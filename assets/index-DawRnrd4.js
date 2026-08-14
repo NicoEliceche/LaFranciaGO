@@ -1165,14 +1165,24 @@ Error generating stack: `+a.message+`
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 0;
 
   [data-primary='true'] & {
     width: 2.625rem;
     height: 2.625rem;
-    border-radius: ${({theme:e})=>e.radius.full};
-    background: ${({theme:e})=>e.color.brand};
     color: ${({theme:e})=>e.color.onPrimary};
-    box-shadow: ${({theme:e})=>e.shadow.glow};
+    background: transparent;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: -0.18rem;
+      border-radius: ${({theme:e})=>e.radius.full};
+      background: ${({theme:e})=>e.color.brand};
+      box-shadow: ${({theme:e})=>e.shadow.glow};
+      z-index: -1;
+    }
   }
 `,qw=c.footer`
   display: none;
@@ -3783,14 +3793,24 @@ Error generating stack: `+a.message+`
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 0;
 
   [data-primary='true'] & {
     width: 2.625rem;
     height: 2.625rem;
-    border-radius: ${({theme:e})=>e.radius.full};
-    background: ${({theme:e})=>e.color.brand};
     color: ${({theme:e})=>e.color.onPrimary};
-    box-shadow: ${({theme:e})=>e.shadow.glow};
+    background: transparent;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: -0.18rem;
+      border-radius: ${({theme:e})=>e.radius.full};
+      background: ${({theme:e})=>e.color.brand};
+      box-shadow: ${({theme:e})=>e.shadow.glow};
+      z-index: -1;
+    }
   }
 `,Yl="/LaFranciaGO/favicon.png",Ah=420,i$=84,ql=e=>`data:image/svg+xml;charset=UTF-8,${encodeURIComponent(e)}`,Nh={"pack-familiar":ql(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420">
