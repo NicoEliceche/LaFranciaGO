@@ -1131,6 +1131,9 @@ Error generating stack: `+a.message+`
   text-align: center;
   white-space: nowrap;
   line-height: 1.05;
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
   transition:
     transform 180ms ease,
     background-color 180ms ease,
@@ -1138,7 +1141,16 @@ Error generating stack: `+a.message+`
 
   &.active {
     color: ${({theme:e})=>e.color.primary};
+  }
+
+  &.active::before,
+  &[aria-current='page']::before {
+    content: '';
+    position: absolute;
+    inset: -0.14rem 0.05rem -0.14rem;
+    border-radius: ${({theme:e})=>e.radius.lg};
     background: ${({theme:e})=>e.color.primarySoft};
+    z-index: -1;
   }
 
   &:not([data-primary='true']) {
@@ -1165,24 +1177,14 @@ Error generating stack: `+a.message+`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  z-index: 0;
 
   [data-primary='true'] & {
     width: 2.625rem;
     height: 2.625rem;
+    border-radius: ${({theme:e})=>e.radius.full};
+    background: ${({theme:e})=>e.color.brand};
     color: ${({theme:e})=>e.color.onPrimary};
-    background: transparent;
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: -0.18rem;
-      border-radius: ${({theme:e})=>e.radius.full};
-      background: ${({theme:e})=>e.color.brand};
-      box-shadow: ${({theme:e})=>e.shadow.glow};
-      z-index: -1;
-    }
+    box-shadow: ${({theme:e})=>e.shadow.glow};
   }
 `,qw=c.footer`
   display: none;
@@ -3758,6 +3760,9 @@ Error generating stack: `+a.message+`
   text-align: center;
   white-space: nowrap;
   line-height: 1.05;
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
   transition:
     transform 180ms ease,
     background-color 180ms ease,
@@ -3765,8 +3770,17 @@ Error generating stack: `+a.message+`
 
   &.active,
   &[aria-current='page'] {
-    background: ${({theme:e})=>e.color.primarySoft};
     color: ${({theme:e})=>e.color.primary};
+  }
+
+  &.active::before,
+  &[aria-current='page']::before {
+    content: '';
+    position: absolute;
+    inset: -0.14rem 0.05rem -0.14rem;
+    border-radius: ${({theme:e})=>e.radius.lg};
+    background: ${({theme:e})=>e.color.primarySoft};
+    z-index: -1;
   }
 
   &:not([data-primary='true']) {
@@ -3793,24 +3807,14 @@ Error generating stack: `+a.message+`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  z-index: 0;
 
   [data-primary='true'] & {
     width: 2.625rem;
     height: 2.625rem;
+    border-radius: ${({theme:e})=>e.radius.full};
+    background: ${({theme:e})=>e.color.brand};
     color: ${({theme:e})=>e.color.onPrimary};
-    background: transparent;
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: -0.18rem;
-      border-radius: ${({theme:e})=>e.radius.full};
-      background: ${({theme:e})=>e.color.brand};
-      box-shadow: ${({theme:e})=>e.shadow.glow};
-      z-index: -1;
-    }
+    box-shadow: ${({theme:e})=>e.shadow.glow};
   }
 `,Yl="/LaFranciaGO/favicon.png",Ah=420,i$=84,ql=e=>`data:image/svg+xml;charset=UTF-8,${encodeURIComponent(e)}`,Nh={"pack-familiar":ql(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420">
