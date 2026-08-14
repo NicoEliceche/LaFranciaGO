@@ -101,9 +101,10 @@ Error generating stack: `+a.message+`
     margin: 0;
     min-height: 100vh;
     overflow-x: hidden;
-    background:
-      ${({theme:e})=>e.mode==="dark"?"radial-gradient(circle at top, rgba(0, 71, 231, 0.18), transparent 36%)":"radial-gradient(circle at top, rgba(0, 71, 231, 0.06), transparent 36%)"},
-      ${({theme:e})=>e.color.background};
+    background-color: ${({theme:e})=>e.color.background};
+    background-image: ${({theme:e})=>e.mode==="dark"?"none":"radial-gradient(circle at top, rgba(0, 71, 231, 0.06), transparent 36%)"};
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     color: ${({theme:e})=>e.color.text};
     font-family: ${({theme:e})=>e.typography.fontFamily.body};
     line-height: ${({theme:e})=>e.typography.lineHeight.normal};
@@ -122,7 +123,7 @@ Error generating stack: `+a.message+`
     z-index: ${({theme:e})=>e.zIndex.bottomNav+20};
     pointer-events: none;
     opacity: 0;
-    background: ${({theme:e})=>e.mode==="dark"?"rgba(5, 8, 22, 0.18)":"rgba(255, 255, 255, 0.1)"};
+    background: ${({theme:e})=>e.mode==="dark"?"rgba(0, 0, 0, 0.08)":"rgba(255, 255, 255, 0.1)"};
     transition: opacity 220ms ease;
   }
 
@@ -206,7 +207,7 @@ Error generating stack: `+a.message+`
       scroll-behavior: auto !important;
     }
   }
-`,Ar={color:{primary:"#0047E7",primaryHover:"#003DCB",primaryActive:"#0033A8",primarySoft:"#EAF1FF",background:"#F5F7FB",backgroundAlt:"#EEF3FA",surface:"#FFFFFF",surfaceMuted:"#EEF2F8",surfaceDark:"#050816",surfaceDarkAlt:"#0B1020",text:"#0B1020",textMuted:"#465067",textSoft:"#6B7280",textInverse:"#FFFFFF",border:"#D7E0ED",borderStrong:"#B8C3D8",shadow:"rgba(5, 8, 22, 0.12)",onPrimary:"#FFFFFF",onDark:"#FFFFFF",success:"#0F9D58",warning:"#D97706",danger:"#DC2626",info:"#2563EB",heroGradient:"linear-gradient(135deg, #050816 0%, #081330 46%, #0047E7 100%)",heroGlow:"radial-gradient(circle at top left, rgba(0, 71, 231, 0.35), transparent 55%)"},typography:{fontFamily:{heading:'"Rubik", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',body:'"Nunito Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',mono:'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace'},size:{xs:"0.75rem",sm:"0.875rem",base:"1rem",lg:"1.125rem",xl:"1.25rem","2xl":"1.5rem","3xl":"2rem","4xl":"2.75rem","5xl":"3.5rem","6xl":"4.5rem"},weight:{regular:"400",medium:"500",semibold:"600",bold:"700",extrabold:"800"},lineHeight:{tight:1.1,snug:1.3,normal:1.5}},spacing:{1:"0.25rem",2:"0.5rem",3:"0.75rem",4:"1rem",5:"1.25rem",6:"1.5rem",8:"2rem",10:"2.5rem",12:"3rem",14:"3.5rem",16:"4rem",20:"5rem",24:"6rem"},radius:{sm:"0.5rem",md:"0.75rem",lg:"1rem",xl:"1.5rem","2xl":"2rem",full:"9999px"},shadow:{sm:"0 1px 2px rgba(5, 8, 22, 0.06)",md:"0 12px 24px rgba(5, 8, 22, 0.08)",lg:"0 20px 40px rgba(5, 8, 22, 0.14)",glow:"0 0 0 1px rgba(0, 71, 231, 0.16), 0 24px 48px rgba(0, 71, 231, 0.16)"},layout:{screenPaddingH:"clamp(1rem, 2.5vw, 1.5rem)",maxContentWidth:"72rem",sectionSpacing:"clamp(3.5rem, 8vw, 6rem)",cardPadding:"clamp(1rem, 2.4vw, 1.5rem)",bottomNavHeight:"3.125rem",topBarHeight:"4rem"},breakpoints:{sm:"480px",md:"768px",lg:"1024px",xl:"1280px"},zIndex:{header:20,bottomNav:30}},Y2=Ar.shadow,q2={primary:"#6B9DFF",primaryHover:"#8AB3FF",primaryActive:"#4F87FF",primarySoft:"#132D63",background:"#09101F",backgroundAlt:"#10182D",surface:"#111A2E",surfaceMuted:"#182238",surfaceDark:"#050816",surfaceDarkAlt:"#0B1020",text:"#F6F9FF",textMuted:"#B4C2D8",textSoft:"#8694AE",textInverse:"#FFFFFF",border:"#25324A",borderStrong:"#34445E",shadow:"rgba(0, 0, 0, 0.32)",onPrimary:"#FFFFFF",onDark:"#FFFFFF",success:"#34D399",warning:"#F59E0B",danger:"#F87171",info:"#60A5FA",heroGradient:"linear-gradient(135deg, #050816 0%, #0B1430 46%, #0047E7 100%)",heroGlow:"radial-gradient(circle at top left, rgba(0, 71, 231, 0.28), transparent 55%)"},Z2={sm:"0 1px 2px rgba(0, 0, 0, 0.28)",md:"0 12px 24px rgba(0, 0, 0, 0.24)",lg:"0 20px 40px rgba(0, 0, 0, 0.34)",glow:"0 0 0 1px rgba(107, 157, 255, 0.28), 0 24px 48px rgba(0, 71, 231, 0.2)"},X2=e=>({mode:e,color:e==="dark"?q2:Ar.color,typography:Ar.typography,spacing:Ar.spacing,radius:Ar.radius,shadow:e==="dark"?Z2:Y2,layout:Ar.layout,breakpoints:Ar.breakpoints,zIndex:Ar.zIndex}),_g="lafranciago-theme-mode",Ig=v.createContext(null),J2=()=>{if(typeof window>"u")return"light";const e=window.localStorage.getItem(_g);return e==="light"||e==="dark"?e:window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"};function ew({children:e}){const[t,r]=v.useState(J2),i=v.useRef(!1);v.useEffect(()=>{if(window.localStorage.setItem(_g,t),document.documentElement.dataset.theme=t,document.documentElement.style.colorScheme=t,!i.current){i.current=!0;return}document.documentElement.dataset.themeTransition="true";const d=window.setTimeout(()=>{delete document.documentElement.dataset.themeTransition},240);return()=>{window.clearTimeout(d),delete document.documentElement.dataset.themeTransition}},[t]);const o=v.useCallback(()=>{r(d=>d==="light"?"dark":"light")},[]),a=v.useCallback(d=>{r(d)},[]),s=v.useMemo(()=>X2(t),[t]),l=v.useMemo(()=>({mode:t,isDarkMode:t==="dark",toggleMode:o,setMode:a}),[t,a,o]);return n.jsx(Ig.Provider,{value:l,children:n.jsxs(W2,{theme:s,children:[n.jsx(Q2,{}),e]})})}function Og(){const e=v.useContext(Ig);if(!e)throw new Error("useThemeMode must be used within ThemeProvider");return e}/**
+`,Ar={color:{primary:"#0047E7",primaryHover:"#003DCB",primaryActive:"#0033A8",primarySoft:"#EAF1FF",background:"#F5F7FB",backgroundAlt:"#EEF3FA",surface:"#FFFFFF",surfaceMuted:"#EEF2F8",surfaceDark:"#050816",surfaceDarkAlt:"#0B1020",text:"#0B1020",textMuted:"#465067",textSoft:"#6B7280",textInverse:"#FFFFFF",border:"#D7E0ED",borderStrong:"#B8C3D8",shadow:"rgba(5, 8, 22, 0.12)",onPrimary:"#FFFFFF",onDark:"#FFFFFF",success:"#0F9D58",warning:"#D97706",danger:"#DC2626",info:"#2563EB",heroGradient:"linear-gradient(135deg, #050816 0%, #081330 46%, #0047E7 100%)",heroGlow:"radial-gradient(circle at top left, rgba(0, 71, 231, 0.35), transparent 55%)"},typography:{fontFamily:{heading:'"Rubik", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',body:'"Nunito Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',mono:'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace'},size:{xs:"0.75rem",sm:"0.875rem",base:"1rem",lg:"1.125rem",xl:"1.25rem","2xl":"1.5rem","3xl":"2rem","4xl":"2.75rem","5xl":"3.5rem","6xl":"4.5rem"},weight:{regular:"400",medium:"500",semibold:"600",bold:"700",extrabold:"800"},lineHeight:{tight:1.1,snug:1.3,normal:1.5}},spacing:{1:"0.25rem",2:"0.5rem",3:"0.75rem",4:"1rem",5:"1.25rem",6:"1.5rem",8:"2rem",10:"2.5rem",12:"3rem",14:"3.5rem",16:"4rem",20:"5rem",24:"6rem"},radius:{sm:"0.5rem",md:"0.75rem",lg:"1rem",xl:"1.5rem","2xl":"2rem",full:"9999px"},shadow:{sm:"0 1px 2px rgba(5, 8, 22, 0.06)",md:"0 12px 24px rgba(5, 8, 22, 0.08)",lg:"0 20px 40px rgba(5, 8, 22, 0.14)",glow:"0 0 0 1px rgba(0, 71, 231, 0.16), 0 24px 48px rgba(0, 71, 231, 0.16)"},layout:{screenPaddingH:"clamp(1rem, 2.5vw, 1.5rem)",maxContentWidth:"72rem",sectionSpacing:"clamp(3.5rem, 8vw, 6rem)",cardPadding:"clamp(1rem, 2.4vw, 1.5rem)",bottomNavHeight:"3.125rem",topBarHeight:"4rem"},breakpoints:{sm:"480px",md:"768px",lg:"1024px",xl:"1280px"},zIndex:{header:20,bottomNav:30}},Y2=Ar.shadow,q2={primary:"#6B9DFF",primaryHover:"#8AB3FF",primaryActive:"#4F87FF",primarySoft:"#132D63",background:"#928D81",backgroundAlt:"#847E74",surface:"#111A2E",surfaceMuted:"#182238",surfaceDark:"#050816",surfaceDarkAlt:"#0B1020",text:"#F6F9FF",textMuted:"#B4C2D8",textSoft:"#8694AE",textInverse:"#FFFFFF",border:"#25324A",borderStrong:"#34445E",shadow:"rgba(0, 0, 0, 0.32)",onPrimary:"#FFFFFF",onDark:"#FFFFFF",success:"#34D399",warning:"#F59E0B",danger:"#F87171",info:"#60A5FA",heroGradient:"linear-gradient(135deg, #050816 0%, #0B1430 46%, #0047E7 100%)",heroGlow:"radial-gradient(circle at top left, rgba(0, 71, 231, 0.28), transparent 55%)"},Z2={sm:"0 1px 2px rgba(0, 0, 0, 0.28)",md:"0 12px 24px rgba(0, 0, 0, 0.24)",lg:"0 20px 40px rgba(0, 0, 0, 0.34)",glow:"0 0 0 1px rgba(107, 157, 255, 0.28), 0 24px 48px rgba(0, 71, 231, 0.2)"},X2=e=>({mode:e,color:e==="dark"?q2:Ar.color,typography:Ar.typography,spacing:Ar.spacing,radius:Ar.radius,shadow:e==="dark"?Z2:Y2,layout:Ar.layout,breakpoints:Ar.breakpoints,zIndex:Ar.zIndex}),_g="lafranciago-theme-mode",Ig=v.createContext(null),J2=()=>{if(typeof window>"u")return"light";const e=window.localStorage.getItem(_g);return e==="light"||e==="dark"?e:window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"};function ew({children:e}){const[t,r]=v.useState(J2),i=v.useRef(!1);v.useEffect(()=>{if(window.localStorage.setItem(_g,t),document.documentElement.dataset.theme=t,document.documentElement.style.colorScheme=t,!i.current){i.current=!0;return}document.documentElement.dataset.themeTransition="true";const d=window.setTimeout(()=>{delete document.documentElement.dataset.themeTransition},240);return()=>{window.clearTimeout(d),delete document.documentElement.dataset.themeTransition}},[t]);const o=v.useCallback(()=>{r(d=>d==="light"?"dark":"light")},[]),a=v.useCallback(d=>{r(d)},[]),s=v.useMemo(()=>X2(t),[t]),l=v.useMemo(()=>({mode:t,isDarkMode:t==="dark",toggleMode:o,setMode:a}),[t,a,o]);return n.jsx(Ig.Provider,{value:l,children:n.jsxs(W2,{theme:s,children:[n.jsx(Q2,{}),e]})})}function Og(){const e=v.useContext(Ig);if(!e)throw new Error("useThemeMode must be used within ThemeProvider");return e}/**
  * @license lucide-react v0.323.0 - ISC
  *
  * This source code is licensed under the ISC license.
@@ -485,9 +486,9 @@ Error generating stack: `+a.message+`
   min-height: 100dvh;
   width: 100%;
   overflow-x: hidden;
-  background:
-    ${({theme:e})=>e.mode==="dark"?"radial-gradient(circle at top, rgba(0, 71, 231, 0.16), transparent 34%)":"radial-gradient(circle at top, rgba(0, 71, 231, 0.05), transparent 34%)"},
-    ${({theme:e})=>e.color.background};
+  background-color: ${({theme:e})=>e.color.background};
+  background-image: ${({theme:e})=>e.mode==="dark"?"none":"radial-gradient(circle at top, rgba(0, 71, 231, 0.05), transparent 34%)"};
+  background-repeat: no-repeat;
   color: ${({theme:e})=>e.color.text};
   padding-top: var(--marketplace-topbar-height, ${({theme:e})=>e.layout.topBarHeight});
   padding-bottom: calc(${({theme:e})=>e.layout.bottomNavHeight} + ${({theme:e})=>e.spacing[3]});
@@ -2417,6 +2418,7 @@ Error generating stack: `+a.message+`
     overflow: hidden;
     padding: 0;
     border-radius: 0 ${({theme:e})=>e.radius["2xl"]} ${({theme:e})=>e.radius["2xl"]} 0;
+    background: ${({theme:e})=>e.mode==="dark"?e.color.background:e.color.surface};
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
     transform: translate3d(calc(-100% - 1rem), 0, 0);
@@ -2499,7 +2501,7 @@ Error generating stack: `+a.message+`
   min-height: calc(${({theme:e})=>e.layout.topBarHeight} - ${({theme:e})=>e.spacing[3]});
   padding: 0 ${({theme:e})=>e.layout.screenPaddingH};
   border-bottom: 1px solid ${({theme:e})=>e.color.border};
-  background: ${({theme:e})=>e.color.surface};
+  background: ${({theme:e})=>e.mode==="dark"?e.color.background:e.color.surface};
   position: sticky;
   top: 0;
   z-index: 1;
@@ -2527,6 +2529,7 @@ Error generating stack: `+a.message+`
   flex-direction: column;
   gap: 0.125rem;
   padding: ${({theme:e})=>e.layout.cardPadding};
+  background: ${({theme:e})=>e.mode==="dark"?e.color.background:e.color.surface};
   overflow: auto;
 `;c.div`
   display: grid;
