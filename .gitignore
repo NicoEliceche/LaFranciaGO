@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
+Skills/
+design-system/
+guide.md
+guide2.md
+restart.bat

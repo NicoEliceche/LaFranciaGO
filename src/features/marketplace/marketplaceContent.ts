@@ -1,0 +1,596 @@
+import {
+  Beef,
+  ChefHat,
+  Croissant,
+  Gift,
+  GlassWater,
+  Hammer,
+  Leaf,
+  Pill,
+  Shirt,
+  ShoppingBasket,
+  Sparkles,
+  Store,
+  Smartphone,
+  ShieldCheck,
+  Truck,
+  UtensilsCrossed,
+  Wrench,
+  PackageSearch,
+  BadgePercent,
+  Heart,
+  MapPinned,
+  ClipboardList,
+  Boxes,
+  Users,
+  ReceiptText,
+  Route,
+  ShieldAlert,
+  Clock3,
+  MapPin,
+} from 'lucide-react';
+
+import type {
+  AdminAlert,
+  AdminMetric,
+  AddressBookEntry,
+  CartItem,
+  CommerceInventoryItem,
+  CommerceMetric,
+  CommerceOrder,
+  CustomerOrder,
+  DeliveryMetric,
+  DeliveryTask,
+  FavoriteProduct,
+  MarketplaceCategory,
+  MarketplaceFeature,
+  OfferItem,
+  PriceComparison,
+  StoreProfile,
+} from './marketplace.types';
+
+export const brandWords = ['mercado', 'ofertas', 'cerca tuyo', 'entrega hoy'];
+
+export const quickFilters = [
+  { id: 'all', label: 'Todo' },
+  { id: 'offers', label: 'Ofertas' },
+  { id: 'nearby', label: 'Cerca mío' },
+  { id: 'lowest', label: 'Más baratos' },
+  { id: 'delivery', label: 'Delivery' },
+  { id: 'pickup', label: 'Retiro' },
+] as const;
+
+export const categories: MarketplaceCategory[] = [
+  { id: 'almacen', name: 'Almacén', description: 'Básicos y reposición diaria', icon: ShoppingBasket },
+  { id: 'kiosco', name: 'Kiosco', description: 'Snacks, bebidas y urgencias', icon: Store },
+  { id: 'bebidas', name: 'Bebidas', description: 'Gaseosas, aguas y combos', icon: GlassWater },
+  { id: 'panaderia', name: 'Panadería', description: 'Fresco del día y facturas', icon: Croissant },
+  { id: 'carniceria', name: 'Carnicería', description: 'Cortes frescos y pedidos por kilo', icon: Beef },
+  { id: 'verduleria', name: 'Verdulería', description: 'Frutas, verduras y combos', icon: Leaf },
+  { id: 'rotiseria', name: 'Rotisería', description: 'Comidas listas para retirar', icon: UtensilsCrossed },
+  { id: 'comida', name: 'Comida', description: 'Platos, viandas y cocina del día', icon: ChefHat },
+  { id: 'farmacia', name: 'Farmacia', description: 'Salud, bienestar y perfumería', icon: Pill },
+  { id: 'perfumeria', name: 'Perfumería', description: 'Higiene y cuidado personal', icon: Sparkles },
+  { id: 'regaleria', name: 'Regalería', description: 'Detalles y decoración', icon: Gift },
+  { id: 'ferreteria', name: 'Ferretería', description: 'Herramientas y materiales', icon: Hammer },
+  { id: 'indumentaria', name: 'Indumentaria', description: 'Ropa, calzado y accesorios', icon: Shirt },
+  { id: 'servicios', name: 'Servicios', description: 'Talleres y asistencia local', icon: Wrench },
+];
+
+export const highlights: MarketplaceFeature[] = [
+  {
+    id: 'pwa',
+    title: 'Se usa como app',
+    description: 'La web se instala en el celular sin ocupar espacio nativo.',
+    icon: Smartphone,
+  },
+  {
+    id: 'secure',
+    title: 'Seguridad base',
+    description: 'Sin secretos en localStorage y lista para auth segura.',
+    icon: ShieldCheck,
+  },
+  {
+    id: 'scale',
+    title: 'Escala por localidad',
+    description: 'La estructura soporta más ciudades y más comercios.',
+    icon: Truck,
+  },
+];
+
+export const offers: OfferItem[] = [
+  {
+    id: 'pack-familiar',
+    product: 'Pack familiar',
+    store: 'Almacén Juan',
+    category: 'Almacén',
+    price: 6890,
+    oldPrice: 7800,
+    discount: 12,
+    distanceKm: 1.2,
+    eta: '32 min',
+    rating: 4.8,
+    tags: ['Ahorro', 'Combo', 'Delivery'],
+    highlight: 'Pack ahorro',
+  },
+  {
+    id: 'frescura-del-dia',
+    product: 'Frescura del día',
+    store: 'La Huerta',
+    category: 'Verdulería',
+    price: 2150,
+    oldPrice: 2550,
+    discount: 16,
+    distanceKm: 1.1,
+    eta: '24 min',
+    rating: 4.9,
+    tags: ['Verduras', 'Frutas', 'Delivery'],
+    highlight: 'Fresco hoy',
+  },
+  {
+    id: 'asado-especial',
+    product: 'Asado especial',
+    store: 'La Estancia',
+    category: 'Carnicería',
+    price: 9750,
+    oldPrice: 10900,
+    discount: 11,
+    distanceKm: 2.1,
+    eta: '28 min',
+    rating: 4.8,
+    tags: ['Carnicería', 'Finde', 'Delivery'],
+    highlight: 'Asado de fin de semana',
+  },
+  {
+    id: 'coca-cola-225',
+    product: 'Coca Cola 2,25 L',
+    store: 'Almacén Juan',
+    category: 'Bebidas',
+    price: 3350,
+    oldPrice: 3900,
+    discount: 14,
+    distanceKm: 1.2,
+    eta: '35 min',
+    rating: 4.8,
+    tags: ['Bebidas', 'Oferta', 'Delivery'],
+    highlight: 'Precio destacado',
+  },
+  {
+    id: 'yerba-1kg',
+    product: 'Yerba mate 1 kg',
+    store: 'Kiosco La Plaza',
+    category: 'Almacén',
+    price: 4800,
+    oldPrice: 5250,
+    discount: 9,
+    distanceKm: 0.9,
+    eta: '22 min',
+    rating: 4.7,
+    tags: ['Almacén', 'Cerca tuyo', 'Retiro'],
+    highlight: 'Oferta local',
+  },
+  {
+    id: 'pan-flauta',
+    product: 'Pan flauta x 6',
+    store: 'Panadería La Esquina',
+    category: 'Panadería',
+    price: 750,
+    oldPrice: 900,
+    discount: 17,
+    distanceKm: 1.6,
+    eta: '15 min',
+    rating: 4.9,
+    tags: ['Pan', 'Fresco', 'Retiro'],
+    highlight: 'Recién hecho',
+  },
+  {
+    id: 'milanesas',
+    product: 'Milanesas x kg',
+    store: 'Carnicería Central',
+    category: 'Carnicería',
+    price: 9100,
+    oldPrice: 9800,
+    discount: 7,
+    distanceKm: 2.4,
+    eta: '28 min',
+    rating: 4.8,
+    tags: ['Carnicería', 'Delivery', 'Stock'],
+    highlight: 'Mejor precio',
+  },
+  {
+    id: 'detergente',
+    product: 'Detergente 900 ml',
+    store: 'Super Norte',
+    category: 'Limpieza',
+    price: 2450,
+    oldPrice: 2890,
+    discount: 15,
+    distanceKm: 1.7,
+    eta: '40 min',
+    rating: 4.6,
+    tags: ['Limpieza', 'Oferta', 'Express'],
+    highlight: 'Limpieza',
+  },
+  {
+    id: 'shampoo',
+    product: 'Shampoo 400 ml',
+    store: 'Farmacia Centro',
+    category: 'Perfumería',
+    price: 3950,
+    oldPrice: 4500,
+    discount: 12,
+    distanceKm: 0.7,
+    eta: '18 min',
+    rating: 4.7,
+    tags: ['Perfumería', 'Cerca tuyo', 'Retiro'],
+    highlight: 'Cuidado personal',
+  },
+];
+
+export const comparisons: PriceComparison[] = [
+  {
+    id: 'coca-cola-compare',
+    product: 'Coca Cola 2,25 L',
+    category: 'Bebidas',
+    badge: '3 negocios cerca tuyo',
+    offers: [
+      { store: 'Kiosco La Plaza', price: 3350, distanceKm: 0.9, eta: '22 min', openNow: true },
+      { store: 'Almacén Juan', price: 3500, distanceKm: 1.2, eta: '35 min', openNow: true },
+      { store: 'Super Norte', price: 3690, distanceKm: 1.7, eta: '40 min', openNow: true },
+    ],
+  },
+  {
+    id: 'yerba-compare',
+    product: 'Yerba mate 1 kg',
+    category: 'Almacén',
+    badge: 'Comparación de precio',
+    offers: [
+      { store: 'Almacén Juan', price: 4650, distanceKm: 1.2, eta: '35 min', openNow: true },
+      { store: 'Super Norte', price: 4800, distanceKm: 1.7, eta: '40 min', openNow: true },
+      { store: 'Kiosco La Plaza', price: 4990, distanceKm: 0.9, eta: '22 min', openNow: true },
+    ],
+  },
+  {
+    id: 'pan-compare',
+    product: 'Pan flauta x 6',
+    category: 'Panadería',
+    badge: 'Fresco y listo',
+    offers: [
+      { store: 'Panadería La Esquina', price: 750, distanceKm: 1.6, eta: '15 min', openNow: true },
+      { store: 'Almacén Juan', price: 820, distanceKm: 1.2, eta: '35 min', openNow: true },
+      { store: 'Super Norte', price: 890, distanceKm: 1.7, eta: '40 min', openNow: true },
+    ],
+  },
+];
+
+export const stores: StoreProfile[] = [
+  {
+    id: 'almacen-juan',
+    name: 'Almacén Juan',
+    category: 'Almacén y bebidas',
+    address: 'Centro · La Francia',
+    phone: '+54 3573 400-201',
+    hours: 'Lun a sáb 08:00 - 21:30',
+    distanceKm: 1.2,
+    rating: 4.8,
+    openNow: true,
+    delivery: true,
+    pickup: true,
+    minOrder: 5000,
+    summary: 'Surtido fuerte en bebidas, limpieza, snacks y básicos para el día a día.',
+    tags: ['Bebidas', 'Limpieza', 'Snacks'],
+    icon: Store,
+    featuredProducts: [
+      { id: 'a1', name: 'Coca Cola 2,25 L', price: 3500, badge: 'Oferta' },
+      { id: 'a2', name: 'Yerba mate 1 kg', price: 4650 },
+      { id: 'a3', name: 'Galletitas surtidas', price: 1250 },
+    ],
+  },
+  {
+    id: 'panaderia-la-esquina',
+    name: 'Panadería La Esquina',
+    category: 'Panadería artesanal',
+    address: 'Av. Principal',
+    phone: '+54 3573 401-122',
+    hours: 'Todos los días 07:00 - 13:30 / 17:00 - 21:00',
+    distanceKm: 1.6,
+    rating: 4.9,
+    openNow: true,
+    delivery: false,
+    pickup: true,
+    minOrder: 3000,
+    summary: 'Pan fresco, facturas y productos de horno para retiro rápido.',
+    tags: ['Pan', 'Facturas', 'Tortas'],
+    icon: Croissant,
+    featuredProducts: [
+      { id: 'p1', name: 'Pan flauta x 6', price: 750, badge: 'Recién hecho' },
+      { id: 'p2', name: 'Facturas surtidas', price: 1900 },
+      { id: 'p3', name: 'Torta de cumpleaños', price: 12000 },
+    ],
+  },
+  {
+    id: 'farmacia-centro',
+    name: 'Farmacia Centro',
+    category: 'Salud y perfumería',
+    address: 'Sector comercial',
+    phone: '+54 3573 402-300',
+    hours: 'Lun a dom 08:30 - 22:00',
+    distanceKm: 0.7,
+    rating: 4.7,
+    openNow: true,
+    delivery: true,
+    pickup: true,
+    minOrder: 4000,
+    summary: 'Productos de farmacia y perfumería con atención prioritaria.',
+    tags: ['Farmacia', 'Perfumería', 'Cuidado'],
+    icon: Pill,
+    featuredProducts: [
+      { id: 'f1', name: 'Shampoo 400 ml', price: 3950, badge: 'Precio bajo' },
+      { id: 'f2', name: 'Omeprazol 20 mg', price: 7150 },
+      { id: 'f3', name: 'Alcohol en gel', price: 1850 },
+    ],
+  },
+  {
+    id: 'carniceria-central',
+    name: 'Carnicería Central',
+    category: 'Cortes y frescos',
+    address: 'Barrio norte',
+    phone: '+54 3573 405-115',
+    hours: 'Mar a dom 08:00 - 13:30 / 17:30 - 21:00',
+    distanceKm: 2.4,
+    rating: 4.8,
+    openNow: true,
+    delivery: true,
+    pickup: true,
+    minOrder: 8000,
+    summary: 'Cortes frescos, milanesas y pedidos por kilo con atención del día.',
+    tags: ['Carne', 'Fresco', 'Delivery'],
+    icon: Beef,
+    featuredProducts: [
+      { id: 'c1', name: 'Milanesas x kg', price: 9100, badge: 'Mejor precio' },
+      { id: 'c2', name: 'Hamburguesas caseras', price: 6200 },
+      { id: 'c3', name: 'Pollo entero', price: 5450 },
+    ],
+  },
+];
+
+export const cartItems: CartItem[] = [
+  {
+    id: 'cart-1',
+    product: 'Coca Cola 2,25 L',
+    store: 'Almacén Juan',
+    price: 2600,
+    quantity: 1,
+    subtotal: 2600,
+    available: true,
+    eta: '15–20 min',
+    statusLabel: 'En stock',
+    statusTone: 'success',
+  },
+  {
+    id: 'cart-2',
+    product: 'Fideos tirabuzón 500 g',
+    store: 'Almacén Juan',
+    price: 980,
+    quantity: 2,
+    subtotal: 1960,
+    available: true,
+    eta: '15–20 min',
+    statusLabel: 'En stock',
+    statusTone: 'success',
+  },
+  {
+    id: 'cart-3',
+    product: 'Pan flauta x 6',
+    store: 'Panadería La Esquina',
+    price: 2550,
+    quantity: 1,
+    subtotal: 2550,
+    available: true,
+    eta: '20–30 min',
+    statusLabel: 'En stock',
+    statusTone: 'success',
+  },
+  {
+    id: 'cart-4',
+    product: 'Medialunas x 6',
+    store: 'Panadería La Esquina',
+    price: 2400,
+    quantity: 1,
+    subtotal: 2400,
+    available: true,
+    eta: '20–30 min',
+    statusLabel: 'Pocas unidades',
+    statusTone: 'warning',
+  },
+  {
+    id: 'cart-5',
+    product: 'Banana premium',
+    store: 'La Huerta',
+    price: 1700,
+    quantity: 1,
+    subtotal: 1700,
+    available: true,
+    eta: '15–25 min',
+    statusLabel: 'En stock',
+    statusTone: 'success',
+  },
+  {
+    id: 'cart-6',
+    product: 'Tomate redondo',
+    store: 'La Huerta',
+    price: 2690,
+    quantity: 1,
+    subtotal: 2690,
+    available: false,
+    eta: '15–25 min',
+    statusLabel: 'Sin stock',
+    statusTone: 'danger',
+  },
+];
+
+export const customerOrders: CustomerOrder[] = [
+  { id: 'ord-1', store: 'Almacén Juan', total: 8350, status: 'En preparación', eta: '35 min' },
+  { id: 'ord-2', store: 'Panadería La Esquina', total: 1900, status: 'Listo para retirar', eta: '15 min' },
+  { id: 'ord-3', store: 'Farmacia Centro', total: 7150, status: 'Entregado', eta: 'Completado' },
+];
+
+export const addresses: AddressBookEntry[] = [
+  { id: 'home', label: 'Casa', address: 'Av. San Martín 123', primary: true },
+  { id: 'work', label: 'Trabajo', address: 'Ruta 19 km 115', primary: false },
+];
+
+export const favorites: FavoriteProduct[] = [
+  { id: 'fav-1', name: 'Coca Cola 2,25 L', store: 'Almacén Juan', price: 3500 },
+  { id: 'fav-2', name: 'Yerba mate 1 kg', store: 'Kiosco La Plaza', price: 4650 },
+  { id: 'fav-3', name: 'Pan flauta x 6', store: 'Panadería La Esquina', price: 750 },
+];
+
+export const commerceMetrics: CommerceMetric[] = [
+  { id: 'orders', label: 'Pedidos hoy', value: '28', trend: '+12%' },
+  { id: 'sales', label: 'Ventas hoy', value: '$182.400', trend: '+8%' },
+  { id: 'stock', label: 'Productos activos', value: '146', trend: '+5' },
+  { id: 'rating', label: 'Puntuación', value: '4,8/5', trend: '+0,2' },
+];
+
+export const commerceOrders: CommerceOrder[] = [
+  { id: 'co-1', customer: 'María G.', total: 8350, status: 'En preparación' },
+  { id: 'co-2', customer: 'Lucas F.', total: 2900, status: 'Listo para retirar' },
+  { id: 'co-3', customer: 'Sofía R.', total: 12450, status: 'Asignado a delivery' },
+];
+
+export const inventory: CommerceInventoryItem[] = [
+  { id: 'inv-1', name: 'Coca Cola 2,25 L', stock: 34, price: 3500, status: 'Activo' },
+  { id: 'inv-2', name: 'Yerba mate 1 kg', stock: 18, price: 4650, status: 'Activo' },
+  { id: 'inv-3', name: 'Limpiador multiuso', stock: 9, price: 2450, status: 'Promoción' },
+];
+
+export const deliveryMetrics: DeliveryMetric[] = [
+  { id: 'available', label: 'Pedidos disponibles', value: '5', help: 'Zona centro y norte' },
+  { id: 'income', label: 'Ganancia estimada', value: '$7.800', help: 'Hoy hasta el momento' },
+  { id: 'distance', label: 'Distancia media', value: '1,8 km', help: 'Por pedido' },
+];
+
+export const deliveryTasks: DeliveryTask[] = [
+  { id: 'del-1', store: 'Almacén Juan', customer: 'María G.', distanceKm: 1.4, payout: 1200, status: 'Asignado' },
+  { id: 'del-2', store: 'Farmacia Centro', customer: 'Lucas F.', distanceKm: 0.8, payout: 1000, status: 'Disponible' },
+  { id: 'del-3', store: 'Carnicería Central', customer: 'Sofía R.', distanceKm: 2.2, payout: 1500, status: 'En camino' },
+];
+
+export const adminMetrics: AdminMetric[] = [
+  { id: 'users', label: 'Usuarios activos', value: '2.184', help: 'Últimos 30 días' },
+  { id: 'stores', label: 'Comercios', value: '42', help: '18 en revisión' },
+  { id: 'commissions', label: 'Comisiones', value: '$1,84M', help: 'Mes actual' },
+  { id: 'deliveries', label: 'Entregas', value: '1.290', help: '95% a tiempo' },
+];
+
+export const adminAlerts: AdminAlert[] = [
+  {
+    id: 'alert-1',
+    title: 'Comercios pendientes de aprobación',
+    description: 'Hay 6 negocios listos para publicar su catálogo.',
+    icon: Users,
+  },
+  {
+    id: 'alert-2',
+    title: 'Pagos y comisiones',
+    description: 'Se debe revisar la liquidación semanal de 14 pedidos.',
+    icon: ReceiptText,
+  },
+  {
+    id: 'alert-3',
+    title: 'Cobertura por zona',
+    description: 'Faltan repartidores registrados en el cuadrante norte.',
+    icon: Route,
+  },
+  {
+    id: 'alert-4',
+    title: 'Seguridad operativa',
+    description: 'Actividad anómala detectada en un comercio suspendido.',
+    icon: ShieldAlert,
+  },
+];
+
+export const commerceHighlights = [
+  {
+    id: 'catalog',
+    title: 'Catálogo propio',
+    description: 'Cada comercio gestiona productos, fotos y precios sin depender del admin.',
+    icon: ClipboardList,
+  },
+  {
+    id: 'stock',
+    title: 'Stock visible',
+    description: 'La disponibilidad se ve antes de comprar para reducir reclamos.',
+    icon: Boxes,
+  },
+  {
+    id: 'delivery',
+    title: 'Entrega y retiro',
+    description: 'El comercio define si vende con delivery, retiro o ambas opciones.',
+    icon: Truck,
+  },
+] as const;
+
+export const customerHighlights = [
+  {
+    id: 'search',
+    title: 'Buscar por producto',
+    description: 'El usuario entra por lo que necesita, no por una lista genérica de comercios.',
+    icon: PackageSearch,
+  },
+  {
+    id: 'compare',
+    title: 'Comparar precios',
+    description: 'La misma referencia puede aparecer en varios negocios con distinto precio.',
+    icon: BadgePercent,
+  },
+  {
+    id: 'save',
+    title: 'Guardar favoritos',
+    description: 'La gente vuelve más rápido a sus productos y tiendas habituales.',
+    icon: Heart,
+  },
+] as const;
+
+export const deliveryHighlights = [
+  {
+    id: 'map',
+    title: 'Zona de trabajo',
+    description: 'El repartidor entiende qué pedidos están dentro de su área de cobertura.',
+    icon: MapPinned,
+  },
+  {
+    id: 'route',
+    title: 'Ruta clara',
+    description: 'Comercio, cliente, monto y estado quedan visibles en una sola vista.',
+    icon: Route,
+  },
+  {
+    id: 'status',
+    title: 'Estados simples',
+    description: 'Asignado, retirado, en camino y entregado sin ambigüedad.',
+    icon: Clock3,
+  },
+] as const;
+
+export const adminHighlights = [
+  {
+    id: 'users',
+    title: 'Usuarios y comercios',
+    description: 'El panel de administración ve cuentas, aprobaciones y suspensiones.',
+    icon: Users,
+  },
+  {
+    id: 'finance',
+    title: 'Finanzas',
+    description: 'Ventas, comisiones y cobros quedan agrupados por localidad y comercio.',
+    icon: ReceiptText,
+  },
+  {
+    id: 'coverage',
+    title: 'Cobertura',
+    description: 'La plataforma escala por ciudad sin rehacer la base del producto.',
+    icon: MapPin,
+  },
+] as const;
