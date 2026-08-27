@@ -358,6 +358,7 @@ export const cartItems: CartItem[] = [
   {
     id: 'cart-1',
     product: 'Coca Cola 2,25 L',
+    categoryId: 'bebidas',
     store: 'Almacén Juan',
     price: 2600,
     quantity: 1,
@@ -370,6 +371,7 @@ export const cartItems: CartItem[] = [
   {
     id: 'cart-2',
     product: 'Fideos tirabuzón 500 g',
+    categoryId: 'almacen',
     store: 'Almacén Juan',
     price: 980,
     quantity: 2,
@@ -382,6 +384,7 @@ export const cartItems: CartItem[] = [
   {
     id: 'cart-3',
     product: 'Pan flauta x 6',
+    categoryId: 'panaderia',
     store: 'Panadería La Esquina',
     price: 2550,
     quantity: 1,
@@ -394,6 +397,7 @@ export const cartItems: CartItem[] = [
   {
     id: 'cart-4',
     product: 'Medialunas x 6',
+    categoryId: 'panaderia',
     store: 'Panadería La Esquina',
     price: 2400,
     quantity: 1,
@@ -406,6 +410,7 @@ export const cartItems: CartItem[] = [
   {
     id: 'cart-5',
     product: 'Banana premium',
+    categoryId: 'verduleria',
     store: 'La Huerta',
     price: 1700,
     quantity: 1,
@@ -418,6 +423,7 @@ export const cartItems: CartItem[] = [
   {
     id: 'cart-6',
     product: 'Tomate redondo',
+    categoryId: 'verduleria',
     store: 'La Huerta',
     price: 2690,
     quantity: 1,
@@ -430,20 +436,79 @@ export const cartItems: CartItem[] = [
 ];
 
 export const customerOrders: CustomerOrder[] = [
-  { id: 'ord-1', store: 'Almacén Juan', total: 8350, status: 'En preparación', eta: '35 min' },
-  { id: 'ord-2', store: 'Panadería La Esquina', total: 1900, status: 'Listo para retirar', eta: '15 min' },
-  { id: 'ord-3', store: 'Farmacia Centro', total: 7150, status: 'Entregado', eta: 'Completado' },
+  {
+    id: 'ord-1',
+    code: '#1248',
+    store: 'Almacén Juan',
+    storeId: 'almacen-juan',
+    categoryId: 'almacen',
+    total: 8350,
+    status: 'En preparación',
+    state: 'proceso',
+    eta: 'Llega en 35 min',
+    date: 'Hoy 14:20',
+    itemCount: 4,
+  },
+  {
+    id: 'ord-2',
+    code: '#1247',
+    store: 'Panadería La Esquina',
+    storeId: 'panaderia-la-esquina',
+    categoryId: 'panaderia',
+    total: 1900,
+    status: 'En camino',
+    state: 'proceso',
+    eta: 'Llega en 15 min',
+    date: 'Hoy 13:05',
+    itemCount: 2,
+  },
+  {
+    id: 'ord-3',
+    code: '#1231',
+    store: 'Farmacia Centro',
+    storeId: 'farmacia-centro',
+    categoryId: 'farmacia',
+    total: 7150,
+    status: 'Entregado',
+    state: 'terminado',
+    eta: 'Entregado 12:40',
+    date: 'Ayer',
+    itemCount: 3,
+  },
+  {
+    id: 'ord-4',
+    code: '#1228',
+    store: 'Carnicería Central',
+    storeId: 'carniceria-central',
+    categoryId: 'carniceria',
+    total: 12400,
+    status: 'Entregado',
+    state: 'terminado',
+    eta: 'Entregado 19:10',
+    date: '18/08',
+    itemCount: 5,
+  },
+  {
+    id: 'ord-5',
+    code: '#1219',
+    store: 'Almacén Juan',
+    storeId: 'almacen-juan',
+    categoryId: 'almacen',
+    total: 3200,
+    status: 'Cancelado por el comercio',
+    state: 'cancelado',
+    eta: 'Sin stock',
+    date: '15/08',
+    itemCount: 2,
+  },
 ];
 
-export const addresses: AddressBookEntry[] = [
-  { id: 'home', label: 'Casa', address: 'Av. San Martín 123', primary: true },
-  { id: 'work', label: 'Trabajo', address: 'Ruta 19 km 115', primary: false },
-];
+export { addresses } from './addressesContent';
 
 export const favorites: FavoriteProduct[] = [
-  { id: 'fav-1', name: 'Coca Cola 2,25 L', store: 'Almacén Juan', price: 3500 },
-  { id: 'fav-2', name: 'Yerba mate 1 kg', store: 'Kiosco La Plaza', price: 4650 },
-  { id: 'fav-3', name: 'Pan flauta x 6', store: 'Panadería La Esquina', price: 750 },
+  { id: 'fav-1', name: 'Coca Cola 2,25 L', store: 'Almacén Juan', categoryId: 'bebidas', price: 3500 },
+  { id: 'fav-2', name: 'Yerba mate 1 kg', store: 'Kiosco La Plaza', categoryId: 'almacen', price: 4650 },
+  { id: 'fav-3', name: 'Pan flauta x 6', store: 'Panadería La Esquina', categoryId: 'panaderia', price: 750 },
 ];
 
 export const commerceMetrics: CommerceMetric[] = [
@@ -479,7 +544,7 @@ export const deliveryTasks: DeliveryTask[] = [
 
 export const adminMetrics: AdminMetric[] = [
   { id: 'users', label: 'Usuarios activos', value: '2.184', help: 'Últimos 30 días' },
-  { id: 'stores', label: 'Comercios', value: '42', help: '18 en revisión' },
+  { id: 'stores', label: 'Negocios', value: '42', help: '18 en revisión' },
   { id: 'commissions', label: 'Comisiones', value: '$1,84M', help: 'Mes actual' },
   { id: 'deliveries', label: 'Entregas', value: '1.290', help: '95% a tiempo' },
 ];
@@ -487,7 +552,7 @@ export const adminMetrics: AdminMetric[] = [
 export const adminAlerts: AdminAlert[] = [
   {
     id: 'alert-1',
-    title: 'Comercios pendientes de aprobación',
+    title: 'Negocios pendientes de aprobación',
     description: 'Hay 6 negocios listos para publicar su catálogo.',
     icon: Users,
   },
@@ -563,7 +628,7 @@ export const deliveryHighlights = [
   {
     id: 'route',
     title: 'Ruta clara',
-    description: 'Comercio, cliente, monto y estado quedan visibles en una sola vista.',
+    description: 'Negocio, cliente, monto y estado quedan visibles en una sola vista.',
     icon: Route,
   },
   {

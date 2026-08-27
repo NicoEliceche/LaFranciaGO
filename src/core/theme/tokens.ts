@@ -30,6 +30,9 @@ export const tokens = {
       'linear-gradient(135deg, #050816 0%, #081330 46%, #0047E7 100%)',
     heroGlow:
       'radial-gradient(circle at top left, rgba(0, 71, 231, 0.35), transparent 55%)',
+    /* Acento neón: sólo se usa en modo oscuro. En claro cae al azul de marca. */
+    neon: '#0047E7',
+    neonSoft: 'rgba(0, 71, 231, 0.28)',
   },
   typography: {
     fontFamily: {
@@ -94,7 +97,7 @@ export const tokens = {
   layout: {
     screenPaddingH: 'clamp(1rem, 2.5vw, 1.5rem)',
     maxContentWidth: '72rem',
-    sectionSpacing: 'clamp(3.5rem, 8vw, 6rem)',
+    sectionSpacing: '0.375rem',
     cardPadding: 'clamp(1rem, 2.4vw, 1.5rem)',
     bottomNavHeight: '3.125rem',
     topBarHeight: '4rem',

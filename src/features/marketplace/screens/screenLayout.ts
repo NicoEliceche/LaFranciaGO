@@ -54,12 +54,23 @@ export const RightAlign = styled.div`
   text-align: right;
 `;
 
-export const TwoUpGrid = styled.div`
+/**
+ * Grilla de productos: dos columnas desde mobile, igual que el catálogo del
+ * comercio y los rieles de Inicio, para que la tarjeta tenga el mismo tamaño
+ * en toda la app.
+ */
+export const ProductGrid = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing[3]};
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: ${({ theme }) => theme.spacing[2]};
 
-  @media (min-width: ${({ theme }) => theme.breakpoints.sm}) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: ${({ theme }) => theme.spacing[3]};
+  }
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 `;
 
@@ -111,10 +122,10 @@ export const LargeBottomSpacing = styled.div`
 `;
 
 export const CompactSection = styled(Section)`
-  padding: ${({ theme }) => theme.spacing[4]} 0;
+  padding: ${({ theme }) => theme.spacing[1]} 0;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    padding: ${({ theme }) => theme.spacing[5]} 0;
+    padding: ${({ theme }) => theme.spacing[2]} 0;
   }
 `;
 
@@ -146,4 +157,96 @@ export const CompactCardPad = styled(CardPad)`
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     padding: ${({ theme }) => theme.spacing[3]};
   }
+`;
+
+// ── Rieles horizontales image-first ──
+
+export const ScrollRail = styled.div`
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(9.5rem, 9.5rem);
+  gap: ${({ theme }) => theme.spacing[2]};
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: ${({ theme }) => theme.spacing[1]};
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+
+  > * {
+    scroll-snap-align: start;
+  }
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    grid-auto-columns: minmax(11rem, 11rem);
+  }
+`;
+
+export const WideScrollRail = styled(ScrollRail)`
+  grid-auto-columns: minmax(15rem, 15rem);
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    grid-auto-columns: minmax(18rem, 18rem);
+  }
+`;
+
+export const CategoryRail = styled(ScrollRail)`
+  grid-auto-columns: minmax(6.5rem, 6.5rem);
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    grid-auto-columns: minmax(8rem, 8rem);
+  }
+`;
+
+export const PromoStack = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing[2]};
+`;
+
+/** Franja del buscador: primer bloque del contenido, con aire arriba. */
+export const SearchSection = styled.section`
+  padding: ${({ theme }) => theme.spacing[2]} 0 ${({ theme }) => theme.spacing[1]};
+
+  /* En escritorio el buscador vive en la barra superior. */
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    padding-top: ${({ theme }) => theme.spacing[2]};
+
+    form[role='search'] {
+      display: none;
+    }
+  }
+`;
+
+/** Riel de filtros rápidos, debajo del buscador. */
+export const FilterRow = styled.div`
+  display: flex;
+  flex-wrap: nowrap;
+  gap: ${({ theme }) => theme.spacing[1]};
+  margin-top: ${({ theme }) => theme.spacing[2]};
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: ${({ theme }) => theme.spacing[1]};
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+`;
+
+/** Lista vertical de pedidos del historial. */
+export const OrderList = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing[2]};
+`;
+
+/** Dos accesos al 50%, debajo de un banner de captación. */
+export const PromoSplitRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: ${({ theme }) => theme.spacing[2]};
 `;

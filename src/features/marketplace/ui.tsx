@@ -1,6 +1,8 @@
 import { Link, NavLink } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 
+import { neonIcon } from '@core/theme/neon';
+
 export const Page = styled.div`
   min-height: 100dvh;
   width: 100%;
@@ -15,6 +17,10 @@ export const Page = styled.div`
   color: ${({ theme }) => theme.color.text};
   padding-top: var(--marketplace-topbar-height, ${({ theme }) => theme.layout.topBarHeight});
   padding-bottom: calc(${({ theme }) => theme.layout.bottomNavHeight} + ${({ theme }) => theme.spacing[3]});
+
+  @media (max-width: calc(${({ theme }) => theme.breakpoints.md} - 1px)) {
+    padding-bottom: calc(${({ theme }) => theme.layout.bottomNavHeight} + ${({ theme }) => theme.spacing[2]});
+  }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
     padding-bottom: 0;
@@ -67,13 +73,28 @@ export const HeaderTopLeft = styled.div`
 `;
 
 export const HeaderMenuButton = styled.button`
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.75rem;
-  min-width: 2.75rem;
-  width: 2.75rem;
+  /* Mismo alto que el chip del logo, para que la fila quede pareja. */
+  min-height: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  width: 2.25rem;
+  flex: 0 0 auto;
   padding: 0;
+
+  /* El área táctil sigue siendo de 44px aunque el botón se vea más chico. */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
   border-radius: ${({ theme }) => theme.radius.full};
   border: 1px solid ${({ theme }) => theme.color.border};
   background: ${({ theme }) => theme.color.surface};
@@ -97,6 +118,11 @@ export const HeaderMenuButton = styled.button`
 
   &:focus {
     outline: none;
+  }
+
+  /* En escritorio el sidebar queda fijo a la izquierda: el botón sobra. */
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    display: none;
   }
 `;
 
@@ -217,6 +243,8 @@ export const BrandIcon = styled.img`
   width: 100%;
   height: 100%;
   object-fit: contain;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.85))
+    drop-shadow(0 1px 3px rgba(5, 8, 22, 0.35));
 `;
 
 export const BrandText = styled.div`
@@ -384,6 +412,12 @@ export const SearchField = styled.div`
     box-shadow: none;
     background: ${({ theme }) => theme.color.surface};
   }
+
+  @media (max-width: calc(${({ theme }) => theme.breakpoints.md} - 1px)) {
+    min-height: 3rem;
+    gap: ${({ theme }) => theme.spacing[1]};
+    padding: 0 ${({ theme }) => theme.spacing[2]};
+  }
 `;
 
 export const SearchInput = styled.input`
@@ -493,10 +527,16 @@ export const Main = styled.main`
 `;
 
 export const Section = styled.section`
-  padding: ${({ theme }) => theme.spacing[6]} 0;
+  /* Ritmo compacto: las secciones se separan por su propio contenido,
+     no por aire vertical. */
+  padding: ${({ theme }) => theme.spacing[1]} 0;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     padding: ${({ theme }) => theme.layout.sectionSpacing} 0;
+  }
+
+  &:first-of-type {
+    padding-top: ${({ theme }) => theme.spacing[2]};
   }
 `;
 
@@ -511,6 +551,11 @@ export const SectionHeader = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing[1]};
   margin-bottom: ${({ theme }) => theme.spacing[2]};
+
+  @media (max-width: calc(${({ theme }) => theme.breakpoints.md} - 1px)) {
+    gap: ${({ theme }) => theme.spacing[1]};
+    margin-bottom: ${({ theme }) => theme.spacing[1]};
+  }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     gap: ${({ theme }) => theme.spacing[2]};
@@ -531,6 +576,13 @@ export const SectionKicker = styled.span`
   font-weight: ${({ theme }) => theme.typography.weight.bold};
   letter-spacing: 0.12em;
   text-transform: uppercase;
+
+  @media (max-width: calc(${({ theme }) => theme.breakpoints.md} - 1px)) {
+    min-height: 32px;
+    padding: 0 ${({ theme }) => theme.spacing[2]};
+    font-size: 0.625rem;
+    letter-spacing: 0.1em;
+  }
 `;
 
 export const SectionTitle = styled.h1`
@@ -541,6 +593,11 @@ export const SectionTitle = styled.h1`
   line-height: ${({ theme }) => theme.typography.lineHeight.tight};
   letter-spacing: -0.04em;
   color: ${({ theme }) => theme.color.text};
+
+  @media (max-width: calc(${({ theme }) => theme.breakpoints.md} - 1px)) {
+    max-width: 15ch;
+    font-size: 1.375rem;
+  }
 `;
 
 export const SectionText = styled.p`
@@ -548,6 +605,11 @@ export const SectionText = styled.p`
   max-width: 60rem;
   color: ${({ theme }) => theme.color.textMuted};
   font-size: ${({ theme }) => theme.typography.size.sm};
+
+  @media (max-width: calc(${({ theme }) => theme.breakpoints.md} - 1px)) {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     font-size: ${({ theme }) => theme.typography.size.base};
@@ -576,6 +638,10 @@ export const ThreeColumnGrid = styled(Grid)`
 `;
 
 export const FourColumnGrid = styled(Grid)`
+  @media (max-width: calc(${({ theme }) => theme.breakpoints.md} - 1px)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -607,6 +673,10 @@ export const CardTitle = styled.h2`
   font-weight: ${({ theme }) => theme.typography.weight.bold};
   letter-spacing: -0.02em;
 
+  @media (max-width: calc(${({ theme }) => theme.breakpoints.md} - 1px)) {
+    font-size: 0.95rem;
+  }
+
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     font-size: ${({ theme }) => theme.typography.size.xl};
   }
@@ -616,6 +686,11 @@ export const CardText = styled.p`
   margin: 0;
   color: ${({ theme }) => theme.color.textMuted};
   font-size: ${({ theme }) => theme.typography.size.sm};
+
+  @media (max-width: calc(${({ theme }) => theme.breakpoints.md} - 1px)) {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
 `;
 
 export const Badge = styled.span`
@@ -628,6 +703,12 @@ export const Badge = styled.span`
   color: ${({ theme }) => theme.color.textMuted};
   font-size: ${({ theme }) => theme.typography.size.xs};
   font-weight: ${({ theme }) => theme.typography.weight.semibold};
+
+  @media (max-width: calc(${({ theme }) => theme.breakpoints.md} - 1px)) {
+    min-height: 32px;
+    padding: 0 ${({ theme }) => theme.spacing[2]};
+    font-size: 0.6875rem;
+  }
 `;
 
 export const AccentBadge = styled(Badge)`
@@ -681,6 +762,10 @@ export const SplitGrid = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing[2]};
 
+  @media (max-width: calc(${({ theme }) => theme.breakpoints.md} - 1px)) {
+    gap: ${({ theme }) => theme.spacing[1]};
+  }
+
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.6fr);
   }
@@ -695,6 +780,10 @@ export const Rail = styled.div`
   padding-bottom: ${({ theme }) => theme.spacing[1]};
   scroll-snap-type: x proximity;
   scrollbar-width: none;
+
+  @media (max-width: calc(${({ theme }) => theme.breakpoints.md} - 1px)) {
+    grid-auto-columns: minmax(14rem, 1fr);
+  }
 
   &::-webkit-scrollbar {
     display: none;
@@ -809,6 +898,12 @@ export const BottomNavLink = styled(NavLink)`
 
   &.active {
     color: ${({ theme }) => theme.color.primary};
+
+    ${({ theme }) =>
+      theme.mode === 'dark' &&
+      css`
+        color: ${theme.color.neon};
+      `};
   }
 
   &.active::before,
@@ -861,6 +956,13 @@ export const BottomNavIcon = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
+  /* El botón central va sobre fondo de marca: ahí el neón no aplica. */
+  [data-primary='true'] & {
+    filter: none;
+  }
+
+  ${neonIcon};
 
   [data-primary='true'] & {
     width: 2.625rem;
@@ -926,4 +1028,328 @@ export const DrawerSectionLabel = styled.span`
   font-weight: ${({ theme }) => theme.typography.weight.bold};
   letter-spacing: 0.12em;
   text-transform: uppercase;
+`;
+
+// ── Header de marca (barra azul) ──
+
+export const BrandHeaderBar = styled.div`
+  background: linear-gradient(135deg, #0047E7 0%, #2563EB 100%);
+  color: #ffffff;
+
+  /* En oscuro se apoya el azul del logo sobre un fondo más profundo
+     para que no vibre contra el resto de la interfaz. */
+  ${({ theme }) =>
+    theme.mode === 'dark' &&
+    css`
+      background: linear-gradient(135deg, #0047E7 0%, #0038B8 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    `};
+`;
+
+export const AddressButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2.75rem;
+  min-width: 0;
+  flex: 1 1 auto;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    flex: 0 0 auto;
+  }
+  padding: 0 ${({ theme }) => theme.spacing[1]} 0 0;
+  border: 0;
+  background: transparent;
+  color: ${({ theme }) => theme.color.onPrimary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.base};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  letter-spacing: -0.02em;
+  cursor: pointer;
+
+  /* En pantallas angostas la dirección entra completa bajando
+     un escalón de tamaño, sin recortar el área táctil. */
+  @media (max-width: 420px) {
+    font-size: ${({ theme }) => theme.typography.size.sm};
+    letter-spacing: -0.03em;
+  }
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: opacity 180ms ease;
+
+  &:hover {
+    opacity: 0.86;
+  }
+
+  &:focus {
+    outline: none;
+  }
+`;
+
+export const AddressButtonLabel = styled.span`
+  display: block;
+  min-width: 0;
+  margin: 0;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+export const AddressButtonHint = styled.span`
+  display: block;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  font-size: 0.6875rem;
+  font-weight: ${({ theme }) => theme.typography.weight.semibold};
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.1;
+`;
+
+export const AddressButtonCopy = styled.span`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.05rem;
+  min-width: 0;
+  flex: 1 1 auto;
+  text-align: left;
+`;
+
+const headerCircleAction = css`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+
+  @media (max-width: 420px) {
+    width: 2.25rem;
+  }
+  border: 0;
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: rgba(255, 255, 255, 0.18);
+  color: ${({ theme }) => theme.color.onPrimary};
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background-color 180ms ease, transform 180ms ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  &:focus {
+    outline: none;
+  }
+`;
+
+export const HeaderCircleButton = styled.button`
+  ${headerCircleAction};
+`;
+
+export const HeaderCircleLink = styled(Link)`
+  ${headerCircleAction};
+`;
+
+export const HeaderCircleBadge = styled.span`
+  position: absolute;
+  top: -0.15rem;
+  right: -0.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.22rem;
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 2px solid ${({ theme }) => theme.color.brand};
+  background: ${({ theme }) => theme.color.danger};
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  line-height: 1;
+`;
+
+export const HeaderActionsRow = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[1]};
+  flex: 0 0 auto;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    gap: ${({ theme }) => theme.spacing[2]};
+  }
+
+  /* En pantallas angostas las acciones ceden ancho a la dirección,
+     sin bajar de 44px de área táctil. */
+  @media (max-width: 420px) {
+    gap: 0;
+  }
+`;
+
+export const BrandSearchField = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  width: 100%;
+  min-height: 2.875rem;
+  padding: 0 0.35rem 0 ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.surface};
+  box-shadow: ${({ theme }) => theme.shadow.sm};
+`;
+
+export const BrandSearchInput = styled.input`
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: ${({ theme }) => theme.color.text};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+
+  &::placeholder {
+    color: ${({ theme }) => theme.color.textSoft};
+  }
+
+  &:focus {
+    outline: none;
+  }
+`;
+
+export const BrandSearchSubmit = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.brand};
+  color: ${({ theme }) => theme.color.onPrimary};
+  cursor: pointer;
+  transition: background-color 180ms ease, transform 180ms ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    background: ${({ theme }) => theme.color.brandHover};
+  }
+`;
+
+export const BrandHeaderRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing[2]};
+  min-height: 3rem;
+  min-width: 0;
+
+  @media (max-width: 420px) {
+    gap: 0.25rem;
+  }
+
+  /* En escritorio: buscador a la izquierda, dirección al medio y acciones
+     a la derecha. El bloque de marca queda oculto (vive en el sidebar). */
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    display: grid;
+    /* Las columnas laterales comparten ancho para que el buscador quede
+       centrado en el área de contenido. */
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: ${({ theme }) => theme.spacing[3]};
+  }
+`;
+
+export const BrandHeaderLeft = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[1]};
+  min-width: 0;
+  flex: 0 0 auto;
+
+  @media (max-width: 420px) {
+    gap: 0.15rem;
+  }
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    display: none;
+  }
+`;
+
+export const HeaderBrandLockup = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  min-width: 0;
+  flex: 0 0 auto;
+
+  /* En escritorio la marca vive en el sidebar: no se repite en el header. */
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    display: none;
+  }
+`;
+
+export const HeaderBrandName = styled.span`
+  display: none;
+  align-items: baseline;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    display: inline-flex;
+  }
+
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.lg};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  letter-spacing: -0.03em;
+  color: ${({ theme }) => theme.color.onPrimary};
+  white-space: nowrap;
+`;
+
+export const HeaderBrandNameAccent = styled.span`
+  font-size: 1.22em;
+  font-weight: ${({ theme }) => theme.typography.weight.extrabold};
+  letter-spacing: -0.05em;
+`;
+
+export const BrandLogoMark = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  /* Sin chip blanco: el logo va directo sobre el azul del header y se
+     despega con un halo claro que sigue su silueta. */
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+`;
+
+
+/** Buscador dentro de la barra azul. Sólo en escritorio. */
+export const HeaderSearchSlot = styled.div`
+  display: none;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    display: block;
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    width: min(34rem, 42vw);
+    justify-self: center;
+  }
 `;

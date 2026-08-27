@@ -2,6 +2,8 @@ import styled, { css } from 'styled-components';
 
 import { Card, CardPad, Section } from '../ui';
 
+import { neonIcon, neonSurface } from '@core/theme/neon';
+
 export const CartPageStack = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing[2]};
@@ -95,6 +97,11 @@ export const CartChip = styled.span`
     color: ${({ theme }) => theme.color.warning};
   }
 
+  &:not([data-tone]) {
+    ${neonIcon};
+    ${neonSurface};
+  }
+
   &[data-tone='brand'] {
     background: ${({ theme }) => theme.color.primarySoft};
     border-color: rgba(0, 71, 231, 0.18);
@@ -104,7 +111,7 @@ export const CartChip = styled.span`
 
 export const CartStepper = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: ${({ theme }) => theme.spacing[1]};
 `;
 
@@ -212,11 +219,16 @@ export const CartStoreBadge = styled.span`
   min-height: 2rem;
   padding: 0 ${({ theme }) => theme.spacing[2]};
   border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid transparent;
   background: ${({ theme }) => theme.color.surfaceMuted};
   color: ${({ theme }) => theme.color.textMuted};
   font-size: 0.75rem;
   font-weight: ${({ theme }) => theme.typography.weight.semibold};
   white-space: nowrap;
+
+  /* Tiempo estimado: destacado con el neón del modo NOCHE. */
+  ${neonIcon};
+  ${neonSurface};
 `;
 
 export const CartItemList = styled.div`
@@ -238,18 +250,21 @@ export const CartItemRow = styled.div`
 
 export const CartItemThumb = styled.div`
   position: relative;
-  display: grid;
-  place-items: center;
+  flex: 0 0 auto;
   width: 4rem;
   height: 4rem;
   border-radius: ${({ theme }) => theme.radius.lg};
   border: 1px solid ${({ theme }) => theme.color.border};
-  background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.24), transparent 36%),
-    linear-gradient(135deg, rgba(0, 71, 231, 0.18) 0%, rgba(0, 71, 231, 0.04) 100%);
-  color: ${({ theme }) => theme.color.primary};
+  background: ${({ theme }) => theme.color.surfaceMuted};
   box-shadow: ${({ theme }) => theme.shadow.sm};
   overflow: hidden;
+`;
+
+export const CartItemThumbImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 `;
 
 export const CartItemThumbText = styled.span`
@@ -499,4 +514,92 @@ export const CartSection = styled(Section)`
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     padding: ${({ theme }) => theme.spacing[5]} 0;
   }
+`;
+
+// ── Quitar producto del carrito ──
+
+export const CartItemPriceGroup = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[1]};
+  flex: 0 0 auto;
+`;
+
+export const CartItemRemoveButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.85rem;
+  height: 1.85rem;
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.surface};
+  color: ${({ theme }) => theme.color.textSoft};
+  cursor: pointer;
+  transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease;
+
+  ${neonIcon};
+  ${neonSurface};
+
+  &:hover {
+    border-color: ${({ theme }) => theme.color.danger};
+    background: rgba(220, 38, 38, 0.08);
+    color: ${({ theme }) => theme.color.danger};
+  }
+`;
+
+// ── Cantidad por producto en el carrito ──
+
+export const CartQtyStepper = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.15rem;
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.primarySoft};
+`;
+
+export const CartQtyButton = styled.button`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border: 0;
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.surface};
+  color: ${({ theme }) => theme.color.primary};
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease;
+
+  /* Área táctil de 44px sin agrandar el círculo. */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.color.brand};
+    color: ${({ theme }) => theme.color.onPrimary};
+  }
+
+  &:disabled {
+    color: ${({ theme }) => theme.color.textSoft};
+    cursor: not-allowed;
+  }
+`;
+
+export const CartQtyValue = styled.span`
+  min-width: 3.5rem;
+  text-align: center;
+  color: ${({ theme }) => theme.color.primary};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
 `;

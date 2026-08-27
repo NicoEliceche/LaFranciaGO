@@ -1,163 +1,63 @@
-import { Bell, Heart, PackageSearch, Store } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
+import { EmptyState } from '../components/EmptyState';
+import { SectionHeading } from '../components/SectionHeading';
+import { StoreCard } from '../components/StoreCard';
 import { favorites, stores } from '../marketplaceContent';
-import { formatMoney } from '../marketplace.utils';
-import {
-  Badge,
-  Card,
-  CardText,
-  CardTitle,
-  LinkButton,
-  PrimaryButton,
-  SectionInner,
-  SectionKicker,
-  SectionText,
-  SectionTitle,
-  StrongPrice,
-} from '../ui';
-import {
-  CardStack,
-  CardTopRow,
-  CompactCardPad,
-  CompactCardStack,
-  CompactSection,
-  CompactSectionStack,
-  CompactTitle,
-  InlineWrap,
-  TagRail,
-} from './screenLayout';
-import { FavoriteMeta, FavoritesGrid, FavoritesList, FavoritesSummary } from './FavoritesScreenStyled';
+import { SectionInner } from '../ui';
+import { CompactSection, ProductGrid } from './screenLayout';
 
+/* Sólo se guardan negocios: los productos se agregan desde cada comercio. */
 const favoriteStores = stores.filter((store) =>
   favorites.some((favorite) => favorite.store.toLowerCase() === store.name.toLowerCase()),
 );
 
 export function FavoritesScreen() {
+  if (favoriteStores.length === 0) {
+    return (
+      <MarketplaceFrame showSearch={false}>
+        <CompactSection>
+          <SectionInner>
+            <EmptyState
+              icon={Heart}
+              title="Todavía no guardaste nada"
+              text="Tocá la estrella en un negocio para tenerlo a mano."
+              ctaLabel="Explorar negocios"
+              ctaTo="/comercios"
+            />
+          </SectionInner>
+        </CompactSection>
+      </MarketplaceFrame>
+    );
+  }
+
   return (
-    <MarketplaceFrame
-      showSearch={false}
-      footerText="Favoritos y alertas rápidas para guardar y reordenar."
-    >
+    <MarketplaceFrame showSearch={false}>
       <CompactSection>
         <SectionInner>
-          <CompactSectionStack>
-            <SectionKicker>Favoritos</SectionKicker>
-            <SectionTitle>Guardados y alertas.</SectionTitle>
-            <SectionText>Seguí ofertas, comercios y cambios de precio sin perder tiempo.</SectionText>
-          </CompactSectionStack>
-        </SectionInner>
-      </CompactSection>
+          <SectionHeading
+            title="Negocios"
+            chip={`${favoriteStores.length}`}
+            subtitle="Tus locales guardados."
+          />
 
-      <CompactSection>
-        <SectionInner>
-          <FavoritesGrid>
-            <Card>
-              <CompactCardPad>
-                <CompactSectionStack>
-                  <CardTitle>Productos</CardTitle>
-                  <FavoritesList>
-                    {favorites.map((favorite) => (
-                      <Card key={favorite.id}>
-                        <CompactCardPad>
-                          <CompactCardStack>
-                            <CardTopRow>
-                              <div>
-                                <CompactTitle>{favorite.name}</CompactTitle>
-                                <CardText>{favorite.store}</CardText>
-                              </div>
-                              <StrongPrice>{formatMoney(favorite.price)}</StrongPrice>
-                            </CardTopRow>
-
-                            <FavoriteMeta>
-                              <Badge>
-                                <Heart size={16} aria-hidden="true" /> Guardado
-                              </Badge>
-                              <Badge>
-                                <Bell size={16} aria-hidden="true" /> Campanita activa
-                              </Badge>
-                            </FavoriteMeta>
-                          </CompactCardStack>
-                        </CompactCardPad>
-                      </Card>
-                    ))}
-                  </FavoritesList>
-                </CompactSectionStack>
-              </CompactCardPad>
-            </Card>
-
-            <Card>
-              <CompactCardPad>
-                <CompactSectionStack>
-                  <CardTitle>Comercios</CardTitle>
-                  <FavoritesList>
-                    {favoriteStores.map((store) => (
-                      <Card key={store.id}>
-                        <CompactCardPad>
-                          <CompactCardStack>
-                            <CardTopRow>
-                              <div>
-                                <CompactTitle>{store.name}</CompactTitle>
-                                <CardText>{store.category}</CardText>
-                              </div>
-                              <Badge>{store.rating.toFixed(1)} ★</Badge>
-                            </CardTopRow>
-
-                            <CardText>{store.summary}</CardText>
-                            <TagRail>
-                              <Badge>{store.delivery ? 'Delivery' : 'Sin delivery'}</Badge>
-                              <Badge>{store.pickup ? 'Retiro' : 'Sin retiro'}</Badge>
-                            </TagRail>
-                          </CompactCardStack>
-                        </CompactCardPad>
-                      </Card>
-                    ))}
-                  </FavoritesList>
-                </CompactSectionStack>
-              </CompactCardPad>
-            </Card>
-          </FavoritesGrid>
-        </SectionInner>
-      </CompactSection>
-
-      <CompactSection>
-        <SectionInner>
-          <FavoritesGrid>
-            <Card>
-              <CompactCardPad>
-                <CompactSectionStack>
-                  <CardTitle>Alertas</CardTitle>
-                  <CardText>Activá avisos de precio, stock o promo en lo que más mirás.</CardText>
-
-                  <FavoritesSummary>
-                    <Badge>
-                      <PackageSearch size={16} aria-hidden="true" /> Coca Cola 3L disponible
-                    </Badge>
-                    <Badge>
-                      <Store size={16} aria-hidden="true" /> Nuevas promos en La Huerta
-                    </Badge>
-                    <Badge>
-                      <Bell size={16} aria-hidden="true" /> Avisos por cambio de precio
-                    </Badge>
-                  </FavoritesSummary>
-
-                  <InlineWrap>
-                    <PrimaryButton to="/notificaciones">Configurar alertas</PrimaryButton>
-                    <LinkButton to="/comercios">Seguir comprando</LinkButton>
-                  </InlineWrap>
-                </CompactSectionStack>
-              </CompactCardPad>
-            </Card>
-
-            <Card>
-              <CompactCardPad>
-                <CompactSectionStack>
-                  <CardTitle>Próxima compra</CardTitle>
-                  <CardText>Después conectamos historial, listas y reorden automático.</CardText>
-                </CompactSectionStack>
-              </CompactCardPad>
-            </Card>
-          </FavoritesGrid>
+          <ProductGrid>
+            {favoriteStores.map((store, index) => (
+              <StoreCard
+                key={store.id}
+                id={store.id}
+                name={store.name}
+                category={store.category}
+                categoryId={store.id}
+                to={`/comercios/${store.id}`}
+                distanceKm={store.distanceKm}
+                rating={store.rating}
+                openNow={store.openNow}
+                priority={index < 4}
+              />
+            ))}
+          </ProductGrid>
         </SectionInner>
       </CompactSection>
     </MarketplaceFrame>

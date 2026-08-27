@@ -1,19 +1,25 @@
+import { useMemo, useState } from 'react';
 import {
-  BadgePercent,
   AlertCircle,
+  ArrowLeftRight,
   CreditCard,
   ShieldCheck,
   ShoppingCart,
-  Sparkles,
-  Store,
   Truck,
   Clock3,
+  Minus,
+  Plus,
+  X,
 } from 'lucide-react';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
-import { cartItems } from '../marketplaceContent';
+import { EmptyState } from '../components/EmptyState';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { categoryImage } from '@shared/utils/media';
+import { addresses, cartItems } from '../marketplaceContent';
+import type { CartItem } from '../marketplace.types';
 import { formatMoney } from '../marketplace.utils';
-import { CardText, CardTitle, LinkButton, PrimaryButton, SectionInner, SectionKicker, SectionText, SectionTitle, StrongPrice } from '../ui';
+import { Card, CardText, CardTitle, LinkButton, PrimaryButton, SectionInner, SectionKicker, SectionText, SectionTitle, StrongPrice } from '../ui';
 import {
   CartActions,
   CartCardPad,
@@ -30,9 +36,15 @@ import {
   CartItemMeta,
   CartItemPill,
   CartItemPrice,
+  CartQtyButton,
+  CartQtyStepper,
+  CartQtyValue,
+  CartItemPriceGroup,
+  CartItemRemoveButton,
   CartItemRow,
   CartItemTop,
   CartItemThumb,
+  CartItemThumbImage,
   CartItemThumbText,
   CartItemTitle,
   CartItemUnavailable,
@@ -131,52 +143,115 @@ const groupCartItems = (items = cartItems) => {
   });
 };
 
-const cartGroups = groupCartItems();
 
-const subtotal = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
-const deliveryFee = subtotal >= freeShippingThreshold ? 0 : 1200;
-const total = subtotal + deliveryFee + serviceFee;
-const totalUnits = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-const totalStores = cartGroups.length;
-const unavailableItems = cartItems.filter((item) => !item.available).length;
-const deliveryWindow = (() => {
-  const etaValues = cartItems.map((item) => parseEtaMinutes(item.eta)).filter(Boolean);
+
+/** Totales derivados del carrito actual. */
+const buildTotals = (items: CartItem[]) => {
+  const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+  const deliveryFee = subtotal >= freeShippingThreshold ? 0 : 1200;
+  const etaValues = items.map((item) => parseEtaMinutes(item.eta)).filter(Boolean);
   const minEta = etaValues.length ? Math.min(...etaValues) : 0;
   const maxEta = etaValues.length ? Math.max(...etaValues) : 0;
 
-  if (!etaValues.length) {
-    return 'Pendiente';
-  }
-
-  return minEta === maxEta ? `${minEta} min` : `${minEta}–${maxEta} min`;
-})();
-const freeShippingRemaining = Math.max(freeShippingThreshold - subtotal, 0);
-const freeShippingProgress = Math.min((subtotal / freeShippingThreshold) * 100, 100);
+  return {
+    subtotal,
+    deliveryFee,
+    total: subtotal + deliveryFee + serviceFee,
+    totalUnits: items.reduce((sum, item) => sum + item.quantity, 0),
+    unavailableItems: items.filter((item) => !item.available).length,
+    deliveryWindow: !etaValues.length
+      ? 'Pendiente'
+      : minEta === maxEta
+        ? `${minEta} min`
+        : `${minEta}–${maxEta} min`,
+    freeShippingRemaining: Math.max(freeShippingThreshold - subtotal, 0),
+    freeShippingProgress: Math.min((subtotal / freeShippingThreshold) * 100, 100),
+  };
+};
 
 const checkoutSteps = [
   { label: 'Carrito', state: 'active' as const },
+  { label: 'Dirección', state: 'idle' as const },
   { label: 'Entrega', state: 'idle' as const },
   { label: 'Pago', state: 'idle' as const },
-  { label: 'Confirmación', state: 'idle' as const },
+  { label: 'Confirmar', state: 'idle' as const },
 ];
 
 const paymentMethods = [
-  { label: 'Tarjeta', icon: CreditCard },
-  { label: 'Saldo', icon: Sparkles },
-  { label: 'Cuotas', icon: BadgePercent },
+  { label: 'Crédito', icon: CreditCard },
+  { label: 'Débito', icon: CreditCard },
+  { label: 'Transferencia', icon: ArrowLeftRight },
 ] as const;
 
 const trustPoints = [
   { label: 'Compra protegida', icon: ShieldCheck },
   { label: 'Sin costos sorpresa', icon: Clock3 },
-  { label: 'Retiro o delivery por comercio', icon: Truck },
+  { label: 'Entrega clara', icon: Truck },
 ] as const;
 
+const deliveryMethods = [
+  'Delivery GO',
+  'Entrega comercio',
+  'Sin retiro',
+];
+
 export function CartScreen() {
+  const [items, setItems] = useState(cartItems);
+  const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
+
+  const cartGroups = useMemo(() => groupCartItems(items), [items]);
+
+  const {
+    subtotal,
+    deliveryFee,
+    total,
+    totalUnits,
+    unavailableItems,
+    deliveryWindow,
+    freeShippingRemaining,
+    freeShippingProgress,
+  } = useMemo(() => buildTotals(items), [items]);
+
+  const changeQuantity = (id: string, delta: number) => {
+    setItems((current) =>
+      current.map((item) => {
+        if (item.id !== id) {
+          return item;
+        }
+
+        const quantity = Math.max(1, item.quantity + delta);
+
+        return { ...item, quantity, subtotal: item.price * quantity };
+      }),
+    );
+  };
+
+  const removeItem = (id: string) => {
+    setItems((current) => current.filter((item) => item.id !== id));
+    setPendingRemoval(null);
+  };
+
+  if (cartGroups.length === 0) {
+    return (
+      <MarketplaceFrame showSearch={false}>
+        <CartSection>
+          <SectionInner>
+            <EmptyState
+              icon={ShoppingCart}
+              title="Tu carrito está vacío"
+              text="Explorá los negocios de La Francia y armá tu pedido."
+              ctaLabel="Explorar negocios"
+              ctaTo="/comercios"
+            />
+          </SectionInner>
+        </CartSection>
+      </MarketplaceFrame>
+    );
+  }
+
   return (
     <MarketplaceFrame
       showSearch={false}
-      footerText="Checkout mobile-first con costos claros, stock visible y pago seguro."
     >
       <CartPageStack>
         <CartSection>
@@ -186,20 +261,12 @@ export function CartScreen() {
                 <CartHeroStack>
                   <CartHeroHeader>
                     <CartHeroCopy>
-                      <SectionKicker>Carrito</SectionKicker>
-                      <SectionTitle>Revisá tu pedido antes de pagar.</SectionTitle>
-                      <SectionText>
-                        Todo lo importante entra en una sola vista: productos, comercios,
-                        costos, stock y una ruta limpia hacia el pago.
-                      </SectionText>
+                      <SectionTitle>Carrito</SectionTitle>
                     </CartHeroCopy>
 
                     <CartOverviewRail>
                       <CartChip data-tone="brand">
                         <ShoppingCart size={14} aria-hidden="true" /> {totalUnits} unidades
-                      </CartChip>
-                      <CartChip>
-                        <Store size={14} aria-hidden="true" /> {totalStores} comercios
                       </CartChip>
                       <CartChip data-tone={unavailableItems > 0 ? 'warning' : 'success'}>
                         <AlertCircle size={14} aria-hidden="true" /> {unavailableItems} sin stock
@@ -235,8 +302,7 @@ export function CartScreen() {
                         <CartStoreCopy>
                           <CartStoreTitle>{group.store}</CartStoreTitle>
                           <CartStoreMeta>
-                            {group.itemCount} unidades · {group.availableCount} confirmadas ·{' '}
-                            {group.unavailableCount} pendientes
+                            {group.itemCount} ítems · {group.unavailableCount} pendientes
                           </CartStoreMeta>
                         </CartStoreCopy>
 
@@ -248,9 +314,12 @@ export function CartScreen() {
                       <CartItemList>
                         {group.items.map((item) => (
                           <CartItemRow key={item.id}>
-                            <CartItemThumb aria-hidden="true">
-                              <ShoppingCart size={18} />
-                              <CartItemThumbText>{getInitials(item.product)}</CartItemThumbText>
+                            <CartItemThumb>
+                              <CartItemThumbImage
+                                src={categoryImage(item.categoryId)}
+                                alt={item.product}
+                                loading="lazy"
+                              />
                             </CartItemThumb>
 
                             <CartItemBody>
@@ -259,14 +328,44 @@ export function CartScreen() {
                                   <CartItemTitle>{item.product}</CartItemTitle>
                                   <CardText>{item.store}</CardText>
                                 </div>
-                                <CartItemPrice>{item.available ? formatMoney(item.subtotal) : '—'}</CartItemPrice>
+                                <CartItemPriceGroup>
+                                  <CartItemPrice>
+                                    {item.available ? formatMoney(item.subtotal) : '—'}
+                                  </CartItemPrice>
+                                  <CartItemRemoveButton
+                                    type="button"
+                                    aria-label={`Quitar ${item.product} del carrito`}
+                                    onClick={() => setPendingRemoval(item.id)}
+                                  >
+                                    <X size={15} aria-hidden="true" />
+                                  </CartItemRemoveButton>
+                                </CartItemPriceGroup>
                               </CartItemTop>
 
                               <CartItemMeta>
-                                <CartItemPill>{item.quantity} unid.</CartItemPill>
-                                <CartItemPill data-tone="brand">
-                                  {formatMoney(item.price)} c/u
-                                </CartItemPill>
+                                <CartQtyStepper>
+                                  <CartQtyButton
+                                    type="button"
+                                    onClick={() => changeQuantity(item.id, -1)}
+                                    disabled={item.quantity <= 1}
+                                    aria-label={`Quitar una unidad de ${item.product}`}
+                                  >
+                                    <Minus size={14} aria-hidden="true" />
+                                  </CartQtyButton>
+
+                                  <CartQtyValue aria-live="polite">
+                                    {item.quantity} unid.
+                                  </CartQtyValue>
+
+                                  <CartQtyButton
+                                    type="button"
+                                    onClick={() => changeQuantity(item.id, 1)}
+                                    aria-label={`Agregar una unidad de ${item.product}`}
+                                  >
+                                    <Plus size={14} aria-hidden="true" />
+                                  </CartQtyButton>
+                                </CartQtyStepper>
+
                                 <CartItemPill data-tone={item.statusTone}>
                                   {item.statusLabel}
                                 </CartItemPill>
@@ -300,10 +399,7 @@ export function CartScreen() {
                     <div>
                       <SectionKicker>Resumen</SectionKicker>
                       <CardTitle>Costos claros y pago seguro.</CardTitle>
-                      <CardText>
-                        El total se presenta sin sorpresas y con el envío ya calculado sobre
-                        el pedido actual.
-                      </CardText>
+                      <CardText>El total sale sin sorpresas y con el envío ya calculado.</CardText>
                     </div>
 
                     <CartProgressCard>
@@ -359,10 +455,53 @@ export function CartScreen() {
                     </CartTrustGrid>
 
                     <CartSummarySection>
-                      <CartSummaryNote>
-                        Sin crear una experiencia pesada: los métodos de pago quedan claros y el
-                        siguiente paso prepara dirección y cobro.
-                      </CartSummaryNote>
+                      <div>
+                        <SectionKicker>Dirección</SectionKicker>
+                        <CardTitle>Elegí dónde recibir</CardTitle>
+                        <CardText>Elegí una dirección guardada antes de seguir.</CardText>
+                      </div>
+
+                      <CartStack>
+                        {addresses.map((address) => (
+                          <Card key={address.id}>
+                            <CartCardPad>
+                              <CartStoreHeader>
+                                <CartStoreCopy>
+                                  <CartStoreTitle>{address.label}</CartStoreTitle>
+                                  <CartStoreMeta>{address.address}</CartStoreMeta>
+                                </CartStoreCopy>
+                                <CartChip data-tone={address.primary ? 'brand' : 'success'}>
+                                  {address.primary ? 'Principal' : 'Guardada'}
+                                </CartChip>
+                              </CartStoreHeader>
+                            </CartCardPad>
+                          </Card>
+                        ))}
+                      </CartStack>
+                    </CartSummarySection>
+
+                    <CartSummarySection>
+                      <div>
+                        <SectionKicker>Entrega</SectionKicker>
+                        <CardTitle>Cómo llega el pedido</CardTitle>
+                        <CardText>La app deja claro quién entrega.</CardText>
+                      </div>
+
+                      <CartPaymentRail>
+                        {deliveryMethods.map((method) => (
+                          <CartChip key={method} data-tone="brand">
+                            {method}
+                          </CartChip>
+                        ))}
+                      </CartPaymentRail>
+                    </CartSummarySection>
+
+                    <CartSummarySection>
+                      <div>
+                        <SectionKicker>Pago</SectionKicker>
+                        <CardTitle>Elegí el medio de pago</CardTitle>
+                        <CartSummaryNote>Crédito, débito y transferencia quedan visibles antes de confirmar.</CartSummaryNote>
+                      </div>
 
                       <CartPaymentRail>
                         {paymentMethods.map((method) => {
@@ -379,7 +518,7 @@ export function CartScreen() {
                     </CartSummarySection>
 
                     <CartActions>
-                      <PrimaryButton to="/mi-cuenta">Continuar al pago</PrimaryButton>
+                      <PrimaryButton to="/pedidos">Confirmar pedido</PrimaryButton>
                       <LinkButton to="/comercios">Seguir comprando</LinkButton>
                     </CartActions>
                   </CartSummaryStack>
@@ -389,6 +528,14 @@ export function CartScreen() {
           </SectionInner>
         </CartSection>
       </CartPageStack>
+
+      <ConfirmDialog
+        open={pendingRemoval !== null}
+        title="¿Deseás eliminar este artículo?"
+        text="Se va a quitar del carrito."
+        onCancel={() => setPendingRemoval(null)}
+        onConfirm={() => pendingRemoval && removeItem(pendingRemoval)}
+      />
     </MarketplaceFrame>
   );
 }

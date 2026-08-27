@@ -1,95 +1,64 @@
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
-export const HeroLeadList = styled.ul`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing[3]};
-  margin: 0;
-  padding: 0;
-  list-style: none;
-`;
+// ── Acceso a mandados, arriba de Inicio ──
 
-export const HeroLeadItem = styled.li`
+export const ErrandBanner = styled(Link)`
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: ${({ theme }) => theme.spacing[3]};
-  color: ${({ theme }) => theme.color.textMuted};
-  font-size: ${({ theme }) => theme.typography.size.sm};
+  padding: ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.xl};
+  background: linear-gradient(135deg, ${({ theme }) => theme.color.brand} 0%, #2563eb 100%);
+  color: ${({ theme }) => theme.color.onPrimary};
+  box-shadow: ${({ theme }) => theme.shadow.sm};
+  cursor: pointer;
+  transition: transform 200ms ease, box-shadow 200ms ease;
 
-  &::before {
-    content: '';
-    display: inline-flex;
-    width: 0.5rem;
-    height: 0.5rem;
-    margin-top: 0.45rem;
-    border-radius: ${({ theme }) => theme.radius.full};
-    background: ${({ theme }) => theme.color.primary};
-    flex: 0 0 auto;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.shadow.md};
   }
 `;
 
-export const HighlightCopy = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.color.textMuted};
-  font-size: ${({ theme }) => theme.typography.size.sm};
+export const ErrandBannerIcon = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 3rem;
+  height: 3rem;
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: rgba(255, 255, 255, 0.18);
 `;
 
-export const HighlightsGrid = styled.div`
+export const ErrandBannerCopy = styled.span`
   display: grid;
-  gap: ${({ theme }) => theme.spacing[3]};
-
-  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1 1 auto;
 `;
 
-export const ActionGrid = styled.div`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing[3]};
-
-  @media (min-width: ${({ theme }) => theme.breakpoints.sm}) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-`;
-
-export const CardCopy = styled.div`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing[2]};
-`;
-
-export const SmallCardTitle = styled.h3`
-  margin: 0;
-  color: ${({ theme }) => theme.color.text};
+export const ErrandBannerTitle = styled.span`
   font-family: ${({ theme }) => theme.typography.fontFamily.heading};
   font-size: ${({ theme }) => theme.typography.size.base};
   font-weight: ${({ theme }) => theme.typography.weight.bold};
+  letter-spacing: -0.02em;
 `;
 
-export const SpacedCardTitle = styled(SmallCardTitle)`
-  margin-top: ${({ theme }) => theme.spacing[3]};
-`;
-
-export const ComparisonStoreTitle = styled.h3`
-  margin: 0;
-  color: ${({ theme }) => theme.color.text};
-  font-size: ${({ theme }) => theme.typography.size.base};
-  font-weight: ${({ theme }) => theme.typography.weight.bold};
-`;
-
-export const ComparisonStoreMeta = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.color.textMuted};
+export const ErrandBannerText = styled.span`
+  color: rgba(255, 255, 255, 0.85);
   font-size: ${({ theme }) => theme.typography.size.sm};
+  line-height: 1.35;
 `;
 
-export const AccessGrid = styled.div`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing[3]};
-
-  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+export const ErrandBannerArrow = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: rgba(255, 255, 255, 0.18);
 `;

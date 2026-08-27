@@ -25,11 +25,10 @@ export const matchesQuery = (query: string, ...values: Array<string | number | b
     return true;
   }
 
-  return values
-    .filter((value) => value !== undefined)
-    .join(' ')
-    .toLowerCase()
-    .includes(normalized);
+  /* Ambos lados se normalizan: "panaderia" encuentra "Panadería". */
+  return normalizeText(values.filter((value) => value !== undefined).join(' ')).includes(
+    normalized,
+  );
 };
 
 export const findOfferById = (offerId: string) => offers.find((offer) => offer.id === offerId);

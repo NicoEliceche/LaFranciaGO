@@ -11,6 +11,8 @@ import {
   Wallet,
 } from 'lucide-react';
 
+import { FileField } from '@shared/components/FileField';
+
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import {
   Badge,
@@ -79,7 +81,47 @@ const requiredFields = [
   'Alias / CBU',
 ] as const;
 
-export function DeliveryRegistrationScreen() {
+type CourierRole = 'delivery' | 'fletero';
+
+/** Vehículos que ofrece cada alta. */
+const vehiclesByRole: Record<CourierRole, Array<{ value: string; label: string }>> = {
+  delivery: [
+    { value: 'moto', label: 'Moto' },
+    { value: 'bicicleta', label: 'Bicicleta' },
+    { value: 'auto', label: 'Auto' },
+  ],
+  fletero: [
+    { value: 'camioneta', label: 'Camioneta' },
+    { value: 'utilitario', label: 'Utilitario' },
+    { value: 'camion-chico', label: 'Camión chico' },
+    { value: 'camion', label: 'Camión' },
+  ],
+};
+
+const roleCopy: Record<CourierRole, { kicker: string; title: string; text: string; footer: string }> = {
+  delivery: {
+    kicker: 'Alta de delivery',
+    title: 'Sumate como repartidor y empezá a trabajar.',
+    text: 'Pedimos los datos mínimos para validar tu perfil, revisar tus documentos y dejar listo el cobro por alias o CBU.',
+    footer: 'Alta de delivery con validación de identidad, documentación del vehículo y medios de cobro.',
+  },
+  fletero: {
+    kicker: 'Alta de fletero',
+    title: 'Sumate como fletero y llevá cargas grandes.',
+    text: 'Contanos con qué vehículo trabajás y qué volumen podés trasladar. Validamos tus documentos y dejamos listo el cobro.',
+    footer: 'Alta de fletero con validación de identidad, documentación del vehículo y medios de cobro.',
+  },
+};
+
+type DeliveryRegistrationScreenProps = {
+  /** Define los textos del alta; el formulario es el mismo para ambos roles. */
+  role?: CourierRole;
+};
+
+export function DeliveryRegistrationScreen({ role = 'delivery' }: DeliveryRegistrationScreenProps) {
+  const copy = roleCopy[role];
+  const vehicles = vehiclesByRole[role];
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
   };
@@ -87,17 +129,13 @@ export function DeliveryRegistrationScreen() {
   return (
     <MarketplaceFrame
       showSearch={false}
-      footerText="Alta de delivery con validación de identidad, documentación del vehículo y medios de cobro."
     >
       <CompactSection>
         <SectionInner>
           <CompactSectionStack>
-            <SectionKicker>Alta de delivery</SectionKicker>
-            <SectionTitle>Sumate como repartidor y empezá a trabajar.</SectionTitle>
-            <SectionText>
-              Pedimos los datos mínimos para validar tu perfil, revisar tus documentos y dejar
-              listo el cobro por alias o CBU.
-            </SectionText>
+            <SectionKicker>{copy.kicker}</SectionKicker>
+            <SectionTitle>{copy.title}</SectionTitle>
+            <SectionText>{copy.text}</SectionText>
           </CompactSectionStack>
         </SectionInner>
       </CompactSection>
@@ -116,55 +154,54 @@ export function DeliveryRegistrationScreen() {
                   <Card>
                     <CardPad>
                       <FieldStack>
-                        <UploadBox htmlFor="delivery-profile-photo">
+                        <UploadBox htmlFor="courier-profile-photo">
                           <UploadTitle>
                             <Upload size={16} aria-hidden="true" /> Foto de perfil
                           </UploadTitle>
                           <UploadText>
                             Subí una imagen clara para que comercios y clientes te identifiquen.
                           </UploadText>
-                          <FieldInput
-                            id="delivery-profile-photo"
-                            type="file"
+                          <FileField
+                            id="courier-profile-photo"
                             accept="image/*"
                             required
                           />
                         </UploadBox>
 
                         <FormGrid>
-                          <FieldGroup htmlFor="delivery-first-name">
+                          <FieldGroup htmlFor="courier-first-name">
                             <FieldLabel>
                               <UserRound size={16} aria-hidden="true" />
                               Nombre
                             </FieldLabel>
                             <FieldInput
-                              id="delivery-first-name"
+                              id="courier-first-name"
                               type="text"
                               placeholder="Juan"
                               required
                             />
                           </FieldGroup>
 
-                          <FieldGroup htmlFor="delivery-last-name">
+                          <FieldGroup htmlFor="courier-last-name">
                             <FieldLabel>
                               <UserRound size={16} aria-hidden="true" />
                               Apellido
                             </FieldLabel>
                             <FieldInput
-                              id="delivery-last-name"
+                              id="courier-last-name"
                               type="text"
                               placeholder="Pérez"
                               required
                             />
                           </FieldGroup>
 
-                          <FieldGroup htmlFor="delivery-password">
+                          <FieldGroup htmlFor="courier-password">
                             <FieldLabel>
                               <ShieldCheck size={16} aria-hidden="true" />
                               Contraseña
                             </FieldLabel>
                             <FieldInput
-                              id="delivery-password"
+                              id="courier-password"
                               type="password"
                               placeholder="••••••••"
                               required
@@ -172,13 +209,13 @@ export function DeliveryRegistrationScreen() {
                             <FieldHint>Usá una contraseña segura para proteger tu acceso.</FieldHint>
                           </FieldGroup>
 
-                          <FieldGroup htmlFor="delivery-password-repeat">
+                          <FieldGroup htmlFor="courier-password-repeat">
                             <FieldLabel>
                               <ShieldCheck size={16} aria-hidden="true" />
                               Repetir contraseña
                             </FieldLabel>
                             <FieldInput
-                              id="delivery-password-repeat"
+                              id="courier-password-repeat"
                               type="password"
                               placeholder="••••••••"
                               required
@@ -203,14 +240,13 @@ export function DeliveryRegistrationScreen() {
                               <FileText size={16} aria-hidden="true" />
                               Carnet de conducir
                             </FieldLabel>
-                            <UploadBox htmlFor="delivery-license">
+                            <UploadBox htmlFor="courier-license">
                               <UploadTitle>
                                 <Upload size={16} aria-hidden="true" /> Subí tu licencia
                               </UploadTitle>
                               <UploadText>Foto o PDF legible de frente y dorso si aplica.</UploadText>
-                              <FieldInput
-                                id="delivery-license"
-                                type="file"
+                              <FileField
+                                id="courier-license"
                                 accept="image/*,application/pdf"
                                 required
                               />
@@ -222,29 +258,28 @@ export function DeliveryRegistrationScreen() {
                               <FileText size={16} aria-hidden="true" />
                               Seguro del vehículo
                             </FieldLabel>
-                            <UploadBox htmlFor="delivery-insurance">
+                            <UploadBox htmlFor="courier-insurance">
                               <UploadTitle>
                                 <Upload size={16} aria-hidden="true" /> Subí tu seguro vigente
                               </UploadTitle>
                               <UploadText>
                                 Aceptamos foto o PDF del seguro del vehículo en uso.
                               </UploadText>
-                              <FieldInput
-                                id="delivery-insurance"
-                                type="file"
+                              <FileField
+                                id="courier-insurance"
                                 accept="image/*,application/pdf"
                                 required
                               />
                             </UploadBox>
                           </FieldStack>
 
-                          <FieldGroup htmlFor="delivery-alias-cbu">
+                          <FieldGroup htmlFor="courier-alias-cbu">
                             <FieldLabel>
                               <Wallet size={16} aria-hidden="true" />
                               Alias / CBU
                             </FieldLabel>
                             <FieldInput
-                              id="delivery-alias-cbu"
+                              id="courier-alias-cbu"
                               type="text"
                               placeholder="alias.o.cbu"
                               required
@@ -252,13 +287,13 @@ export function DeliveryRegistrationScreen() {
                             <FieldHint>Usá el dato donde querés recibir los pagos.</FieldHint>
                           </FieldGroup>
 
-                          <FieldGroup htmlFor="delivery-phone">
+                          <FieldGroup htmlFor="courier-phone">
                             <FieldLabel>
                               <Phone size={16} aria-hidden="true" />
                               Teléfono
                             </FieldLabel>
                             <FieldInput
-                              id="delivery-phone"
+                              id="courier-phone"
                               type="tel"
                               placeholder="+54 3573 400-201"
                             />
@@ -277,50 +312,51 @@ export function DeliveryRegistrationScreen() {
                         </CardText>
 
                         <FormGrid>
-                          <FieldGroup htmlFor="delivery-email">
+                          <FieldGroup htmlFor="courier-email">
                             <FieldLabel>
                               <Mail size={16} aria-hidden="true" />
                               Email
                             </FieldLabel>
                             <FieldInput
-                              id="delivery-email"
+                              id="courier-email"
                               type="email"
                               placeholder="delivery@correo.com"
                             />
                           </FieldGroup>
 
-                          <FieldGroup htmlFor="delivery-zone">
+                          <FieldGroup htmlFor="courier-zone">
                             <FieldLabel>
                               <MapPin size={16} aria-hidden="true" />
                               Zona de trabajo
                             </FieldLabel>
                             <FieldInput
-                              id="delivery-zone"
+                              id="courier-zone"
                               type="text"
                               placeholder="La Francia centro, Ruta 19..."
                             />
                           </FieldGroup>
 
-                          <FieldGroup htmlFor="delivery-vehicle">
+                          <FieldGroup htmlFor="courier-vehicle">
                             <FieldLabel>
                               <Truck size={16} aria-hidden="true" />
                               Vehículo
                             </FieldLabel>
-                            <FieldSelect id="delivery-vehicle" defaultValue="moto">
-                              <option value="moto">Moto</option>
-                              <option value="auto">Auto</option>
-                              <option value="bicicleta">Bicicleta</option>
-                              <option value="camioneta">Camioneta</option>
+                            <FieldSelect id="courier-vehicle" defaultValue={vehicles[0].value}>
+                              {vehicles.map((vehicle) => (
+                                <option key={vehicle.value} value={vehicle.value}>
+                                  {vehicle.label}
+                                </option>
+                              ))}
                             </FieldSelect>
                           </FieldGroup>
 
-                          <FieldGroup htmlFor="delivery-plate">
+                          <FieldGroup htmlFor="courier-plate">
                             <FieldLabel>
                               <Truck size={16} aria-hidden="true" />
                               Patente
                             </FieldLabel>
                             <FieldInput
-                              id="delivery-plate"
+                              id="courier-plate"
                               type="text"
                               placeholder="AA123BB"
                             />

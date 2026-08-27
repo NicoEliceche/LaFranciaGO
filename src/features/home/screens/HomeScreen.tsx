@@ -1474,7 +1474,7 @@ export function HomeScreen() {
   );
 
   return (
-    <MarketplaceFrame showSearch={false} footerText="Inicio del marketplace: promociones, comercios y ofertas.">
+    <MarketplaceFrame showSearch={false}>
       <div aria-hidden="true" style={{ display: 'none' }}>
       <TopBar ref={topBarRef}>
         <TopBarInner>

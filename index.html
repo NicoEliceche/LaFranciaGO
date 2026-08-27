@@ -11,6 +11,26 @@
     <link rel="icon" type="image/png" href="%BASE_URL%favicon.png" />
     <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
     <title>LaFranciaGO | Marketplace local</title>
+    <style>
+      /* Pintado inicial: la barra de marca aparece antes de que React monte,
+         para que la primera impresión no sea una pantalla en blanco. Se
+         reemplaza por la interfaz real y no altera su diseño. */
+      #root:empty::before {
+        content: '';
+        display: block;
+        height: 58px;
+        background: linear-gradient(135deg, #0047e7 0%, #2563eb 100%);
+      }
+      body {
+        margin: 0;
+        background: #f5f7fb;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #0c111d;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

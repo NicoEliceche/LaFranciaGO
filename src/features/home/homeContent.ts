@@ -298,7 +298,7 @@ export const trustItems: HomeTrustItem[] = [
   },
   {
     id: 'local',
-    title: 'Comercio local',
+    title: 'Negocio local',
     description: 'Apoyá a los negocios de La Francia',
     icon: MapPinned,
   },

@@ -8,43 +8,49 @@ type ThemeShadowTokens = { [K in keyof typeof tokens.shadow]: string };
 const lightShadowTokens: ThemeShadowTokens = tokens.shadow;
 
 const darkColorTokens: ThemeColorTokens = {
-  primary: '#FFFFFF',
-  primaryHover: '#EAF1FF',
-  primaryActive: '#DCE8FF',
-  brand: '#6B9DFF',
-  brandHover: '#8AB3FF',
-  brandActive: '#4F87FF',
-  primarySoft: '#132D63',
-  background: '#141413',
-  backgroundAlt: '#1D1D1B',
-  surface: '#111A2E',
-  surfaceMuted: '#182238',
+  // El azul del logo se mantiene como color de marca también en oscuro.
+  // Sobre superficies oscuras se usa una variante apenas aclarada para
+  // conservar identidad sin perder contraste de texto (WCAG AA).
+  primary: '#4D8BFF',
+  primaryHover: '#6BA0FF',
+  primaryActive: '#3D7BF0',
+  brand: '#0047E7',
+  brandHover: '#1F5CEC',
+  brandActive: '#0038B8',
+  primarySoft: '#152449',
+  background: '#0C111D',
+  backgroundAlt: '#111827',
+  surface: '#151C2C',
+  surfaceMuted: '#1C2537',
   surfaceDark: '#050816',
   surfaceDarkAlt: '#0B1020',
-  text: '#F6F9FF',
-  textMuted: '#B4C2D8',
-  textSoft: '#8694AE',
+  text: '#F3F6FC',
+  textMuted: '#AFBCD2',
+  textSoft: '#8493AC',
   textInverse: '#FFFFFF',
-  border: '#25324A',
-  borderStrong: '#34445E',
-  shadow: 'rgba(0, 0, 0, 0.32)',
+  border: '#26314A',
+  borderStrong: '#36435E',
+  shadow: 'rgba(0, 0, 0, 0.42)',
   onPrimary: '#FFFFFF',
   onDark: '#FFFFFF',
   success: '#34D399',
-  warning: '#F59E0B',
+  warning: '#FBBF24',
   danger: '#F87171',
   info: '#60A5FA',
   heroGradient:
-    'linear-gradient(135deg, #050816 0%, #0B1430 46%, #6B9DFF 100%)',
+    'linear-gradient(135deg, #050816 0%, #0B1430 46%, #0047E7 100%)',
   heroGlow:
-    'radial-gradient(circle at top left, rgba(107, 157, 255, 0.28), transparent 55%)',
+    'radial-gradient(circle at top left, rgba(0, 71, 231, 0.32), transparent 55%)',
+  /* Cian del interruptor NOCHE, usado como acento de todo el modo oscuro. */
+  neon: '#4DE5FF',
+  neonSoft: 'rgba(77, 229, 255, 0.275)',
 };
 
 const darkShadowTokens: ThemeShadowTokens = {
   sm: '0 1px 2px rgba(0, 0, 0, 0.28)',
   md: '0 12px 24px rgba(0, 0, 0, 0.24)',
   lg: '0 20px 40px rgba(0, 0, 0, 0.34)',
-  glow: '0 0 0 1px rgba(107, 157, 255, 0.28), 0 24px 48px rgba(107, 157, 255, 0.2)',
+  glow: '0 0 0 1px rgba(0, 71, 231, 0.42), 0 24px 48px rgba(0, 71, 231, 0.28)',
 };
 
 export type Theme = {

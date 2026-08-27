@@ -1,5 +1,5 @@
 import {
-  type FormEvent,
+  type ComponentType,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
   useCallback,
@@ -14,6 +14,7 @@ import styled from 'styled-components';
 import {
   ArrowRight,
   Bell,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Heart,
@@ -21,56 +22,53 @@ import {
   LayoutGrid,
   MapPin,
   Menu,
-  Moon,
   PackageSearch,
   ShoppingCart,
-  Search,
   Settings,
   Store,
-  Sun,
   Truck,
   UserRound,
   X,
   type LucideIcon,
 } from 'lucide-react';
 import { useThemeMode } from '@core/theme';
+import { MotoDeliveryIcon } from '@shared/components/icons/MotoDeliveryIcon';
 
-import { quickFilters } from '../marketplaceContent';
+import { AddressSheet } from './AddressSheet';
+import { SearchBar } from './SearchBar';
+import { GamerThemeToggle } from './GamerThemeToggle';
+
 import {
+  AddressButton,
+  AddressButtonCopy,
+  AddressButtonHint,
+  AddressButtonLabel,
   BottomNav,
   BottomNavIcon,
   BottomNavLink,
   BottomNavList,
+  BrandHeaderBar,
+  BrandHeaderLeft,
+  BrandHeaderRow,
   BrandIcon,
-  BrandLink,
+  BrandLogoMark,
   BrandMark,
   BrandName,
   BrandNameAccent,
-  BrandTag,
-  HeaderBrandCopy,
-  HeaderBrandTag,
-  HeaderMenuButton,
-  HeaderMobileActions,
-  HeaderMobileLogoLink,
-  FilterChip,
-  FilterRail,
   Header,
+  HeaderActionsRow,
+  HeaderBrandLockup,
+  HeaderBrandName,
+  HeaderBrandNameAccent,
+  HeaderBrandTag,
+  HeaderCircleBadge,
+  HeaderCircleButton,
+  HeaderCircleLink,
   HeaderInner,
-  HeaderTop,
-  HeaderTopLeft,
-  LocationPill,
+  HeaderMenuButton,
+  HeaderSearchSlot,
   Main,
   Page,
-  SearchButton,
-  SearchField,
-  SearchInput,
-  SearchLabel,
-  SearchRow,
-  SearchShell,
-  TopActions,
-  TopAction,
-  TopNavLink,
-  TopNavLinks,
 } from '../ui';
 import {
   DrawerBody,
@@ -86,15 +84,7 @@ import {
   DrawerList,
   DrawerSection,
   DrawerSectionLabel,
-  DrawerThemeIcon,
-  DrawerThemeRow,
   DrawerThemeSection,
-  DrawerThemeSubtitle,
-  DrawerThemeText,
-  DrawerThemeThumb,
-  DrawerThemeTitle,
-  DrawerThemeTrack,
-  DrawerThemeTrackIcon,
   ModalCard,
   ModalCloseButton,
   ModalOverlay,
@@ -121,28 +111,27 @@ import {
   NotificationRowSubtitle,
   NotificationRowTitle,
   NotificationRowTitleBar,
-} from '../../home/screens/HomeScreenStyled';
-import { TopBarCartLink, TopBarNotificationButton, TopBarProfileButton } from '../../home/screens/HomeScreenStyled';
+} from './MarketplaceFrameStyled';
 
 type MarketplaceFrameProps = {
   children: ReactNode;
   query?: string;
   onQueryChange?: (value: string) => void;
-  activeFilter?: string;
-  onFilterChange?: (filter: string) => void;
   showSearch?: boolean;
-  footerText?: string;
 };
 
 type MenuDrawerPhase = 'opening' | 'open' | 'closing';
 type NotificationPanelPhase = 'opening' | 'open' | 'closing';
 type NotificationSectionId = 'ventas' | 'entregas' | 'cercania';
 
+/** Acepta íconos de lucide y los propios del proyecto. */
+type AppIcon = LucideIcon | ComponentType<{ size?: number }>;
+
 type DrawerItemData = {
   to: string;
   title: string;
   subtitle: string;
-  icon: LucideIcon;
+  icon: AppIcon;
   end?: boolean;
 };
 
@@ -162,20 +151,23 @@ type NotificationSection = {
 };
 
 const brandIconUrl = `${import.meta.env.BASE_URL}favicon.png`;
+const deliveryAddress = 'Av. San Martín 123';
+const notificationsCount = 3;
 const MENU_DRAWER_TRANSITION_MS = 420;
 const NOTIFICATIONS_TRANSITION_MS = 260;
 
 const drawerPrimaryItems: DrawerItemData[] = [
   { to: '/', title: 'Inicio', subtitle: 'Portada y promociones', icon: Home, end: true },
   { to: '/comercios', title: 'Categorías', subtitle: 'Navegá por rubros', icon: LayoutGrid },
-  { to: '/pedidos', title: 'Pedidos', subtitle: 'Seguimiento y entregas', icon: PackageSearch },
+  { to: '/pedidos', title: 'Mis pedidos', subtitle: 'Historial y seguimiento', icon: PackageSearch },
   { to: '/favoritos', title: 'Favoritos', subtitle: 'Guardados para después', icon: Heart },
   { to: '/mi-cuenta', title: 'Cuenta', subtitle: 'Perfil y seguridad', icon: UserRound },
 ];
 
 const drawerActionItems: DrawerItemData[] = [
   { to: '/registro/comercio', title: 'Publicar comercio', subtitle: 'Sumá tu negocio', icon: Store },
-  { to: '/trabaja-con-nosotros', title: 'Trabaja con nosotros', subtitle: 'Registrate como delivery', icon: Truck },
+  { to: '/trabaja-con-nosotros', title: 'Registrate como delivery', subtitle: 'Trabajá repartiendo pedidos', icon: MotoDeliveryIcon },
+  { to: '/registro/fletero', title: 'Registrate como fletero', subtitle: 'Trabajá haciendo fletes', icon: Truck },
   { to: '/notificaciones', title: 'Notificaciones', subtitle: 'Alertas y seguimientos', icon: Bell },
 ];
 
@@ -273,7 +265,7 @@ const topLinks = [
 const bottomLinks = [
   { to: '/', label: 'Inicio', icon: Home },
   { to: '/comercios', label: 'Categorías', icon: LayoutGrid },
-  { to: '/pedidos', label: 'Pedidos', icon: PackageSearch },
+  { to: '/pedidos', label: 'Mis pedidos', icon: PackageSearch },
   { to: '/favoritos', label: 'Favoritos', icon: Heart },
   { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
 ] as const;
@@ -282,20 +274,18 @@ export function MarketplaceFrame({
   children,
   query,
   onQueryChange,
-  activeFilter,
-  onFilterChange,
   showSearch = true,
-  footerText: _footerText = 'Navegación principal y accesos por rol.',
 }: MarketplaceFrameProps) {
   const { isDarkMode, toggleMode } = useThemeMode();
   const navigate = useNavigate();
   const hasSearch = typeof query === 'string' && typeof onQueryChange === 'function';
-  const hasFilters = typeof onFilterChange === 'function';
   const headerRef = useRef<HTMLElement | null>(null);
   const menuFrameRef = useRef<number | null>(null);
   const menuTimeoutRef = useRef<number | null>(null);
   const notificationsFrameRef = useRef<number | null>(null);
   const notificationsTimeoutRef = useRef<number | null>(null);
+  const [addressOpen, setAddressOpen] = useState(false);
+  const [address, setAddress] = useState({ id: 'home', label: deliveryAddress });
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [menuPhase, setMenuPhase] = useState<MenuDrawerPhase>('opening');
@@ -304,9 +294,6 @@ export function MarketplaceFrame({
   const [notificationsPhase, setNotificationsPhase] = useState<NotificationPanelPhase>('opening');
   const [selectedNotificationSectionId, setSelectedNotificationSectionId] = useState<NotificationSectionId | null>(null);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-  };
 
   const closeOverlays = useCallback(() => {
     setMenuOpen(false);
@@ -515,150 +502,87 @@ export function MarketplaceFrame({
   return (
     <Page>
       <Header ref={headerRef}>
-        <HeaderInner>
-          <HeaderTop>
-            <HeaderTopLeft>
-              <HeaderMenuButton
-                type="button"
-                onClick={toggleMenu}
-                aria-label="Abrir menú"
-                aria-haspopup="dialog"
-                aria-controls="marketplace-menu-drawer"
-                aria-expanded={menuOpen || menuMounted}
-              >
-                <Menu size={20} aria-hidden="true" />
-              </HeaderMenuButton>
-
-              <HeaderMobileLogoLink aria-label="LaFranciaGO">
-                <BrandMark>
-                  <BrandIcon src={brandIconUrl} alt="" aria-hidden="true" />
-                </BrandMark>
-              </HeaderMobileLogoLink>
-            </HeaderTopLeft>
-
-            <BrandLink aria-label="LaFranciaGO">
-              <BrandMark>
-                <BrandIcon src={brandIconUrl} alt="" aria-hidden="true" />
-              </BrandMark>
-              <BrandName>
-                LaFrancia
-                <BrandNameAccent>GO</BrandNameAccent>
-              </BrandName>
-              <BrandTag>Todo lo de tu pueblo, en un solo lugar.</BrandTag>
-            </BrandLink>
-
-            <HeaderBrandCopy aria-label="LaFranciaGO">
-              <BrandName>
-                LaFrancia
-                <BrandNameAccent>GO</BrandNameAccent>
-              </BrandName>
-              <HeaderBrandTag>{'Todo lo de tu pueblo,\nen un solo lugar.'}</HeaderBrandTag>
-            </HeaderBrandCopy>
-
-            <HeaderMobileActions aria-label="Acciones rápidas">
-              <TopBarCartLink to="/carrito" aria-label="Abrir carrito">
-                <ShoppingCart size={18} aria-hidden="true" />
-              </TopBarCartLink>
-              <TopBarNotificationButton
-                type="button"
-                onClick={toggleNotifications}
-                aria-label="Abrir notificaciones"
-                aria-haspopup="dialog"
-                aria-controls="marketplace-notifications-popover"
-                aria-expanded={notificationsOpen || notificationsMounted}
-              >
-                <Bell size={18} aria-hidden="true" />
-              </TopBarNotificationButton>
-              <TopBarProfileButton to="/mi-cuenta" aria-label="Abrir mi cuenta">
-                <UserRound size={18} aria-hidden="true" />
-              </TopBarProfileButton>
-            </HeaderMobileActions>
-
-            <LocationPill>
-              <MapPin size={16} aria-hidden="true" />
-              La Francia centro · entrega hoy
-            </LocationPill>
-
-            <TopActions>
-              <TopBarCartLink to="/carrito" aria-label="Abrir carrito">
-                <ShoppingCart size={18} aria-hidden="true" />
-              </TopBarCartLink>
-              <TopBarNotificationButton
-                type="button"
-                onClick={toggleNotifications}
-                aria-label="Abrir notificaciones"
-                aria-haspopup="dialog"
-                aria-controls="marketplace-notifications-popover"
-                aria-expanded={notificationsOpen || notificationsMounted}
-              >
-                <Bell size={18} aria-hidden="true" />
-              </TopBarNotificationButton>
-              <TopBarProfileButton to="/mi-cuenta" aria-label="Abrir mi cuenta">
-                <UserRound size={18} aria-hidden="true" />
-              </TopBarProfileButton>
-              <TopAction to="/registro/comercio">Publicar comercio</TopAction>
-              <TopAction to="/trabaja-con-nosotros">Trabaja con nosotros</TopAction>
-              <TopAction to="/mi-cuenta">Mi cuenta</TopAction>
-            </TopActions>
-          </HeaderTop>
-
-          <TopNavLinks aria-label="Navegación principal">
-            {topLinks.map((link) => {
-              const Icon = link.icon;
-
-              return (
-                <TopNavLink key={link.to} to={link.to}>
-                  <Icon size={16} aria-hidden="true" />
-                  {link.label}
-                </TopNavLink>
-              );
-            })}
-          </TopNavLinks>
-
-          {showSearch && hasSearch && (
-            <SearchRow onSubmit={handleSubmit}>
-              <SearchShell htmlFor="marketplace-search">
-                <SearchLabel>Buscá productos, comercios o categorías</SearchLabel>
-                <SearchField>
-                  <Search size={18} aria-hidden="true" />
-                  <SearchInput
-                    id="marketplace-search"
-                    value={query}
-                    onChange={(event) => onQueryChange(event.target.value)}
-                    placeholder="Coca Cola 3L, pan, farmacia, delivery..."
-                  />
-                </SearchField>
-              </SearchShell>
-
-              <SearchButton type="submit">Buscar</SearchButton>
-            </SearchRow>
-          )}
-
-          {showSearch && hasFilters && (
-            <FilterRail aria-label="Filtros rápidos">
-              {quickFilters.map((filter) => (
-                <FilterChip
-                  key={filter.id}
+        <BrandHeaderBar>
+          <HeaderInner>
+            <BrandHeaderRow>
+              <BrandHeaderLeft>
+                <HeaderMenuButton
                   type="button"
-                  onClick={() => onFilterChange(filter.id)}
-                  data-active={activeFilter === filter.id}
+                  onClick={toggleMenu}
+                  aria-label="Abrir menú"
+                  aria-haspopup="dialog"
+                  aria-controls="marketplace-menu-drawer"
+                  aria-expanded={menuOpen || menuMounted}
                 >
-                  {filter.label}
-                </FilterChip>
-              ))}
-            </FilterRail>
-          )}
-        </HeaderInner>
+                  <Menu size={20} aria-hidden="true" />
+                </HeaderMenuButton>
+
+                <HeaderBrandLockup role="img" aria-label="LaFranciaGO">
+                  <BrandLogoMark>
+                    <BrandIcon src={brandIconUrl} alt="" aria-hidden="true" />
+                  </BrandLogoMark>
+                  <HeaderBrandName>
+                    LaFrancia
+                    <HeaderBrandNameAccent>GO</HeaderBrandNameAccent>
+                  </HeaderBrandName>
+                </HeaderBrandLockup>
+              </BrandHeaderLeft>
+
+              {hasSearch ? (
+                <HeaderSearchSlot>
+                  <SearchBar value={query} onChange={onQueryChange} />
+                </HeaderSearchSlot>
+              ) : null}
+
+              <HeaderActionsRow aria-label="Acciones rápidas">
+              <AddressButton
+                type="button"
+                aria-label={`Entregar en ${address.label}. Cambiar dirección`}
+                aria-haspopup="dialog"
+                aria-expanded={addressOpen}
+                onClick={() => setAddressOpen(true)}
+              >
+                <AddressButtonCopy>
+                  <AddressButtonHint>Entregar en</AddressButtonHint>
+                  <AddressButtonLabel>{address.label}</AddressButtonLabel>
+                </AddressButtonCopy>
+                <ChevronDown size={15} aria-hidden="true" />
+              </AddressButton>
+
+                <HeaderCircleButton
+                  type="button"
+                  onClick={toggleNotifications}
+                  aria-label={`Abrir notificaciones, ${notificationsCount} sin leer`}
+                  aria-haspopup="dialog"
+                  aria-controls="marketplace-notifications-popover"
+                  aria-expanded={notificationsOpen || notificationsMounted}
+                >
+                  <Bell size={18} aria-hidden="true" />
+                  <HeaderCircleBadge>{notificationsCount}</HeaderCircleBadge>
+                </HeaderCircleButton>
+
+                <HeaderCircleLink to="/carrito" aria-label="Abrir carrito">
+                  <ShoppingCart size={18} aria-hidden="true" />
+                </HeaderCircleLink>
+
+                <HeaderCircleLink to="/mi-cuenta" aria-label="Abrir mi cuenta">
+                  <UserRound size={18} aria-hidden="true" />
+                </HeaderCircleLink>
+              </HeaderActionsRow>
+            </BrandHeaderRow>
+
+          </HeaderInner>
+        </BrandHeaderBar>
       </Header>
 
       <DesktopSidebar aria-label="Navegación principal">
         <DesktopSidebarBody>
-          <DrawerBrand aria-label="LaFranciaGO">
+          <DrawerBrand role="img" aria-label="LaFranciaGO">
             <BrandMark>
               <BrandIcon src={brandIconUrl} alt="" aria-hidden="true" />
             </BrandMark>
             <DrawerBrandText>
-              <BrandName aria-label="LaFranciaGO">
+              <BrandName>
                 <span>LaFrancia</span>
                 <BrandNameAccent>GO</BrandNameAccent>
               </BrandName>
@@ -722,31 +646,14 @@ export function MarketplaceFrame({
           <div style={{ flex: 1 }} aria-hidden="true" />
 
           <DrawerThemeSection>
-            <DrawerThemeRow type="button" onClick={toggleMode} role="switch" aria-checked={isDarkMode}>
-              <DrawerThemeIcon data-active="true" aria-hidden="true">
-                {isDarkMode ? <Moon size={16} aria-hidden="true" /> : <Sun size={16} aria-hidden="true" />}
-              </DrawerThemeIcon>
-
-              <DrawerThemeText>
-                <DrawerThemeTitle>{isDarkMode ? 'Tema oscuro' : 'Tema claro'}</DrawerThemeTitle>
-                <DrawerThemeSubtitle>Ajustá el contraste de toda la app.</DrawerThemeSubtitle>
-              </DrawerThemeText>
-
-              <DrawerThemeTrack aria-hidden="true">
-                <DrawerThemeTrackIcon data-side="top" data-active={!isDarkMode}>
-                  <Sun size={12} aria-hidden="true" />
-                </DrawerThemeTrackIcon>
-                <DrawerThemeThumb data-mode={isDarkMode ? 'dark' : 'light'} />
-                <DrawerThemeTrackIcon data-side="bottom" data-active={isDarkMode}>
-                  <Moon size={12} aria-hidden="true" />
-                </DrawerThemeTrackIcon>
-              </DrawerThemeTrack>
-            </DrawerThemeRow>
+            <GamerThemeToggle isDarkMode={isDarkMode} onToggle={toggleMode} />
           </DrawerThemeSection>
         </DesktopSidebarBody>
       </DesktopSidebar>
 
-      <Main>{children}</Main>
+      <Main>
+        {children}
+      </Main>
 
       <BottomNav aria-label="Navegación móvil">
         <BottomNavList>
@@ -780,12 +687,12 @@ export function MarketplaceFrame({
             onClick={(event) => event.stopPropagation()}
           >
             <DrawerHeader>
-              <DrawerBrand aria-label="LaFranciaGO">
+              <DrawerBrand role="img" aria-label="LaFranciaGO">
                 <BrandMark>
                   <BrandIcon src={brandIconUrl} alt="" aria-hidden="true" />
                 </BrandMark>
                 <DrawerBrandText>
-                  <BrandName aria-label="LaFranciaGO">
+                  <BrandName>
                     <span>LaFrancia</span>
                     <BrandNameAccent>GO</BrandNameAccent>
                   </BrandName>
@@ -855,26 +762,7 @@ export function MarketplaceFrame({
               </DrawerSection>
 
               <DrawerThemeSection>
-                <DrawerThemeRow type="button" onClick={toggleMode} role="switch" aria-checked={isDarkMode}>
-                  <DrawerThemeIcon data-active="true" aria-hidden="true">
-                    {isDarkMode ? <Moon size={16} aria-hidden="true" /> : <Sun size={16} aria-hidden="true" />}
-                  </DrawerThemeIcon>
-
-                  <DrawerThemeText>
-                    <DrawerThemeTitle>{isDarkMode ? 'Tema oscuro' : 'Tema claro'}</DrawerThemeTitle>
-                    <DrawerThemeSubtitle>Ajustá el contraste de toda la app.</DrawerThemeSubtitle>
-                  </DrawerThemeText>
-
-                  <DrawerThemeTrack aria-hidden="true">
-                    <DrawerThemeTrackIcon data-side="top" data-active={!isDarkMode}>
-                      <Sun size={12} aria-hidden="true" />
-                    </DrawerThemeTrackIcon>
-                    <DrawerThemeThumb data-mode={isDarkMode ? 'dark' : 'light'} />
-                    <DrawerThemeTrackIcon data-side="bottom" data-active={isDarkMode}>
-                      <Moon size={12} aria-hidden="true" />
-                    </DrawerThemeTrackIcon>
-                  </DrawerThemeTrack>
-                </DrawerThemeRow>
+                <GamerThemeToggle isDarkMode={isDarkMode} onToggle={toggleMode} />
               </DrawerThemeSection>
             </DrawerBody>
           </ModalCard>
@@ -986,6 +874,12 @@ export function MarketplaceFrame({
         </ModalOverlay>
       )}
 
+      <AddressSheet
+        open={addressOpen}
+        currentId={address.id}
+        onClose={() => setAddressOpen(false)}
+        onSelect={(id, value) => setAddress({ id, label: value })}
+      />
     </Page>
   );
 }

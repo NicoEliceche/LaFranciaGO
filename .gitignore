@@ -11,3 +11,7 @@ design-system/
 guide.md
 guide2.md
 restart.bat
+
+# Carpetas temporales de verificación local
+.verify/
+.lhtmp/

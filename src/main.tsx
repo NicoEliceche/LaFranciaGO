@@ -2,14 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 
-import '@fontsource/rubik/400.css';
-import '@fontsource/rubik/500.css';
-import '@fontsource/rubik/600.css';
-import '@fontsource/rubik/700.css';
-import '@fontsource/nunito-sans/400.css';
-import '@fontsource/nunito-sans/500.css';
-import '@fontsource/nunito-sans/600.css';
-import '@fontsource/nunito-sans/700.css';
+/* Sólo el subset latino: los alfabetos árabe, cirílico y hebreo no se usan
+   y sumaban decenas de archivos al build. */
+import '@fontsource/rubik/latin-400.css';
+import '@fontsource/rubik/latin-500.css';
+import '@fontsource/rubik/latin-700.css';
+import '@fontsource/nunito-sans/latin-400.css';
+import '@fontsource/nunito-sans/latin-600.css';
+import '@fontsource/nunito-sans/latin-700.css';
 
 import App from './App';
 import '@core/theme/types';

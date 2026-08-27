@@ -11,5 +11,11 @@ export const formatPercent = (value: number) => `${value > 0 ? '+' : ''}${value}
 
 export const formatTimeRange = (min: number, max: number) => `${min}-${max} min`;
 
-export const normalizeText = (value: string) => value.trim().toLowerCase();
+/** Normaliza para comparar: sin espacios extra, sin mayúsculas y sin acentos. */
+export const normalizeText = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
 

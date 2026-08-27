@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { FormEvent } from 'react';
 
+import { FileField } from '@shared/components/FileField';
+
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { Badge, Button, Card, CardPad, CardText, CardTitle, LinkButton, PrimaryButton, Section, SectionHeader, SectionInner, SectionKicker, SectionText, SectionTitle } from '../ui';
 import { CardStack, CompactSection, CompactSectionStack, InlineWrap, SectionStack } from './screenLayout';
@@ -64,7 +66,6 @@ export function CommerceRegistrationScreen() {
   return (
     <MarketplaceFrame
       showSearch={false}
-      footerText="Alta de comercio con campos obligatorios y sugerencias para crecer con mejores perfiles."
     >
       <CompactSection>
         <SectionInner>
@@ -177,7 +178,7 @@ export function CommerceRegistrationScreen() {
                           <UploadText>
                             PNG, JPG o WebP. Idealmente cuadrado y con fondo limpio.
                           </UploadText>
-                          <FieldInput id="business-logo" type="file" accept="image/*" />
+                          <FileField id="business-logo" accept="image/*" />
                         </UploadBox>
                       </SectionStack>
                     </CardPad>

@@ -71,12 +71,20 @@ export interface StoreProfile {
   featuredProducts: StoreFeaturedProduct[];
 }
 
+export type OrderState = 'proceso' | 'terminado' | 'cancelado';
+
 export interface CustomerOrder {
   id: string;
+  code: string;
   store: string;
+  storeId: string;
+  categoryId: string;
   total: number;
   status: string;
+  state: OrderState;
   eta: string;
+  date: string;
+  itemCount: number;
 }
 
 export interface AddressBookEntry {
@@ -90,6 +98,7 @@ export interface FavoriteProduct {
   id: string;
   name: string;
   store: string;
+  categoryId: string;
   price: number;
 }
 
@@ -97,6 +106,7 @@ export interface CartItem {
   id: string;
   product: string;
   store: string;
+  categoryId: string;
   price: number;
   quantity: number;
   subtotal: number;

@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
+import { neonActive, neonIcon, neonSurface } from '@core/theme/neon';
 
 const interactiveSurface = css`
   transition:
@@ -1655,9 +1656,11 @@ export const DrawerItemIcon = styled.span`
   height: 2.1rem;
   border-radius: ${({ theme }) => theme.radius.lg};
   background: ${({ theme }) =>
-    theme.mode === 'dark' ? 'rgba(107, 157, 255, 0.18)' : 'rgba(0, 71, 231, 0.08)'};
+    theme.mode === 'dark' ? 'rgba(77, 229, 255, 0.12)' : 'rgba(0, 71, 231, 0.08)'};
   color: ${({ theme }) => theme.color.primary};
   flex: 0 0 auto;
+
+  ${neonIcon};
 `;
 
 export const DrawerItemText = styled.div`
@@ -2120,6 +2123,9 @@ export const ModalCloseButton = styled.button`
   border: 1px solid ${({ theme }) => theme.color.border};
   background: ${({ theme }) => theme.color.surface};
   color: ${({ theme }) => theme.color.text};
+
+  ${neonSurface};
+  ${neonIcon};
 `;
 
 export const ModalGrid = styled.div`

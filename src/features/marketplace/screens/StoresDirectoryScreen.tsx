@@ -1,36 +1,19 @@
 import { useMemo, useState } from 'react';
-import { Store, MapPinned, Truck, PackageSearch } from 'lucide-react';
+import { SearchX } from 'lucide-react';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
-import { categories, stores } from '../marketplaceContent';
-import { matchesQuery, formatMoney, formatDistance } from '../marketplace.utils';
+import { CategoryTile } from '../components/CategoryTile';
+import { EmptyState } from '../components/EmptyState';
+import { SearchBar } from '../components/SearchBar';
+import { SectionHeading } from '../components/SectionHeading';
+import { StoreCard } from '../components/StoreCard';
+import { categories, quickFilters, stores } from '../marketplaceContent';
+import { matchesQuery } from '../marketplace.utils';
 import type { MarketplaceFilter, StoreProfile } from '../marketplace.types';
-import {
-  AccentBadge,
-  Badge,
-  Card,
-  CardText,
-  CardTitle,
-  FourColumnGrid,
-  LinkButton,
-  SectionInner,
-  SectionKicker,
-  SectionText,
-  SectionTitle,
-  TwoColumnGrid,
-  Price,
-} from '../ui';
-import {
-  CardTopRow,
-  CompactCardPad,
-  CompactCardStack,
-  CompactInlineWrap,
-  CompactSection,
-  CompactSectionHeader,
-  CompactSectionStack,
-  TagRail,
-} from './screenLayout';
-import { DirectoryIntro, StoreMetaRow, StoreScore } from './StoresDirectoryScreenStyled';
+import { FilterChip, SectionInner } from '../ui';
+import { ScrollRail } from '@shared/components/ScrollRail';
+
+import { CategoryRail, CompactSection, ProductGrid, SearchSection } from './screenLayout';
 
 const sortStores = (items: StoreProfile[], filter: MarketplaceFilter) => {
   const list = [...items];
@@ -59,7 +42,7 @@ export function StoresDirectoryScreen() {
     () =>
       sortStores(
         stores.filter((store) =>
-          matchesQuery(query, store.name, store.category, store.summary, store.address, store.tags.join(' ')),
+          matchesQuery(query, store.name, store.category, store.address, store.tags.join(' ')),
         ),
         filter,
       ),
@@ -67,132 +50,99 @@ export function StoresDirectoryScreen() {
   );
 
   const filteredCategories = useMemo(
-    () => categories.filter((category) => matchesQuery(query, category.name, category.description)),
+    () => categories.filter((category) => matchesQuery(query, category.name)),
     [query],
   );
+
+  const hasResults = filteredStores.length > 0 || filteredCategories.length > 0;
 
   return (
     <MarketplaceFrame
       query={query}
       onQueryChange={setQuery}
-      activeFilter={filter}
-      onFilterChange={(value) => setFilter(value as MarketplaceFilter)}
-      footerText="Directorio de comercios, pensado para buscar por cercanía, categoría y modalidad de entrega."
     >
-      <CompactSection>
+      <SearchSection>
         <SectionInner>
-          <CompactSectionStack>
-            <SectionKicker>Comercios</SectionKicker>
-            <SectionTitle>Buscá por rubro y cercanía.</SectionTitle>
-            <DirectoryIntro>
-              Compará delivery, retiro y distancia sin perder tiempo.
-            </DirectoryIntro>
-          </CompactSectionStack>
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="Buscar comercios o rubros"
+          />
+
+          <ScrollRail aria-label="Filtros rápidos">
+            {quickFilters.map((option) => (
+              <FilterChip
+                key={option.id}
+                type="button"
+                onClick={() => setFilter(option.id as MarketplaceFilter)}
+                data-active={filter === option.id}
+              >
+                {option.label}
+              </FilterChip>
+            ))}
+          </ScrollRail>
         </SectionInner>
-      </CompactSection>
+      </SearchSection>
+
+      {filteredCategories.length > 0 && (
+        <CompactSection>
+          <SectionInner>
+            <SectionHeading title="Categorías" subtitle="Elegí un rubro para filtrar." />
+
+            <CategoryRail aria-label="Categorías">
+              {filteredCategories.map((category, index) => (
+                <CategoryTile
+                  key={category.id}
+                  id={category.id}
+                  name={category.name}
+                  to={`/comercios?rubro=${category.id}`}
+                  priority={index < 5}
+                />
+              ))}
+            </CategoryRail>
+          </SectionInner>
+        </CompactSection>
+      )}
 
       <CompactSection>
         <SectionInner>
-          <CompactSectionHeader>
-            <SectionKicker>Categorías</SectionKicker>
-            <SectionTitle>Atajo por rubro</SectionTitle>
-            <SectionText>Elegí rápido sin escribir de más.</SectionText>
-          </CompactSectionHeader>
+          {filteredStores.length > 0 ? (
+            <>
+              <SectionHeading
+                title="Negocios"
+                chip={`${filteredStores.length}`}
+                subtitle="Locales activos cerca tuyo."
+              />
 
-          <FourColumnGrid>
-            {filteredCategories.map((category) => {
-              const Icon = category.icon;
-
-              return (
-                <Card key={category.id}>
-                  <CompactCardPad>
-                    <CompactCardStack>
-                      <AccentBadge>
-                        <Icon size={16} aria-hidden="true" />
-                      </AccentBadge>
-                      <CardTitle>{category.name}</CardTitle>
-                      <CardText>{category.description}</CardText>
-                    </CompactCardStack>
-                  </CompactCardPad>
-                </Card>
-              );
-            })}
-          </FourColumnGrid>
-        </SectionInner>
-      </CompactSection>
-
-      <CompactSection>
-        <SectionInner>
-          <CompactSectionHeader>
-            <SectionKicker>Comercios visibles</SectionKicker>
-            <SectionTitle>Cercanos y activos</SectionTitle>
-            <SectionText>Estado, distancia y perfil en una sola vista.</SectionText>
-          </CompactSectionHeader>
-
-          <TwoColumnGrid>
-            {filteredStores.map((store) => {
-              const Icon = store.icon;
-
-              return (
-                <Card key={store.id}>
-                  <CompactCardPad>
-                    <CompactCardStack>
-                      <CardTopRow>
-                        <div>
-                          <CompactInlineWrap>
-                            <AccentBadge>
-                              <Icon size={16} aria-hidden="true" />
-                            </AccentBadge>
-                            <StoreScore>{store.rating.toFixed(1)} ★</StoreScore>
-                          </CompactInlineWrap>
-                          <CardTitle>{store.name}</CardTitle>
-                          <CardText>{store.category}</CardText>
-                        </div>
-
-                        <Price>{formatMoney(store.minOrder)}</Price>
-                      </CardTopRow>
-
-                      <CardText>{store.summary}</CardText>
-
-                      <StoreMetaRow>
-                        <Badge>{store.openNow ? 'Abierto' : 'Cerrado'}</Badge>
-                        <Badge>{store.delivery ? 'Delivery' : 'Sin delivery'}</Badge>
-                        <Badge>{store.pickup ? 'Retiro' : 'Sin retiro'}</Badge>
-                      </StoreMetaRow>
-
-                      <CardText>
-                        <MapPinned size={16} aria-hidden="true" /> {store.address} · {formatDistance(store.distanceKm)}
-                      </CardText>
-                      <CardText>{store.hours}</CardText>
-                      <CardText>{store.phone}</CardText>
-
-                      <TagRail>
-                        {store.tags.map((tag) => (
-                          <Badge key={tag}>{tag}</Badge>
-                        ))}
-                      </TagRail>
-
-                      <LinkButton to={`/comercios/${store.id}`}>Abrir perfil</LinkButton>
-                    </CompactCardStack>
-                  </CompactCardPad>
-                </Card>
-              );
-            })}
-          </TwoColumnGrid>
-        </SectionInner>
-      </CompactSection>
-
-      <CompactSection>
-        <SectionInner>
-          <Card>
-            <CompactCardPad>
-              <CompactSectionStack>
-                <SectionKicker>Qué habilita este directorio</SectionKicker>
-                <SectionTitle>Comparar y comprar</SectionTitle>
-                <SectionText>Después se conecta con login, carrito y checkout.</SectionText>
-              </CompactSectionStack>
-            </CompactCardPad>
-          </Card>
+              <ProductGrid>
+                {filteredStores.map((store, index) => (
+                  <StoreCard
+                    key={store.id}
+                    id={store.id}
+                    name={store.name}
+                    category={store.category}
+                    categoryId={store.id}
+                    to={`/comercios/${store.id}`}
+                    distanceKm={store.distanceKm}
+                    rating={store.rating}
+                    openNow={store.openNow}
+                    priority={index < 4}
+                  />
+                ))}
+              </ProductGrid>
+            </>
+          ) : (
+            <EmptyState
+              icon={SearchX}
+              title="Sin negocios"
+              text={
+                hasResults
+                  ? 'Probá cambiando el filtro.'
+                  : `No encontramos negocios para "${query}".`
+              }
+              dashed
+            />
+          )}
         </SectionInner>
       </CompactSection>
     </MarketplaceFrame>

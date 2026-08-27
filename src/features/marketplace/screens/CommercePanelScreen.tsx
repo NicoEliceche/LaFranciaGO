@@ -1,167 +1,157 @@
-import { ClipboardList, Boxes, BadgePercent, Store, PackagePlus } from 'lucide-react';
+import {
+  BadgePercent,
+  BarChart3,
+  Boxes,
+  ClipboardList,
+  LayoutGrid,
+  PackagePlus,
+  ReceiptText,
+  Settings,
+  Store,
+  Users,
+} from 'lucide-react';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { commerceHighlights, commerceMetrics, commerceOrders, inventory } from '../marketplaceContent';
 import { formatMoney } from '../marketplace.utils';
-import {
-  Badge,
-  Card,
-  CardPad,
-  CardText,
-  CardTitle,
-  LinkButton,
-  PrimaryButton,
-  Section,
-  SectionHeader,
-  SectionInner,
-  SectionKicker,
-  SectionText,
-  SectionTitle,
-  StrongPrice,
-} from '../ui';
-import { CardStack, CardTopRow, CompactTitle, InlineWrap, SectionStack, TagRail } from './screenLayout';
-import { DashboardGrid, InventoryList, ManagementGrid } from './CommercePanelScreenStyled';
+import { Section, SectionInner } from '../ui';
+import { FourUpGrid } from './screenLayout';
+import { MetricTile } from '../components/MetricTile';
+import { SectionHeading } from '../components/SectionHeading';
+import { SettingsList, SettingsRow } from '../components/SettingsList';
+import { PanelRowValue } from './CommercePanelScreenStyled';
+
+const managementSections = [
+  {
+    id: 'overview',
+    title: 'Inicio / resumen',
+    description: 'Ventas del día, alertas y accesos rápidos.',
+    icon: Store,
+  },
+  {
+    id: 'orders',
+    title: 'Pedidos',
+    description: 'Estados, tiempos y cambios de fase.',
+    icon: ClipboardList,
+  },
+  {
+    id: 'products',
+    title: 'Productos',
+    description: 'Precios, stock, fotos y visibilidad.',
+    icon: Boxes,
+  },
+  {
+    id: 'categories',
+    title: 'Categorías',
+    description: 'Organización propia por comercio.',
+    icon: LayoutGrid,
+  },
+  {
+    id: 'clients',
+    title: 'Clientes',
+    description: 'Frecuentes, direcciones y hábitos.',
+    icon: Users,
+  },
+  {
+    id: 'promotions',
+    title: 'Promociones',
+    description: 'Combos, descuentos y destacados.',
+    icon: BadgePercent,
+  },
+  {
+    id: 'reports',
+    title: 'Reportes',
+    description: 'Ventas, ticket promedio y top productos.',
+    icon: BarChart3,
+  },
+  {
+    id: 'settings',
+    title: 'Configuración',
+    description: 'Horarios, reparto y visibilidad.',
+    icon: Settings,
+  },
+];
 
 export function CommercePanelScreen() {
   return (
-    <MarketplaceFrame
-      showSearch={false}
-      footerText="Panel de comercio para pedidos, stock, promociones y control operativo."
-    >
+    <MarketplaceFrame showSearch={false}>
       <Section>
         <SectionInner>
-          <SectionStack>
-            <SectionKicker>Panel comercio</SectionKicker>
-            <SectionTitle>Operación diaria del negocio.</SectionTitle>
-            <SectionText>
-              El comercio administra productos, precios, stock, promociones y pedidos desde una
-              sola vista.
-            </SectionText>
-          </SectionStack>
-        </SectionInner>
-      </Section>
+          <SectionHeading
+            title="Panel del comercio"
+            chip="Hoy"
+            subtitle="Resumen de la operación del día."
+          />
 
-      <Section>
-        <SectionInner>
-          <DashboardGrid>
+          <FourUpGrid>
             {commerceMetrics.map((metric) => (
-              <Card key={metric.id}>
-                <CardPad>
-                  <CardStack>
-                    <CardTitle>{metric.label}</CardTitle>
-                    <StrongPrice>{metric.value}</StrongPrice>
-                    <Badge>{metric.trend}</Badge>
-                  </CardStack>
-                </CardPad>
-              </Card>
+              <MetricTile
+                key={metric.id}
+                label={metric.label}
+                value={metric.value}
+                help={metric.trend}
+              />
             ))}
-          </DashboardGrid>
+          </FourUpGrid>
         </SectionInner>
       </Section>
 
       <Section>
         <SectionInner>
-          <ManagementGrid>
-            <Card>
-              <CardPad>
-                <SectionStack>
-                  <CardTitle>Pedidos recientes</CardTitle>
-                  <CardStack>
-                    {commerceOrders.map((order) => (
-                      <Card key={order.id}>
-                        <CardPad>
-                          <CardTopRow>
-                            <div>
-                              <CompactTitle>{order.customer}</CompactTitle>
-                              <CardText>{order.status}</CardText>
-                            </div>
-                            <StrongPrice>{formatMoney(order.total)}</StrongPrice>
-                          </CardTopRow>
-                        </CardPad>
-                      </Card>
-                    ))}
-                  </CardStack>
-                </SectionStack>
-              </CardPad>
-            </Card>
+          <SectionHeading title="Pedidos recientes" seeAllTo="/panel/comercio" seeAllLabel="Ver todos" />
 
-            <Card>
-              <CardPad>
-                <SectionStack>
-                  <CardTitle>Stock y productos</CardTitle>
-                  <InventoryList>
-                    {inventory.map((item) => (
-                      <Card key={item.id}>
-                        <CardPad>
-                          <CardStack>
-                            <CardTopRow>
-                              <div>
-                                <CompactTitle>{item.name}</CompactTitle>
-                                <CardText>
-                                  Stock {item.stock} · {item.status}
-                                </CardText>
-                              </div>
-                              <StrongPrice>{formatMoney(item.price)}</StrongPrice>
-                            </CardTopRow>
-                            <InlineWrap>
-                              <Badge>
-                                <Boxes size={16} aria-hidden="true" /> Inventario
-                              </Badge>
-                              <Badge>
-                                <BadgePercent size={16} aria-hidden="true" /> Promociones
-                              </Badge>
-                            </InlineWrap>
-                          </CardStack>
-                        </CardPad>
-                      </Card>
-                    ))}
-                  </InventoryList>
-                </SectionStack>
-              </CardPad>
-            </Card>
-          </ManagementGrid>
+          <SettingsList>
+            {commerceOrders.map((order) => (
+              <SettingsRow
+                key={order.id}
+                icon={ClipboardList}
+                title={order.customer}
+                subtitle={order.status}
+                trailing={<PanelRowValue>{formatMoney(order.total)}</PanelRowValue>}
+              />
+            ))}
+          </SettingsList>
         </SectionInner>
       </Section>
 
       <Section>
         <SectionInner>
-          <SectionHeader>
-            <SectionKicker>Acciones rápidas</SectionKicker>
-            <SectionTitle>Gestión operativa sin fricción</SectionTitle>
-            <SectionText>Alta, baja, edición de productos y promociones destacadas.</SectionText>
-          </SectionHeader>
+          <SectionHeading
+            title="Stock y productos"
+            subtitle="Precios y disponibilidad."
+            seeAllTo="/panel/comercio/producto"
+            seeAllLabel="Nuevo producto"
+          />
 
-          <TagRail>
-            <PrimaryButton to="/panel/comercio">
-              <PackagePlus size={18} aria-hidden="true" />
-              Agregar producto
-            </PrimaryButton>
-            <LinkButton to="/panel/comercio">
-              <ClipboardList size={18} aria-hidden="true" />
-              Ver pedidos
-            </LinkButton>
-            <LinkButton to="/panel/comercio">
-              <Store size={18} aria-hidden="true" />
-              Ajustar comercio
-            </LinkButton>
-          </TagRail>
+          <SettingsList>
+            {inventory.map((item) => (
+              <SettingsRow
+                key={item.id}
+                icon={Boxes}
+                title={item.name}
+                subtitle={`${item.stock} en stock · ${item.status}`}
+                trailing={<PanelRowValue>{formatMoney(item.price)}</PanelRowValue>}
+              />
+            ))}
+          </SettingsList>
         </SectionInner>
       </Section>
 
       <Section>
         <SectionInner>
-          <Card>
-            <CardPad>
-              <SectionStack>
-                <SectionKicker>El panel está listo para crecer</SectionKicker>
-                <SectionTitle>Productos, promos y stock en una sola base.</SectionTitle>
-                <SectionText>
-                  Cuando se conecte el backend, esta pantalla ya tiene la estructura para operar
-                  sin rehacer la interfaz.
-                </SectionText>
-              </SectionStack>
-            </CardPad>
-          </Card>
+          <SectionHeading title="Gestión" subtitle="Todo el panel ordenado por tarea." />
+
+          <SettingsList>
+            {managementSections.map((section) => (
+              <SettingsRow
+                key={section.id}
+                icon={section.icon}
+                title={section.title}
+                subtitle={section.description}
+                to={section.id === 'products' ? '/panel/comercio/producto' : '/panel/comercio'}
+              />
+            ))}
+          </SettingsList>
         </SectionInner>
       </Section>
     </MarketplaceFrame>

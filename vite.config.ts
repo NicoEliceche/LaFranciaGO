@@ -12,6 +12,14 @@ export default defineConfig(({ command }) => ({
     tsconfigPaths(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        /* Al publicar, los chunks cambian de nombre. Sin esto, un usuario con
+           la app instalada conserva el HTML viejo y pide archivos que ya no
+           existen (404 en las pantallas diferidas). */
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
+      },
       includeAssets: ['favicon.png', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'LaFranciaGO',
@@ -43,5 +51,14 @@ export default defineConfig(({ command }) => ({
     outDir: 'dist',
     sourcemap: false,
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        /* Se separan las dependencias grandes para que el bundle inicial
+           no arrastre el mapa ni todo el set de íconos. */
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
   },
 }));
