@@ -11,10 +11,31 @@
     <link rel="icon" type="image/png" href="/LaFranciaGO/favicon.png" />
     <link rel="apple-touch-icon" href="/LaFranciaGO/apple-touch-icon.png" />
     <title>LaFranciaGO | Marketplace local</title>
-    <script type="module" crossorigin src="/LaFranciaGO/assets/index-i8d5hWjK.js"></script>
-    <link rel="stylesheet" crossorigin href="/LaFranciaGO/assets/index-Dn4afGmz.css">
+    <style>
+      /* Pintado inicial: la barra de marca aparece antes de que React monte,
+         para que la primera impresión no sea una pantalla en blanco. Se
+         reemplaza por la interfaz real y no altera su diseño. */
+      #root:empty::before {
+        content: '';
+        display: block;
+        height: 58px;
+        background: linear-gradient(135deg, #0047e7 0%, #2563eb 100%);
+      }
+      body {
+        margin: 0;
+        background: #f5f7fb;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #0c111d;
+        }
+      }
+    </style>
+    <script type="module" crossorigin src="/LaFranciaGO/assets/index-Cc6rlhUm.js"></script>
+    <link rel="modulepreload" crossorigin href="/LaFranciaGO/assets/react-Clk3ySf9.js">
+    <link rel="stylesheet" crossorigin href="/LaFranciaGO/assets/index-CQ7vFYxu.css">
   <link rel="manifest" href="/LaFranciaGO/manifest.webmanifest"></head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
   </body>
 </html>
