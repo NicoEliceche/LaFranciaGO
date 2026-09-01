@@ -12,6 +12,7 @@ import {
   StoreMetaPill,
   StoreName,
   StoreOpenBadge,
+  StorePremiumBadge,
   StoreRatingBadge,
   StoreSubtitle,
 } from './StoreCardStyled';
@@ -25,6 +26,8 @@ type StoreCardProps = {
   distanceKm?: number;
   rating?: number;
   openNow?: boolean;
+  /** Plan pagado: se rotula para no confundir con un orden natural. */
+  premium?: boolean;
   deliveryFee?: number;
   etaMin?: number;
   etaMax?: number;
@@ -44,6 +47,7 @@ export function StoreCard({
   distanceKm,
   rating,
   openNow,
+  premium,
   etaMin,
   etaMax,
   priority,
@@ -59,6 +63,8 @@ export function StoreCard({
           ) : (
             <span />
           )}
+
+          {premium ? <StorePremiumBadge>Destacado</StorePremiumBadge> : null}
 
           {rating !== undefined ? (
             <StoreRatingBadge>

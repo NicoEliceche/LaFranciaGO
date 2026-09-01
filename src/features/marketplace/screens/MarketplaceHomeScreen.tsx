@@ -14,6 +14,8 @@ import { SectionHeading } from '../components/SectionHeading';
 import { StoreCard } from '../components/StoreCard';
 import { categories, featuredStores, nearbyOffers } from '../../home/homeContent';
 import { matchesQuery } from '../marketplace.utils';
+import { rankResults } from '@core/data/rankingService';
+import { useSortPreference } from '@shared/hooks/useSortPreference';
 import { Section, SectionInner } from '../ui';
 import {
   ErrandBanner,
@@ -35,6 +37,7 @@ import {
 
 export function MarketplaceHomeScreen() {
   const [query, setQuery] = useState('');
+  const { sortMode } = useSortPreference();
 
   const normalizedQuery = query.trim();
   const isSearching = normalizedQuery.length > 0;
@@ -44,18 +47,25 @@ export function MarketplaceHomeScreen() {
     [normalizedQuery],
   );
 
+  /* Mismo criterio que el buscador: cercanía primero, Premium desempata. */
   const visibleStores = useMemo(
     () =>
-      featuredStores.filter((store) =>
-        matchesQuery(normalizedQuery, store.name, store.category, store.address),
+      rankResults(
+        featuredStores.filter((store) =>
+          matchesQuery(normalizedQuery, store.name, store.category, store.address),
+        ),
+        sortMode,
       ),
-    [normalizedQuery],
+    [normalizedQuery, sortMode],
   );
 
   const visibleOffers = useMemo(
     () =>
-      nearbyOffers.filter((offer) => matchesQuery(normalizedQuery, offer.product, offer.store)),
-    [normalizedQuery],
+      rankResults(
+        nearbyOffers.filter((offer) => matchesQuery(normalizedQuery, offer.product, offer.store)),
+        sortMode,
+      ),
+    [normalizedQuery, sortMode],
   );
 
   const hasResults =
@@ -180,6 +190,8 @@ export function MarketplaceHomeScreen() {
                   distanceKm={store.distanceKm}
                   rating={store.rating}
                   openNow={store.openNow}
+                premium={store.premium}
+                  
                   etaMin={store.etaMin}
                   etaMax={store.etaMax}
                   priority={index < 2}

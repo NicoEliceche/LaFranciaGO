@@ -310,6 +310,7 @@ export const stores: StoreProfile[] = [
   },
   {
     id: 'farmacia-centro',
+    premium: true,
     name: 'Farmacia Centro',
     category: 'Salud y perfumería',
     address: 'Sector comercial',
@@ -332,6 +333,7 @@ export const stores: StoreProfile[] = [
   },
   {
     id: 'carniceria-central',
+    premium: true,
     name: 'Carnicería Central',
     category: 'Cortes y frescos',
     address: 'Barrio norte',

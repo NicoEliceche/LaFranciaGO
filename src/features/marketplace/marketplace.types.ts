@@ -55,6 +55,8 @@ export interface StoreFeaturedProduct {
 export interface StoreProfile {
   id: string;
   name: string;
+  /** Plan pagado: mejora la posición dentro del radio cercano. */
+  premium?: boolean;
   category: string;
   address: string;
   phone: string;

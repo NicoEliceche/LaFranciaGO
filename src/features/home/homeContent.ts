@@ -249,6 +249,7 @@ export const featuredStores: HomeFeaturedStore[] = [
   },
   {
     id: 'la-estancia',
+    premium: true,
     name: 'La Estancia',
     category: 'Carnicería',
     categoryId: 'carniceria',
@@ -269,6 +270,7 @@ export const featuredStores: HomeFeaturedStore[] = [
   },
   {
     id: 'delicias',
+    premium: true,
     name: 'Delicias',
     category: 'Panadería',
     categoryId: 'panaderia',

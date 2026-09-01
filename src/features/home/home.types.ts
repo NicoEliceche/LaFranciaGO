@@ -55,6 +55,8 @@ export interface HomeCategory {
 export interface HomeFeaturedStore {
   id: string;
   name: string;
+  /** Plan pagado: mejora la posición dentro del radio cercano. */
+  premium?: boolean;
   category: string;
   categoryId: string;
   logoLabel: string;

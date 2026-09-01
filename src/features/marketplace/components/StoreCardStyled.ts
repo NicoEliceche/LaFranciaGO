@@ -108,3 +108,18 @@ export const StoreRatingBadge = styled.span`
   font-weight: ${({ theme }) => theme.typography.weight.bold};
   box-shadow: ${({ theme }) => theme.shadow.sm};
 `;
+
+/** Rótulo de negocio con plan pagado. */
+export const StorePremiumBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding: 0 ${({ theme }) => theme.spacing[2]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.warning};
+  color: #1a1204;
+  font-size: 0.6875rem;
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  letter-spacing: 0.02em;
+  box-shadow: ${({ theme }) => theme.shadow.sm};
+`;

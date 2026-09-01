@@ -54,6 +54,7 @@ export function FavoritesScreen() {
                 distanceKm={store.distanceKm}
                 rating={store.rating}
                 openNow={store.openNow}
+                premium={store.premium}
                 priority={index < 4}
               />
             ))}

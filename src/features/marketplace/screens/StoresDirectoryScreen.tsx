@@ -9,44 +9,32 @@ import { SectionHeading } from '../components/SectionHeading';
 import { StoreCard } from '../components/StoreCard';
 import { categories, quickFilters, stores } from '../marketplaceContent';
 import { matchesQuery } from '../marketplace.utils';
+import { SORT_OPTIONS, rankResults } from '@core/data/rankingService';
+import { useSortPreference } from '@shared/hooks/useSortPreference';
+import type { SortMode } from '@shared/types/ranking.types';
 import type { MarketplaceFilter, StoreProfile } from '../marketplace.types';
 import { FilterChip, SectionInner } from '../ui';
 import { ScrollRail } from '@shared/components/ScrollRail';
 
 import { CategoryRail, CompactSection, ProductGrid, SearchSection } from './screenLayout';
+import { SortField, SortLabel, SortRow, SortSelect } from './StoresDirectoryScreenStyled';
 
-const sortStores = (items: StoreProfile[], filter: MarketplaceFilter) => {
-  const list = [...items];
 
-  switch (filter) {
-    case 'lowest':
-      return list.sort((a, b) => a.minOrder - b.minOrder);
-    case 'nearby':
-      return list.sort((a, b) => a.distanceKm - b.distanceKm);
-    case 'delivery':
-      return list.sort((a, b) => (a.delivery === b.delivery ? 0 : a.delivery ? -1 : 1));
-    case 'pickup':
-      return list.sort((a, b) => (a.pickup === b.pickup ? 0 : a.pickup ? -1 : 1));
-    case 'offers':
-      return list.sort((a, b) => b.rating - a.rating);
-    default:
-      return list.sort((a, b) => b.rating - a.rating);
-  }
-};
 
 export function StoresDirectoryScreen() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<MarketplaceFilter>('all');
+  const { sortMode, setSortMode } = useSortPreference();
 
   const filteredStores = useMemo(
     () =>
-      sortStores(
+      rankResults(
         stores.filter((store) =>
           matchesQuery(query, store.name, store.category, store.address, store.tags.join(' ')),
         ),
-        filter,
+        sortMode,
       ),
-    [filter, query],
+    [query, sortMode],
   );
 
   const filteredCategories = useMemo(
@@ -108,11 +96,28 @@ export function StoresDirectoryScreen() {
         <SectionInner>
           {filteredStores.length > 0 ? (
             <>
-              <SectionHeading
-                title="Negocios"
-                chip={`${filteredStores.length}`}
-                subtitle="Locales activos cerca tuyo."
-              />
+              <SortRow>
+                <SectionHeading
+                  title="Negocios"
+                  chip={`${filteredStores.length}`}
+                  subtitle="Locales activos cerca tuyo."
+                />
+
+                <SortField>
+                  <SortLabel htmlFor="orden-negocios">Ordenar por</SortLabel>
+                  <SortSelect
+                    id="orden-negocios"
+                    value={sortMode}
+                    onChange={(event) => setSortMode(event.target.value as SortMode)}
+                  >
+                    {SORT_OPTIONS.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </SortSelect>
+                </SortField>
+              </SortRow>
 
               <ProductGrid>
                 {filteredStores.map((store, index) => (
@@ -126,6 +131,8 @@ export function StoresDirectoryScreen() {
                     distanceKm={store.distanceKm}
                     rating={store.rating}
                     openNow={store.openNow}
+                premium={store.premium}
+                  
                     priority={index < 4}
                   />
                 ))}
