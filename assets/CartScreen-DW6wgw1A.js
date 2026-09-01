@@ -1,4 +1,4 @@
-import{a9 as E,q as a,aa as C,ab as Y,j as r,I as re,V as v,ac as ae,a7 as T,G as te,ad as K,M as H,a as M,E as ie,U as R,ae as oe,af as j,o as ne,W as x,t as g,ag as se,v as le,ah as b,ai as y,aj as de,ak as ce,a1 as pe,a2 as ge}from"./index-CEnDCpoj.js";import{r as m}from"./react-Clk3ySf9.js";import{M as he}from"./minus-DET3v042.js";import{S as ue}from"./shield-check-DP3_L1Wp.js";import{C as me}from"./clock-3-CkPZ94lo.js";/**
+import{a8 as E,q as a,a9 as C,aa as Y,j as r,J as re,W as v,ab as ae,ac as T,H as te,ad as K,M as q,a as M,E as ie,V as R,ae as oe,af as j,p as ne,X as x,v as g,ag as se,w as le,ah as b,ai as y,aj as de,ak as ce,a2 as pe,a3 as ge}from"./index-D6S0K3LY.js";import{r as m}from"./react-Clk3ySf9.js";import{M as he}from"./minus-Bnd2LAyg.js";import{S as ue}from"./shield-check-D4biKlRl.js";import{C as me}from"./clock-3-Bf8cS_Nw.js";/**
  * @license lucide-react v0.323.0 - ISC
  *
  * This source code is licensed under the ISC license.
@@ -211,7 +211,7 @@ import{a9 as E,q as a,aa as C,ab as Y,j as r,I as re,V as v,ac as ae,a7 as T,G a
     background: ${({theme:e})=>e.color.primarySoft};
     color: ${({theme:e})=>e.color.primary};
   }
-`,qe=a.span`
+`,He=a.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -227,7 +227,7 @@ import{a9 as E,q as a,aa as C,ab as Y,j as r,I as re,V as v,ac as ae,a7 as T,G a
     background: ${({theme:e})=>e.color.brand};
     color: ${({theme:e})=>e.color.onPrimary};
   }
-`,He=a.span`
+`,qe=a.span`
   font-size: 0.6875rem;
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
   line-height: 1.05;
@@ -265,7 +265,7 @@ import{a9 as E,q as a,aa as C,ab as Y,j as r,I as re,V as v,ac as ae,a7 as T,G a
   line-height: ${({theme:e})=>e.typography.lineHeight.tight};
   letter-spacing: -0.03em;
   color: ${({theme:e})=>e.color.text};
-`,U=a.p`
+`,W=a.p`
   margin: 0;
   color: ${({theme:e})=>e.color.textMuted};
   font-size: ${({theme:e})=>e.typography.size.sm};
@@ -299,7 +299,7 @@ import{a9 as E,q as a,aa as C,ab as Y,j as r,I as re,V as v,ac as ae,a7 as T,G a
   grid-template-columns: auto minmax(0, 1fr);
   gap: ${({theme:e})=>e.spacing[2]};
   min-width: 0;
-`,Ue=a.div`
+`,We=a.div`
   position: relative;
   flex: 0 0 auto;
   width: 4rem;
@@ -309,7 +309,7 @@ import{a9 as E,q as a,aa as C,ab as Y,j as r,I as re,V as v,ac as ae,a7 as T,G a
   background: ${({theme:e})=>e.color.surfaceMuted};
   box-shadow: ${({theme:e})=>e.shadow.sm};
   overflow: hidden;
-`,We=a.img`
+`,Ne=a.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -319,11 +319,11 @@ import{a9 as E,q as a,aa as C,ab as Y,j as r,I as re,V as v,ac as ae,a7 as T,G a
   font-size: ${({theme:e})=>e.typography.size.sm};
   font-weight: ${({theme:e})=>e.typography.weight.extrabold};
   letter-spacing: -0.04em;
-`;const Ne=a.div`
+`;const Oe=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
   min-width: 0;
-`,Oe=a.div`
+`,Ue=a.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -385,11 +385,11 @@ import{a9 as E,q as a,aa as C,ab as Y,j as r,I as re,V as v,ac as ae,a7 as T,G a
   gap: ${({theme:e})=>e.spacing[2]};
   color: ${({theme:e})=>e.color.textMuted};
   font-size: ${({theme:e})=>e.typography.size.xs};
-`,W=a.span`
+`,N=a.span`
   display: inline-flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[1]};
-`,N=a.span`
+`,O=a.span`
   color: ${({theme:e})=>e.color.danger};
   font-size: ${({theme:e})=>e.typography.size.xs};
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
@@ -487,7 +487,7 @@ import{a9 as E,q as a,aa as C,ab as Y,j as r,I as re,V as v,ac as ae,a7 as T,G a
   color: ${({theme:e})=>e.color.text};
   font-size: ${({theme:e})=>e.typography.size.sm};
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
-`,O=a.div`
+`,U=a.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({theme:e})=>e.spacing[1]};
@@ -580,4 +580,4 @@ import{a9 as E,q as a,aa as C,ab as Y,j as r,I as re,V as v,ac as ae,a7 as T,G a
   color: ${({theme:e})=>e.color.primary};
   font-size: ${({theme:e})=>e.typography.size.xs};
   font-weight: ${({theme:e})=>e.typography.weight.bold};
-`,w=15e3,X=200,J=e=>{const s=e.match(/\d+/);return Number((s==null?void 0:s[0])??0)},mr=(e=K)=>{const s=new Map;return e.forEach(o=>{const n=s.get(o.store);if(n){n.items.push(o),n.itemCount+=o.quantity,n.subtotal+=o.subtotal,n.availableCount+=o.available?1:0,n.unavailableCount+=o.available?0:1;return}s.set(o.store,{store:o.store,items:[o],itemCount:o.quantity,subtotal:o.subtotal,etaLabel:o.eta,availableCount:o.available?1:0,unavailableCount:o.available?0:1})}),[...s.values()].map(o=>{const n=o.items.map(l=>J(l.eta)).filter(Boolean),d=n.length?Math.min(...n):0,p=n.length?Math.max(...n):0;return{...o,etaLabel:n.length<=1||d===p?`${d||0} min`:`${d}–${p} min`}})},xr=e=>{const s=e.reduce((l,c)=>l+c.subtotal,0),o=s>=w?0:1200,n=e.map(l=>J(l.eta)).filter(Boolean),d=n.length?Math.min(...n):0,p=n.length?Math.max(...n):0;return{subtotal:s,deliveryFee:o,total:s+o+X,totalUnits:e.reduce((l,c)=>l+c.quantity,0),unavailableItems:e.filter(l=>!l.available).length,deliveryWindow:n.length?d===p?`${d} min`:`${d}–${p} min`:"Pendiente",freeShippingRemaining:Math.max(w-s,0),freeShippingProgress:Math.min(s/w*100,100)}},br=[{label:"Carrito",state:"active"},{label:"Dirección",state:"idle"},{label:"Entrega",state:"idle"},{label:"Pago",state:"idle"},{label:"Confirmar",state:"idle"}],yr=[{label:"Crédito",icon:B},{label:"Débito",icon:B},{label:"Transferencia",icon:be}],$r=[{label:"Compra protegida",icon:ue},{label:"Sin costos sorpresa",icon:me},{label:"Entrega clara",icon:j}],fr=["Delivery GO","Entrega comercio","Sin retiro"];function zr(){const[e,s]=m.useState(K),[o,n]=m.useState(null),d=m.useMemo(()=>mr(e),[e]),{subtotal:p,deliveryFee:l,total:c,totalUnits:k,unavailableItems:L,deliveryWindow:Z,freeShippingRemaining:z,freeShippingProgress:_}=m.useMemo(()=>xr(e),[e]),F=(t,i)=>{s(S=>S.map(u=>{if(u.id!==t)return u;const q=Math.max(1,u.quantity+i);return{...u,quantity:q,subtotal:u.price*q}}))},ee=t=>{s(i=>i.filter(S=>S.id!==t)),n(null)};return d.length===0?r.jsx(H,{showSearch:!1,children:r.jsx(P,{children:r.jsx(M,{children:r.jsx(ie,{icon:R,title:"Tu carrito está vacío",text:"Explorá los negocios de La Francia y armá tu pedido.",ctaLabel:"Explorar negocios",ctaTo:"/comercios"})})})}):r.jsxs(H,{showSearch:!1,children:[r.jsxs(Me,{children:[r.jsx(P,{children:r.jsx(M,{children:r.jsx(Ie,{children:r.jsx($,{children:r.jsxs(Pe,{children:[r.jsxs(Ee,{children:[r.jsx(Te,{children:r.jsx(oe,{children:"Carrito"})}),r.jsxs(Re,{children:[r.jsxs(h,{"data-tone":"brand",children:[r.jsx(R,{size:14,"aria-hidden":"true"})," ",k," unidades"]}),r.jsxs(h,{"data-tone":L>0?"warning":"success",children:[r.jsx(xe,{size:14,"aria-hidden":"true"})," ",L," sin stock"]}),r.jsxs(h,{children:[r.jsx(j,{size:14,"aria-hidden":"true"})," ",Z]})]})]}),r.jsx(Le,{"aria-label":"Progreso de compra",children:br.map((t,i)=>r.jsxs(Fe,{"data-state":t.state,children:[r.jsx(qe,{"data-state":t.state,children:i+1}),r.jsx(He,{children:t.label})]},t.label))})]})})})})}),r.jsx(P,{children:r.jsx(M,{children:r.jsxs(Be,{children:[r.jsx(A,{children:d.map(t=>r.jsx(Ae,{children:r.jsxs($,{children:[r.jsxs(D,{children:[r.jsxs(G,{children:[r.jsx(Q,{children:t.store}),r.jsxs(U,{children:[t.itemCount," ítems · ",t.unavailableCount," pendientes"]})]}),r.jsxs(De,{children:[r.jsx(j,{size:14,"aria-hidden":"true"})," ",t.etaLabel]})]}),r.jsx(Ge,{children:t.items.map(i=>r.jsxs(Qe,{children:[r.jsx(Ue,{children:r.jsx(We,{src:ne(i.categoryId),alt:i.product,loading:"lazy"})}),r.jsxs(Ne,{children:[r.jsxs(Oe,{children:[r.jsxs("div",{style:{minWidth:0},children:[r.jsx(Ve,{children:i.product}),r.jsx(x,{children:i.store})]}),r.jsxs(pr,{children:[r.jsx(Ye,{children:i.available?g(i.subtotal):"—"}),r.jsx(gr,{type:"button","aria-label":`Quitar ${i.product} del carrito`,onClick:()=>n(i.id),children:r.jsx(se,{size:15,"aria-hidden":"true"})})]})]}),r.jsxs(Ke,{children:[r.jsxs(hr,{children:[r.jsx(V,{type:"button",onClick:()=>F(i.id,-1),disabled:i.quantity<=1,"aria-label":`Quitar una unidad de ${i.product}`,children:r.jsx(he,{size:14,"aria-hidden":"true"})}),r.jsxs(ur,{"aria-live":"polite",children:[i.quantity," unid."]}),r.jsx(V,{type:"button",onClick:()=>F(i.id,1),"aria-label":`Agregar una unidad de ${i.product}`,children:r.jsx(le,{size:14,"aria-hidden":"true"})})]}),r.jsx(Xe,{"data-tone":i.statusTone,children:i.statusLabel})]}),r.jsxs(Je,{children:[r.jsxs(W,{children:[r.jsx(j,{size:14,"aria-hidden":"true"}),i.eta]}),i.statusTone==="success"?r.jsx(W,{children:"Listo para sumar al pedido"}):i.statusTone==="warning"?r.jsx(N,{"data-tone":"warning",children:"Pocas unidades"}):r.jsx(N,{"data-tone":"danger",children:"Sin stock"})]})]})]},i.id))})]})},t.store))}),r.jsx(Ze,{children:r.jsx($,{children:r.jsxs(_e,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Resumen"}),r.jsx(y,{children:"Costos claros y pago seguro."}),r.jsx(x,{children:"El total sale sin sorpresas y con el envío ya calculado."})]}),r.jsxs(rr,{children:[r.jsxs(ar,{children:[r.jsx("span",{children:"Envío gratis"}),r.jsx("strong",{children:z>0?`${g(z)} faltan`:"Ya lo alcanzaste"})]}),r.jsx(ir,{children:r.jsx(or,{$value:_})}),r.jsxs(tr,{children:["Umbral estimado ",g(w)," ·"," ",z>0?"te falta poco para liberarlo":"el envío ya queda liberado"]})]}),r.jsxs(nr,{children:[r.jsxs(f,{children:[r.jsx("span",{children:"Subtotal"}),r.jsx("span",{children:g(p)})]}),r.jsxs(f,{children:[r.jsx("span",{children:"Envío estimado"}),r.jsx("span",{children:g(l)})]}),r.jsxs(f,{children:[r.jsx("span",{children:"Cargo de servicio"}),r.jsx("span",{children:g(X)})]}),r.jsxs(f,{"data-emphasis":"true",children:[r.jsx("strong",{children:"Total estimado"}),r.jsx(de,{children:g(c)})]})]}),r.jsx(sr,{children:$r.map(t=>{const i=t.icon;return r.jsxs(lr,{children:[r.jsx(i,{size:16,"aria-hidden":"true"}),r.jsx("span",{children:t.label})]},t.label)})}),r.jsxs(I,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Dirección"}),r.jsx(y,{children:"Elegí dónde recibir"}),r.jsx(x,{children:"Elegí una dirección guardada antes de seguir."})]}),r.jsx(A,{children:ce.map(t=>r.jsx(v,{children:r.jsx($,{children:r.jsxs(D,{children:[r.jsxs(G,{children:[r.jsx(Q,{children:t.label}),r.jsx(U,{children:t.address})]}),r.jsx(h,{"data-tone":t.primary?"brand":"success",children:t.primary?"Principal":"Guardada"})]})})},t.id))})]}),r.jsxs(I,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Entrega"}),r.jsx(y,{children:"Cómo llega el pedido"}),r.jsx(x,{children:"La app deja claro quién entrega."})]}),r.jsx(O,{children:fr.map(t=>r.jsx(h,{"data-tone":"brand",children:t},t))})]}),r.jsxs(I,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Pago"}),r.jsx(y,{children:"Elegí el medio de pago"}),r.jsx(er,{children:"Crédito, débito y transferencia quedan visibles antes de confirmar."})]}),r.jsx(O,{children:yr.map(t=>{const i=t.icon;return r.jsxs(h,{"data-tone":"brand",children:[r.jsx(i,{size:14,"aria-hidden":"true"}),t.label]},t.label)})})]}),r.jsxs(cr,{children:[r.jsx(pe,{to:"/pedidos",children:"Confirmar pedido"}),r.jsx(ge,{to:"/comercios",children:"Seguir comprando"})]})]})})})]})})})]}),r.jsx(Se,{open:o!==null,title:"¿Deseás eliminar este artículo?",text:"Se va a quitar del carrito.",onCancel:()=>n(null),onConfirm:()=>o&&ee(o)})]})}export{zr as CartScreen};
+`,w=15e3,X=200,J=e=>{const s=e.match(/\d+/);return Number((s==null?void 0:s[0])??0)},mr=(e=K)=>{const s=new Map;return e.forEach(o=>{const n=s.get(o.store);if(n){n.items.push(o),n.itemCount+=o.quantity,n.subtotal+=o.subtotal,n.availableCount+=o.available?1:0,n.unavailableCount+=o.available?0:1;return}s.set(o.store,{store:o.store,items:[o],itemCount:o.quantity,subtotal:o.subtotal,etaLabel:o.eta,availableCount:o.available?1:0,unavailableCount:o.available?0:1})}),[...s.values()].map(o=>{const n=o.items.map(l=>J(l.eta)).filter(Boolean),d=n.length?Math.min(...n):0,p=n.length?Math.max(...n):0;return{...o,etaLabel:n.length<=1||d===p?`${d||0} min`:`${d}–${p} min`}})},xr=e=>{const s=e.reduce((l,c)=>l+c.subtotal,0),o=s>=w?0:1200,n=e.map(l=>J(l.eta)).filter(Boolean),d=n.length?Math.min(...n):0,p=n.length?Math.max(...n):0;return{subtotal:s,deliveryFee:o,total:s+o+X,totalUnits:e.reduce((l,c)=>l+c.quantity,0),unavailableItems:e.filter(l=>!l.available).length,deliveryWindow:n.length?d===p?`${d} min`:`${d}–${p} min`:"Pendiente",freeShippingRemaining:Math.max(w-s,0),freeShippingProgress:Math.min(s/w*100,100)}},br=[{label:"Carrito",state:"active"},{label:"Dirección",state:"idle"},{label:"Entrega",state:"idle"},{label:"Pago",state:"idle"},{label:"Confirmar",state:"idle"}],yr=[{label:"Crédito",icon:B},{label:"Débito",icon:B},{label:"Transferencia",icon:be}],$r=[{label:"Compra protegida",icon:ue},{label:"Sin costos sorpresa",icon:me},{label:"Entrega clara",icon:j}],fr=["Delivery GO","Entrega comercio","Sin retiro"];function zr(){const[e,s]=m.useState(K),[o,n]=m.useState(null),d=m.useMemo(()=>mr(e),[e]),{subtotal:p,deliveryFee:l,total:c,totalUnits:k,unavailableItems:L,deliveryWindow:Z,freeShippingRemaining:z,freeShippingProgress:_}=m.useMemo(()=>xr(e),[e]),F=(t,i)=>{s(S=>S.map(u=>{if(u.id!==t)return u;const H=Math.max(1,u.quantity+i);return{...u,quantity:H,subtotal:u.price*H}}))},ee=t=>{s(i=>i.filter(S=>S.id!==t)),n(null)};return d.length===0?r.jsx(q,{showSearch:!1,children:r.jsx(P,{children:r.jsx(M,{children:r.jsx(ie,{icon:R,title:"Tu carrito está vacío",text:"Explorá los negocios de La Francia y armá tu pedido.",ctaLabel:"Explorar negocios",ctaTo:"/comercios"})})})}):r.jsxs(q,{showSearch:!1,children:[r.jsxs(Me,{children:[r.jsx(P,{children:r.jsx(M,{children:r.jsx(Ie,{children:r.jsx($,{children:r.jsxs(Pe,{children:[r.jsxs(Ee,{children:[r.jsx(Te,{children:r.jsx(oe,{children:"Carrito"})}),r.jsxs(Re,{children:[r.jsxs(h,{"data-tone":"brand",children:[r.jsx(R,{size:14,"aria-hidden":"true"})," ",k," unidades"]}),r.jsxs(h,{"data-tone":L>0?"warning":"success",children:[r.jsx(xe,{size:14,"aria-hidden":"true"})," ",L," sin stock"]}),r.jsxs(h,{children:[r.jsx(j,{size:14,"aria-hidden":"true"})," ",Z]})]})]}),r.jsx(Le,{"aria-label":"Progreso de compra",children:br.map((t,i)=>r.jsxs(Fe,{"data-state":t.state,children:[r.jsx(He,{"data-state":t.state,children:i+1}),r.jsx(qe,{children:t.label})]},t.label))})]})})})})}),r.jsx(P,{children:r.jsx(M,{children:r.jsxs(Be,{children:[r.jsx(A,{children:d.map(t=>r.jsx(Ae,{children:r.jsxs($,{children:[r.jsxs(D,{children:[r.jsxs(G,{children:[r.jsx(Q,{children:t.store}),r.jsxs(W,{children:[t.itemCount," ítems · ",t.unavailableCount," pendientes"]})]}),r.jsxs(De,{children:[r.jsx(j,{size:14,"aria-hidden":"true"})," ",t.etaLabel]})]}),r.jsx(Ge,{children:t.items.map(i=>r.jsxs(Qe,{children:[r.jsx(We,{children:r.jsx(Ne,{src:ne(i.categoryId),alt:i.product,loading:"lazy"})}),r.jsxs(Oe,{children:[r.jsxs(Ue,{children:[r.jsxs("div",{style:{minWidth:0},children:[r.jsx(Ve,{children:i.product}),r.jsx(x,{children:i.store})]}),r.jsxs(pr,{children:[r.jsx(Ye,{children:i.available?g(i.subtotal):"—"}),r.jsx(gr,{type:"button","aria-label":`Quitar ${i.product} del carrito`,onClick:()=>n(i.id),children:r.jsx(se,{size:15,"aria-hidden":"true"})})]})]}),r.jsxs(Ke,{children:[r.jsxs(hr,{children:[r.jsx(V,{type:"button",onClick:()=>F(i.id,-1),disabled:i.quantity<=1,"aria-label":`Quitar una unidad de ${i.product}`,children:r.jsx(he,{size:14,"aria-hidden":"true"})}),r.jsxs(ur,{"aria-live":"polite",children:[i.quantity," unid."]}),r.jsx(V,{type:"button",onClick:()=>F(i.id,1),"aria-label":`Agregar una unidad de ${i.product}`,children:r.jsx(le,{size:14,"aria-hidden":"true"})})]}),r.jsx(Xe,{"data-tone":i.statusTone,children:i.statusLabel})]}),r.jsxs(Je,{children:[r.jsxs(N,{children:[r.jsx(j,{size:14,"aria-hidden":"true"}),i.eta]}),i.statusTone==="success"?r.jsx(N,{children:"Listo para sumar al pedido"}):i.statusTone==="warning"?r.jsx(O,{"data-tone":"warning",children:"Pocas unidades"}):r.jsx(O,{"data-tone":"danger",children:"Sin stock"})]})]})]},i.id))})]})},t.store))}),r.jsx(Ze,{children:r.jsx($,{children:r.jsxs(_e,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Resumen"}),r.jsx(y,{children:"Costos claros y pago seguro."}),r.jsx(x,{children:"El total sale sin sorpresas y con el envío ya calculado."})]}),r.jsxs(rr,{children:[r.jsxs(ar,{children:[r.jsx("span",{children:"Envío gratis"}),r.jsx("strong",{children:z>0?`${g(z)} faltan`:"Ya lo alcanzaste"})]}),r.jsx(ir,{children:r.jsx(or,{$value:_})}),r.jsxs(tr,{children:["Umbral estimado ",g(w)," ·"," ",z>0?"te falta poco para liberarlo":"el envío ya queda liberado"]})]}),r.jsxs(nr,{children:[r.jsxs(f,{children:[r.jsx("span",{children:"Subtotal"}),r.jsx("span",{children:g(p)})]}),r.jsxs(f,{children:[r.jsx("span",{children:"Envío estimado"}),r.jsx("span",{children:g(l)})]}),r.jsxs(f,{children:[r.jsx("span",{children:"Cargo de servicio"}),r.jsx("span",{children:g(X)})]}),r.jsxs(f,{"data-emphasis":"true",children:[r.jsx("strong",{children:"Total estimado"}),r.jsx(de,{children:g(c)})]})]}),r.jsx(sr,{children:$r.map(t=>{const i=t.icon;return r.jsxs(lr,{children:[r.jsx(i,{size:16,"aria-hidden":"true"}),r.jsx("span",{children:t.label})]},t.label)})}),r.jsxs(I,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Dirección"}),r.jsx(y,{children:"Elegí dónde recibir"}),r.jsx(x,{children:"Elegí una dirección guardada antes de seguir."})]}),r.jsx(A,{children:ce.map(t=>r.jsx(v,{children:r.jsx($,{children:r.jsxs(D,{children:[r.jsxs(G,{children:[r.jsx(Q,{children:t.label}),r.jsx(W,{children:t.address})]}),r.jsx(h,{"data-tone":t.primary?"brand":"success",children:t.primary?"Principal":"Guardada"})]})})},t.id))})]}),r.jsxs(I,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Entrega"}),r.jsx(y,{children:"Cómo llega el pedido"}),r.jsx(x,{children:"La app deja claro quién entrega."})]}),r.jsx(U,{children:fr.map(t=>r.jsx(h,{"data-tone":"brand",children:t},t))})]}),r.jsxs(I,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Pago"}),r.jsx(y,{children:"Elegí el medio de pago"}),r.jsx(er,{children:"Crédito, débito y transferencia quedan visibles antes de confirmar."})]}),r.jsx(U,{children:yr.map(t=>{const i=t.icon;return r.jsxs(h,{"data-tone":"brand",children:[r.jsx(i,{size:14,"aria-hidden":"true"}),t.label]},t.label)})})]}),r.jsxs(cr,{children:[r.jsx(pe,{to:"/pedidos",children:"Confirmar pedido"}),r.jsx(ge,{to:"/comercios",children:"Seguir comprando"})]})]})})})]})})})]}),r.jsx(Se,{open:o!==null,title:"¿Deseás eliminar este artículo?",text:"Se va a quitar del carrito.",onCancel:()=>n(null),onConfirm:()=>o&&ee(o)})]})}export{zr as CartScreen};
