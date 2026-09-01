@@ -15,6 +15,13 @@ export const ErrandBanner = styled(Link)`
   cursor: pointer;
   transition: transform 200ms ease, box-shadow 200ms ease;
 
+  /* En escritorio el bloque se centra: el ancho completo dejaba el texto
+     perdido a la izquierda de una franja muy larga. */
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    justify-content: center;
+    gap: ${({ theme }) => theme.spacing[4]};
+  }
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadow.md};
@@ -37,6 +44,10 @@ export const ErrandBannerCopy = styled.span`
   gap: 0.1rem;
   min-width: 0;
   flex: 1 1 auto;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    flex: 0 1 auto;
+  }
 `;
 
 export const ErrandBannerTitle = styled.span`

@@ -1129,7 +1129,7 @@ export function StoreProfileScreen() {
               subtitle="Combinaciones que van con lo que estás pidiendo."
             />
 
-            <ScrollRail aria-label="Productos sugeridos">
+            <HScrollRail as={ScrollRail} aria-label="Productos sugeridos">
               {suggestionProducts.map((product) => (
                 <CatalogProductCard
                   key={product.id}
@@ -1141,7 +1141,7 @@ export function StoreProfileScreen() {
                   onAdd={(units) => updateQuantity(product.id, units)}
                 />
               ))}
-            </ScrollRail>
+            </HScrollRail>
           </SectionInner>
         </Section>
       )}

@@ -15,6 +15,7 @@ import { StoreCard } from '../components/StoreCard';
 import { categories, featuredStores, nearbyOffers } from '../../home/homeContent';
 import { matchesQuery } from '../marketplace.utils';
 import { rankResults } from '@core/data/rankingService';
+import { ScrollRail as HScrollRail } from '@shared/components/ScrollRail';
 import { useSortPreference } from '@shared/hooks/useSortPreference';
 import { Section, SectionInner } from '../ui';
 import {
@@ -123,7 +124,7 @@ export function MarketplaceHomeScreen() {
               seeAllTo="/comercios"
             />
 
-            <CategoryRail aria-label="Categorías">
+            <HScrollRail as={CategoryRail} aria-label="Categorías">
               {visibleCategories.map((category, index) => (
                 <CategoryTile
                   key={category.id}
@@ -133,7 +134,7 @@ export function MarketplaceHomeScreen() {
                   priority={index < 5}
                 />
               ))}
-            </CategoryRail>
+            </HScrollRail>
           </SectionInner>
         </Section>
       ) : null}
@@ -148,7 +149,7 @@ export function MarketplaceHomeScreen() {
               seeAllTo="/comercios"
             />
 
-            <ScrollRail aria-label="Productos destacados">
+            <HScrollRail as={ScrollRail} aria-label="Productos destacados">
               {visibleOffers.map((offer, index) => (
                 <ProductCard
                   key={offer.id}
@@ -163,7 +164,7 @@ export function MarketplaceHomeScreen() {
                   priority={index < 3}
                 />
               ))}
-            </ScrollRail>
+            </HScrollRail>
           </SectionInner>
         </Section>
       ) : null}
@@ -178,7 +179,7 @@ export function MarketplaceHomeScreen() {
               seeAllTo="/comercios"
             />
 
-            <WideScrollRail aria-label="Negocios destacados">
+            <HScrollRail as={WideScrollRail} aria-label="Negocios destacados">
               {visibleStores.map((store, index) => (
                 <StoreCard
                   key={store.id}
@@ -197,7 +198,7 @@ export function MarketplaceHomeScreen() {
                   priority={index < 2}
                 />
               ))}
-            </WideScrollRail>
+            </HScrollRail>
           </SectionInner>
         </Section>
       ) : null}

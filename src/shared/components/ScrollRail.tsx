@@ -1,4 +1,5 @@
 import {
+  type ComponentType,
   type ReactNode,
   useCallback,
   useEffect,
@@ -18,6 +19,11 @@ type ScrollRailProps = {
   children: ReactNode;
   'aria-label'?: string;
   className?: string;
+  /**
+   * Riel a usar como pista. Permite conservar los anchos y el snap de cada
+   * sección, reutilizando la lógica de flechas sin duplicarla.
+   */
+  as?: ComponentType<{ ref?: unknown; children?: ReactNode; 'aria-label'?: string }>;
 };
 
 /** Margen de tolerancia: evita que la flecha parpadee por 1px de redondeo. */
@@ -30,7 +36,7 @@ const EDGE_TOLERANCE = 4;
  * únicamente la derecha, al final únicamente la izquierda, y ambas en el
  * medio. Si todo entra en pantalla no se muestra ninguna.
  */
-export function ScrollRail({ children, className, ...rest }: ScrollRailProps) {
+export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRailProps) {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -111,9 +117,15 @@ tabIndex={-1}
         </ScrollRailArrow>
       ) : null}
 
-      <ScrollRailTrack ref={trackRef} {...rest}>
-        {children}
-      </ScrollRailTrack>
+      {Track ? (
+        <Track ref={trackRef} {...rest}>
+          {children}
+        </Track>
+      ) : (
+        <ScrollRailTrack ref={trackRef} {...rest}>
+          {children}
+        </ScrollRailTrack>
+      )}
 
       {canScrollRight ? (
         <ScrollRailArrow
