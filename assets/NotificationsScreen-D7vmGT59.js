@@ -1,7 +1,7 @@
-import{i as o,y as c,a0 as l,Z as p,j as i,M as t,D as r,a as n,E as u,al as g,N as h,d as f}from"./index-Cc6rlhUm.js";import{r as x}from"./react-Clk3ySf9.js";import{B as y}from"./badge-percent-CkEjFiUR.js";const b=o.div`
+import{q as i,D as c,a3 as l,a0 as p,j as o,M as t,I as r,a as n,E as u,ao as g,R as h,e as f}from"./index-CEnDCpoj.js";import{r as x}from"./react-Clk3ySf9.js";import{B as b}from"./badge-percent-CREyDmu6.js";const y=i.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[2]};
-`,m=o.article`
+`,m=i.article`
   position: relative;
   display: flex;
   align-items: flex-start;
@@ -15,7 +15,7 @@ import{i as o,y as c,a0 as l,Z as p,j as i,M as t,D as r,a as n,E as u,al as g,N
   &[data-unread='true'] {
     border-color: rgba(0, 71, 231, 0.24);
   }
-`,$=o.span`
+`,$=i.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -25,34 +25,34 @@ import{i as o,y as c,a0 as l,Z as p,j as i,M as t,D as r,a as n,E as u,al as g,N
   border-radius: ${({theme:e})=>e.radius.md};
   background: ${({theme:e})=>e.color.primarySoft};
   color: ${({theme:e})=>e.color.primary};
-`,j=o.div`
+`,j=i.div`
   display: grid;
   gap: 0.15rem;
   min-width: 0;
   flex: 1 1 auto;
-`,N=o.div`
+`,S=i.div`
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: ${({theme:e})=>e.spacing[2]};
-`,S=o.h3`
+`,N=i.h3`
   margin: 0;
   font-family: ${({theme:e})=>e.typography.fontFamily.heading};
   font-size: ${({theme:e})=>e.typography.size.base};
   font-weight: ${({theme:e})=>e.typography.weight.bold};
   letter-spacing: -0.02em;
   color: ${({theme:e})=>e.color.text};
-`,w=o.span`
+`,w=i.span`
   flex: 0 0 auto;
   color: ${({theme:e})=>e.color.textSoft};
   font-size: ${({theme:e})=>e.typography.size.xs};
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
-`,v=o.p`
+`,v=i.p`
   margin: 0;
   color: ${({theme:e})=>e.color.textMuted};
   font-size: ${({theme:e})=>e.typography.size.sm};
   line-height: 1.4;
-`,C=o.span`
+`,C=i.span`
   position: absolute;
   top: ${({theme:e})=>e.spacing[2]};
   right: ${({theme:e})=>e.spacing[2]};
@@ -60,7 +60,7 @@ import{i as o,y as c,a0 as l,Z as p,j as i,M as t,D as r,a as n,E as u,al as g,N
   height: 0.5rem;
   border-radius: ${({theme:e})=>e.radius.full};
   background: ${({theme:e})=>e.color.danger};
-`,k=o.button`
+`,k=i.button`
   justify-self: end;
   min-height: 2.25rem;
   padding: 0 ${({theme:e})=>e.spacing[3]};
@@ -77,4 +77,4 @@ import{i as o,y as c,a0 as l,Z as p,j as i,M as t,D as r,a as n,E as u,al as g,N
     border-color: ${({theme:e})=>e.color.danger};
     background: rgba(220, 38, 38, 0.08);
   }
-`,z=[{id:"n1",title:"Tu pedido va en camino",subtitle:"El repartidor ya retiró tu pedido de Almacén Juan.",date:"Hoy",unread:!0,icon:c},{id:"n2",title:"Pedido confirmado",subtitle:"Panadería La Esquina aceptó tu pedido #1248.",date:"Hoy",unread:!0,icon:l},{id:"n3",title:"Nueva oferta cerca tuyo",subtitle:"La Huerta bajó el precio de las verduras del día.",date:"Ayer",unread:!0,icon:y},{id:"n4",title:"Nuevo comercio en LaFranciaGO",subtitle:"Carnicería Central ya está recibiendo pedidos.",date:"12/08",unread:!1,icon:p}];function P(){const[e,s]=x.useState(z);return e.length===0?i.jsx(t,{showSearch:!1,children:i.jsx(r,{children:i.jsx(n,{children:i.jsx(u,{icon:g,title:"No tenés notificaciones",text:"Acá vas a ver el estado de tus pedidos y las ofertas cerca tuyo.",ctaLabel:"Explorar negocios",ctaTo:"/comercios"})})})}):i.jsx(t,{showSearch:!1,children:i.jsx(r,{children:i.jsx(n,{children:i.jsxs(h,{children:[i.jsx(f,{title:"Notificaciones",chip:`${e.filter(a=>a.unread).length} nuevas`}),i.jsx(k,{type:"button",onClick:()=>s([]),children:"Limpiar todo"}),i.jsx(b,{children:e.map(a=>{const d=a.icon;return i.jsxs(m,{"data-unread":a.unread,children:[i.jsx($,{children:i.jsx(d,{size:18,"aria-hidden":"true"})}),i.jsxs(j,{children:[i.jsxs(N,{children:[i.jsx(S,{children:a.title}),i.jsx(w,{children:a.date})]}),i.jsx(v,{children:a.subtitle})]}),a.unread?i.jsx(C,{"aria-label":"Sin leer"}):null]},a.id)})})]})})})})}export{P as NotificationsScreen};
+`,z=[{id:"n1",title:"Tu pedido va en camino",subtitle:"El repartidor ya retiró tu pedido de Almacén Juan.",date:"Hoy",unread:!0,icon:c},{id:"n2",title:"Pedido confirmado",subtitle:"Panadería La Esquina aceptó tu pedido #1248.",date:"Hoy",unread:!0,icon:l},{id:"n3",title:"Nueva oferta cerca tuyo",subtitle:"La Huerta bajó el precio de las verduras del día.",date:"Ayer",unread:!0,icon:b},{id:"n4",title:"Nuevo comercio en LaFranciaGO",subtitle:"Carnicería Central ya está recibiendo pedidos.",date:"12/08",unread:!1,icon:p}];function P(){const[e,s]=x.useState(z);return e.length===0?o.jsx(t,{showSearch:!1,children:o.jsx(r,{children:o.jsx(n,{children:o.jsx(u,{icon:g,title:"No tenés notificaciones",text:"Acá vas a ver el estado de tus pedidos y las ofertas cerca tuyo.",ctaLabel:"Explorar negocios",ctaTo:"/comercios"})})})}):o.jsx(t,{showSearch:!1,children:o.jsx(r,{children:o.jsx(n,{children:o.jsxs(h,{children:[o.jsx(f,{title:"Notificaciones",chip:`${e.filter(a=>a.unread).length} nuevas`}),o.jsx(k,{type:"button",onClick:()=>s([]),children:"Limpiar todo"}),o.jsx(y,{children:e.map(a=>{const d=a.icon;return o.jsxs(m,{"data-unread":a.unread,children:[o.jsx($,{children:o.jsx(d,{size:18,"aria-hidden":"true"})}),o.jsxs(j,{children:[o.jsxs(S,{children:[o.jsx(N,{children:a.title}),o.jsx(w,{children:a.date})]}),o.jsx(v,{children:a.subtitle})]}),a.unread?o.jsx(C,{"aria-label":"Sin leer"}):null]},a.id)})})]})})})})}export{P as NotificationsScreen};
