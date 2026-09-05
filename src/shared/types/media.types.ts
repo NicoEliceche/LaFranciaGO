@@ -14,6 +14,8 @@ export interface MediaLimits {
   maxVideos: number;
   maxImageDimension: number;
   maxImageBytes: number;
+  /** Tope del archivo original, antes de comprimir. */
+  maxImageUploadBytes: number;
   maxVideoBytes: number;
   maxVideoSeconds: number;
 }

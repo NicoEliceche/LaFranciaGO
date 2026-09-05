@@ -17,6 +17,12 @@ export const MEDIA_LIMITS: MediaLimits = {
   maxImageDimension: 1200,
   /** Peso objetivo por foto ya procesada. */
   maxImageBytes: 300 * 1024,
+  /**
+   * Tope del archivo ANTES de comprimir. El navegador tiene que decodificar la
+   * imagen entera en memoria para procesarla: sin este límite, un archivo de
+   * cientos de megas cuelga la pestaña del usuario.
+   */
+  maxImageUploadBytes: 12 * 1024 * 1024,
   /** Tope de subida del video, sin recomprimir. */
   maxVideoBytes: 20 * 1024 * 1024,
   maxVideoSeconds: 30,
@@ -165,9 +171,25 @@ export async function validateVideo(file: File): Promise<string | null> {
   return null;
 }
 
+/**
+ * Comprueba el archivo antes de procesarlo.
+ *
+ * `file.type` lo informa el navegador a partir de la extensión y se puede
+ * falsear, así que no alcanza como garantía: la validación de verdad es que
+ * `processImage` logre decodificarlo como imagen. Esto filtra lo evidente y,
+ * sobre todo, frena archivos enormes antes de intentar cargarlos en memoria.
+ */
 export function validateImageFile(file: File): string | null {
   if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
     return 'Formato no soportado. Usá JPG, PNG o WebP.';
+  }
+
+  if (file.size > MEDIA_LIMITS.maxImageUploadBytes) {
+    return `La imagen supera ${formatBytes(MEDIA_LIMITS.maxImageUploadBytes)}. Probá con una más liviana.`;
+  }
+
+  if (file.size === 0) {
+    return 'El archivo está vacío.';
   }
 
   return null;
