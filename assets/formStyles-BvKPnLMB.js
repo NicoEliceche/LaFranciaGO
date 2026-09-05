@@ -1,4 +1,4 @@
-import{a8 as l,q as o,G as t,ad as w,ab as k,j as e,w as z,X as v}from"./index-BAcms3Nh.js";import{r as n}from"./react-B1kPYQQd.js";import{f as F}from"./mediaService-D2_VAu2k.js";/**
+import{a8 as l,q as o,G as t,ad as w,ab as k,j as e,w as z,X as v}from"./index-BUEfuTw_.js";import{r as n}from"./react-B1kPYQQd.js";import{f as F}from"./mediaService-D2_VAu2k.js";/**
  * @license lucide-react v0.323.0 - ISC
  *
  * This source code is licensed under the ISC license.
@@ -139,7 +139,7 @@ import{a8 as l,q as o,G as t,ad as w,ab as k,j as e,w as z,X as v}from"./index-B
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-`,q=o.button`
+`,T=o.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -158,7 +158,7 @@ import{a8 as l,q as o,G as t,ad as w,ab as k,j as e,w as z,X as v}from"./index-B
     background: rgba(220, 38, 38, 0.12);
     color: ${({theme:r})=>r.color.danger};
   }
-`;function G({id:r,accept:m,required:b,label:h="Elegir archivo",onChange:i}){const $=n.useId(),c=r??$,d=n.useRef(null),[a,p]=n.useState(null),x=y=>{var u;const g=((u=y.target.files)==null?void 0:u[0])??null;p(g),i==null||i(g)},f=()=>{d.current&&(d.current.value=""),p(null),i==null||i(null)};return e.jsxs(H,{children:[e.jsxs(I,{"data-filled":!!a,children:[e.jsxs(P,{htmlFor:c,children:[e.jsx(j,{size:16,"aria-hidden":"true"}),h]}),e.jsxs(R,{"data-filled":!!a,children:[e.jsx(B,{"data-filled":!!a,"aria-hidden":"true",children:a?e.jsx(z,{size:13}):e.jsx(S,{size:13})}),e.jsx(U,{title:a==null?void 0:a.name,children:a?`${a.name} · ${F(a.size)}`:"Sin archivo"})]}),a?e.jsx(q,{type:"button",onClick:f,"aria-label":"Quitar el archivo",children:e.jsx(v,{size:14,"aria-hidden":"true"})}):null]}),e.jsx("input",{ref:d,id:c,type:"file",accept:m,required:b,onChange:x,hidden:!0})]})}const s=t`
+`;function G({id:r,accept:m,required:b,label:h="Elegir archivo",onChange:i}){const $=n.useId(),c=r??$,d=n.useRef(null),[a,p]=n.useState(null),x=y=>{var u;const g=((u=y.target.files)==null?void 0:u[0])??null;p(g),i==null||i(g)},f=()=>{d.current&&(d.current.value=""),p(null),i==null||i(null)};return e.jsxs(H,{children:[e.jsxs(I,{"data-filled":!!a,children:[e.jsxs(P,{htmlFor:c,children:[e.jsx(j,{size:16,"aria-hidden":"true"}),h]}),e.jsxs(R,{"data-filled":!!a,children:[e.jsx(B,{"data-filled":!!a,"aria-hidden":"true",children:a?e.jsx(z,{size:13}):e.jsx(S,{size:13})}),e.jsx(U,{title:a==null?void 0:a.name,children:a?`${a.name} · ${F(a.size)}`:"Sin archivo"})]}),a?e.jsx(T,{type:"button",onClick:f,"aria-label":"Quitar el archivo",children:e.jsx(v,{size:14,"aria-hidden":"true"})}):null]}),e.jsx("input",{ref:d,id:c,type:"file",accept:m,required:b,onChange:x,hidden:!0})]})}const s=t`
   background: ${({theme:r})=>r.color.surface};
   border: 1px solid ${({theme:r})=>r.color.border};
   border-radius: ${({theme:r})=>r.radius.xl};
@@ -170,10 +170,10 @@ import{a8 as l,q as o,G as t,ad as w,ab as k,j as e,w as z,X as v}from"./index-B
   @media (min-width: ${({theme:r})=>r.breakpoints.lg}) {
     grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
   }
-`;const L=o.div`
+`;const N=o.div`
   ${s}
   padding: ${({theme:r})=>r.layout.cardPadding};
-`,N=o.div`
+`,L=o.div`
   ${s}
   padding: ${({theme:r})=>r.layout.cardPadding};
   display: grid;
@@ -318,22 +318,22 @@ import{a8 as l,q as o,G as t,ad as w,ab as k,j as e,w as z,X as v}from"./index-B
   display: flex;
   flex-wrap: wrap;
   gap: ${({theme:r})=>r.spacing[2]};
-`,or=o.div`
+`;o.div`
+  display: grid;
+  gap: ${({theme:r})=>r.spacing[2]};
+`;const or=o.div`
   display: grid;
   gap: ${({theme:r})=>r.spacing[2]};
 `,er=o.div`
   display: grid;
   gap: ${({theme:r})=>r.spacing[2]};
 `,ar=o.div`
-  display: grid;
-  gap: ${({theme:r})=>r.spacing[2]};
-`,ir=o.div`
   display: flex;
   align-items: flex-start;
   gap: ${({theme:r})=>r.spacing[2]};
   color: ${({theme:r})=>r.color.textMuted};
   font-size: ${({theme:r})=>r.typography.size.sm};
-`,tr=o.span`
+`,ir=o.span`
   width: 0.5rem;
   height: 0.5rem;
   margin-top: 0.45rem;
@@ -345,7 +345,7 @@ import{a8 as l,q as o,G as t,ad as w,ab as k,j as e,w as z,X as v}from"./index-B
   margin: 0;
   border: 0;
   border-top: 1px solid ${({theme:r})=>r.color.border};
-`;const sr=o.span`
+`;const tr=o.span`
   display: inline-flex;
   align-items: center;
   min-height: 44px;
@@ -355,4 +355,4 @@ import{a8 as l,q as o,G as t,ad as w,ab as k,j as e,w as z,X as v}from"./index-B
   color: ${({theme:r})=>r.color.textMuted};
   font-size: ${({theme:r})=>r.typography.size.xs};
   font-weight: ${({theme:r})=>r.typography.weight.bold};
-`;export{rr as A,L as F,sr as M,er as R,N as S,K as U,J as a,W as b,Y as c,O as d,X as e,V as f,Q as g,_ as h,C as i,G as j,D as k,Z as l,ir as m,tr as n,ar as o,or as p,j as q};
+`;export{rr as A,N as F,tr as M,or as R,L as S,K as U,J as a,W as b,Y as c,O as d,X as e,V as f,Q as g,_ as h,C as i,G as j,D as k,Z as l,ar as m,ir as n,er as o,j as p};
