@@ -1,4 +1,4 @@
-import{q as i,_ as h,$ as f,a0 as y,a1 as x,a2 as u,j as r,M as $,K as c,a as d,n as b,o as j,p as w,t as P,v as l,a3 as p,a4 as S,X as z,a5 as D,f as M,D as O}from"./index-DIvu5IMT.js";import{e as k,r as g}from"./react-DINHX3pJ.js";import{S as v,a as B}from"./SettingsList-TS3zUlJH.js";const F=i.div`
+import{q as i,_ as h,$ as f,a0 as y,a1 as x,a2 as u,j as r,M as $,J as c,a as d,l as b,n as j,o as w,p as P,t as l,a3 as p,a4 as S,W as z,a5 as D,d as M,B as O}from"./index-CQqLBoOg.js";import{f as k,r as g}from"./react-74MrHXS-.js";import{S as B,a as v}from"./SettingsList-CW8Q81sx.js";const F=i.div`
   border-radius: ${({theme:e})=>e.radius.xl};
   border: 1px solid ${({theme:e})=>e.color.border};
   background: ${({theme:e})=>e.color.surface};
@@ -52,12 +52,12 @@ import{q as i,_ as h,$ as f,a0 as y,a1 as x,a2 as u,j as r,M as $,K as c,a as d,
   color: ${({theme:e})=>e.color.textMuted};
   font-size: ${({theme:e})=>e.typography.size.xs};
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
-`,K=i.div`
+`,L=i.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({theme:e})=>e.spacing[2]};
   margin-top: ${({theme:e})=>e.spacing[3]};
-`,L=i.span`
+`,N=i.span`
   display: inline-flex;
   align-items: center;
   min-height: 1.6rem;
@@ -70,11 +70,11 @@ import{q as i,_ as h,$ as f,a0 as y,a1 as x,a2 as u,j as r,M as $,K as c,a as d,
   text-transform: uppercase;
   letter-spacing: 0.03em;
   box-shadow: ${({theme:e})=>e.shadow.sm};
-`,N=i.span`
+`,T=i.span`
   flex: 0 0 auto;
   font-family: ${({theme:e})=>e.typography.fontFamily.heading};
   font-size: ${({theme:e})=>e.typography.size.base};
   font-weight: ${({theme:e})=>e.typography.weight.extrabold};
   letter-spacing: -0.02em;
   color: ${({theme:e})=>e.color.primary};
-`;function X(){const{productId:e=""}=k(),o=g.useMemo(()=>h(e),[e]),a=g.useMemo(()=>{var n;if((o==null?void 0:o.kind)==="comparison")return{name:o.comparison.product,category:o.comparison.category,bestPrice:o.bestOffer.price,bestStore:o.bestOffer.store,comparisonOffers:o.sortedOffers,badge:o.comparison.badge};const t=f(e)??y[0];return{name:t.product,category:t.category,bestPrice:t.price,bestStore:t.store,comparisonOffers:((n=x.find(m=>m.id===`${t.id}-compare`))==null?void 0:n.offers)??[],badge:t.highlight}},[o,e]),s=u(a.bestStore);return r.jsxs($,{showSearch:!1,children:[r.jsx(c,{children:r.jsx(d,{children:r.jsxs(F,{children:[r.jsxs(b,{$ratio:"4 / 3",children:[r.jsx(j,{src:w(s==null?void 0:s.id),alt:a.name,loading:"eager"}),a.badge?r.jsx(P,{children:r.jsx(L,{children:a.badge})}):null]}),r.jsxs(I,{children:[r.jsx(R,{children:a.category}),r.jsx(C,{children:a.name}),r.jsxs(q,{children:[r.jsx(A,{children:l(a.bestPrice)}),r.jsxs(E,{children:[r.jsx(p,{size:14,"aria-hidden":"true"}),a.bestStore]})]}),r.jsxs(K,{children:[r.jsxs(S,{to:"/carrito",children:[r.jsx(z,{size:18,"aria-hidden":"true"}),"Agregar al carrito"]}),s?r.jsx(D,{to:`/comercios/${s.id}`,children:"Ver comercio"}):null]})]})]})})}),a.comparisonOffers.length>0&&r.jsx(c,{children:r.jsxs(d,{children:[r.jsx(M,{title:"Dónde comprarlo",chip:"Precios",subtitle:"Mismo producto en distintos comercios."}),r.jsx(v,{children:a.comparisonOffers.map(t=>r.jsx(B,{icon:p,title:t.store,subtitle:`${O(t.distanceKm)} · ${t.eta}`,trailing:r.jsx(N,{children:l(t.price)})},t.store))})]})})]})}export{X as ProductDetailScreen};
+`;function V(){const{productId:e=""}=k(),o=g.useMemo(()=>h(e),[e]),a=g.useMemo(()=>{var n;if((o==null?void 0:o.kind)==="comparison")return{name:o.comparison.product,category:o.comparison.category,bestPrice:o.bestOffer.price,bestStore:o.bestOffer.store,comparisonOffers:o.sortedOffers,badge:o.comparison.badge};const t=f(e)??y[0];return{name:t.product,category:t.category,bestPrice:t.price,bestStore:t.store,comparisonOffers:((n=x.find(m=>m.id===`${t.id}-compare`))==null?void 0:n.offers)??[],badge:t.highlight}},[o,e]),s=u(a.bestStore);return r.jsxs($,{showSearch:!1,children:[r.jsx(c,{children:r.jsx(d,{children:r.jsxs(F,{children:[r.jsxs(b,{$ratio:"4 / 3",children:[r.jsx(j,{src:w(s==null?void 0:s.id),alt:a.name,loading:"eager"}),a.badge?r.jsx(P,{children:r.jsx(N,{children:a.badge})}):null]}),r.jsxs(I,{children:[r.jsx(R,{children:a.category}),r.jsx(C,{children:a.name}),r.jsxs(q,{children:[r.jsx(A,{children:l(a.bestPrice)}),r.jsxs(E,{children:[r.jsx(p,{size:14,"aria-hidden":"true"}),a.bestStore]})]}),r.jsxs(L,{children:[r.jsxs(S,{to:"/carrito",children:[r.jsx(z,{size:18,"aria-hidden":"true"}),"Agregar al carrito"]}),s?r.jsx(D,{to:`/comercios/${s.id}`,children:"Ver comercio"}):null]})]})]})})}),a.comparisonOffers.length>0&&r.jsx(c,{children:r.jsxs(d,{children:[r.jsx(M,{title:"Dónde comprarlo",chip:"Precios",subtitle:"Mismo producto en distintos comercios."}),r.jsx(B,{children:a.comparisonOffers.map(t=>r.jsx(v,{icon:p,title:t.store,subtitle:`${O(t.distanceKm)} · ${t.eta}`,trailing:r.jsx(T,{children:l(t.price)})},t.store))})]})})]})}export{V as ProductDetailScreen};

@@ -1,4 +1,4 @@
-import{q as o,j as a,n as h,o as g,p as m,L as c,v as x,a6 as f,J as r,M as y,S as u,a as d,f as b,d as $,F as j,C as w,a7 as C,E as S}from"./index-DIvu5IMT.js";import{L as v,r as l}from"./react-DINHX3pJ.js";import{C as z}from"./clock-3-CpXAbjOA.js";const O=o(v)`
+import{q as o,j as a,l as h,n as g,o as m,K as c,t as x,a6 as f,I as r,M as y,S as u,a as d,d as b,g as $,F as j,C as w,a7 as C,E as S}from"./index-CQqLBoOg.js";import{L as v,r as l}from"./react-74MrHXS-.js";import{C as z}from"./clock-3-CvGWf2jf.js";const O=o(v)`
   display: flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[3]};
@@ -45,7 +45,7 @@ import{q as o,j as a,n as h,o as g,p as m,L as c,v as x,a6 as f,J as r,M as y,S 
   color: ${({theme:e})=>e.color.textSoft};
   font-size: ${({theme:e})=>e.typography.size.xs};
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
-`,L=o.span`
+`,I=o.span`
   justify-self: start;
   display: inline-flex;
   align-items: center;
@@ -70,7 +70,7 @@ import{q as o,j as a,n as h,o as g,p as m,L as c,v as x,a6 as f,J as r,M as y,S 
     background: rgba(220, 38, 38, 0.12);
     color: ${({theme:e})=>e.color.danger};
   }
-`,I=o.span`
+`,L=o.span`
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -100,4 +100,4 @@ import{q as o,j as a,n as h,o as g,p as m,L as c,v as x,a6 as f,J as r,M as y,S 
   font-weight: ${({theme:e})=>e.typography.weight.extrabold};
   letter-spacing: -0.02em;
   color: ${({theme:e})=>e.color.primary};
-`,q={proceso:"En proceso",terminado:"Entregado",cancelado:"Cancelado"};function B({order:e,priority:s}){return a.jsxs(O,{to:`/comercios/${e.storeId}?pedido=${e.id}`,children:[a.jsx(k,{children:a.jsx(h,{$ratio:"1 / 1",$radius:"md",children:a.jsx(g,{src:m(e.categoryId),alt:e.store,loading:s?"eager":"lazy"})})}),a.jsxs(E,{children:[a.jsxs(F,{children:[a.jsx(M,{children:e.store}),a.jsx(T,{children:e.code})]}),a.jsx(L,{"data-state":e.state,children:q[e.state]}),a.jsxs(I,{children:[a.jsx(z,{size:13,"aria-hidden":"true"}),e.eta," · ",e.date]}),a.jsxs(H,{children:[a.jsxs("span",{children:[a.jsx(c,{size:13,"aria-hidden":"true"})," ",e.itemCount," ",e.itemCount===1?"producto":"productos"]}),a.jsx(R,{children:x(e.total)})]})]}),a.jsx(f,{size:18,"aria-hidden":"true"})]})}const J=[{id:"todos",label:"Todos"},{id:"proceso",label:"En proceso"},{id:"terminado",label:"Terminados"},{id:"cancelado",label:"Cancelados"}];function D(){const[e,s]=l.useState("todos"),i=l.useMemo(()=>e==="todos"?r:r.filter(t=>t.state===e),[e]),n=r.filter(t=>t.state==="proceso").length;return a.jsxs(y,{showSearch:!1,children:[a.jsx(u,{children:a.jsxs(d,{children:[a.jsx(b,{title:"Mis pedidos",chip:n>0?`${n} en curso`:void 0,subtitle:"Historial completo de tus compras."}),a.jsx($,{"aria-label":"Filtrar pedidos",children:J.map(t=>a.jsx(j,{type:"button",onClick:()=>s(t.id),"data-active":e===t.id,children:t.label},t.id))})]})}),a.jsx(w,{children:a.jsx(d,{children:i.length>0?a.jsx(C,{children:i.map((t,p)=>a.jsx(B,{order:t,priority:p<3},t.id))}):a.jsx(S,{icon:c,title:"Sin pedidos acá",text:"Todavía no tenés pedidos en este estado.",ctaLabel:"Explorar negocios",ctaTo:"/comercios"})})})]})}export{D as MyOrdersScreen};
+`,q={proceso:"En proceso",terminado:"Entregado",cancelado:"Cancelado"};function B({order:e,priority:s}){return a.jsxs(O,{to:`/comercios/${e.storeId}?pedido=${e.id}`,children:[a.jsx(k,{children:a.jsx(h,{$ratio:"1 / 1",$radius:"md",children:a.jsx(g,{src:m(e.categoryId),alt:e.store,loading:s?"eager":"lazy"})})}),a.jsxs(E,{children:[a.jsxs(F,{children:[a.jsx(M,{children:e.store}),a.jsx(T,{children:e.code})]}),a.jsx(I,{"data-state":e.state,children:q[e.state]}),a.jsxs(L,{children:[a.jsx(z,{size:13,"aria-hidden":"true"}),e.eta," · ",e.date]}),a.jsxs(H,{children:[a.jsxs("span",{children:[a.jsx(c,{size:13,"aria-hidden":"true"})," ",e.itemCount," ",e.itemCount===1?"producto":"productos"]}),a.jsx(R,{children:x(e.total)})]})]}),a.jsx(f,{size:18,"aria-hidden":"true"})]})}const K=[{id:"todos",label:"Todos"},{id:"proceso",label:"En proceso"},{id:"terminado",label:"Terminados"},{id:"cancelado",label:"Cancelados"}];function D(){const[e,s]=l.useState("todos"),i=l.useMemo(()=>e==="todos"?r:r.filter(t=>t.state===e),[e]),n=r.filter(t=>t.state==="proceso").length;return a.jsxs(y,{showSearch:!1,children:[a.jsx(u,{children:a.jsxs(d,{children:[a.jsx(b,{title:"Mis pedidos",chip:n>0?`${n} en curso`:void 0,subtitle:"Historial completo de tus compras."}),a.jsx($,{"aria-label":"Filtrar pedidos",children:K.map(t=>a.jsx(j,{type:"button",onClick:()=>s(t.id),"data-active":e===t.id,children:t.label},t.id))})]})}),a.jsx(w,{children:a.jsx(d,{children:i.length>0?a.jsx(C,{children:i.map((t,p)=>a.jsx(B,{order:t,priority:p<3},t.id))}):a.jsx(S,{icon:c,title:"Sin pedidos acá",text:"Todavía no tenés pedidos en este estado.",ctaLabel:"Explorar negocios",ctaTo:"/comercios"})})})]})}export{D as MyOrdersScreen};
