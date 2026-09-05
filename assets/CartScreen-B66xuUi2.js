@@ -1,25 +1,25 @@
-import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as ce,ad as ee,M as q,a as k,E as pe,W as B,ae as ge,af as x,o as he,Z as ue,t as h,X as me,v as U,ag as b,ah as be,ai as S,aj as O,a4 as fe,a5 as xe,ak as ye}from"./index-DIvec79A.js";import{r as m,u as $e}from"./react-B1kPYQQd.js";import{p as je}from"./ordersStore-C9ebM3Kl.js";import{M as we}from"./minus-BgTTVJqN.js";import{S as Ce}from"./shield-check-DHwr893L.js";import{C as ve}from"./clock-3-DmGR9h3u.js";/**
+import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as de,ad as _,M as R,a as k,E as ce,W as q,ae as pe,af as y,o as ge,Z as he,t as h,X as ue,v as B,ag as b,ah as me,ai as S,aj as O,a4 as be,a5 as xe,ak as ye}from"./index-D4G15rmE.js";import{r as m,u as fe}from"./react-B1kPYQQd.js";import{s as $e,m as U,a as je}from"./saleUnits-CLP-TCsg.js";import{p as we}from"./ordersStore-BvyMlCLu.js";import{M as ve}from"./minus-CKmS1ZGk.js";import{S as Ce}from"./shield-check-CFIsk8sM.js";/**
  * @license lucide-react v0.323.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
- */const ke=E("AlertCircle",[["circle",{cx:"12",cy:"12",r:"10",key:"1mglay"}],["line",{x1:"12",x2:"12",y1:"8",y2:"12",key:"1pkeuh"}],["line",{x1:"12",x2:"12.01",y1:"16",y2:"16",key:"4dfq90"}]]);/**
+ */const ke=P("AlertCircle",[["circle",{cx:"12",cy:"12",r:"10",key:"1mglay"}],["line",{x1:"12",x2:"12",y1:"8",y2:"12",key:"1pkeuh"}],["line",{x1:"12",x2:"12.01",y1:"16",y2:"16",key:"4dfq90"}]]);/**
  * @license lucide-react v0.323.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
- */const Se=E("ArrowLeftRight",[["path",{d:"M8 3 4 7l4 4",key:"9rb6wj"}],["path",{d:"M4 7h16",key:"6tx8e3"}],["path",{d:"m16 21 4-4-4-4",key:"siv7j2"}],["path",{d:"M20 17H4",key:"h6l3hr"}]]);/**
+ */const Se=P("ArrowLeftRight",[["path",{d:"M8 3 4 7l4 4",key:"9rb6wj"}],["path",{d:"M4 7h16",key:"6tx8e3"}],["path",{d:"m16 21 4-4-4-4",key:"siv7j2"}],["path",{d:"M20 17H4",key:"h6l3hr"}]]);/**
  * @license lucide-react v0.323.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
- */const D=E("CreditCard",[["rect",{width:"20",height:"14",x:"2",y:"5",rx:"2",key:"ynyp8z"}],["line",{x1:"2",x2:"22",y1:"10",y2:"10",key:"1b3vmo"}]]),ze=[{factor:.25,label:"1/4"},{factor:.5,label:"1/2"},{factor:.75,label:"3/4"},{factor:1,label:"1 kg"},{factor:1.25,label:"1 kg + 1/4"},{factor:1.5,label:"1 kg + 1/2"},{factor:1.75,label:"1 kg + 3/4"},{factor:2,label:"2 kg"},{factor:2.25,label:"2 kg + 1/4"},{factor:2.5,label:"2 kg + 1/2"},{factor:2.75,label:"2 kg + 3/4"},{factor:3,label:"3 kg"},{factor:3.25,label:"3 kg + 1/4"},{factor:3.5,label:"3 kg + 1/2"},{factor:3.75,label:"3 kg + 3/4"},{factor:4,label:"4 kg"}],Me=(e,s,o)=>Array.from({length:e},(n,d)=>({factor:d+1,label:`${d+1} ${d===0?s:o}`})),Ie={unidad:{id:"unidad",label:"Por unidad",help:"El cliente elige de a una. El precio cargado es el de una unidad.",priceSuffix:"c/u",steps:Me(20,"unid.","unid.")},peso:{id:"peso",label:"Por peso (kg)",help:"Escalones de un cuarto de kilo, hasta 4 kg. El precio cargado es el del kilo.",priceSuffix:"el kg",steps:ze}},Ee="unidad",T=e=>Ie[e??Ee],G=e=>T(e).steps.length-1;function Pe(e,s){const{steps:o}=T(e),n=Math.min(Math.max(s,0),o.length-1);return o[n].label}function Te(e,s){const{steps:o}=T(e),n=Math.min(Math.max(s,0),o.length-1);return o[n].factor}const Le=X`
+ */const D=P("CreditCard",[["rect",{width:"20",height:"14",x:"2",y:"5",rx:"2",key:"ynyp8z"}],["line",{x1:"2",x2:"22",y1:"10",y2:"10",key:"1b3vmo"}]]),ze=X`
   from { opacity: 0; }
   to { opacity: 1; }
-`,Ae=X`
+`,Me=X`
   from { opacity: 0; transform: translateY(0.5rem) scale(0.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
-`,Fe=r.div`
+`,Ie=a.div`
   position: fixed;
   inset: 0;
   z-index: ${({theme:e})=>e.zIndex.header+40};
@@ -29,12 +29,12 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
   padding: ${({theme:e})=>e.spacing[4]};
   background: rgba(5, 8, 22, 0.56);
   backdrop-filter: blur(6px);
-  animation: ${Le} 160ms ease-out;
+  animation: ${ze} 160ms ease-out;
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
-`,He=r.div`
+`,Pe=a.div`
   width: 100%;
   max-width: 22rem;
   padding: ${({theme:e})=>e.spacing[4]};
@@ -45,29 +45,29 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
   text-align: center;
 
   ${$};
-  animation: ${Ae} 180ms ease-out;
+  animation: ${Me} 180ms ease-out;
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
-`,Re=r.h2`
+`,Te=a.h2`
   margin: 0;
   font-family: ${({theme:e})=>e.typography.fontFamily.heading};
   font-size: ${({theme:e})=>e.typography.size.lg};
   font-weight: ${({theme:e})=>e.typography.weight.extrabold};
   letter-spacing: -0.02em;
   color: ${({theme:e})=>e.color.text};
-`,qe=r.p`
+`,Ee=a.p`
   margin: ${({theme:e})=>e.spacing[1]} 0 0;
   color: ${({theme:e})=>e.color.textSoft};
   font-size: ${({theme:e})=>e.typography.size.sm};
   line-height: 1.45;
-`,Be=r.div`
+`,Fe=a.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${({theme:e})=>e.spacing[2]};
   margin-top: ${({theme:e})=>e.spacing[4]};
-`,Ue=r.button`
+`,Le=a.button`
   min-height: 2.75rem;
   padding: 0 ${({theme:e})=>e.spacing[3]};
   border: 1px solid ${({theme:e})=>e.color.border};
@@ -84,7 +84,7 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     background: ${({theme:e})=>e.color.surfaceMuted};
     border-color: ${({theme:e})=>e.color.borderStrong};
   }
-`,Oe=r.button`
+`,Ae=a.button`
   min-height: 2.75rem;
   padding: 0 ${({theme:e})=>e.spacing[3]};
   border: 0;
@@ -106,10 +106,10 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     outline: 2px solid ${({theme:e})=>e.color.text};
     outline-offset: 2px;
   }
-`;function De({open:e,title:s,text:o,confirmLabel:n="Aceptar",cancelLabel:d="Cancelar",onConfirm:c,onCancel:l}){return m.useEffect(()=>{if(!e)return;const p=w=>{w.key==="Escape"&&l()};return document.addEventListener("keydown",p),()=>document.removeEventListener("keydown",p)},[l,e]),e?a.jsx(Fe,{onClick:l,role:"presentation",children:a.jsxs(He,{role:"alertdialog","aria-modal":"true","aria-label":s,onClick:p=>p.stopPropagation(),children:[a.jsx(Re,{children:s}),o?a.jsx(qe,{children:o}):null,a.jsxs(Be,{children:[a.jsx(Ue,{type:"button",onClick:l,children:d}),a.jsx(Oe,{type:"button",onClick:c,autoFocus:!0,children:n})]})]})}):null}const Ge=r.div`
+`;function He({open:e,title:s,text:i,confirmLabel:n="Aceptar",cancelLabel:d="Cancelar",onConfirm:c,onCancel:l}){return m.useEffect(()=>{if(!e)return;const p=w=>{w.key==="Escape"&&l()};return document.addEventListener("keydown",p),()=>document.removeEventListener("keydown",p)},[l,e]),e?r.jsx(Ie,{onClick:l,role:"presentation",children:r.jsxs(Pe,{role:"alertdialog","aria-modal":"true","aria-label":s,onClick:p=>p.stopPropagation(),children:[r.jsx(Te,{children:s}),i?r.jsx(Ee,{children:i}):null,r.jsxs(Fe,{children:[r.jsx(Le,{type:"button",onClick:l,children:d}),r.jsx(Ae,{type:"button",onClick:c,autoFocus:!0,children:n})]})]})}):null}const Re=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[2]};
-`,Ne=r(j)`
+`,qe=a(j)`
   position: relative;
   overflow: hidden;
   border-color: ${({theme:e})=>e.mode==="dark"?"rgba(107, 157, 255, 0.22)":"rgba(0, 71, 231, 0.12)"};
@@ -127,20 +127,20 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     background: ${({theme:e})=>e.mode==="dark"?"radial-gradient(circle, rgba(107, 157, 255, 0.16) 0%, rgba(107, 157, 255, 0.02) 55%, transparent 70%)":"radial-gradient(circle, rgba(0, 71, 231, 0.12) 0%, rgba(0, 71, 231, 0.02) 55%, transparent 70%)"};
     pointer-events: none;
   }
-`,z=r(Z)`
+`,z=a(Z)`
   padding: ${({theme:e})=>e.spacing[3]};
 
   @media (min-width: ${({theme:e})=>e.breakpoints.lg}) {
     padding: ${({theme:e})=>e.spacing[4]};
   }
-`,Qe=r(Z)`
+`,Be=a(Z)`
   padding: ${({theme:e})=>e.spacing[2]} ${({theme:e})=>e.spacing[3]};
-`,We=r.div`
+`,Oe=a.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: ${({theme:e})=>e.spacing[2]};
-`,Ye=r.button`
+`,Ue=a.button`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,12 +161,12 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     border-color: ${({theme:e})=>e.color.primary};
     background: ${({theme:e})=>e.color.primarySoft};
   }
-`,_e=r.div`
+`,De=a.div`
   position: relative;
   z-index: 1;
   display: grid;
   gap: ${({theme:e})=>e.spacing[2]};
-`,Ve=r.div`
+`,Ge=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
 
@@ -175,14 +175,14 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     align-items: start;
     gap: ${({theme:e})=>e.spacing[3]};
   }
-`,Ke=r.div`
+`,Ne=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
-`;r.div`
+`;a.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({theme:e})=>e.spacing[1]};
-`;const u=r.span`
+`;const u=a.span`
   display: inline-flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[1]};
@@ -209,7 +209,7 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
   }
 
   &:not([data-tone]) {
-    ${P};
+    ${T};
     ${$};
   }
 
@@ -218,11 +218,11 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     border-color: rgba(0, 71, 231, 0.18);
     color: ${({theme:e})=>e.color.primary};
   }
-`,Je=r.div`
+`,Qe=a.div`
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: ${({theme:e})=>e.spacing[1]};
-`,Xe=r.div`
+`,We=a.div`
   display: grid;
   justify-items: center;
   gap: 0.35rem;
@@ -239,7 +239,7 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     background: ${({theme:e})=>e.color.primarySoft};
     color: ${({theme:e})=>e.color.primary};
   }
-`,Ze=r.span`
+`,Ye=a.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -255,15 +255,15 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     background: ${({theme:e})=>e.color.brand};
     color: ${({theme:e})=>e.color.onPrimary};
   }
-`,ea=r.span`
+`,Ve=a.span`
   font-size: 0.6875rem;
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
   line-height: 1.05;
-`,aa=r.div`
+`,Ke=a.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({theme:e})=>e.spacing[1]};
-`,ra=r.div`
+`,Je=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[2]};
   align-items: start;
@@ -271,33 +271,33 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
   @media (min-width: ${({theme:e})=>e.breakpoints.lg}) {
     grid-template-columns: minmax(0, 1.35fr) minmax(20rem, 0.65fr);
   }
-`,N=r.div`
+`,G=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[2]};
-`,ta=r(j)`
+`,Xe=a(j)`
   overflow: hidden;
-`,oa=r.div`
+`,Ze=a.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: ${({theme:e})=>e.spacing[2]};
   margin-bottom: ${({theme:e})=>e.spacing[2]};
-`,Q=r.div`
+`,N=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
   min-width: 0;
-`,W=r.h2`
+`,Q=a.h2`
   margin: 0;
   font-family: ${({theme:e})=>e.typography.fontFamily.heading};
   font-size: ${({theme:e})=>e.typography.size.lg};
   line-height: ${({theme:e})=>e.typography.lineHeight.tight};
   letter-spacing: -0.03em;
   color: ${({theme:e})=>e.color.text};
-`,Y=r.p`
+`,W=a.p`
   margin: 0;
   color: ${({theme:e})=>e.color.textMuted};
   font-size: ${({theme:e})=>e.typography.size.sm};
-`,ia=r.span`
+`,_e=a.span`
   display: inline-flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[1]};
@@ -312,9 +312,9 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
   white-space: nowrap;
 
   /* Tiempo estimado: destacado con el neón del modo NOCHE. */
-  ${P};
+  ${T};
   ${$};
-`,na=r.div`
+`,er=a.div`
   display: grid;
 
   > * + * {
@@ -322,12 +322,12 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     padding-top: ${({theme:e})=>e.spacing[2]};
     border-top: 1px solid ${({theme:e})=>e.color.border};
   }
-`,sa=r.div`
+`,rr=a.div`
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: ${({theme:e})=>e.spacing[2]};
   min-width: 0;
-`,la=r.div`
+`,ar=a.div`
   position: relative;
   flex: 0 0 auto;
   width: 4rem;
@@ -337,26 +337,26 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
   background: ${({theme:e})=>e.color.surfaceMuted};
   box-shadow: ${({theme:e})=>e.shadow.sm};
   overflow: hidden;
-`,da=r.img`
+`,tr=a.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-`;r.span`
+`;a.span`
   font-family: ${({theme:e})=>e.typography.fontFamily.heading};
   font-size: ${({theme:e})=>e.typography.size.sm};
   font-weight: ${({theme:e})=>e.typography.weight.extrabold};
   letter-spacing: -0.04em;
-`;const ca=r.div`
+`;const or=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
   min-width: 0;
-`,pa=r.div`
+`,ir=a.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: ${({theme:e})=>e.spacing[2]};
-`,ga=r.h3`
+`,nr=a.h3`
   margin: 0;
   color: ${({theme:e})=>e.color.text};
   font-family: ${({theme:e})=>e.typography.fontFamily.heading};
@@ -364,17 +364,17 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
   line-height: ${({theme:e})=>e.typography.lineHeight.tight};
   font-weight: ${({theme:e})=>e.typography.weight.bold};
   letter-spacing: -0.02em;
-`,ha=r.span`
+`,sr=a.span`
   color: ${({theme:e})=>e.color.primary};
   font-family: ${({theme:e})=>e.typography.fontFamily.heading};
   font-size: ${({theme:e})=>e.typography.size.lg};
   font-weight: ${({theme:e})=>e.typography.weight.bold};
   white-space: nowrap;
-`,ua=r.div`
+`,lr=a.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({theme:e})=>e.spacing[1]};
-`,ma=r.span`
+`,dr=a.span`
   display: inline-flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[1]};
@@ -406,18 +406,18 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     background: ${({theme:e})=>e.color.primarySoft};
     color: ${({theme:e})=>e.color.primary};
   }
-`,ba=r.div`
+`,cr=a.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: ${({theme:e})=>e.spacing[2]};
   color: ${({theme:e})=>e.color.textMuted};
   font-size: ${({theme:e})=>e.typography.size.xs};
-`,_=r.span`
+`,Y=a.span`
   display: inline-flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[1]};
-`,V=r.span`
+`,V=a.span`
   color: ${({theme:e})=>e.color.danger};
   font-size: ${({theme:e})=>e.typography.size.xs};
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
@@ -429,7 +429,7 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
   &[data-tone='danger'] {
     color: ${({theme:e})=>e.color.danger};
   }
-`,fa=r(j)`
+`,pr=a(j)`
   overflow: hidden;
   background:
     ${({theme:e})=>e.mode==="dark"?"linear-gradient(180deg, rgba(107, 157, 255, 0.10) 0%, rgba(17, 26, 46, 0.98) 60%)":"linear-gradient(180deg, rgba(0, 71, 231, 0.05) 0%, rgba(255, 255, 255, 0.98) 60%)"};
@@ -439,22 +439,22 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     top: calc(var(--marketplace-topbar-height, ${({theme:e})=>e.layout.topBarHeight}) + ${({theme:e})=>e.spacing[2]});
     align-self: start;
   }
-`,xa=r.div`
+`,gr=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[2]};
-`;r.p`
+`;a.p`
   margin: 0;
   color: ${({theme:e})=>e.color.textMuted};
   font-size: ${({theme:e})=>e.typography.size.sm};
   line-height: ${({theme:e})=>e.typography.lineHeight.snug};
-`;const ya=r.div`
+`;const hr=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
   padding: ${({theme:e})=>e.spacing[2]};
   border-radius: ${({theme:e})=>e.radius.lg};
   border: 1px solid ${({theme:e})=>e.color.border};
   background: ${({theme:e})=>e.color.surface};
-`,$a=r.div`
+`,ur=a.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -462,31 +462,31 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
   font-size: ${({theme:e})=>e.typography.size.sm};
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
   color: ${({theme:e})=>e.color.text};
-`,ja=r.span`
+`,mr=a.span`
   color: ${({theme:e})=>e.color.textMuted};
   font-size: ${({theme:e})=>e.typography.size.xs};
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
-`,wa=r.div`
+`,br=a.div`
   position: relative;
   height: 0.625rem;
   border-radius: ${({theme:e})=>e.radius.full};
   background: ${({theme:e})=>e.color.surfaceMuted};
   overflow: hidden;
-`,Ca=r.div`
+`,xr=a.div`
   width: ${({$value:e})=>`${Math.max(0,Math.min(100,e))}%`};
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, ${({theme:e})=>e.color.brand} 0%, ${({theme:e})=>e.color.primary} 100%);
   box-shadow: ${({theme:e})=>e.shadow.glow};
   transition: width 220ms ease;
-`,M=r.div`
+`,M=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[2]};
   padding: ${({theme:e})=>e.spacing[2]} 0;
-`,va=r.div`
+`,yr=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
-`,f=r.div`
+`,x=a.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -501,11 +501,11 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     color: ${({theme:e})=>e.color.text};
     font-size: ${({theme:e})=>e.typography.size.base};
   }
-`,ka=r.div`
+`,fr=a.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${({theme:e})=>e.spacing[1]};
-`,Sa=r.div`
+`,$r=a.div`
   display: flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[1]};
@@ -521,31 +521,31 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
   > svg {
     flex: 0 0 auto;
   }
-`,K=r.div`
+`,K=a.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({theme:e})=>e.spacing[1]};
-`,za=ce`
+`,jr=de`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
 
   @media (min-width: ${({theme:e})=>e.breakpoints.sm}) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-`,Ma=r.div`
-  ${za}
-`,I=r(de)`
+`,wr=a.div`
+  ${jr}
+`,I=a(le)`
   padding: ${({theme:e})=>e.spacing[4]} 0;
 
   @media (min-width: ${({theme:e})=>e.breakpoints.lg}) {
     padding: ${({theme:e})=>e.spacing[5]} 0;
   }
-`,Ia=r.div`
+`,vr=a.div`
   display: inline-flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[1]};
   flex: 0 0 auto;
-`,Ea=r.button`
+`,Cr=a.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -559,7 +559,7 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
   cursor: pointer;
   transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease;
 
-  ${P};
+  ${T};
   ${$};
 
   &:hover {
@@ -567,14 +567,14 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     background: rgba(220, 38, 38, 0.08);
     color: ${({theme:e})=>e.color.danger};
   }
-`,Pa=r.div`
+`,kr=a.div`
   display: inline-flex;
   align-items: center;
   gap: 0.1rem;
   padding: 0.15rem;
   border-radius: ${({theme:e})=>e.radius.full};
   background: ${({theme:e})=>e.color.primarySoft};
-`,J=r.button`
+`,J=a.button`
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -608,10 +608,10 @@ import{a8 as E,q as r,a9 as $,aa as X,j as a,J as de,Y as j,ab as Z,ac as P,G as
     color: ${({theme:e})=>e.color.textSoft};
     cursor: not-allowed;
   }
-`,Ta=r.span`
+`,Sr=a.span`
   min-width: 3.5rem;
   text-align: center;
   color: ${({theme:e})=>e.color.primary};
   font-size: ${({theme:e})=>e.typography.size.xs};
   font-weight: ${({theme:e})=>e.typography.weight.bold};
-`,y=15e3,ae=200,re=e=>{const s=e.match(/\d+/);return Number((s==null?void 0:s[0])??0)},La=(e=ee)=>{const s=new Map;return e.forEach(o=>{const n=s.get(o.store);if(n){n.items.push(o),n.itemCount+=o.quantity,n.subtotal+=o.subtotal,n.availableCount+=o.available?1:0,n.unavailableCount+=o.available?0:1;return}s.set(o.store,{store:o.store,items:[o],itemCount:o.quantity,subtotal:o.subtotal,etaLabel:o.eta,availableCount:o.available?1:0,unavailableCount:o.available?0:1})}),[...s.values()].map(o=>{const n=o.items.map(l=>re(l.eta)).filter(Boolean),d=n.length?Math.min(...n):0,c=n.length?Math.max(...n):0;return{...o,etaLabel:n.length<=1||d===c?`${d||0} min`:`${d}–${c} min`}})},Aa=e=>{const s=e.reduce((l,p)=>l+p.subtotal,0),o=s>=y?0:1200,n=e.map(l=>re(l.eta)).filter(Boolean),d=n.length?Math.min(...n):0,c=n.length?Math.max(...n):0;return{subtotal:s,deliveryFee:o,total:s+o+ae,totalUnits:e.filter(l=>l.available).length,unavailableItems:e.filter(l=>!l.available).length,deliveryWindow:n.length?d===c?`${d} min`:`${d}–${c} min`:"Pendiente",freeShippingRemaining:Math.max(y-s,0),freeShippingProgress:Math.min(s/y*100,100)}},Fa=[{label:"Carrito",state:"active"},{label:"Dirección",state:"idle"},{label:"Entrega",state:"idle"},{label:"Pago",state:"idle"},{label:"Confirmar",state:"idle"}],Ha=[{label:"Crédito",icon:D},{label:"Débito",icon:D},{label:"Transferencia",icon:Se}],Ra=[{label:"Compra protegida",icon:Ce},{label:"Sin costos sorpresa",icon:ve},{label:"Entrega clara",icon:x}],qa=["Delivery GO","Entrega comercio","Sin retiro"];function Qa(){var H;const[e,s]=m.useState(ee),[o,n]=m.useState(null),[d,c]=m.useState(!1),l=$e(),p=m.useMemo(()=>La(e),[e]),{subtotal:w,deliveryFee:te,total:oe,totalUnits:L,unavailableItems:A,deliveryWindow:ie,freeShippingRemaining:C,freeShippingProgress:ne}=m.useMemo(()=>Aa(e),[e]),F=(i,t)=>{s(v=>v.map(g=>{if(g.id!==i||!g.available)return g;const R=Math.min(Math.max(0,g.quantity+t),G(g.saleUnit));return{...g,quantity:R,subtotal:Math.round(g.price*Te(g.saleUnit,R))}}))},se=()=>{je(e),l("/pedidos")},le=i=>{s(t=>t.filter(v=>v.id!==i)),n(null)};return p.length===0?a.jsx(q,{showSearch:!1,children:a.jsx(I,{children:a.jsx(k,{children:a.jsx(pe,{icon:B,title:"Tu carrito está vacío",text:"Explorá los negocios de La Francia y armá tu pedido.",ctaLabel:"Explorar negocios",ctaTo:"/comercios"})})})}):a.jsxs(q,{showSearch:!1,children:[a.jsxs(Ge,{children:[a.jsx(I,{children:a.jsx(k,{children:a.jsx(Ne,{children:a.jsx(z,{children:a.jsxs(_e,{children:[a.jsxs(Ve,{children:[a.jsx(Ke,{children:a.jsx(ge,{children:"Carrito"})}),a.jsxs(aa,{children:[a.jsxs(u,{"data-tone":"brand",children:[a.jsx(B,{size:14,"aria-hidden":"true"})," ",L," ",L===1?"producto":"productos"]}),a.jsxs(u,{"data-tone":A>0?"warning":"success",children:[a.jsx(ke,{size:14,"aria-hidden":"true"})," ",A," sin stock"]}),a.jsxs(u,{children:[a.jsx(x,{size:14,"aria-hidden":"true"})," ",ie]})]})]}),a.jsx(Je,{"aria-label":"Progreso de compra",children:Fa.map((i,t)=>a.jsxs(Xe,{"data-state":i.state,children:[a.jsx(Ze,{"data-state":i.state,children:t+1}),a.jsx(ea,{children:i.label})]},i.label))})]})})})})}),a.jsx(I,{children:a.jsx(k,{children:a.jsxs(ra,{children:[a.jsx(N,{children:p.map(i=>a.jsx(ta,{children:a.jsxs(z,{children:[a.jsxs(oa,{children:[a.jsxs(Q,{children:[a.jsx(W,{children:i.store}),a.jsxs(Y,{children:[i.itemCount," ítems · ",i.unavailableCount," pendientes"]})]}),a.jsxs(ia,{children:[a.jsx(x,{size:14,"aria-hidden":"true"})," ",i.etaLabel]})]}),a.jsx(na,{children:i.items.map(t=>a.jsxs(sa,{children:[a.jsx(la,{children:a.jsx(da,{src:he(t.categoryId),alt:t.product,loading:"lazy"})}),a.jsxs(ca,{children:[a.jsxs(pa,{children:[a.jsxs("div",{style:{minWidth:0},children:[a.jsx(ga,{children:t.product}),a.jsx(ue,{children:t.store})]}),a.jsxs(Ia,{children:[a.jsx(ha,{children:t.available?h(t.subtotal):"—"}),a.jsx(Ea,{type:"button","aria-label":`Quitar ${t.product} del carrito`,onClick:()=>n(t.id),children:a.jsx(me,{size:15,"aria-hidden":"true"})})]})]}),a.jsxs(ua,{children:[a.jsxs(Pa,{children:[a.jsx(J,{type:"button",onClick:()=>F(t.id,-1),disabled:!t.available||t.quantity<=0,"aria-label":`Quitar cantidad de ${t.product}`,children:a.jsx(we,{size:14,"aria-hidden":"true"})}),a.jsx(Ta,{"aria-live":"polite",children:t.available?Pe(t.saleUnit,t.quantity):"0 unid."}),a.jsx(J,{type:"button",onClick:()=>F(t.id,1),disabled:!t.available||t.quantity>=G(t.saleUnit),"aria-label":`Agregar cantidad de ${t.product}`,children:a.jsx(U,{size:14,"aria-hidden":"true"})})]}),a.jsx(ma,{"data-tone":t.statusTone,children:t.statusLabel})]}),a.jsxs(ba,{children:[a.jsxs(_,{children:[a.jsx(x,{size:14,"aria-hidden":"true"}),t.eta]}),t.statusTone==="success"?a.jsx(_,{children:"Listo para sumar al pedido"}):t.statusTone==="warning"?a.jsx(V,{"data-tone":"warning",children:"Pocas unidades"}):a.jsx(V,{"data-tone":"danger",children:"Sin stock"})]})]})]},t.id))})]})},i.store))}),a.jsx(fa,{children:a.jsx(z,{children:a.jsxs(xa,{children:[a.jsx(b,{children:"Resumen"}),a.jsxs(ya,{children:[a.jsxs($a,{children:[a.jsx("span",{children:"Envío gratis"}),a.jsx("strong",{children:C>0?`${h(C)} faltan`:"Ya lo alcanzaste"})]}),a.jsx(wa,{children:a.jsx(Ca,{$value:ne})}),a.jsxs(ja,{children:["Umbral estimado ",h(y)," ·"," ",C>0?"te falta poco para liberarlo":"el envío ya queda liberado"]})]}),a.jsxs(va,{children:[a.jsxs(f,{children:[a.jsx("span",{children:"Subtotal"}),a.jsx("span",{children:h(w)})]}),a.jsxs(f,{children:[a.jsx("span",{children:"Envío estimado"}),a.jsx("span",{children:h(te)})]}),a.jsxs(f,{children:[a.jsx("span",{children:"Cargo de servicio"}),a.jsx("span",{children:h(ae)})]}),a.jsxs(f,{"data-emphasis":"true",children:[a.jsx("strong",{children:"Total estimado"}),a.jsx(be,{children:h(oe)})]})]}),a.jsx(ka,{children:Ra.map(i=>{const t=i.icon;return a.jsxs(Sa,{children:[a.jsx(t,{size:16,"aria-hidden":"true"}),a.jsx("span",{children:i.label})]},i.label)})}),a.jsxs(M,{children:[a.jsxs("div",{children:[a.jsx(b,{children:"Dirección"}),a.jsx(S,{children:"Elegí dónde recibir"})]}),a.jsxs(N,{children:[O.map(i=>a.jsx(j,{children:a.jsx(Qe,{children:a.jsxs(We,{children:[a.jsxs(Q,{children:[a.jsx(W,{children:i.label}),a.jsx(Y,{children:i.address})]}),a.jsx(u,{"data-tone":i.primary?"brand":"success",children:i.primary?"Principal":"Guardada"})]})})},i.id)),a.jsxs(Ye,{type:"button",onClick:()=>c(!0),children:[a.jsx(U,{size:18,"aria-hidden":"true"}),"Agregar una dirección nueva"]})]})]}),a.jsxs(M,{children:[a.jsxs("div",{children:[a.jsx(b,{children:"Entrega"}),a.jsx(S,{children:"Cómo llega el pedido"})]}),a.jsx(K,{children:qa.map(i=>a.jsx(u,{"data-tone":"brand",children:i},i))})]}),a.jsxs(M,{children:[a.jsxs("div",{children:[a.jsx(b,{children:"Pago"}),a.jsx(S,{children:"Elegí el medio de pago"})]}),a.jsx(K,{children:Ha.map(i=>{const t=i.icon;return a.jsxs(u,{"data-tone":"brand",children:[a.jsx(t,{size:14,"aria-hidden":"true"}),i.label]},i.label)})})]}),a.jsxs(Ma,{children:[a.jsx(fe,{as:"button",type:"button",onClick:se,children:"Confirmar pedido"}),a.jsx(xe,{to:"/",children:"Seguir comprando"})]})]})})})]})})})]}),a.jsx(De,{open:o!==null,title:"¿Deseás eliminar este artículo?",text:"Se va a quitar del carrito.",onCancel:()=>n(null),onConfirm:()=>o&&le(o)}),a.jsx(ye,{open:d,currentId:((H=O[0])==null?void 0:H.id)??"",startOnNew:!0,onClose:()=>c(!1),onSelect:()=>c(!1)})]})}export{Qa as CartScreen};
+`,f=15e3,ee=200,re=e=>{const s=e.match(/\d+/);return Number((s==null?void 0:s[0])??0)},zr=(e=_)=>{const s=new Map;return e.forEach(i=>{const n=s.get(i.store);if(n){n.items.push(i),n.itemCount+=i.quantity,n.subtotal+=i.subtotal,n.availableCount+=i.available?1:0,n.unavailableCount+=i.available?0:1;return}s.set(i.store,{store:i.store,items:[i],itemCount:i.quantity,subtotal:i.subtotal,etaLabel:i.eta,availableCount:i.available?1:0,unavailableCount:i.available?0:1})}),[...s.values()].map(i=>{const n=i.items.map(l=>re(l.eta)).filter(Boolean),d=n.length?Math.min(...n):0,c=n.length?Math.max(...n):0;return{...i,etaLabel:n.length<=1||d===c?`${d||0} min`:`${d}–${c} min`}})},Mr=e=>{const s=e.reduce((l,p)=>l+p.subtotal,0),i=s>=f?0:1200,n=e.map(l=>re(l.eta)).filter(Boolean),d=n.length?Math.min(...n):0,c=n.length?Math.max(...n):0;return{subtotal:s,deliveryFee:i,total:s+i+ee,totalUnits:e.filter(l=>l.available).length,unavailableItems:e.filter(l=>!l.available).length,deliveryWindow:n.length?d===c?`${d} min`:`${d}–${c} min`:"Pendiente",freeShippingRemaining:Math.max(f-s,0),freeShippingProgress:Math.min(s/f*100,100)}},Ir=[{label:"Carrito",state:"active"},{label:"Dirección",state:"idle"},{label:"Entrega",state:"idle"},{label:"Pago",state:"idle"},{label:"Confirmar",state:"idle"}],Pr=[{label:"Crédito",icon:D},{label:"Débito",icon:D},{label:"Transferencia",icon:Se}],Tr=[{label:"Precio final",icon:Ce},{label:"Seguí tu pedido",icon:y}],Er=["Delivery GO","Entrega comercio","Sin retiro"];function Br(){var A;const[e,s]=m.useState(_),[i,n]=m.useState(null),[d,c]=m.useState(!1),l=fe(),p=m.useMemo(()=>zr(e),[e]),{subtotal:w,deliveryFee:ae,total:te,totalUnits:E,unavailableItems:F,deliveryWindow:oe,freeShippingRemaining:v,freeShippingProgress:ie}=m.useMemo(()=>Mr(e),[e]),L=(o,t)=>{s(C=>C.map(g=>{if(g.id!==o||!g.available)return g;const H=Math.min(Math.max(0,g.quantity+t),U(g.saleUnit));return{...g,quantity:H,subtotal:Math.round(g.price*je(g.saleUnit,H))}}))},ne=()=>{we(e),l("/pedidos")},se=o=>{s(t=>t.filter(C=>C.id!==o)),n(null)};return p.length===0?r.jsx(R,{showSearch:!1,children:r.jsx(I,{children:r.jsx(k,{children:r.jsx(ce,{icon:q,title:"Tu carrito está vacío",text:"Explorá los negocios de La Francia y armá tu pedido.",ctaLabel:"Explorar negocios",ctaTo:"/comercios"})})})}):r.jsxs(R,{showSearch:!1,children:[r.jsxs(Re,{children:[r.jsx(I,{children:r.jsx(k,{children:r.jsx(qe,{children:r.jsx(z,{children:r.jsxs(De,{children:[r.jsxs(Ge,{children:[r.jsx(Ne,{children:r.jsx(pe,{children:"Carrito"})}),r.jsxs(Ke,{children:[r.jsxs(u,{"data-tone":"brand",children:[r.jsx(q,{size:14,"aria-hidden":"true"})," ",E," ",E===1?"producto":"productos"]}),r.jsxs(u,{"data-tone":F>0?"warning":"success",children:[r.jsx(ke,{size:14,"aria-hidden":"true"})," ",F," sin stock"]}),r.jsxs(u,{children:[r.jsx(y,{size:14,"aria-hidden":"true"})," ",oe]})]})]}),r.jsx(Qe,{"aria-label":"Progreso de compra",children:Ir.map((o,t)=>r.jsxs(We,{"data-state":o.state,children:[r.jsx(Ye,{"data-state":o.state,children:t+1}),r.jsx(Ve,{children:o.label})]},o.label))})]})})})})}),r.jsx(I,{children:r.jsx(k,{children:r.jsxs(Je,{children:[r.jsx(G,{children:p.map(o=>r.jsx(Xe,{children:r.jsxs(z,{children:[r.jsxs(Ze,{children:[r.jsxs(N,{children:[r.jsx(Q,{children:o.store}),r.jsxs(W,{children:[o.itemCount," ítems · ",o.unavailableCount," pendientes"]})]}),r.jsxs(_e,{children:[r.jsx(y,{size:14,"aria-hidden":"true"})," ",o.etaLabel]})]}),r.jsx(er,{children:o.items.map(t=>r.jsxs(rr,{children:[r.jsx(ar,{children:r.jsx(tr,{src:ge(t.categoryId),alt:t.product,loading:"lazy"})}),r.jsxs(or,{children:[r.jsxs(ir,{children:[r.jsxs("div",{style:{minWidth:0},children:[r.jsx(nr,{children:t.product}),r.jsx(he,{children:t.store})]}),r.jsxs(vr,{children:[r.jsx(sr,{children:t.available?h(t.subtotal):"—"}),r.jsx(Cr,{type:"button","aria-label":`Quitar ${t.product} del carrito`,onClick:()=>n(t.id),children:r.jsx(ue,{size:15,"aria-hidden":"true"})})]})]}),r.jsxs(lr,{children:[r.jsxs(kr,{children:[r.jsx(J,{type:"button",onClick:()=>L(t.id,-1),disabled:!t.available||t.quantity<=0,"aria-label":`Quitar cantidad de ${t.product}`,children:r.jsx(ve,{size:14,"aria-hidden":"true"})}),r.jsx(Sr,{"aria-live":"polite",children:t.available?$e(t.saleUnit,t.quantity):"0 unid."}),r.jsx(J,{type:"button",onClick:()=>L(t.id,1),disabled:!t.available||t.quantity>=U(t.saleUnit),"aria-label":`Agregar cantidad de ${t.product}`,children:r.jsx(B,{size:14,"aria-hidden":"true"})})]}),r.jsx(dr,{"data-tone":t.statusTone,children:t.statusLabel})]}),r.jsxs(cr,{children:[r.jsxs(Y,{children:[r.jsx(y,{size:14,"aria-hidden":"true"}),t.eta]}),t.statusTone==="success"?r.jsx(Y,{children:"Listo para sumar al pedido"}):t.statusTone==="warning"?r.jsx(V,{"data-tone":"warning",children:"Pocas unidades"}):r.jsx(V,{"data-tone":"danger",children:"Sin stock"})]})]})]},t.id))})]})},o.store))}),r.jsx(pr,{children:r.jsx(z,{children:r.jsxs(gr,{children:[r.jsx(b,{children:"Resumen"}),r.jsxs(hr,{children:[r.jsxs(ur,{children:[r.jsx("span",{children:"Envío gratis"}),r.jsx("strong",{children:v>0?`${h(v)} faltan`:"Ya lo alcanzaste"})]}),r.jsx(br,{children:r.jsx(xr,{$value:ie})}),r.jsxs(mr,{children:["Umbral estimado ",h(f)," ·"," ",v>0?"te falta poco para liberarlo":"el envío ya queda liberado"]})]}),r.jsxs(yr,{children:[r.jsxs(x,{children:[r.jsx("span",{children:"Subtotal"}),r.jsx("span",{children:h(w)})]}),r.jsxs(x,{children:[r.jsx("span",{children:"Envío estimado"}),r.jsx("span",{children:h(ae)})]}),r.jsxs(x,{children:[r.jsx("span",{children:"Cargo de servicio"}),r.jsx("span",{children:h(ee)})]}),r.jsxs(x,{"data-emphasis":"true",children:[r.jsx("strong",{children:"Total estimado"}),r.jsx(me,{children:h(te)})]})]}),r.jsx(fr,{children:Tr.map(o=>{const t=o.icon;return r.jsxs($r,{children:[r.jsx(t,{size:16,"aria-hidden":"true"}),r.jsx("span",{children:o.label})]},o.label)})}),r.jsxs(M,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Dirección"}),r.jsx(S,{children:"Elegí dónde recibir"})]}),r.jsxs(G,{children:[O.map(o=>r.jsx(j,{children:r.jsx(Be,{children:r.jsxs(Oe,{children:[r.jsxs(N,{children:[r.jsx(Q,{children:o.label}),r.jsx(W,{children:o.address})]}),r.jsx(u,{"data-tone":o.primary?"brand":"success",children:o.primary?"Principal":"Guardada"})]})})},o.id)),r.jsxs(Ue,{type:"button",onClick:()=>c(!0),children:[r.jsx(B,{size:18,"aria-hidden":"true"}),"Agregar una dirección nueva"]})]})]}),r.jsxs(M,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Entrega"}),r.jsx(S,{children:"Cómo llega el pedido"})]}),r.jsx(K,{children:Er.map(o=>r.jsx(u,{"data-tone":"brand",children:o},o))})]}),r.jsxs(M,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Pago"}),r.jsx(S,{children:"Elegí el medio de pago"})]}),r.jsx(K,{children:Pr.map(o=>{const t=o.icon;return r.jsxs(u,{"data-tone":"brand",children:[r.jsx(t,{size:14,"aria-hidden":"true"}),o.label]},o.label)})})]}),r.jsxs(wr,{children:[r.jsx(be,{as:"button",type:"button",onClick:ne,children:"Confirmar pedido"}),r.jsx(xe,{to:"/",children:"Seguir comprando"})]})]})})})]})})})]}),r.jsx(He,{open:i!==null,title:"¿Deseás eliminar este artículo?",text:"Se va a quitar del carrito.",onCancel:()=>n(null),onConfirm:()=>i&&se(i)}),r.jsx(ye,{open:d,currentId:((A=O[0])==null?void 0:A.id)??"",startOnNew:!0,onClose:()=>c(!1),onSelect:()=>c(!1)})]})}export{Br as CartScreen};
