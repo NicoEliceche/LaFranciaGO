@@ -47,6 +47,8 @@ type AddressSheetProps = {
   currentId: string;
   onClose: () => void;
   onSelect: (id: string, address: string) => void;
+  /** Abre directo en el alta, para quien ya pidió "agregar una dirección". */
+  startOnNew?: boolean;
 };
 
 type SheetStep = 'list' | 'new';
@@ -59,10 +61,16 @@ const SEARCH_DEBOUNCE_MS = 350;
  *   1. lista de direcciones guardadas
  *   2. alta de una dirección nueva, a pantalla completa, con autocompletado y mapa
  */
-export function AddressSheet({ open, currentId, onClose, onSelect }: AddressSheetProps) {
+export function AddressSheet({
+  open,
+  currentId,
+  onClose,
+  onSelect,
+  startOnNew = false,
+}: AddressSheetProps) {
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [step, setStep] = useState<SheetStep>('list');
+  const [step, setStep] = useState<SheetStep>(startOnNew ? 'new' : 'list');
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<GeoSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
@@ -77,6 +85,7 @@ export function AddressSheet({ open, currentId, onClose, onSelect }: AddressShee
   useEffect(() => {
     if (open) {
       setMounted(true);
+      setStep(startOnNew ? 'new' : 'list');
       const frame = window.requestAnimationFrame(() => setVisible(true));
       return () => window.cancelAnimationFrame(frame);
     }
@@ -88,7 +97,7 @@ export function AddressSheet({ open, currentId, onClose, onSelect }: AddressShee
     setVisible(false);
     const timeout = window.setTimeout(() => {
       setMounted(false);
-      setStep('list');
+      setStep(startOnNew ? 'new' : 'list');
       setQuery('');
       setSuggestions([]);
       setPoint(null);
@@ -96,7 +105,7 @@ export function AddressSheet({ open, currentId, onClose, onSelect }: AddressShee
     }, TRANSITION_MS);
 
     return () => window.clearTimeout(timeout);
-  }, [mounted, open]);
+  }, [mounted, open, startOnNew]);
 
   useEffect(() => {
     if (!open) {

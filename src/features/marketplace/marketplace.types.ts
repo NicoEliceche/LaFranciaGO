@@ -1,3 +1,4 @@
+import type { SaleUnitId } from '@shared/types/saleUnit.types';
 import type { LucideIcon } from 'lucide-react';
 
 export interface MarketplaceCategory {
@@ -121,7 +122,14 @@ export interface CartItem {
   product: string;
   store: string;
   categoryId: string;
+  /** Precio del escalón base: de una unidad, o del kilo si se vende por peso. */
   price: number;
+  /** Cómo se vende. Si falta, se asume por unidad. */
+  saleUnit?: SaleUnitId;
+  /**
+   * Escalón elegido dentro de la unidad de venta, empezando en 0.
+   * Por unidad, 0 es "1 unid."; por peso, 0 es "1/4".
+   */
   quantity: number;
   subtotal: number;
   available: boolean;

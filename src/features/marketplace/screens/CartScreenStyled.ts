@@ -42,6 +42,48 @@ export const CartCardPad = styled(CardPad)`
   }
 `;
 
+/**
+ * Fila de dirección: alto ajustado al texto.
+ *
+ * Con el relleno de las tarjetas de comercio quedaban más altas que cualquier
+ * otra cosa de la pantalla para mostrar dos líneas. Crecen solas si la
+ * dirección necesita más de una línea.
+ */
+export const CartAddressPad = styled(CardPad)`
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+`;
+
+export const CartAddressHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing[2]};
+`;
+
+/** Abre el mismo alta de dirección que la hoja del header. */
+export const CartAddressNewButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  width: 100%;
+  min-height: 2.75rem;
+  border-radius: ${({ theme }) => theme.radius.lg};
+  border: 1px dashed ${({ theme }) => theme.color.borderStrong};
+  background: transparent;
+  color: ${({ theme }) => theme.color.primary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.color.primary};
+    background: ${({ theme }) => theme.color.primarySoft};
+  }
+`;
+
 export const CartHeroStack = styled.div`
   position: relative;
   z-index: 1;
@@ -471,22 +513,29 @@ export const CartTotalRow = styled.div`
   }
 `;
 
+/* Dos por fila: cuatro sellos apilados ocupaban más que el propio total. */
 export const CartTrustGrid = styled.div`
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${({ theme }) => theme.spacing[1]};
 `;
 
 export const CartTrustItem = styled.div`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
-  min-height: 2.75rem;
+  gap: ${({ theme }) => theme.spacing[1]};
+  min-height: 2.5rem;
   padding: 0 ${({ theme }) => theme.spacing[2]};
   border-radius: ${({ theme }) => theme.radius.lg};
   background: ${({ theme }) => theme.color.surfaceMuted};
   color: ${({ theme }) => theme.color.text};
-  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-size: ${({ theme }) => theme.typography.size.xs};
   font-weight: ${({ theme }) => theme.typography.weight.semibold};
+  line-height: 1.2;
+
+  > svg {
+    flex: 0 0 auto;
+  }
 `;
 
 export const CartPaymentRail = styled.div`

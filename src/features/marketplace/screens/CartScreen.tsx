@@ -1,4 +1,8 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { maxStepIndex, stepFactor, stepLabel } from '@core/data/saleUnits';
+import { AddressSheet } from '../components/AddressSheet';
+import { placeOrder } from '../ordersStore';
 import {
   AlertCircle,
   ArrowLeftRight,
@@ -68,6 +72,9 @@ import {
   CartSummaryStack,
   CartTotalRow,
   CartTotalsList,
+  CartAddressHeader,
+  CartAddressNewButton,
+  CartAddressPad,
   CartTrustGrid,
   CartTrustItem,
   CartStepper,
@@ -157,7 +164,9 @@ const buildTotals = (items: CartItem[]) => {
     subtotal,
     deliveryFee,
     total: subtotal + deliveryFee + serviceFee,
-    totalUnits: items.reduce((sum, item) => sum + item.quantity, 0),
+    /* Cuenta productos, no escalones: "3 productos" se entiende siempre;
+       "3 unidades" sería falso si uno se pidió por peso. */
+    totalUnits: items.filter((item) => item.available).length,
     unavailableItems: items.filter((item) => !item.available).length,
     deliveryWindow: !etaValues.length
       ? 'Pendiente'
@@ -198,6 +207,9 @@ const deliveryMethods = [
 export function CartScreen() {
   const [items, setItems] = useState(cartItems);
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
+  /* Alta de dirección: abre la misma hoja del header, en el paso de alta. */
+  const [addressSheetOpen, setAddressSheetOpen] = useState(false);
+  const navigate = useNavigate();
 
   const cartGroups = useMemo(() => groupCartItems(items), [items]);
 
@@ -219,11 +231,29 @@ export function CartScreen() {
           return item;
         }
 
-        const quantity = Math.max(1, item.quantity + delta);
+        /* Sin stock no se puede pedir nada: el escalón queda en cero. */
+        if (!item.available) {
+          return item;
+        }
 
-        return { ...item, quantity, subtotal: item.price * quantity };
+        const quantity = Math.min(
+          Math.max(0, item.quantity + delta),
+          maxStepIndex(item.saleUnit),
+        );
+
+        return {
+          ...item,
+          quantity,
+          subtotal: Math.round(item.price * stepFactor(item.saleUnit, quantity)),
+        };
       }),
     );
+  };
+
+  /* Genera el pedido y lleva al historial, donde ya aparece el nuevo. */
+  const confirmOrder = () => {
+    placeOrder(items);
+    navigate('/pedidos');
   };
 
   const removeItem = (id: string) => {
@@ -266,7 +296,8 @@ export function CartScreen() {
 
                     <CartOverviewRail>
                       <CartChip data-tone="brand">
-                        <ShoppingCart size={14} aria-hidden="true" /> {totalUnits} unidades
+                        <ShoppingCart size={14} aria-hidden="true" /> {totalUnits}{' '}
+                        {totalUnits === 1 ? 'producto' : 'productos'}
                       </CartChip>
                       <CartChip data-tone={unavailableItems > 0 ? 'warning' : 'success'}>
                         <AlertCircle size={14} aria-hidden="true" /> {unavailableItems} sin stock
@@ -347,20 +378,26 @@ export function CartScreen() {
                                   <CartQtyButton
                                     type="button"
                                     onClick={() => changeQuantity(item.id, -1)}
-                                    disabled={item.quantity <= 1}
-                                    aria-label={`Quitar una unidad de ${item.product}`}
+                                    disabled={!item.available || item.quantity <= 0}
+                                    aria-label={`Quitar cantidad de ${item.product}`}
                                   >
                                     <Minus size={14} aria-hidden="true" />
                                   </CartQtyButton>
 
                                   <CartQtyValue aria-live="polite">
-                                    {item.quantity} unid.
+                                    {item.available
+                                      ? stepLabel(item.saleUnit, item.quantity)
+                                      : '0 unid.'}
                                   </CartQtyValue>
 
                                   <CartQtyButton
                                     type="button"
                                     onClick={() => changeQuantity(item.id, 1)}
-                                    aria-label={`Agregar una unidad de ${item.product}`}
+                                    disabled={
+                                      !item.available ||
+                                      item.quantity >= maxStepIndex(item.saleUnit)
+                                    }
+                                    aria-label={`Agregar cantidad de ${item.product}`}
                                   >
                                     <Plus size={14} aria-hidden="true" />
                                   </CartQtyButton>
@@ -396,11 +433,7 @@ export function CartScreen() {
               <CartSummaryCard>
                 <CartCardPad>
                   <CartSummaryStack>
-                    <div>
-                      <SectionKicker>Resumen</SectionKicker>
-                      <CardTitle>Costos claros y pago seguro.</CardTitle>
-                      <CardText>El total sale sin sorpresas y con el envío ya calculado.</CardText>
-                    </div>
+                    <SectionKicker>Resumen</SectionKicker>
 
                     <CartProgressCard>
                       <CartProgressHeader>
@@ -458,14 +491,13 @@ export function CartScreen() {
                       <div>
                         <SectionKicker>Dirección</SectionKicker>
                         <CardTitle>Elegí dónde recibir</CardTitle>
-                        <CardText>Elegí una dirección guardada antes de seguir.</CardText>
                       </div>
 
                       <CartStack>
                         {addresses.map((address) => (
                           <Card key={address.id}>
-                            <CartCardPad>
-                              <CartStoreHeader>
+                            <CartAddressPad>
+                              <CartAddressHeader>
                                 <CartStoreCopy>
                                   <CartStoreTitle>{address.label}</CartStoreTitle>
                                   <CartStoreMeta>{address.address}</CartStoreMeta>
@@ -473,10 +505,15 @@ export function CartScreen() {
                                 <CartChip data-tone={address.primary ? 'brand' : 'success'}>
                                   {address.primary ? 'Principal' : 'Guardada'}
                                 </CartChip>
-                              </CartStoreHeader>
-                            </CartCardPad>
+                              </CartAddressHeader>
+                            </CartAddressPad>
                           </Card>
                         ))}
+
+                        <CartAddressNewButton type="button" onClick={() => setAddressSheetOpen(true)}>
+                          <Plus size={18} aria-hidden="true" />
+                          Agregar una dirección nueva
+                        </CartAddressNewButton>
                       </CartStack>
                     </CartSummarySection>
 
@@ -484,7 +521,6 @@ export function CartScreen() {
                       <div>
                         <SectionKicker>Entrega</SectionKicker>
                         <CardTitle>Cómo llega el pedido</CardTitle>
-                        <CardText>La app deja claro quién entrega.</CardText>
                       </div>
 
                       <CartPaymentRail>
@@ -500,7 +536,6 @@ export function CartScreen() {
                       <div>
                         <SectionKicker>Pago</SectionKicker>
                         <CardTitle>Elegí el medio de pago</CardTitle>
-                        <CartSummaryNote>Crédito, débito y transferencia quedan visibles antes de confirmar.</CartSummaryNote>
                       </div>
 
                       <CartPaymentRail>
@@ -518,8 +553,10 @@ export function CartScreen() {
                     </CartSummarySection>
 
                     <CartActions>
-                      <PrimaryButton to="/pedidos">Confirmar pedido</PrimaryButton>
-                      <LinkButton to="/comercios">Seguir comprando</LinkButton>
+                      <PrimaryButton as="button" type="button" onClick={confirmOrder}>
+                        Confirmar pedido
+                      </PrimaryButton>
+                      <LinkButton to="/">Seguir comprando</LinkButton>
                     </CartActions>
                   </CartSummaryStack>
                 </CartCardPad>
@@ -535,6 +572,14 @@ export function CartScreen() {
         text="Se va a quitar del carrito."
         onCancel={() => setPendingRemoval(null)}
         onConfirm={() => pendingRemoval && removeItem(pendingRemoval)}
+      />
+
+      <AddressSheet
+        open={addressSheetOpen}
+        currentId={addresses[0]?.id ?? ''}
+        startOnNew
+        onClose={() => setAddressSheetOpen(false)}
+        onSelect={() => setAddressSheetOpen(false)}
       />
     </MarketplaceFrame>
   );

@@ -5,7 +5,7 @@ import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { EmptyState } from '../components/EmptyState';
 import { OrderCard } from '../components/OrderCard';
 import { SectionHeading } from '../components/SectionHeading';
-import { customerOrders } from '../marketplaceContent';
+import { useCustomerOrders } from '../ordersStore';
 import type { OrderState } from '../marketplace.types';
 import { FilterChip, SectionInner } from '../ui';
 import { ScrollRail } from '@shared/components/ScrollRail';
@@ -23,13 +23,14 @@ const tabs: Array<{ id: OrderTab; label: string }> = [
 
 export function MyOrdersScreen() {
   const [tab, setTab] = useState<OrderTab>('todos');
+  const orders = useCustomerOrders();
 
   const visibleOrders = useMemo(
-    () => (tab === 'todos' ? customerOrders : customerOrders.filter((order) => order.state === tab)),
-    [tab],
+    () => (tab === 'todos' ? orders : orders.filter((order) => order.state === tab)),
+    [orders, tab],
   );
 
-  const activeCount = customerOrders.filter((order) => order.state === 'proceso').length;
+  const activeCount = orders.filter((order) => order.state === 'proceso').length;
 
   return (
     <MarketplaceFrame showSearch={false}>

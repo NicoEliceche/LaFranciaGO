@@ -876,12 +876,10 @@ export const BottomNavIcon = styled.span`
   justify-content: center;
 
   /* El botón central va sobre fondo de marca: ahí el neón no aplica. */
-  [data-primary='true'] & {
-    filter: none;
-  }
-
   ${neonIcon};
 
+  /* El botón central va sobre fondo de marca: el ícono queda blanco y sin
+     resplandor. El realce lo da el círculo, no el ícono de adentro. */
   [data-primary='true'] & {
     width: 2.625rem;
     height: 2.625rem;
@@ -889,6 +887,7 @@ export const BottomNavIcon = styled.span`
     background: ${({ theme }) => theme.color.brand};
     color: ${({ theme }) => theme.color.onPrimary};
     box-shadow: ${({ theme }) => theme.shadow.glow};
+    filter: none;
   }
 `;
 
@@ -933,6 +932,13 @@ export const BottomNavLink = styled(NavLink)`
   &.active ${BottomNavIcon},
   &[aria-current='page'] ${BottomNavIcon} {
     ${neonIconActive};
+  }
+
+  /* Salvo el central: ahí el ícono se mantiene blanco y plano. */
+  &[data-primary='true'].active ${BottomNavIcon},
+  &[data-primary='true'][aria-current='page'] ${BottomNavIcon} {
+    color: ${({ theme }) => theme.color.onPrimary};
+    filter: none;
   }
 
   &.active::before,
@@ -1356,9 +1362,33 @@ export const BrandLogoMark = styled.span`
   padding: 0;
   box-shadow: none;
 
+  /*
+    En mobile el logo va y viene por el hueco que queda entre la hamburguesa
+    y la dirección. El recorrido es corto a propósito: medido en 375px, ese
+    hueco es de 17px, así que 12px es lo que entra sin tocar la dirección.
+    Se anima con transform, que la compone la GPU y no fuerza recalcular el
+    layout del header en cada cuadro.
+  */
+  animation: lfg-logo-bounce 3.4s ease-in-out infinite alternate;
+
+  @keyframes lfg-logo-bounce {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(0.75rem);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     width: 2.5rem;
     height: 2.5rem;
+    /* En escritorio queda quieto: el header ahí es otra composición. */
+    animation: none;
   }
 `;
 
