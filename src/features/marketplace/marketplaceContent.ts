@@ -450,6 +450,12 @@ export const customerOrders: CustomerOrder[] = [
     eta: 'Llega en 35 min',
     date: 'Hoy 14:20',
     itemCount: 4,
+    items: [
+      { productId: 'coca-cola-225', quantity: 1 },
+      { productId: 'yerba-1kg', quantity: 1 },
+      { productId: 'fideos-500', quantity: 1 },
+      { productId: 'galletitas-mixtas', quantity: 1 },
+    ],
   },
   {
     id: 'ord-2',
@@ -463,6 +469,10 @@ export const customerOrders: CustomerOrder[] = [
     eta: 'Llega en 15 min',
     date: 'Hoy 13:05',
     itemCount: 2,
+    items: [
+      { productId: 'pan-flauta', quantity: 1 },
+      { productId: 'medialunas-x6', quantity: 1 },
+    ],
   },
   {
     id: 'ord-3',
@@ -476,6 +486,11 @@ export const customerOrders: CustomerOrder[] = [
     eta: 'Entregado 12:40',
     date: 'Ayer',
     itemCount: 3,
+    items: [
+      { productId: 'shampoo-400', quantity: 1 },
+      { productId: 'alcohol-gel', quantity: 1 },
+      { productId: 'crema-manos', quantity: 1 },
+    ],
   },
   {
     id: 'ord-4',
@@ -489,6 +504,12 @@ export const customerOrders: CustomerOrder[] = [
     eta: 'Entregado 19:10',
     date: '18/08',
     itemCount: 5,
+    items: [
+      { productId: 'bife-ancho', quantity: 2 },
+      { productId: 'asado-especial', quantity: 1 },
+      { productId: 'milanesas-kg', quantity: 1 },
+      { productId: 'salsas', quantity: 1 },
+    ],
   },
   {
     id: 'ord-5',
@@ -502,6 +523,10 @@ export const customerOrders: CustomerOrder[] = [
     eta: 'Sin stock',
     date: '15/08',
     itemCount: 2,
+    items: [
+      { productId: 'detergente-900', quantity: 1 },
+      { productId: 'lavandina-1l', quantity: 1 },
+    ],
   },
 ];
 

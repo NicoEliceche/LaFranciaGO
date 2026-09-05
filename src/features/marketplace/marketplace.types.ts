@@ -75,6 +75,13 @@ export interface StoreProfile {
 
 export type OrderState = 'proceso' | 'terminado' | 'cancelado';
 
+/** Línea de un pedido: qué producto se compró y cuántas unidades. */
+export interface OrderLine {
+  /** Id del producto en el catálogo del comercio. */
+  productId: string;
+  quantity: number;
+}
+
 export interface CustomerOrder {
   id: string;
   code: string;
@@ -87,6 +94,8 @@ export interface CustomerOrder {
   eta: string;
   date: string;
   itemCount: number;
+  /** Productos que se compraron en este pedido. */
+  items: OrderLine[];
 }
 
 export interface AddressBookEntry {

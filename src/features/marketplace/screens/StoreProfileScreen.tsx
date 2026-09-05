@@ -13,7 +13,7 @@ import {
   Truck,
   type LucideIcon,
 } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
@@ -22,7 +22,7 @@ import { EmptyState } from '../components/EmptyState';
 import { SectionHeading } from '../components/SectionHeading';
 import { StoreHero } from '../components/StoreHero';
 import { findStoreById, formatDistance, formatMoney } from '../marketplace.utils';
-import { stores } from '../marketplaceContent';
+import { customerOrders, stores } from '../marketplaceContent';
 import {
   AccentBadge,
   Badge,
@@ -50,6 +50,11 @@ import { ScrollRail as HScrollRail } from '@shared/components/ScrollRail';
 
 import { ScrollRail, SectionStack } from './screenLayout';
 import {
+  OrderNotice,
+  OrderNoticeClear,
+  OrderNoticeMeta,
+  OrderNoticeText,
+  OrderNoticeTitle,
   StoreCheckoutBar,
   StoreCheckoutCount,
   StoreCheckoutCta,
@@ -899,8 +904,53 @@ const findStoreCatalog = (storeId: string) => storeCatalogs[storeId] ?? storeCat
 
 export function StoreProfileScreen() {
   const { storeId = '' } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const store = useMemo(() => findStoreById(storeId) ?? stores[0], [storeId]);
-  const catalog = useMemo(() => findStoreCatalog(store.id), [store.id]);
+  const fullCatalog = useMemo(() => findStoreCatalog(store.id), [store.id]);
+
+  /* Al venir desde "Mis pedidos" se mira un pedido concreto. */
+  const orderId = searchParams.get('pedido');
+  const order = useMemo(
+    () =>
+      orderId
+        ? (customerOrders.find(
+            (item) => item.id === orderId && item.storeId === store.id,
+          ) ?? null)
+        : null,
+    [orderId, store.id],
+  );
+
+  /**
+   * Mirando un pedido, el catálogo se recorta a lo que se compró: las
+   * categorías, el buscador y las sugerencias trabajan sobre ese subconjunto,
+   * así nada muestra productos que no formaban parte del pedido.
+   */
+  const catalog = useMemo(() => {
+    if (!order) {
+      return fullCatalog;
+    }
+
+    const ordered = new Set(order.items.map((item) => item.productId));
+
+    return {
+      ...fullCatalog,
+      sections: fullCatalog.sections
+        .map((section) => ({
+          ...section,
+          products: section.products.filter((product) => ordered.has(product.id)),
+        }))
+        .filter((section) => section.products.length > 0),
+    };
+  }, [fullCatalog, order]);
+
+  /** Unidades compradas de cada producto, para mostrarlas en la tarjeta. */
+  const orderedQuantities = useMemo(() => {
+    if (!order) {
+      return {} as Record<string, number>;
+    }
+
+    return Object.fromEntries(order.items.map((item) => [item.productId, item.quantity]));
+  }, [order]);
 
   const allProducts = useMemo(
     () => catalog.sections.flatMap((section) => section.products),
@@ -959,7 +1009,9 @@ export function StoreProfileScreen() {
   );
 
   const suggestionProducts = useMemo(() => {
-    if (!selectedProduct) {
+    /* Mirando un pedido la pantalla es una consulta, no una compra nueva:
+       sugerir otros productos sería salirse de lo que se pidió ver. */
+    if (!selectedProduct || order) {
       return [];
     }
 
@@ -1006,6 +1058,13 @@ export function StoreProfileScreen() {
     return filtered.length > 0 ? filtered.slice(0, 3) : catalog.sections.slice(0, 3);
   }, [catalog.sections, query]);
 
+  /* Quita el filtro del pedido y deja el comercio completo. */
+  const showWholeCatalog = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('pedido');
+    setSearchParams(next, { replace: true });
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
   };
@@ -1051,6 +1110,21 @@ export function StoreProfileScreen() {
       <Section>
         <SectionInner>
           <CatalogShell>
+            {order ? (
+              <OrderNotice>
+                <PackageSearch size={20} aria-hidden="true" />
+                <OrderNoticeText>
+                  <OrderNoticeTitle>Productos del pedido {order.code}</OrderNoticeTitle>
+                  <OrderNoticeMeta>
+                    {order.date} · {formatMoney(order.total)}
+                  </OrderNoticeMeta>
+                </OrderNoticeText>
+                <OrderNoticeClear type="button" onClick={showWholeCatalog}>
+                  Ver todo el comercio
+                </OrderNoticeClear>
+              </OrderNotice>
+            ) : null}
+
             <SearchRow onSubmit={handleSubmit}>
               <SearchShell htmlFor="store-search">
                 <SearchLabel>Buscar productos dentro del comercio</SearchLabel>
@@ -1099,7 +1173,13 @@ export function StoreProfileScreen() {
                         name={product.name}
                         price={product.price}
                         categoryId={product.categoryId}
-                        badge={product.badge}
+                        /* Mirando un pedido, el badge dice cuántas unidades
+                           se compraron en lugar de la etiqueta comercial. */
+                        badge={
+                          order
+                            ? `${orderedQuantities[product.id] ?? 1} u.`
+                            : product.badge
+                        }
                         quantity={quantities[product.id] ?? 0}
                         onAdd={(units) => updateQuantity(product.id, units)}
                         priority={sectionIndex === 0 && index < 4}

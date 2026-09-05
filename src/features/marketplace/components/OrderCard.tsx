@@ -32,7 +32,8 @@ const stateLabel: Record<CustomerOrder['state'], string> = {
 /** Fila de pedido en el historial: comercio, estado, total y acceso al detalle. */
 export function OrderCard({ order, priority }: OrderCardProps) {
   return (
-    <OrderCardShell to={`/comercios/${order.storeId}`}>
+    /* Se lleva el pedido en la URL: el comercio muestra sólo lo comprado. */
+    <OrderCardShell to={`/comercios/${order.storeId}?pedido=${order.id}`}>
       <OrderCardThumb>
         <MediaFrame $ratio="1 / 1" $radius="md">
           <MediaImage

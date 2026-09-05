@@ -140,3 +140,60 @@ export const StoreCheckoutCta = styled(Link)`
     background: ${({ theme }) => theme.color.brandHover};
   }
 `;
+
+// ── Aviso de pedido: el catálogo está recortado a lo comprado ──
+
+export const OrderNotice = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.surfaceMuted};
+  color: ${({ theme }) => theme.color.text};
+
+  > svg {
+    flex: 0 0 auto;
+    color: ${({ theme }) => theme.color.primary};
+  }
+`;
+
+export const OrderNoticeText = styled.div`
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1 1 auto;
+`;
+
+export const OrderNoticeTitle = styled.span`
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+`;
+
+export const OrderNoticeMeta = styled.span`
+  color: ${({ theme }) => theme.color.textSoft};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  line-height: 1.3;
+`;
+
+/** Vuelve al catálogo completo del comercio. */
+export const OrderNoticeClear = styled.button`
+  flex: 0 0 auto;
+  min-height: 2.25rem;
+  padding: 0 ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.surface};
+  color: ${({ theme }) => theme.color.primary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  cursor: pointer;
+  transition: background-color 180ms ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.color.primarySoft};
+  }
+`;
