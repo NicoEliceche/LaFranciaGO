@@ -10,11 +10,20 @@ import {
   UserRound,
   Wallet,
 } from 'lucide-react';
-import { FormEvent } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
+
+import { searchTradeCategories } from '@core/data/tradeCategories';
 
 import { FileField } from '@shared/components/FileField';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
+import { AddressSheet } from '../components/AddressSheet';
+import {
+  MapPickerButton,
+  TradeCombo,
+  TradeSuggestItem,
+  TradeSuggestList,
+} from './CommerceRegistrationScreenStyled';
 import { Badge, Button, Card, CardPad, CardText, CardTitle, LinkButton, PrimaryButton, Section, SectionHeader, SectionInner, SectionKicker, SectionText, SectionTitle } from '../ui';
 import { CardStack, CompactSection, CompactSectionStack, InlineWrap, SectionStack } from './screenLayout';
 import { RegistrationGrid } from './CommerceRegistrationScreenStyled';
@@ -58,7 +67,35 @@ const registrationSteps = [
   { id: 'step-3', title: 'Publicación', text: 'Pagás el alta y activás tu cuenta para aparecer.' },
 ];
 
+/**
+ * Da formato de CUIT/CUIL mientras se escribe: 20-12345678-9.
+ *
+ * Se trabaja sólo con los dígitos y se reinsertan los guiones, así borrar
+ * desde el medio no deja el número partido en dos.
+ */
+const formatTaxId = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+
+  if (digits.length <= 2) {
+    return digits;
+  }
+
+  if (digits.length <= 10) {
+    return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+  }
+
+  return `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`;
+};
+
 export function CommerceRegistrationScreen() {
+  const [taxId, setTaxId] = useState('');
+  const [tradeQuery, setTradeQuery] = useState('');
+  const [tradeOpen, setTradeOpen] = useState(false);
+  const [mapAddress, setMapAddress] = useState('');
+  const [mapSheetOpen, setMapSheetOpen] = useState(false);
+
+  const tradeMatches = useMemo(() => searchTradeCategories(tradeQuery), [tradeQuery]);
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
   };
@@ -94,7 +131,16 @@ export function CommerceRegistrationScreen() {
                         <FileText size={16} aria-hidden="true" />
                         CUIT / CUIL
                       </FieldLabel>
-                      <FieldInput id="business-tax" type="text" placeholder="20-12345678-9" required />
+                      <FieldInput
+                        id="business-tax"
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="20-12345678-9"
+                        value={taxId}
+                        onChange={(event) => setTaxId(formatTaxId(event.target.value))}
+                        maxLength={13}
+                        required
+                      />
                       <FieldHint>Validación fiscal para publicar como comercio.</FieldHint>
                     </FieldGroup>
 
@@ -135,14 +181,44 @@ export function CommerceRegistrationScreen() {
                         <LayoutGrid size={16} aria-hidden="true" />
                         Rubro principal
                       </FieldLabel>
-                      <FieldSelect id="business-category" defaultValue="verduleria">
-                        <option value="verduleria">Verdulería</option>
-                        <option value="almacen">Almacén</option>
-                        <option value="bebidas">Bebidas</option>
-                        <option value="carniceria">Carnicería</option>
-                        <option value="panaderia">Panadería</option>
-                        <option value="farmacia">Farmacia</option>
-                      </FieldSelect>
+                      <TradeCombo>
+                        <FieldInput
+                          id="business-category"
+                          type="text"
+                          autoComplete="off"
+                          placeholder="Escribí tu rubro (ej: panadería)"
+                          value={tradeQuery}
+                          onChange={(event) => {
+                            setTradeQuery(event.target.value);
+                            setTradeOpen(true);
+                          }}
+                          onFocus={() => setTradeOpen(true)}
+                          /* Se cierra con un respiro: sin él, el clic sobre una
+                             sugerencia se pierde antes de registrarse. */
+                          onBlur={() => window.setTimeout(() => setTradeOpen(false), 140)}
+                          required
+                        />
+
+                        {tradeOpen && tradeMatches.length > 0 ? (
+                          <TradeSuggestList aria-label="Rubros sugeridos">
+                            {tradeMatches.map((category) => (
+                              <TradeSuggestItem
+                                key={category.id}
+                                type="button"
+                                onClick={() => {
+                                  setTradeQuery(category.name);
+                                  setTradeOpen(false);
+                                }}
+                              >
+                                {category.name}
+                              </TradeSuggestItem>
+                            ))}
+                          </TradeSuggestList>
+                        ) : null}
+                      </TradeCombo>
+                      <FieldHint>
+                        Escribí una letra y elegí de la lista. Si no está, poné "Otro rubro".
+                      </FieldHint>
                     </FieldGroup>
 
                     <FieldGroup htmlFor="business-password">
@@ -173,7 +249,7 @@ export function CommerceRegistrationScreen() {
                         <CardTitle>Foto de perfil / logo</CardTitle>
                         <UploadBox htmlFor="business-logo">
                           <UploadTitle>
-                            <Upload size={16} aria-hidden="true" /> Subí tu logo o foto de perfil
+                            Subí tu logo o foto de perfil
                           </UploadTitle>
                           <UploadText>
                             PNG, JPG o WebP. Idealmente cuadrado y con fondo limpio.
@@ -225,8 +301,14 @@ export function CommerceRegistrationScreen() {
                             <FieldInput
                               id="business-map"
                               type="text"
-                              placeholder="Ubicación exacta para Google Maps"
+                              placeholder="Ubicación exacta para el mapa"
+                              value={mapAddress}
+                              onChange={(event) => setMapAddress(event.target.value)}
                             />
+                            <MapPickerButton type="button" onClick={() => setMapSheetOpen(true)}>
+                              <MapPin size={16} aria-hidden="true" />
+                              Agregar dirección de maps
+                            </MapPickerButton>
                           </FieldGroup>
                         </FormGrid>
 
@@ -342,6 +424,16 @@ export function CommerceRegistrationScreen() {
           </RegistrationGrid>
         </SectionInner>
       </CompactSection>
+      <AddressSheet
+        open={mapSheetOpen}
+        currentId=""
+        startOnNew
+        onClose={() => setMapSheetOpen(false)}
+        onSelect={(_id, value) => {
+          setMapAddress(value);
+          setMapSheetOpen(false);
+        }}
+      />
     </MarketplaceFrame>
   );
 }

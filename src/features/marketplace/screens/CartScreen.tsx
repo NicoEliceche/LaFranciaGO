@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { maxStepIndex, stepFactor, stepLabel } from '@core/data/saleUnits';
 import { AddressSheet } from '../components/AddressSheet';
 import { placeOrder } from '../ordersStore';
+import { changeCartQuantity, clearCart, removeCartItem, useCart } from '../cartStore';
 import {
   AlertCircle,
   ArrowLeftRight,
@@ -205,7 +206,7 @@ const deliveryMethods = [
 ];
 
 export function CartScreen() {
-  const [items, setItems] = useState(cartItems);
+  const items = useCart();
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   /* Alta de dirección: abre la misma hoja del header, en el paso de alta. */
   const [addressSheetOpen, setAddressSheetOpen] = useState(false);
@@ -224,40 +225,18 @@ export function CartScreen() {
     freeShippingProgress,
   } = useMemo(() => buildTotals(items), [items]);
 
-  const changeQuantity = (id: string, delta: number) => {
-    setItems((current) =>
-      current.map((item) => {
-        if (item.id !== id) {
-          return item;
-        }
-
-        /* Sin stock no se puede pedir nada: el escalón queda en cero. */
-        if (!item.available) {
-          return item;
-        }
-
-        const quantity = Math.min(
-          Math.max(0, item.quantity + delta),
-          maxStepIndex(item.saleUnit),
-        );
-
-        return {
-          ...item,
-          quantity,
-          subtotal: Math.round(item.price * stepFactor(item.saleUnit, quantity)),
-        };
-      }),
-    );
-  };
+  const changeQuantity = changeCartQuantity;
 
   /* Genera el pedido y lleva al historial, donde ya aparece el nuevo. */
   const confirmOrder = () => {
     placeOrder(items);
+    /* El carrito se vacía: lo pedido ya vive en "Mis pedidos". */
+    clearCart();
     navigate('/pedidos');
   };
 
   const removeItem = (id: string) => {
-    setItems((current) => current.filter((item) => item.id !== id));
+    removeCartItem(id);
     setPendingRemoval(null);
   };
 
