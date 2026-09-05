@@ -134,6 +134,13 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
     const startScroll = track.scrollLeft;
     let dragging = false;
 
+    /* Los enlaces e imágenes tienen arrastre nativo: el navegador se lleva el
+       gesto para "arrastrar el link" y el riel nunca llega a moverse. Por eso
+       el arrastre sólo funcionaba en el hueco entre tarjetas. */
+    const blockNativeDrag = (dragEvent: Event) => dragEvent.preventDefault();
+
+    track.addEventListener('dragstart', blockNativeDrag);
+
     const onMove = (moveEvent: PointerEvent) => {
       const delta = moveEvent.clientX - startX;
 
@@ -156,6 +163,7 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
       document.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerup', onUp);
       document.removeEventListener('pointercancel', onUp);
+      track.removeEventListener('dragstart', blockNativeDrag);
 
       track.style.scrollBehavior = '';
       track.style.cursor = '';
