@@ -1,4 +1,4 @@
-import{a8 as x,q as a,aa as R,j as r,M as w,J as C,a as S,E,a4 as T}from"./index-C0r01CVR.js";import{r as s}from"./react-Clk3ySf9.js";import{p as U}from"./mediaService-Be9g9s7c.js";import{u as q}from"./errandStore-CkHbx8OT.js";/**
+import{a8 as x,q as a,aa as R,j as r,M as w,K as C,a as S,E,L as T}from"./index-BsNwJpnQ.js";import{r as s}from"./react-DINHX3pJ.js";import{p as U}from"./mediaService-Be9g9s7c.js";import{u as q}from"./errandStore-C4Mn-q-H.js";/**
  * @license lucide-react v0.323.0 - ISC
  *
  * This source code is licensed under the ISC license.
@@ -49,11 +49,11 @@ import{a8 as x,q as a,aa as R,j as r,M as w,J as C,a as S,E,a4 as T}from"./index
   &[data-status='cancelado'] {
     background: ${({theme:e})=>e.color.danger};
   }
-`,O=a.span`
+`,K=a.span`
   color: ${({theme:e})=>e.color.textMuted};
   font-size: ${({theme:e})=>e.typography.size.xs};
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
-`,K=a.p`
+`,O=a.p`
   margin: ${({theme:e})=>e.spacing[2]} 0;
   padding: ${({theme:e})=>e.spacing[2]};
   border-left: 3px solid ${({theme:e})=>e.color.primary};
@@ -95,7 +95,7 @@ import{a8 as x,q as a,aa as R,j as r,M as w,J as C,a as S,E,a4 as T}from"./index
       animation: none;
     }
   }
-`,J=a.div`
+`,W=a.div`
   display: flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[3]};
@@ -103,7 +103,7 @@ import{a8 as x,q as a,aa as R,j as r,M as w,J as C,a as S,E,a4 as T}from"./index
   border-radius: ${({theme:e})=>e.radius.lg};
   border: 1px solid ${({theme:e})=>e.color.border};
   background: ${({theme:e})=>e.color.surface};
-`,W=a.span`
+`,X=a.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -116,7 +116,7 @@ import{a8 as x,q as a,aa as R,j as r,M as w,J as C,a as S,E,a4 as T}from"./index
   font-family: ${({theme:e})=>e.typography.fontFamily.heading};
   font-size: ${({theme:e})=>e.typography.size.lg};
   font-weight: ${({theme:e})=>e.typography.weight.bold};
-`,X=a.strong`
+`,J=a.strong`
   display: block;
   font-family: ${({theme:e})=>e.typography.fontFamily.heading};
   font-size: ${({theme:e})=>e.typography.size.base};
@@ -259,4 +259,4 @@ import{a8 as x,q as a,aa as R,j as r,M as w,J as C,a as S,E,a4 as T}from"./index
   font-size: ${({theme:e})=>e.typography.size.sm};
   font-weight: ${({theme:e})=>e.typography.weight.bold};
   text-align: center;
-`;function pe(){const{errand:e,send:n}=q(),[l,g]=s.useState(""),m=s.useRef(null),i=N();if(s.useEffect(()=>{const o=m.current;o&&(o.scrollTop=o.scrollHeight)},[e==null?void 0:e.messages.length]),!e)return r.jsx(w,{showSearch:!1,children:r.jsx(C,{children:r.jsx(S,{children:r.jsx(E,{icon:T,title:"No tenés mandados activos",text:"Generá uno y te conectamos con un repartidor cercano.",ctaLabel:"Pedir un mandado",ctaTo:"/mandado"})})})});const c=e.status==="buscando",y=o=>{o.preventDefault();const h=l.trim();h&&(n({author:"cliente",kind:"texto",text:h}),g(""))},d=async o=>{const h=o==null?void 0:o[0];if(h)try{const k=await U(h);n({author:"cliente",kind:"foto",mediaUrl:k.previewUrl})}catch{n({author:"cliente",kind:"texto",text:"No pude enviar la foto."})}},$=async()=>{if(i.recording){const o=await i.stop();o&&n({author:"cliente",kind:"audio",mediaUrl:o.url,durationSec:o.seconds});return}await i.start()};return r.jsx(w,{showSearch:!1,children:r.jsx(C,{children:r.jsxs(S,{children:[r.jsxs(V,{children:[r.jsx(G,{"data-status":e.status}),r.jsx(O,{children:c?`Buscando repartidor en ${e.radiusKm} km...`:`Mandado ${e.code} · en curso`})]}),r.jsx(K,{children:e.description}),c?r.jsxs(Z,{children:[r.jsx(_,{"aria-hidden":"true"}),"Avisamos a los repartidores cercanos. El primero que lo tome se queda con el pedido."]}):e.courier?r.jsxs(J,{children:[r.jsx(W,{children:e.courier.name.charAt(0)}),r.jsxs("div",{children:[r.jsx(X,{children:e.courier.name}),r.jsxs(Q,{children:[e.courier.vehicle," · ",e.courier.rating.toFixed(1)," ★ · a"," ",e.courier.distanceKm.toFixed(1)," km"]})]})]}):null,r.jsx(Y,{ref:m,"aria-label":"Mensajes del mandado",children:e.messages.map(o=>r.jsx(ee,{"data-mine":o.author==="cliente",children:r.jsxs(re,{"data-mine":o.author==="cliente",children:[o.kind==="texto"?o.text:null,o.kind==="foto"&&o.mediaUrl?r.jsx(oe,{src:o.mediaUrl,alt:"Foto enviada en el chat"}):null,o.kind==="audio"&&o.mediaUrl?r.jsx(ae,{src:o.mediaUrl,controls:!0,preload:"metadata"}):null,r.jsx(z,{children:o.time})]})},o.id))}),i.recording?r.jsxs(ie,{children:[r.jsx(j,{type:"button",onClick:i.cancel,"aria-label":"Descartar audio","data-tone":"danger",children:r.jsx(I,{size:18,"aria-hidden":"true"})}),r.jsxs(se,{children:["Grabando… ",i.seconds,"s"]}),r.jsx(M,{type:"button",onClick:$,"aria-label":"Enviar audio",children:r.jsx(F,{size:16,"aria-hidden":"true"})})]}):r.jsxs(te,{as:"form",onSubmit:y,children:[r.jsxs(j,{as:"label","aria-label":"Enviar una foto",children:[r.jsx(P,{size:18,"aria-hidden":"true"}),r.jsx("input",{type:"file",accept:"image/*",capture:"environment",hidden:!0,onChange:o=>{d(o.target.files),o.target.value=""}})]}),i.supported?r.jsx(j,{type:"button",onClick:$,"aria-label":"Grabar un audio",children:r.jsx(A,{size:18,"aria-hidden":"true"})}):null,r.jsx(ne,{value:l,onChange:o=>g(o.target.value),placeholder:c?"Esperando repartidor…":"Escribí un mensaje","aria-label":"Mensaje"}),r.jsx(M,{type:"submit","aria-label":"Enviar mensaje",disabled:!l.trim(),children:r.jsx(D,{size:16,"aria-hidden":"true"})})]}),i.error?r.jsx(z,{role:"alert",children:i.error}):null]})})})}export{pe as ErrandChatScreen};
+`;function pe(){const{errand:e,send:n}=q(),[l,g]=s.useState(""),m=s.useRef(null),i=N();if(s.useEffect(()=>{const o=m.current;o&&(o.scrollTop=o.scrollHeight)},[e==null?void 0:e.messages.length]),!e)return r.jsx(w,{showSearch:!1,children:r.jsx(C,{children:r.jsx(S,{children:r.jsx(E,{icon:T,title:"No tenés mandados activos",text:"Generá uno y te conectamos con un repartidor cercano.",ctaLabel:"Pedir un mandado",ctaTo:"/mandado"})})})});const c=e.status==="buscando",y=o=>{o.preventDefault();const h=l.trim();h&&(n({author:"cliente",kind:"texto",text:h}),g(""))},d=async o=>{const h=o==null?void 0:o[0];if(h)try{const k=await U(h);n({author:"cliente",kind:"foto",mediaUrl:k.previewUrl})}catch{n({author:"cliente",kind:"texto",text:"No pude enviar la foto."})}},$=async()=>{if(i.recording){const o=await i.stop();o&&n({author:"cliente",kind:"audio",mediaUrl:o.url,durationSec:o.seconds});return}await i.start()};return r.jsx(w,{showSearch:!1,children:r.jsx(C,{children:r.jsxs(S,{children:[r.jsxs(V,{children:[r.jsx(G,{"data-status":e.status}),r.jsx(K,{children:c?`Buscando repartidor en ${e.radiusKm} km...`:`Mandado ${e.code} · en curso`})]}),r.jsx(O,{children:e.description}),c?r.jsxs(Z,{children:[r.jsx(_,{"aria-hidden":"true"}),"Avisamos a los repartidores cercanos. El primero que lo tome se queda con el pedido."]}):e.courier?r.jsxs(W,{children:[r.jsx(X,{children:e.courier.name.charAt(0)}),r.jsxs("div",{children:[r.jsx(J,{children:e.courier.name}),r.jsxs(Q,{children:[e.courier.vehicle," · ",e.courier.rating.toFixed(1)," ★ · a"," ",e.courier.distanceKm.toFixed(1)," km"]})]})]}):null,r.jsx(Y,{ref:m,"aria-label":"Mensajes del mandado",children:e.messages.map(o=>r.jsx(ee,{"data-mine":o.author==="cliente",children:r.jsxs(re,{"data-mine":o.author==="cliente",children:[o.kind==="texto"?o.text:null,o.kind==="foto"&&o.mediaUrl?r.jsx(oe,{src:o.mediaUrl,alt:"Foto enviada en el chat"}):null,o.kind==="audio"&&o.mediaUrl?r.jsx(ae,{src:o.mediaUrl,controls:!0,preload:"metadata"}):null,r.jsx(z,{children:o.time})]})},o.id))}),i.recording?r.jsxs(ie,{children:[r.jsx(j,{type:"button",onClick:i.cancel,"aria-label":"Descartar audio","data-tone":"danger",children:r.jsx(I,{size:18,"aria-hidden":"true"})}),r.jsxs(se,{children:["Grabando… ",i.seconds,"s"]}),r.jsx(M,{type:"button",onClick:$,"aria-label":"Enviar audio",children:r.jsx(F,{size:16,"aria-hidden":"true"})})]}):r.jsxs(te,{as:"form",onSubmit:y,children:[r.jsxs(j,{as:"label","aria-label":"Enviar una foto",children:[r.jsx(P,{size:18,"aria-hidden":"true"}),r.jsx("input",{type:"file",accept:"image/*",capture:"environment",hidden:!0,onChange:o=>{d(o.target.files),o.target.value=""}})]}),i.supported?r.jsx(j,{type:"button",onClick:$,"aria-label":"Grabar un audio",children:r.jsx(A,{size:18,"aria-hidden":"true"})}):null,r.jsx(ne,{value:l,onChange:o=>g(o.target.value),placeholder:c?"Esperando repartidor…":"Escribí un mensaje","aria-label":"Mensaje"}),r.jsx(M,{type:"submit","aria-label":"Enviar mensaje",disabled:!l.trim(),children:r.jsx(D,{size:16,"aria-hidden":"true"})})]}),i.error?r.jsx(z,{role:"alert",children:i.error}):null]})})})}export{pe as ErrandChatScreen};
