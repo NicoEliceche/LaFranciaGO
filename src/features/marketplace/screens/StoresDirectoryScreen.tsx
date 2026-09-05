@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { SearchX } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { SearchX, X } from 'lucide-react';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { CategoryTile } from '../components/CategoryTile';
@@ -16,33 +17,52 @@ import type { MarketplaceFilter, StoreProfile } from '../marketplace.types';
 import { FilterChip, SectionInner } from '../ui';
 import { ScrollRail } from '@shared/components/ScrollRail';
 
-import { CategoryRail, CompactSection, ProductGrid, SearchSection } from './screenLayout';
-import { SortField, SortLabel, SortRow, SortSelect } from './StoresDirectoryScreenStyled';
+import { CompactSection, ProductGrid, SearchSection } from './screenLayout';
+import {
+  RubroChip,
+  RubroChipClear,
+  SortField,
+  SortLabel,
+  SortRow,
+  SortSelect,
+} from './StoresDirectoryScreenStyled';
 
 
 
 export function StoresDirectoryScreen() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<MarketplaceFilter>('all');
+  const [searchParams, setSearchParams] = useSearchParams();
   const { sortMode, setSortMode } = useSortPreference();
+
+  /* Rubro elegido en la pantalla de categorías. Antes el enlace traía este
+     parámetro pero nadie lo leía: tocar una categoría no filtraba nada. */
+  const rubroId = searchParams.get('rubro');
+  const rubro = useMemo(
+    () => (rubroId ? (categories.find((item) => item.id === rubroId) ?? null) : null),
+    [rubroId],
+  );
 
   const filteredStores = useMemo(
     () =>
       rankResults(
-        stores.filter((store) =>
-          matchesQuery(query, store.name, store.category, store.address, store.tags.join(' ')),
-        ),
+        stores
+          .filter((store) => !rubro || store.categoryId === rubro.id)
+          .filter((store) =>
+            matchesQuery(query, store.name, store.category, store.address, store.tags.join(' ')),
+          ),
         sortMode,
       ),
-    [query, sortMode],
+    [query, rubro, sortMode],
   );
 
-  const filteredCategories = useMemo(
-    () => categories.filter((category) => matchesQuery(query, category.name)),
-    [query],
-  );
+  const clearRubro = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('rubro');
+    setSearchParams(next, { replace: true });
+  };
 
-  const hasResults = filteredStores.length > 0 || filteredCategories.length > 0;
+  const hasResults = filteredStores.length > 0;
 
   return (
     <MarketplaceFrame
@@ -72,25 +92,18 @@ export function StoresDirectoryScreen() {
         </SectionInner>
       </SearchSection>
 
-      {filteredCategories.length > 0 && (
+      {rubro ? (
         <CompactSection>
           <SectionInner>
-            <SectionHeading title="Categorías" subtitle="Elegí un rubro para filtrar." />
-
-            <ScrollRail as={CategoryRail} aria-label="Categorías">
-              {filteredCategories.map((category, index) => (
-                <CategoryTile
-                  key={category.id}
-                  id={category.id}
-                  name={category.name}
-                  to={`/comercios?rubro=${category.id}`}
-                  priority={index < 5}
-                />
-              ))}
-            </ScrollRail>
+            <RubroChip>
+              Rubro: <strong>{rubro.name}</strong>
+              <RubroChipClear type="button" onClick={clearRubro} aria-label="Quitar el filtro de rubro">
+                <X size={14} aria-hidden="true" />
+              </RubroChipClear>
+            </RubroChip>
           </SectionInner>
         </CompactSection>
-      )}
+      ) : null}
 
       <CompactSection>
         <SectionInner>

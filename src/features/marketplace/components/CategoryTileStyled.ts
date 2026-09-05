@@ -29,3 +29,18 @@ export const CategoryTileLabel = styled.span`
   background: linear-gradient(180deg, transparent 0%, rgba(5, 8, 22, 0.72) 100%);
   text-shadow: 0 1px 3px rgba(5, 8, 22, 0.4);
 `;
+
+/** Cantidad de negocios del rubro, arriba a la derecha del tile. */
+export const CategoryTileCount = styled.span`
+  position: absolute;
+  top: ${({ theme }) => theme.spacing[1]};
+  right: ${({ theme }) => theme.spacing[1]};
+  z-index: 2;
+  padding: 0.15rem 0.45rem;
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: rgba(5, 8, 22, 0.62);
+  color: #ffffff;
+  font-size: 0.625rem;
+  font-weight: ${({ theme }) => theme.typography.weight.semibold};
+  white-space: nowrap;
+`;

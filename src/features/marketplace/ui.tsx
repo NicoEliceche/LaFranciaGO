@@ -1165,6 +1165,21 @@ export const HeaderCircleLink = styled(Link)`
   ${headerCircleAction};
 `;
 
+/** Foto de perfil dentro del botón circular del header. */
+export const HeaderAvatarImage = styled.img`
+  position: absolute;
+  /* El botón puede achicarse de ancho en pantallas angostas: anclando la
+     imagen al centro con proporción 1:1 el círculo nunca sale ovalado. */
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  border-radius: ${({ theme }) => theme.radius.full};
+  object-fit: cover;
+`;
+
 export const HeaderCircleBadge = styled.span`
   position: absolute;
   top: -0.15rem;

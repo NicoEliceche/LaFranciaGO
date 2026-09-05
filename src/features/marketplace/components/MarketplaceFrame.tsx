@@ -34,6 +34,7 @@ import {
 import { useThemeMode } from '@core/theme';
 import { MotoDeliveryIcon } from '@shared/components/icons/MotoDeliveryIcon';
 
+import { useProfilePhoto } from '../profileStore';
 import { AddressSheet } from './AddressSheet';
 import { SearchBar } from './SearchBar';
 import { GamerThemeToggle } from './GamerThemeToggle';
@@ -61,6 +62,7 @@ import {
   HeaderBrandName,
   HeaderBrandNameAccent,
   HeaderBrandTag,
+  HeaderAvatarImage,
   HeaderCircleBadge,
   HeaderCircleButton,
   HeaderCircleLink,
@@ -158,7 +160,7 @@ const NOTIFICATIONS_TRANSITION_MS = 260;
 
 const drawerPrimaryItems: DrawerItemData[] = [
   { to: '/', title: 'Inicio', subtitle: 'Portada y promociones', icon: Home, end: true },
-  { to: '/comercios', title: 'Categorías', subtitle: 'Navegá por rubros', icon: LayoutGrid },
+  { to: '/categorias', title: 'Categorías', subtitle: 'Navegá por rubros', icon: LayoutGrid },
   { to: '/pedidos', title: 'Mis pedidos', subtitle: 'Historial y seguimiento', icon: PackageSearch },
   { to: '/favoritos', title: 'Favoritos', subtitle: 'Guardados para después', icon: Heart },
   { to: '/mi-cuenta', title: 'Cuenta', subtitle: 'Perfil y seguridad', icon: UserRound },
@@ -256,7 +258,7 @@ const notificationSections: NotificationSection[] = [
 
 const topLinks = [
   { to: '/', label: 'Inicio', icon: Home },
-  { to: '/comercios', label: 'Comercios', icon: Store },
+  { to: '/categorias', label: 'Categorías', icon: LayoutGrid },
   { to: '/pedidos', label: 'Pedidos', icon: PackageSearch },
   { to: '/notificaciones', label: 'Notificaciones', icon: Bell },
   { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
@@ -264,7 +266,7 @@ const topLinks = [
 
 const bottomLinks = [
   { to: '/', label: 'Inicio', icon: Home },
-  { to: '/comercios', label: 'Categorías', icon: LayoutGrid },
+  { to: '/categorias', label: 'Categorías', icon: LayoutGrid },
   { to: '/pedidos', label: 'Mis pedidos', icon: PackageSearch },
   { to: '/favoritos', label: 'Favoritos', icon: Heart },
   { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
@@ -277,6 +279,7 @@ export function MarketplaceFrame({
   showSearch = true,
 }: MarketplaceFrameProps) {
   const { isDarkMode, toggleMode } = useThemeMode();
+  const { photo: profilePhoto } = useProfilePhoto();
   const navigate = useNavigate();
   const hasSearch = typeof query === 'string' && typeof onQueryChange === 'function';
   const headerRef = useRef<HTMLElement | null>(null);
@@ -566,7 +569,11 @@ export function MarketplaceFrame({
                 </HeaderCircleLink>
 
                 <HeaderCircleLink to="/mi-cuenta" aria-label="Abrir mi cuenta">
-                  <UserRound size={18} aria-hidden="true" />
+                  {profilePhoto ? (
+                    <HeaderAvatarImage src={profilePhoto} alt="" />
+                  ) : (
+                    <UserRound size={18} aria-hidden="true" />
+                  )}
                 </HeaderCircleLink>
               </HeaderActionsRow>
             </BrandHeaderRow>

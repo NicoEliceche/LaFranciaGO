@@ -57,7 +57,10 @@ export interface StoreProfile {
   name: string;
   /** Plan pagado: mejora la posición dentro del radio cercano. */
   premium?: boolean;
+  /** Etiqueta visible del rubro ("Almacén y bebidas"). */
   category: string;
+  /** Rubro al que pertenece, para filtrar por categoría. */
+  categoryId: string;
   address: string;
   phone: string;
   hours: string;

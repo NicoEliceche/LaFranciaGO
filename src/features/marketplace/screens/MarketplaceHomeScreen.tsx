@@ -36,6 +36,9 @@ import {
   WideScrollRail,
 } from './screenLayout';
 
+/** Rubros que se adelantan en Inicio; el resto vive en la pantalla Categorías. */
+const HOME_CATEGORY_PREVIEW = 8;
+
 export function MarketplaceHomeScreen() {
   const [query, setQuery] = useState('');
   const { sortMode } = useSortPreference();
@@ -43,10 +46,18 @@ export function MarketplaceHomeScreen() {
   const normalizedQuery = query.trim();
   const isSearching = normalizedQuery.length > 0;
 
-  const visibleCategories = useMemo(
-    () => categories.filter((category) => matchesQuery(normalizedQuery, category.name)),
-    [normalizedQuery],
-  );
+  /**
+   * Inicio muestra un adelanto de rubros, no el listado completo: para verlos
+   * todos está la pantalla Categorías, a la que lleva "Ver todos". Buscando sí
+   * se listan todas las coincidencias, que es lo que se espera de una búsqueda.
+   */
+  const visibleCategories = useMemo(() => {
+    const matches = categories.filter((category) =>
+      matchesQuery(normalizedQuery, category.name),
+    );
+
+    return isSearching ? matches : matches.slice(0, HOME_CATEGORY_PREVIEW);
+  }, [isSearching, normalizedQuery]);
 
   /* Mismo criterio que el buscador: cercanía primero, Premium desempata. */
   const visibleStores = useMemo(
@@ -121,7 +132,7 @@ export function MarketplaceHomeScreen() {
             <SectionHeading
               title="Categorías"
               subtitle="Elegí un rubro y encontrá tu comercio."
-              seeAllTo="/comercios"
+              seeAllTo="/categorias"
             />
 
             <HScrollRail as={CategoryRail} aria-label="Categorías">

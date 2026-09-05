@@ -47,3 +47,43 @@ export const SortSelect = styled.select`
     box-shadow: 0 0 0 3px ${({ theme }) => theme.color.primarySoft};
   }
 `;
+
+// ── Rubro activo ──
+
+/** Recuerda desde qué categoría se llegó, y permite quitarla. */
+export const RubroChip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  min-height: 2.25rem;
+  padding: 0 ${({ theme }) => theme.spacing[1]} 0 ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.primarySoft};
+  color: ${({ theme }) => theme.color.text};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+
+  > strong {
+    font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+    font-weight: ${({ theme }) => theme.typography.weight.bold};
+  }
+`;
+
+export const RubroChipClear = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: transparent;
+  color: ${({ theme }) => theme.color.textSoft};
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.color.surface};
+    color: ${({ theme }) => theme.color.text};
+  }
+`;
