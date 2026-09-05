@@ -1,7 +1,7 @@
 import { Link, NavLink } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 
-import { neonIcon, neonSurface } from '@core/theme/neon';
+import { neonIcon, neonIconActive, neonSurface } from '@core/theme/neon';
 
 /**
  * Estilos del shell (header, drawer, panel de notificaciones y modales).
@@ -87,6 +87,23 @@ export const DrawerHeader = styled.div`
   z-index: 1;
 `;
 
+export const DrawerItemIcon = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: ${({ theme }) => theme.radius.lg};
+  /* Fondo apenas insinuado en reposo: el realce lo da la opción activa. */
+  background: ${({ theme }) =>
+    theme.mode === 'dark' ? 'rgba(92, 185, 201, 0.08)' : 'rgba(0, 71, 231, 0.08)'};
+  color: ${({ theme }) => theme.color.primary};
+  flex: 0 0 auto;
+  transition: color 160ms ease, background-color 160ms ease;
+
+  ${neonIcon};
+`;
+
 export const DrawerItem = styled(NavLink)`
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -106,6 +123,19 @@ export const DrawerItem = styled(NavLink)`
     background: ${({ theme }) => theme.color.primarySoft};
     color: ${({ theme }) => theme.color.primary};
   }
+
+  /* El cian pleno queda para lo activo y para el hover: son las señales de
+     interacción, no el estado de reposo de toda la lista. */
+  &.active ${DrawerItemIcon},
+  &[aria-current='page'] ${DrawerItemIcon} {
+    ${neonIconActive};
+    background: ${({ theme }) =>
+      theme.mode === 'dark' ? 'rgba(77, 229, 255, 0.14)' : 'rgba(0, 71, 231, 0.12)'};
+  }
+
+  &:hover ${DrawerItemIcon} {
+    ${neonIconActive};
+  }
 `;
 
 export const DrawerItemArrow = styled.span`
@@ -115,20 +145,6 @@ export const DrawerItemArrow = styled.span`
   color: ${({ theme }) => theme.color.textSoft};
 `;
 
-export const DrawerItemIcon = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.1rem;
-  height: 2.1rem;
-  border-radius: ${({ theme }) => theme.radius.lg};
-  background: ${({ theme }) =>
-    theme.mode === 'dark' ? 'rgba(77, 229, 255, 0.12)' : 'rgba(0, 71, 231, 0.08)'};
-  color: ${({ theme }) => theme.color.primary};
-  flex: 0 0 auto;
-
-  ${neonIcon};
-`;
 
 export const DrawerItemSubtitle = styled.span`
   color: ${({ theme }) => theme.color.textMuted};

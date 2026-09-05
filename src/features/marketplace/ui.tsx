@@ -1,7 +1,7 @@
 import { Link, NavLink } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 
-import { neonIcon } from '@core/theme/neon';
+import { neonIcon, neonIconActive } from '@core/theme/neon';
 
 export const Page = styled.div`
   min-height: 100dvh;
@@ -870,6 +870,28 @@ export const BottomNavList = styled.ul`
   }
 `;
 
+export const BottomNavIcon = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* El botón central va sobre fondo de marca: ahí el neón no aplica. */
+  [data-primary='true'] & {
+    filter: none;
+  }
+
+  ${neonIcon};
+
+  [data-primary='true'] & {
+    width: 2.625rem;
+    height: 2.625rem;
+    border-radius: ${({ theme }) => theme.radius.full};
+    background: ${({ theme }) => theme.color.brand};
+    color: ${({ theme }) => theme.color.onPrimary};
+    box-shadow: ${({ theme }) => theme.shadow.glow};
+  }
+`;
+
 export const BottomNavLink = styled(NavLink)`
   display: flex;
   flex-direction: column;
@@ -904,6 +926,13 @@ export const BottomNavLink = styled(NavLink)`
       css`
         color: ${theme.color.neon};
       `};
+  }
+
+  /* Sólo la pestaña activa lleva el cian pleno con halo: es la que indica
+     dónde está parado el usuario. Las demás acompañan en reposo. */
+  &.active ${BottomNavIcon},
+  &[aria-current='page'] ${BottomNavIcon} {
+    ${neonIconActive};
   }
 
   &.active::before,
@@ -952,27 +981,6 @@ export const BottomNavLink = styled(NavLink)`
   }
 `;
 
-export const BottomNavIcon = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  /* El botón central va sobre fondo de marca: ahí el neón no aplica. */
-  [data-primary='true'] & {
-    filter: none;
-  }
-
-  ${neonIcon};
-
-  [data-primary='true'] & {
-    width: 2.625rem;
-    height: 2.625rem;
-    border-radius: ${({ theme }) => theme.radius.full};
-    background: ${({ theme }) => theme.color.brand};
-    color: ${({ theme }) => theme.color.onPrimary};
-    box-shadow: ${({ theme }) => theme.shadow.glow};
-  }
-`;
 
 export const Footer = styled.footer`
   display: none;

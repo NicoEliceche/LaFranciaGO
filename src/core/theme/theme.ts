@@ -44,6 +44,9 @@ const darkColorTokens: ThemeColorTokens = {
   /* Cian del interruptor NOCHE, usado como acento de todo el modo oscuro. */
   neon: '#4DE5FF',
   neonSoft: 'rgba(77, 229, 255, 0.275)',
+  /* Mismo tono, media saturación: es el cian de los íconos en reposo, para
+     que el brillo pleno quede reservado a lo activo. Contraste 7.45:1. */
+  neonMuted: '#5CB9C9',
 };
 
 const darkShadowTokens: ThemeShadowTokens = {

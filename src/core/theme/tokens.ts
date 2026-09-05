@@ -33,6 +33,8 @@ export const tokens = {
     /* Acento neón: sólo se usa en modo oscuro. En claro cae al azul de marca. */
     neon: '#0047E7',
     neonSoft: 'rgba(0, 71, 231, 0.28)',
+    /* Variante en reposo: en claro no hay neón, se usa el azul apagado. */
+    neonMuted: '#4B5C7A',
   },
   typography: {
     fontFamily: {
