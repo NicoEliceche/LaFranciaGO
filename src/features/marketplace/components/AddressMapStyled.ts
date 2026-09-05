@@ -1,5 +1,7 @@
 import styled from 'styled-components';
 
+import { neonIcon, neonSurface } from '@core/theme/neon';
+
 // ── Mapa de selección de ubicación ──
 
 export const MapWrap = styled.div`
@@ -58,10 +60,12 @@ export const MapCanvas = styled.div`
   `}
 `;
 
+/* Arriba a la derecha: abajo va el botón de ubicación y arriba a la
+   izquierda los controles de zoom de Leaflet. */
 export const MapCrosshair = styled.span`
   position: absolute;
-  left: 50%;
-  bottom: ${({ theme }) => theme.spacing[2]};
+  right: ${({ theme }) => theme.spacing[2]};
+  top: ${({ theme }) => theme.spacing[2]};
   z-index: 500;
   padding: 0.28rem ${({ theme }) => theme.spacing[2]};
   border-radius: ${({ theme }) => theme.radius.full};
@@ -70,6 +74,79 @@ export const MapCrosshair = styled.span`
   font-size: 0.6875rem;
   font-weight: ${({ theme }) => theme.typography.weight.semibold};
   white-space: nowrap;
-  transform: translateX(-50%);
   pointer-events: none;
+`;
+
+/* Flota sobre el mapa, como en las apps de mapas conocidas: la acción
+   pertenece al mapa, y el cuerpo de la hoja ya está ajustado de alto. */
+export const MapLocateButton = styled.button`
+  position: absolute;
+  right: ${({ theme }) => theme.spacing[2]};
+  bottom: ${({ theme }) => theme.spacing[2]};
+  z-index: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  min-height: 2.5rem;
+  padding: 0 ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.surface};
+  color: ${({ theme }) => theme.color.text};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  box-shadow: 0 2px 10px rgba(5, 8, 22, 0.28);
+  cursor: pointer;
+  transition: background-color 180ms ease;
+
+  ${({ theme }) => theme.mode === 'dark' && neonSurface}
+
+  svg {
+    flex: 0 0 auto;
+    ${neonIcon}
+  }
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.color.surfaceMuted};
+  }
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.75;
+  }
+
+  /* Mientras busca, el ícono gira. Se respeta a quien pidió menos movimiento. */
+  &[data-locating='true'] svg {
+    animation: lfg-locate-spin 1s linear infinite;
+  }
+
+  @keyframes lfg-locate-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-locating='true'] svg {
+      animation: none;
+    }
+  }
+`;
+
+/** Aviso cuando el permiso se rechaza o la ubicación falla. */
+export const MapLocateError = styled.p`
+  position: absolute;
+  left: ${({ theme }) => theme.spacing[2]};
+  right: ${({ theme }) => theme.spacing[2]};
+  bottom: 3.5rem;
+  z-index: 500;
+  margin: 0;
+  padding: ${({ theme }) => theme.spacing[2]};
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: rgba(5, 8, 22, 0.86);
+  color: #ffffff;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  text-align: center;
 `;

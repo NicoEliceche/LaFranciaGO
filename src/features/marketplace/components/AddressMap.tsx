@@ -1,9 +1,18 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
+import { LocateFixed } from 'lucide-react';
 
 import 'leaflet/dist/leaflet.css';
 
-import { MapCanvas, MapCrosshair, MapWrap } from './AddressMapStyled';
+import { useCurrentPosition } from '@shared/hooks/useCurrentPosition';
+
+import {
+  MapCanvas,
+  MapCrosshair,
+  MapLocateButton,
+  MapLocateError,
+  MapWrap,
+} from './AddressMapStyled';
 
 type AddressMapProps = {
   lat: number;
@@ -13,6 +22,8 @@ type AddressMapProps = {
 };
 
 const DEFAULT_ZOOM = 16;
+/** Al ubicar al usuario se acerca más: ya sabemos la manzana exacta. */
+const LOCATED_ZOOM = 18;
 
 /**
  * Mapa OpenStreetMap con pin arrastrable.
@@ -22,6 +33,7 @@ const DEFAULT_ZOOM = 16;
  * define el usuario, no el geocoder.
  */
 export function AddressMap({ lat, lon, onPick }: AddressMapProps) {
+  const { status, error, locate } = useCurrentPosition();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -107,10 +119,42 @@ export function AddressMap({ lat, lon, onPick }: AddressMapProps) {
     map.setView([lat, lon], map.getZoom() < DEFAULT_ZOOM ? DEFAULT_ZOOM : map.getZoom());
   }, [lat, lon]);
 
+  /* Lleva el pin y la vista a donde está el dispositivo. El pin sigue siendo
+     movible después: el GPS puede errar unos metros y quien mejor sabe dónde
+     está la puerta es el usuario. */
+  const handleLocate = () => {
+    locate(({ lat: foundLat, lon: foundLon }) => {
+      const map = mapRef.current;
+      const marker = markerRef.current;
+
+      if (map && marker) {
+        marker.setLatLng([foundLat, foundLon]);
+        map.setView([foundLat, foundLon], LOCATED_ZOOM);
+      }
+
+      skipRecenterRef.current = true;
+      onPickRef.current(foundLat, foundLon);
+    });
+  };
+
+  const locating = status === 'locating';
+
   return (
     <MapWrap>
       <MapCanvas ref={containerRef} />
       <MapCrosshair aria-hidden="true">Arrastrá el punto hasta tu casa</MapCrosshair>
+
+      {error ? <MapLocateError role="status">{error}</MapLocateError> : null}
+
+      <MapLocateButton
+        type="button"
+        onClick={handleLocate}
+        disabled={locating}
+        data-locating={locating}
+      >
+        <LocateFixed size={16} aria-hidden="true" />
+        {locating ? 'Buscando…' : 'Usar mi ubicación actual'}
+      </MapLocateButton>
     </MapWrap>
   );
 }
