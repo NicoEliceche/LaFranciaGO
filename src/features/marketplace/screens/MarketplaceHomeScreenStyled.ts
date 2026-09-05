@@ -15,11 +15,13 @@ export const ErrandBanner = styled(Link)`
   cursor: pointer;
   transition: transform 200ms ease, box-shadow 200ms ease;
 
-  /* En escritorio el bloque se centra: el ancho completo dejaba el texto
-     perdido a la izquierda de una franja muy larga. */
+  /* En escritorio el fondo se ajusta al contenido y el bloque queda centrado:
+     ocupando todo el ancho parecía una franja enorme para un solo botón. */
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    justify-content: center;
+    width: fit-content;
+    margin-inline: auto;
     gap: ${({ theme }) => theme.spacing[4]};
+    padding-inline: ${({ theme }) => theme.spacing[5]};
   }
 
   &:hover {
