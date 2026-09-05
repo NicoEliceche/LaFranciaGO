@@ -1,5 +1,6 @@
 import {
   type ComponentType,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -23,11 +24,22 @@ type ScrollRailProps = {
    * Riel a usar como pista. Permite conservar los anchos y el snap de cada
    * sección, reutilizando la lógica de flechas sin duplicarla.
    */
-  as?: ComponentType<{ ref?: unknown; children?: ReactNode; 'aria-label'?: string }>;
+  as?: ComponentType<{
+    ref?: unknown;
+    children?: ReactNode;
+    'aria-label'?: string;
+    onPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  }>;
 };
 
 /** Margen de tolerancia: evita que la flecha parpadee por 1px de redondeo. */
 const EDGE_TOLERANCE = 4;
+
+/**
+ * Cuánto hay que mover el mouse para que cuente como arrastre y no como clic.
+ * Por debajo de esto, tocar una tarjeta sigue abriéndola.
+ */
+const DRAG_THRESHOLD_PX = 6;
 
 /**
  * Riel horizontal con indicadores de scroll.
@@ -59,6 +71,18 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
     sync();
   }, [sync, children]);
 
+  /* La manito sólo tiene sentido si hay algo para arrastrar y hay mouse. */
+  useEffect(() => {
+    const track = trackRef.current;
+
+    if (!track) {
+      return;
+    }
+
+    const finePointer = window.matchMedia?.('(pointer: fine)').matches ?? false;
+    track.style.cursor = finePointer && (canScrollLeft || canScrollRight) ? 'grab' : '';
+  }, [canScrollLeft, canScrollRight]);
+
   useEffect(() => {
     const track = trackRef.current;
 
@@ -87,6 +111,79 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
       observer?.disconnect();
     };
   }, [sync]);
+
+  /**
+   * Arrastre con el mouse para desplazar el riel.
+   *
+   * Sólo se engancha al mouse: en pantallas táctiles el navegador ya scrollea
+   * solo, e interferir ahí empeora el gesto nativo. Hasta superar el umbral no
+   * se toca nada, así un clic sobre una tarjeta sigue funcionando.
+   */
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== 'mouse' || event.button !== 0) {
+      return;
+    }
+
+    const track = trackRef.current;
+
+    if (!track) {
+      return;
+    }
+
+    const startX = event.clientX;
+    const startScroll = track.scrollLeft;
+    let dragging = false;
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const delta = moveEvent.clientX - startX;
+
+      if (!dragging) {
+        if (Math.abs(delta) < DRAG_THRESHOLD_PX) {
+          return;
+        }
+
+        dragging = true;
+        /* El scroll suave pelea contra el arrastre: mientras dura, directo. */
+        track.style.scrollBehavior = 'auto';
+        track.style.cursor = 'grabbing';
+        track.style.userSelect = 'none';
+      }
+
+      track.scrollLeft = startScroll - delta;
+    };
+
+    const onUp = () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+
+      track.style.scrollBehavior = '';
+      track.style.cursor = '';
+      track.style.userSelect = '';
+
+      /* Tras un arrastre real se anula el clic que el navegador dispara al
+         soltar, para no abrir la tarjeta donde terminó el gesto. */
+      if (dragging) {
+        const swallowClick = (clickEvent: MouseEvent) => {
+          clickEvent.stopPropagation();
+          clickEvent.preventDefault();
+        };
+
+        track.addEventListener('click', swallowClick, { capture: true, once: true });
+        /* Si no hubo clic (por ejemplo, se soltó fuera), se limpia igual. */
+        window.setTimeout(
+          () => track.removeEventListener('click', swallowClick, { capture: true }),
+          0,
+        );
+      }
+
+      sync();
+    };
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+  };
 
   const nudge = (direction: 1 | -1) => {
     const track = trackRef.current;
@@ -118,11 +215,11 @@ tabIndex={-1}
       ) : null}
 
       {Track ? (
-        <Track ref={trackRef} {...rest}>
+        <Track ref={trackRef} onPointerDown={handlePointerDown} {...rest}>
           {children}
         </Track>
       ) : (
-        <ScrollRailTrack ref={trackRef} {...rest}>
+        <ScrollRailTrack ref={trackRef} onPointerDown={handlePointerDown} {...rest}>
           {children}
         </ScrollRailTrack>
       )}
