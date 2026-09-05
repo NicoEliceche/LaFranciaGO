@@ -41,6 +41,15 @@ const EDGE_TOLERANCE = 4;
  */
 const DRAG_THRESHOLD_PX = 6;
 
+/** Duración del deslizamiento al tocar una flecha. */
+const GLIDE_MS = 420;
+
+/**
+ * Curva de salida: arranca rápido y frena al final, que es como se siente un
+ * swipe real. Con una interpolación lineal el movimiento parece mecánico.
+ */
+const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+
 /**
  * Riel horizontal con indicadores de scroll.
  *
@@ -50,6 +59,8 @@ const DRAG_THRESHOLD_PX = 6;
  */
 export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRailProps) {
   const trackRef = useRef<HTMLDivElement | null>(null);
+  /* Frame del deslizamiento en curso, para poder cancelarlo. */
+  const glideRef = useRef<number | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
@@ -109,6 +120,11 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
       track.removeEventListener('scroll', sync);
       track.removeEventListener('scrollend', sync);
       observer?.disconnect();
+
+      if (glideRef.current !== null) {
+        cancelAnimationFrame(glideRef.current);
+        glideRef.current = null;
+      }
     };
   }, [sync]);
 
@@ -128,6 +144,12 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
 
     if (!track) {
       return;
+    }
+
+    /* Si el riel venía deslizándose por una flecha, el arrastre manda. */
+    if (glideRef.current !== null) {
+      cancelAnimationFrame(glideRef.current);
+      glideRef.current = null;
     }
 
     const startX = event.clientX;
@@ -193,6 +215,55 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
     document.addEventListener('pointercancel', onUp);
   };
 
+  /**
+   * Desliza el riel hasta la posición pedida, animando cuadro a cuadro.
+   *
+   * No se usa `scrollBy({ behavior: 'smooth' })` porque el navegador lo
+   * desactiva por completo cuando el sistema pide menos movimiento, y en ese
+   * caso el contenido saltaba de golpe. Animándolo acá se controla la
+   * duración y la curva, y se respeta esa preferencia de forma explícita.
+   */
+  const glideTo = (track: HTMLDivElement, target: number) => {
+    /* Si ya hay un deslizamiento en curso, se cancela para no pelearse. */
+    if (glideRef.current !== null) {
+      cancelAnimationFrame(glideRef.current);
+      glideRef.current = null;
+    }
+
+    const start = track.scrollLeft;
+    const distance = target - start;
+
+    if (Math.abs(distance) < 1) {
+      return;
+    }
+
+    /* Quien pidió menos movimiento va directo al destino. */
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      track.scrollLeft = target;
+      sync();
+      return;
+    }
+
+    const startedAt = performance.now();
+
+    const step = (now: number) => {
+      const elapsed = now - startedAt;
+      const progress = Math.min(elapsed / GLIDE_MS, 1);
+
+      track.scrollLeft = start + distance * easeOutCubic(progress);
+      sync();
+
+      if (progress < 1) {
+        glideRef.current = requestAnimationFrame(step);
+        return;
+      }
+
+      glideRef.current = null;
+    };
+
+    glideRef.current = requestAnimationFrame(step);
+  };
+
   const nudge = (direction: 1 | -1) => {
     const track = trackRef.current;
 
@@ -201,11 +272,10 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
     }
 
     /* Avanza ~70% del ancho visible: deja a la vista el chip del borde. */
-    track.scrollBy({ left: direction * track.clientWidth * 0.7, behavior: 'smooth' });
+    const max = track.scrollWidth - track.clientWidth;
+    const target = track.scrollLeft + direction * track.clientWidth * 0.7;
 
-    /* El scroll suave puede terminar sin emitir un último evento: se vuelve
-       a medir al cerrar la animación para no dejar una flecha de más. */
-    window.setTimeout(sync, 420);
+    glideTo(track, Math.max(0, Math.min(target, max)));
   };
 
   return (

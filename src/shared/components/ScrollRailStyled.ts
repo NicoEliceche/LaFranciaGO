@@ -19,16 +19,11 @@ export const ScrollRailTrack = styled.div`
   overflow-y: hidden;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
   padding-bottom: ${({ theme }) => theme.spacing[1]};
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
     display: none;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    scroll-behavior: auto;
   }
 `;
 
