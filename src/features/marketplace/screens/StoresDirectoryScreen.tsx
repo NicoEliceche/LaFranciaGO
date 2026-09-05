@@ -77,7 +77,7 @@ export function StoresDirectoryScreen() {
           <SectionInner>
             <SectionHeading title="Categorías" subtitle="Elegí un rubro para filtrar." />
 
-            <CategoryRail aria-label="Categorías">
+            <ScrollRail as={CategoryRail} aria-label="Categorías">
               {filteredCategories.map((category, index) => (
                 <CategoryTile
                   key={category.id}
@@ -87,7 +87,7 @@ export function StoresDirectoryScreen() {
                   priority={index < 5}
                 />
               ))}
-            </CategoryRail>
+            </ScrollRail>
           </SectionInner>
         </CompactSection>
       )}

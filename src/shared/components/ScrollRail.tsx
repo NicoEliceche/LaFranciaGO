@@ -56,6 +56,9 @@ const MIN_VELOCITY = 0.2;
 /* Debajo de este envión inicial se considera que el usuario quiso frenar. */
 const MIN_FLICK_VELOCITY = 0.45;
 
+/** Cuánto avanza el riel por cada golpe de rueda. */
+const WHEEL_STEP_PX = 260;
+
 /**
  * Curva de salida: arranca rápido y frena al final, que es como se siente un
  * swipe real. Con una interpolación lineal el movimiento parece mecánico.
@@ -73,6 +76,9 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
   const trackRef = useRef<HTMLDivElement | null>(null);
   /* Frame del deslizamiento en curso, para poder cancelarlo. */
   const glideRef = useRef<number | null>(null);
+  /* A dónde va el deslizamiento actual: permite encadenar golpes de rueda
+     sin que cada uno reinicie el recorrido desde donde quedó. */
+  const glideTargetRef = useRef<number | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
@@ -113,6 +119,50 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
       return undefined;
     }
 
+    /**
+     * Rueda del mouse sobre el riel.
+     *
+     * El navegador desplaza el riel de un salto, sin transición, y ni siquiera
+     * emite un `wheel` que se pueda observar desde acá cuando lo hace solo.
+     * Se toma el control para animar el desplazamiento igual que las flechas.
+     */
+    const onWheel = (wheelEvent: WheelEvent) => {
+      const overflow = track.scrollWidth - track.clientWidth;
+
+      if (overflow <= 0) {
+        return;
+      }
+
+      /* Se atiende tanto la rueda horizontal como la vertical sobre el riel:
+         en un mouse común la vertical es la única que existe. */
+      const raw =
+        Math.abs(wheelEvent.deltaX) > Math.abs(wheelEvent.deltaY)
+          ? wheelEvent.deltaX
+          : wheelEvent.deltaY;
+
+      if (raw === 0) {
+        return;
+      }
+
+      const direction = raw > 0 ? 1 : -1;
+      const atStart = track.scrollLeft <= EDGE_TOLERANCE;
+      const atEnd = track.scrollLeft >= overflow - EDGE_TOLERANCE;
+
+      /* En los extremos se devuelve la rueda a la página: si no, el riel
+         se come el gesto y no se puede seguir bajando. */
+      if ((direction < 0 && atStart) || (direction > 0 && atEnd)) {
+        return;
+      }
+
+      wheelEvent.preventDefault();
+
+      const from = glideTargetRef.current ?? track.scrollLeft;
+      const target = Math.max(0, Math.min(from + direction * WHEEL_STEP_PX, overflow));
+
+      glideTo(track, target);
+    };
+
+    track.addEventListener('wheel', onWheel, { passive: false });
     track.addEventListener('scroll', sync, { passive: true });
     /* `scrollend` cierra la animación suave; donde no existe, el scroll
        normal y el re-chequeo por timeout cubren el caso. */
@@ -129,6 +179,7 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
     document.fonts?.ready.then(sync).catch(() => undefined);
 
     return () => {
+      track.removeEventListener('wheel', onWheel);
       track.removeEventListener('scroll', sync);
       track.removeEventListener('scrollend', sync);
       observer?.disconnect();
@@ -137,6 +188,8 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
         cancelAnimationFrame(glideRef.current);
         glideRef.current = null;
       }
+
+      glideTargetRef.current = null;
     };
   }, [sync]);
 
@@ -152,6 +205,8 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
       cancelAnimationFrame(glideRef.current);
       glideRef.current = null;
     }
+
+    glideTargetRef.current = null;
 
     /* Un arrastre lento y sostenido no debe salir disparado al soltar. */
     if (
@@ -215,6 +270,8 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
       cancelAnimationFrame(glideRef.current);
       glideRef.current = null;
     }
+
+    glideTargetRef.current = null;
 
     const startX = event.clientX;
     const startScroll = track.scrollLeft;
@@ -318,12 +375,16 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
     const distance = target - start;
 
     if (Math.abs(distance) < 1) {
+      glideTargetRef.current = null;
       return;
     }
+
+    glideTargetRef.current = target;
 
     /* Quien pidió menos movimiento va directo al destino. */
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       track.scrollLeft = target;
+      glideTargetRef.current = null;
       sync();
       return;
     }
@@ -343,6 +404,7 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
       }
 
       glideRef.current = null;
+      glideTargetRef.current = null;
     };
 
     glideRef.current = requestAnimationFrame(step);
