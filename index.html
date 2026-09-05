@@ -4,6 +4,38 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0047E7" />
+    <!--
+      Política de seguridad de contenido.
+
+      Limita de dónde puede cargarse cada tipo de recurso: aunque se colara
+      contenido malicioso en la página, el navegador no ejecutaría scripts de
+      otros orígenes ni permitiría enviar datos afuera.
+
+      GitHub Pages no deja definir cabeceras propias, así que va por meta.
+      'unsafe-inline' en estilos es necesario para styled-components, que
+      inyecta las reglas en tiempo de ejecución; los scripts NO lo llevan,
+      que es donde realmente importa.
+
+      `frame-ancestors` no se incluye porque el navegador lo ignora cuando la
+      política viene por meta: contra el clickjacking se usa el guardia de
+      marco de más abajo, que sí funciona sin cabeceras propias.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self';
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' data: blob: https://*.tile.openstreetmap.org;
+               font-src 'self';
+               connect-src 'self' https://photon.komoot.io https://nominatim.openstreetmap.org;
+               media-src 'self' blob:;
+               object-src 'none';
+               base-uri 'self';
+               form-action 'self';
+               upgrade-insecure-requests"
+    />
+    <!-- No filtrar la ruta completa a sitios externos al navegar o pedir tiles. -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta
       name="description"
       content="LaFranciaGO: marketplace local mobile-first para buscar productos, ver comercios y seguir pedidos desde la web."
@@ -31,11 +63,11 @@
         }
       }
     </style>
-    <script type="module" crossorigin src="/LaFranciaGO/assets/index-CQqLBoOg.js"></script>
-    <link rel="modulepreload" crossorigin href="/LaFranciaGO/assets/react-74MrHXS-.js">
+    <script type="module" crossorigin src="/LaFranciaGO/assets/index-BU1SzTKf.js"></script>
+    <link rel="modulepreload" crossorigin href="/LaFranciaGO/assets/react-B1kPYQQd.js">
     <link rel="stylesheet" crossorigin href="/LaFranciaGO/assets/index-CQ7vFYxu.css">
   <link rel="manifest" href="/LaFranciaGO/manifest.webmanifest"></head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
   </body>
 </html>
