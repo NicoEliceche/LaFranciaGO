@@ -45,6 +45,18 @@ const DRAG_THRESHOLD_PX = 6;
 const GLIDE_MS = 420;
 
 /**
+ * Inercia al soltar el arrastre, para que se sienta como el swipe táctil:
+ * el riel sigue de largo y frena solo en lugar de cortarse en seco.
+ */
+/* Cuánta velocidad conserva en cada cuadro. Calibrado para que un envión
+   fuerte recorra ~440px en ~950ms, en el orden de lo que hace el táctil. */
+const FRICTION = 0.91;
+/* Por debajo de esta velocidad (px por cuadro) ya no se nota: se corta. */
+const MIN_VELOCITY = 0.2;
+/* Debajo de este envión inicial se considera que el usuario quiso frenar. */
+const MIN_FLICK_VELOCITY = 0.45;
+
+/**
  * Curva de salida: arranca rápido y frena al final, que es como se siente un
  * swipe real. Con una interpolación lineal el movimiento parece mecánico.
  */
@@ -129,6 +141,58 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
   }, [sync]);
 
   /**
+   * Continúa el movimiento tras soltar, frenando de a poco.
+   *
+   * Es lo que hace el navegador solo en pantallas táctiles y lo que le faltaba
+   * al arrastre con mouse: sin esto el riel se detiene de golpe en el punto
+   * exacto donde se suelta el botón, y se siente rígido.
+   */
+  const glideWithMomentum = (track: HTMLDivElement, initialVelocity: number) => {
+    if (glideRef.current !== null) {
+      cancelAnimationFrame(glideRef.current);
+      glideRef.current = null;
+    }
+
+    /* Un arrastre lento y sostenido no debe salir disparado al soltar. */
+    if (
+      Math.abs(initialVelocity) < MIN_FLICK_VELOCITY ||
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    ) {
+      sync();
+      return;
+    }
+
+    /* El gesto va al revés que el scroll: arrastrar a la izquierda avanza. */
+    let speed = -initialVelocity;
+    const max = track.scrollWidth - track.clientWidth;
+
+    const step = () => {
+      const next = track.scrollLeft + speed;
+
+      /* Al llegar a un extremo el envión se termina, no rebota. */
+      if (next <= 0 || next >= max) {
+        track.scrollLeft = next <= 0 ? 0 : max;
+        glideRef.current = null;
+        sync();
+        return;
+      }
+
+      track.scrollLeft = next;
+      speed *= FRICTION;
+      sync();
+
+      if (Math.abs(speed) < MIN_VELOCITY) {
+        glideRef.current = null;
+        return;
+      }
+
+      glideRef.current = requestAnimationFrame(step);
+    };
+
+    glideRef.current = requestAnimationFrame(step);
+  };
+
+  /**
    * Arrastre con el mouse para desplazar el riel.
    *
    * Sólo se engancha al mouse: en pantallas táctiles el navegador ya scrollea
@@ -156,6 +220,12 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
     const startScroll = track.scrollLeft;
     let dragging = false;
 
+    /* Velocidad del gesto, suavizada entre cuadros: un promedio móvil evita
+       que un último temblor de la mano defina todo el envión. */
+    let velocity = 0;
+    let lastX = event.clientX;
+    let lastAt = performance.now();
+
     /* Los enlaces e imágenes tienen arrastre nativo: el navegador se lleva el
        gesto para "arrastrar el link" y el riel nunca llega a moverse. Por eso
        el arrastre sólo funcionaba en el hueco entre tarjetas. */
@@ -178,6 +248,17 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
         track.style.userSelect = 'none';
       }
 
+      const now = performance.now();
+      const elapsed = now - lastAt;
+
+      if (elapsed > 0) {
+        /* px por cuadro de 16 ms, que es la unidad que usa la inercia. */
+        const instant = ((moveEvent.clientX - lastX) / elapsed) * 16;
+        velocity = velocity * 0.7 + instant * 0.3;
+        lastX = moveEvent.clientX;
+        lastAt = now;
+      }
+
       track.scrollLeft = startScroll - delta;
     };
 
@@ -191,9 +272,12 @@ export function ScrollRail({ children, className, as: Track, ...rest }: ScrollRa
       track.style.cursor = '';
       track.style.userSelect = '';
 
-      /* Tras un arrastre real se anula el clic que el navegador dispara al
-         soltar, para no abrir la tarjeta donde terminó el gesto. */
       if (dragging) {
+        /* Al soltar, el riel sigue con el envión y frena solo. */
+        glideWithMomentum(track, velocity);
+
+        /* Tras un arrastre real se anula el clic que el navegador dispara al
+           soltar, para no abrir la tarjeta donde terminó el gesto. */
         const swallowClick = (clickEvent: MouseEvent) => {
           clickEvent.stopPropagation();
           clickEvent.preventDefault();
