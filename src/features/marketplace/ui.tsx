@@ -1068,8 +1068,21 @@ export const AddressButton = styled.button`
   min-width: 0;
   flex: 1 1 auto;
 
+  /* Se corre a la derecha para dejarle pista al logo, que rebota en ese
+     hueco. El margen es proporcional al ancho: en un teléfono de 320px una
+     medida fija empujaba el carrito y el perfil fuera de la pantalla. */
+  @media (max-width: 1023px) {
+    margin-left: clamp(0rem, 5vw, 2.25rem);
+  }
+
+  /* Por debajo de 360px el header ya viene justo: no se le suma margen. */
+  @media (max-width: 359px) {
+    margin-left: 0;
+  }
+
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     flex: 0 0 auto;
+    margin-left: 0;
   }
   padding: 0 ${({ theme }) => theme.spacing[1]} 0 0;
   border: 0;
@@ -1363,20 +1376,22 @@ export const BrandLogoMark = styled.span`
   box-shadow: none;
 
   /*
-    En mobile el logo va y viene por el hueco que queda entre la hamburguesa
-    y la dirección. El recorrido es corto a propósito: medido en 375px, ese
-    hueco es de 17px, así que 12px es lo que entra sin tocar la dirección.
+    En mobile el logo rebota entre la hamburguesa y el texto de la dirección.
+    El recorrido se define por variable para poder medirlo desde el header:
+    depende del ancho de pantalla y de cuánto ocupe la dirección, así que
+    fijarlo en el CSS daría un rebote corto en pantallas anchas.
+
     Se anima con transform, que la compone la GPU y no fuerza recalcular el
     layout del header en cada cuadro.
   */
-  animation: lfg-logo-bounce 3.4s ease-in-out infinite alternate;
+  animation: lfg-logo-bounce 3.6s ease-in-out infinite alternate;
 
   @keyframes lfg-logo-bounce {
     from {
       transform: translateX(0);
     }
     to {
-      transform: translateX(0.75rem);
+      transform: translateX(var(--lfg-logo-travel, 0));
     }
   }
 

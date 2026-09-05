@@ -280,8 +280,11 @@ export function MarketplaceFrame({
 }: MarketplaceFrameProps) {
   const { isDarkMode, toggleMode } = useThemeMode();
   const { photo: profilePhoto } = useProfilePhoto();
+  const logoRef = useRef<HTMLSpanElement | null>(null);
+  const addressRef = useRef<HTMLButtonElement | null>(null);
   const navigate = useNavigate();
   const hasSearch = typeof query === 'string' && typeof onQueryChange === 'function';
+
   const headerRef = useRef<HTMLElement | null>(null);
   const menuFrameRef = useRef<number | null>(null);
   const menuTimeoutRef = useRef<number | null>(null);
@@ -289,6 +292,68 @@ export function MarketplaceFrame({
   const notificationsTimeoutRef = useRef<number | null>(null);
   const [addressOpen, setAddressOpen] = useState(false);
   const [address, setAddress] = useState({ id: 'home', label: deliveryAddress });
+
+  /**
+   * Recorrido del logo que rebota en el header.
+   *
+   * Se mide el hueco entre el borde del logo y el arranque real del texto de
+   * la dirección, no el de su contenedor: el botón tiene relleno propio y
+   * medirlo daría un recorrido más corto del que hay.
+   *
+   * Va como variable CSS porque depende del ancho de pantalla: fijarlo en el
+   * CSS daría un rebote corto en pantallas anchas y un choque en las angostas.
+   */
+  useEffect(() => {
+    const logo = logoRef.current;
+    const addressButton = addressRef.current;
+
+    if (!logo || !addressButton) {
+      return undefined;
+    }
+
+    const measure = () => {
+      /* En escritorio la marca del header no se muestra: no hay nada que medir. */
+      if (logo.offsetParent === null) {
+        return;
+      }
+
+      const textNode = addressButton.querySelector('span');
+
+      if (!textNode) {
+        return;
+      }
+
+      const range = document.createRange();
+      range.selectNodeContents(textNode);
+
+      const logoBox = logo.getBoundingClientRect();
+      const textBox = range.getBoundingClientRect();
+
+      /* Se deja un respiro para que no llegue a tocar la letra. */
+      const travel = Math.max(0, Math.round(textBox.left - logoBox.right - 6));
+
+      logo.style.setProperty('--lfg-logo-travel', `${travel}px`);
+    };
+
+    measure();
+    /* Se vuelve a medir tras el primer pintado: la primera pasada corre antes
+       de que se apliquen los márgenes que definen el hueco. */
+    const raf = window.requestAnimationFrame(measure);
+
+    /* El hueco cambia al rotar el teléfono o al cambiar de dirección. */
+    const observer =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+
+    observer?.observe(addressButton);
+    window.addEventListener('resize', measure);
+    document.fonts?.ready.then(measure).catch(() => undefined);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      observer?.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [address.label]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [menuPhase, setMenuPhase] = useState<MenuDrawerPhase>('opening');
@@ -521,7 +586,7 @@ export function MarketplaceFrame({
                 </HeaderMenuButton>
 
                 <HeaderBrandLockup role="img" aria-label="LaFranciaGO">
-                  <BrandLogoMark>
+                  <BrandLogoMark ref={logoRef}>
                     <BrandIcon src={brandIconUrl} alt="" aria-hidden="true" />
                   </BrandLogoMark>
                   <HeaderBrandName>
@@ -539,6 +604,7 @@ export function MarketplaceFrame({
 
               <HeaderActionsRow aria-label="Acciones rápidas">
               <AddressButton
+                ref={addressRef}
                 type="button"
                 aria-label={`Entregar en ${address.label}. Cambiar dirección`}
                 aria-haspopup="dialog"
