@@ -16,12 +16,13 @@ export const businessTypes: BusinessType[] = [
     name: 'Almacén',
     description: 'Básicos, bebidas y limpieza.',
     suggestedCategories: [
-      { id: 'bebidas', name: 'Bebidas' },
-      { id: 'almacen', name: 'Almacén' },
-      { id: 'limpieza', name: 'Limpieza' },
-      { id: 'lacteos', name: 'Lácteos' },
-      { id: 'snacks', name: 'Snacks' },
-      { id: 'congelados', name: 'Congelados' },
+      { id: 'bebidas', name: 'Bebidas', defaultSaleUnit: 'unidad' },
+      { id: 'almacen', name: 'Almacén', defaultSaleUnit: 'unidad' },
+      { id: 'limpieza', name: 'Limpieza', defaultSaleUnit: 'unidad' },
+      { id: 'lacteos', name: 'Lácteos', defaultSaleUnit: 'unidad' },
+      { id: 'fiambres', name: 'Fiambres y quesos', defaultSaleUnit: 'peso' },
+      { id: 'snacks', name: 'Snacks', defaultSaleUnit: 'unidad' },
+      { id: 'congelados', name: 'Congelados', defaultSaleUnit: 'unidad' },
     ],
   },
   {
@@ -29,11 +30,11 @@ export const businessTypes: BusinessType[] = [
     name: 'Kiosco',
     description: 'Golosinas, bebidas y cigarrillos.',
     suggestedCategories: [
-      { id: 'golosinas', name: 'Golosinas' },
-      { id: 'bebidas', name: 'Bebidas' },
-      { id: 'snacks', name: 'Snacks' },
-      { id: 'cigarrillos', name: 'Cigarrillos' },
-      { id: 'helados', name: 'Helados' },
+      { id: 'golosinas', name: 'Golosinas', defaultSaleUnit: 'unidad' },
+      { id: 'bebidas', name: 'Bebidas', defaultSaleUnit: 'unidad' },
+      { id: 'snacks', name: 'Snacks', defaultSaleUnit: 'unidad' },
+      { id: 'cigarrillos', name: 'Cigarrillos', defaultSaleUnit: 'unidad' },
+      { id: 'helados', name: 'Helados', defaultSaleUnit: 'unidad' },
     ],
   },
   {
@@ -41,11 +42,12 @@ export const businessTypes: BusinessType[] = [
     name: 'Panadería',
     description: 'Pan, facturas y repostería.',
     suggestedCategories: [
-      { id: 'pan', name: 'Pan' },
-      { id: 'facturas', name: 'Facturas' },
-      { id: 'tortas', name: 'Tortas' },
-      { id: 'sandwicheria', name: 'Sándwiches' },
-      { id: 'reposteria', name: 'Repostería' },
+      { id: 'pan', name: 'Pan', defaultSaleUnit: 'peso' },
+      /* Las facturas se piden por docena, no de a una. */
+      { id: 'facturas', name: 'Facturas', defaultSaleUnit: 'docena' },
+      { id: 'tortas', name: 'Tortas', defaultSaleUnit: 'unidad' },
+      { id: 'sandwicheria', name: 'Sándwiches', defaultSaleUnit: 'unidad' },
+      { id: 'reposteria', name: 'Repostería', defaultSaleUnit: 'unidad' },
     ],
   },
   {
@@ -53,12 +55,32 @@ export const businessTypes: BusinessType[] = [
     name: 'Carnicería',
     description: 'Cortes, achuras y elaborados.',
     suggestedCategories: [
-      { id: 'vacuno', name: 'Vacuno' },
-      { id: 'cerdo', name: 'Cerdo' },
-      { id: 'pollo', name: 'Pollo' },
-      { id: 'achuras', name: 'Achuras' },
-      { id: 'embutidos', name: 'Embutidos' },
-      { id: 'carbon', name: 'Carbón y leña' },
+      /* Los cortes se piden de medio kilo en adelante: nadie compra un
+         cuarto de asado. */
+      { id: 'vacuno', name: 'Vacuno', defaultSaleUnit: 'pesoMedio' },
+      { id: 'cerdo', name: 'Cerdo', defaultSaleUnit: 'pesoMedio' },
+      /* El pollo entero y los medallones van por unidad; la presa por peso
+         se carga como producto aparte. */
+      { id: 'pollo', name: 'Pollo', defaultSaleUnit: 'unidad' },
+      /* Achuras: la morcilla y el chorizo se piden por unidad ("seis
+         chorizos"), pero el chinchulín y la molleja van por peso. Se deja
+         por unidad, que es lo más frecuente, y el comercio lo cambia. */
+      { id: 'achuras', name: 'Achuras', defaultSaleUnit: 'unidad' },
+      { id: 'embutidos', name: 'Embutidos', defaultSaleUnit: 'unidad' },
+      { id: 'elaborados', name: 'Milanesas y elaborados', defaultSaleUnit: 'pesoMedio' },
+      { id: 'carbon', name: 'Carbón y leña', defaultSaleUnit: 'unidad' },
+    ],
+  },
+  {
+    id: 'fiambreria',
+    name: 'Fiambrería',
+    description: 'Fiambres, quesos y picadas.',
+    suggestedCategories: [
+      { id: 'fiambres', name: 'Fiambres', defaultSaleUnit: 'peso' },
+      { id: 'quesos', name: 'Quesos', defaultSaleUnit: 'peso' },
+      /* La picada armada se vende como bandeja, no por peso. */
+      { id: 'picadas', name: 'Picadas armadas', defaultSaleUnit: 'unidad' },
+      { id: 'conservas', name: 'Conservas', defaultSaleUnit: 'unidad' },
     ],
   },
   {
@@ -66,11 +88,12 @@ export const businessTypes: BusinessType[] = [
     name: 'Verdulería',
     description: 'Frutas, verduras y huevos.',
     suggestedCategories: [
-      { id: 'frutas', name: 'Frutas' },
-      { id: 'verduras', name: 'Verduras' },
-      { id: 'huevos', name: 'Huevos' },
-      { id: 'aromaticas', name: 'Aromáticas' },
-      { id: 'combos', name: 'Combos' },
+      { id: 'frutas', name: 'Frutas', defaultSaleUnit: 'peso' },
+      { id: 'verduras', name: 'Verduras', defaultSaleUnit: 'peso' },
+      { id: 'huevos', name: 'Huevos', defaultSaleUnit: 'docena' },
+      /* El atado de acelga o perejil es una unidad en sí. */
+      { id: 'aromaticas', name: 'Aromáticas', defaultSaleUnit: 'unidad' },
+      { id: 'combos', name: 'Combos', defaultSaleUnit: 'unidad' },
     ],
   },
   {

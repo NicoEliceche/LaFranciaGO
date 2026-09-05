@@ -165,3 +165,10 @@ export const CatalogInCartHint = styled.span`
   font-weight: ${({ theme }) => theme.typography.weight.semibold};
   text-align: center;
 `;
+
+/** Aclara a qué corresponde el precio cuando no se vende por unidad. */
+export const CatalogCardPriceUnit = styled.span`
+  color: ${({ theme }) => theme.color.textSoft};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.semibold};
+`;

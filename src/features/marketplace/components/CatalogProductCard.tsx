@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { maxStepIndex, priceSuffix, stepLabel } from '@core/data/saleUnits';
+import type { SaleUnitId } from '@shared/types/saleUnit.types';
 import { Check, Minus, Plus } from 'lucide-react';
 
 import { MediaFrame, MediaImage, MediaOverlayTop } from '@shared/components/Media';
@@ -11,6 +13,7 @@ import {
   CatalogCardShell,
   CatalogCardName,
   CatalogCardPrice,
+  CatalogCardPriceUnit,
   CatalogCardPriceRow,
   CatalogCardTag,
   CatalogInCartHint,
@@ -22,6 +25,8 @@ import {
 type CatalogProductCardProps = {
   name: string;
   price: number;
+  /** Cómo se vende: define los escalones del selector. */
+  saleUnit?: SaleUnitId;
   categoryId?: string;
   badge?: string;
   /** Unidades que ya tiene el pedido, para mostrarlas como referencia. */
@@ -42,6 +47,7 @@ const MIN_UNITS = 1;
 export function CatalogProductCard({
   name,
   price,
+  saleUnit,
   categoryId,
   badge,
   quantity,
@@ -77,24 +83,36 @@ export function CatalogProductCard({
         <CatalogCardName>{name}</CatalogCardName>
 
         <CatalogCardPriceRow>
-          <CatalogCardPrice>{formatMoney(price)}</CatalogCardPrice>
+          <CatalogCardPrice>
+            {formatMoney(price)}
+            {saleUnit && saleUnit !== 'unidad' ? (
+              <CatalogCardPriceUnit> {priceSuffix(saleUnit)}</CatalogCardPriceUnit>
+            ) : null}
+          </CatalogCardPrice>
 
           <CatalogStepper>
             <CatalogStepperButton
               type="button"
               onClick={() => setUnits((current) => Math.max(MIN_UNITS, current - 1))}
               disabled={units <= MIN_UNITS}
-              aria-label={`Quitar una unidad de ${name}`}
+              aria-label={`Quitar cantidad de ${name}`}
             >
               <Minus size={16} aria-hidden="true" />
             </CatalogStepperButton>
 
-            <CatalogStepperValue aria-live="polite">{units}</CatalogStepperValue>
+            <CatalogStepperValue aria-live="polite">
+              {stepLabel(saleUnit, units - MIN_UNITS)}
+            </CatalogStepperValue>
 
             <CatalogStepperButton
               type="button"
-              onClick={() => setUnits((current) => current + 1)}
-              aria-label={`Agregar una unidad de ${name}`}
+              onClick={() =>
+                setUnits((current) =>
+                  Math.min(current + 1, maxStepIndex(saleUnit) + MIN_UNITS),
+                )
+              }
+              disabled={units - MIN_UNITS >= maxStepIndex(saleUnit)}
+              aria-label={`Agregar cantidad de ${name}`}
             >
               <Plus size={16} aria-hidden="true" />
             </CatalogStepperButton>
@@ -114,7 +132,7 @@ export function CatalogProductCard({
 
         {quantity > 0 ? (
           <CatalogInCartHint>
-            {quantity} {quantity === 1 ? 'unidad' : 'unidades'} en el pedido
+            {stepLabel(saleUnit, quantity - MIN_UNITS)} en el pedido
           </CatalogInCartHint>
         ) : null}
       </CatalogCardBody>

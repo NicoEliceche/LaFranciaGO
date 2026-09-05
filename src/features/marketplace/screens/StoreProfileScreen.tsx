@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import type { SaleUnitId } from '@shared/types/saleUnit.types';
 import {
   CreditCard,
   Clock3,
@@ -71,6 +72,8 @@ type CatalogProduct = {
   categoryId: string;
   categoryLabel: string;
   price: number;
+  /** Cómo se vende. Si falta, se asume por unidad. */
+  saleUnit?: SaleUnitId;
   tone: CatalogTone;
   badge?: string;
   suggestions: string[];
@@ -226,6 +229,7 @@ const storeCatalogs: Record<string, StoreCatalog> = {
         products: [
           {
             id: 'pan-flauta',
+            saleUnit: 'peso',
             name: 'Pan flauta x 6',
             description: 'Salida clásica para la mesa de todos los días.',
             categoryId: 'pan',
@@ -237,6 +241,7 @@ const storeCatalogs: Record<string, StoreCatalog> = {
           },
           {
             id: 'pan-lactal',
+            saleUnit: 'peso',
             name: 'Pan lactal',
             description: 'Práctico para tostadas y viandas.',
             categoryId: 'pan',
@@ -266,6 +271,7 @@ const storeCatalogs: Record<string, StoreCatalog> = {
         products: [
           {
             id: 'medialunas-x6',
+            saleUnit: 'docena',
             name: 'Medialunas x 6',
             description: 'Perfectas para salir con café o mate.',
             categoryId: 'facturas',
@@ -277,6 +283,7 @@ const storeCatalogs: Record<string, StoreCatalog> = {
           },
           {
             id: 'facturas-surtidas',
+            saleUnit: 'docena',
             name: 'Facturas surtidas',
             description: 'Variadas para compartir en familia.',
             categoryId: 'facturas',
@@ -476,6 +483,7 @@ const storeCatalogs: Record<string, StoreCatalog> = {
         products: [
           {
             id: 'bife-ancho',
+            saleUnit: 'pesoMedio',
             name: 'Bife ancho',
             description: 'Un corte protagonista para la compra principal.',
             categoryId: 'cortes',
@@ -487,6 +495,7 @@ const storeCatalogs: Record<string, StoreCatalog> = {
           },
           {
             id: 'asado-especial',
+            saleUnit: 'pesoMedio',
             name: 'Asado especial',
             description: 'Para el finde y las comidas largas.',
             categoryId: 'cortes',
@@ -498,6 +507,7 @@ const storeCatalogs: Record<string, StoreCatalog> = {
           },
           {
             id: 'picada-premium',
+            saleUnit: 'pesoMedio',
             name: 'Picada premium',
             description: 'Para compartir sin complicarse.',
             categoryId: 'cortes',
@@ -516,6 +526,7 @@ const storeCatalogs: Record<string, StoreCatalog> = {
         products: [
           {
             id: 'milanesas-kg',
+            saleUnit: 'pesoMedio',
             name: 'Milanesas x kg',
             description: 'Una de las salidas más prácticas de la carnicería.',
             categoryId: 'milanesas',
@@ -1172,6 +1183,7 @@ export function StoreProfileScreen() {
                         key={product.id}
                         name={product.name}
                         price={product.price}
+                        saleUnit={product.saleUnit}
                         categoryId={product.categoryId}
                         /* Mirando un pedido, el badge dice cuántas unidades
                            se compraron en lugar de la etiqueta comercial. */

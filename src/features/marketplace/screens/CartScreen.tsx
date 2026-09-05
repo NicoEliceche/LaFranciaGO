@@ -10,7 +10,6 @@ import {
   ShieldCheck,
   ShoppingCart,
   Truck,
-  Clock3,
   Minus,
   Plus,
   X,
@@ -193,9 +192,10 @@ const paymentMethods = [
 ] as const;
 
 const trustPoints = [
-  { label: 'Compra protegida', icon: ShieldCheck },
-  { label: 'Sin costos sorpresa', icon: Clock3 },
-  { label: 'Entrega clara', icon: Truck },
+  /* Sólo dos, y que digan algo comprobable: "compra protegida" prometía un
+     sistema de reclamos que todavía no existe. */
+  { label: 'Precio final', icon: ShieldCheck },
+  { label: 'Seguí tu pedido', icon: Truck },
 ] as const;
 
 const deliveryMethods = [

@@ -35,6 +35,24 @@ const WEIGHT_STEPS = [
   { factor: 4, label: '4 kg' },
 ];
 
+/**
+ * Carne de kilo: la gente pide de medio en medio, no de a cuartos. Nadie
+ * compra un cuarto de asado, pero sí "medio kilo de picada" o "dos kilos y
+ * medio de milanesas". Llega hasta 5 kg porque las compras son más grandes.
+ */
+const HALF_KILO_STEPS = [
+  { factor: 0.5, label: '1/2 kg' },
+  { factor: 1, label: '1 kg' },
+  { factor: 1.5, label: '1 kg + 1/2' },
+  { factor: 2, label: '2 kg' },
+  { factor: 2.5, label: '2 kg + 1/2' },
+  { factor: 3, label: '3 kg' },
+  { factor: 3.5, label: '3 kg + 1/2' },
+  { factor: 4, label: '4 kg' },
+  { factor: 4.5, label: '4 kg + 1/2' },
+  { factor: 5, label: '5 kg' },
+];
+
 /** Unidades sueltas: el escalón es siempre uno más. */
 const unitSteps = (max: number, singular: string, plural: string) =>
   Array.from({ length: max }, (_, index) => ({
@@ -52,10 +70,33 @@ export const SALE_UNITS: Record<SaleUnitId, SaleUnit> = {
   },
   peso: {
     id: 'peso',
-    label: 'Por peso (kg)',
-    help: 'Escalones de un cuarto de kilo, hasta 4 kg. El precio cargado es el del kilo.',
+    label: 'Por peso, de a 1/4 kg',
+    help: 'Pan, fiambre, queso, verdura y fruta. Escalones de un cuarto hasta 4 kg. El precio cargado es el del kilo.',
     priceSuffix: 'el kg',
     steps: WEIGHT_STEPS,
+  },
+  pesoMedio: {
+    id: 'pesoMedio',
+    label: 'Por peso, de a 1/2 kg',
+    help: 'Cortes de carne, picada y milanesas. Escalones de medio kilo hasta 5 kg. El precio cargado es el del kilo.',
+    priceSuffix: 'el kg',
+    steps: HALF_KILO_STEPS,
+  },
+  docena: {
+    id: 'docena',
+    label: 'Por docena',
+    help: 'Empanadas, huevos, facturas. El precio cargado es el de la docena.',
+    priceSuffix: 'la docena',
+    steps: [
+      { factor: 0.5, label: '1/2 docena' },
+      { factor: 1, label: '1 docena' },
+      { factor: 1.5, label: '1 docena + 1/2' },
+      { factor: 2, label: '2 docenas' },
+      { factor: 2.5, label: '2 docenas + 1/2' },
+      { factor: 3, label: '3 docenas' },
+      { factor: 4, label: '4 docenas' },
+      { factor: 5, label: '5 docenas' },
+    ],
   },
 };
 

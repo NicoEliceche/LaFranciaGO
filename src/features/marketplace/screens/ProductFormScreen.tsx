@@ -1,4 +1,11 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import {
+  DEFAULT_SALE_UNIT,
+  SALE_UNITS,
+  SALE_UNIT_OPTIONS,
+  priceSuffix,
+} from '@core/data/saleUnits';
+import type { SaleUnitId } from '@shared/types/saleUnit.types';
 import { Check, ImagePlus, Video, X } from 'lucide-react';
 
 import { findBusinessType } from '@core/data/businessTypes';
@@ -49,6 +56,9 @@ export function ProductFormScreen() {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  /* Cómo se vende. Lo propone la categoría, pero el comercio puede cambiarlo:
+     una panadería puede vender el pan por unidad si así lo maneja. */
+  const [saleUnit, setSaleUnit] = useState<SaleUnitId>(DEFAULT_SALE_UNIT);
   const [description, setDescription] = useState('');
   const [photos, setPhotos] = useState<ProductPhoto[]>([]);
   const [video, setVideo] = useState<{ url: string; bytes: number; name: string } | null>(null);
@@ -207,7 +217,9 @@ export function ProductFormScreen() {
               </FormRow>
 
               <FormRow>
-                <FieldLabel htmlFor="product-price">Precio</FieldLabel>
+                <FieldLabel htmlFor="product-price">
+                  Precio ({priceSuffix(saleUnit)})
+                </FieldLabel>
                 <FormInput
                   id="product-price"
                   type="number"
@@ -226,7 +238,19 @@ export function ProductFormScreen() {
                 <FormSelect
                   id="product-category"
                   value={categoryId}
-                  onChange={(event) => setCategoryId(event.target.value)}
+                  onChange={(event) => {
+                    const nextId = event.target.value;
+
+                    setCategoryId(nextId);
+
+                    const suggested = categories.find(
+                      (category) => category.id === nextId,
+                    )?.defaultSaleUnit;
+
+                    if (suggested) {
+                      setSaleUnit(suggested);
+                    }
+                  }}
                   data-invalid={submitted && !!errors.category}
                 >
                   <option value="">Elegí una categoría</option>
@@ -241,6 +265,22 @@ export function ProductFormScreen() {
                 ) : (
                   <FieldHint>Sugeridas para {businessType?.name}.</FieldHint>
                 )}
+              </FormRow>
+
+              <FormRow>
+                <FieldLabel htmlFor="product-sale-unit">Cómo se vende</FieldLabel>
+                <FormSelect
+                  id="product-sale-unit"
+                  value={saleUnit}
+                  onChange={(event) => setSaleUnit(event.target.value as SaleUnitId)}
+                >
+                  {SALE_UNIT_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </FormSelect>
+                <FieldHint>{SALE_UNITS[saleUnit].help}</FieldHint>
               </FormRow>
 
               <FormRow>

@@ -1,5 +1,5 @@
 /** Formas en que un comercio puede vender un producto. */
-export type SaleUnitId = 'unidad' | 'peso';
+export type SaleUnitId = 'unidad' | 'peso' | 'pesoMedio' | 'docena';
 
 export interface SaleUnitStep {
   /** Multiplicador sobre el precio base cargado por el comercio. */
