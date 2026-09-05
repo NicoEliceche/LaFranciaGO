@@ -1,25 +1,25 @@
-import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as de,ad as _,M as R,a as k,E as ce,W as q,ae as pe,af as y,o as ge,Z as he,t as h,X as ue,v as B,ag as b,ah as me,ai as S,aj as O,a4 as be,a5 as xe,ak as ye}from"./index-U-wdHHrK.js";import{r as m,u as fe}from"./react-B1kPYQQd.js";import{s as $e,m as U,a as je}from"./saleUnits-CLP-TCsg.js";import{p as we}from"./ordersStore-DCNwIyzn.js";import{M as ve}from"./minus-riE2fFkx.js";import{S as Ce}from"./shield-check-BOWF6chM.js";/**
+import{a8 as E,a9 as x,q as a,aa as j,ab as _,j as r,J as ce,Y as w,ac as ee,ad as T,G as pe,M as B,a as k,E as ge,W as O,ae as he,af as f,o as ue,Z as me,t as h,X as ye,v as G,ag as y,ah as be,ai as S,aj as N,a4 as xe,a5 as fe,ak as $e}from"./index-BAcms3Nh.js";import{r as u,u as je}from"./react-B1kPYQQd.js";import{m as re,a as we,s as Ce}from"./saleUnits-CLP-TCsg.js";import{p as ve}from"./ordersStore-CHLMNHDe.js";import{M as ke}from"./minus-DXGabBlZ.js";import{S as Se}from"./shield-check-Brw4F3sE.js";/**
  * @license lucide-react v0.323.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
- */const ke=P("AlertCircle",[["circle",{cx:"12",cy:"12",r:"10",key:"1mglay"}],["line",{x1:"12",x2:"12",y1:"8",y2:"12",key:"1pkeuh"}],["line",{x1:"12",x2:"12.01",y1:"16",y2:"16",key:"4dfq90"}]]);/**
+ */const ze=E("AlertCircle",[["circle",{cx:"12",cy:"12",r:"10",key:"1mglay"}],["line",{x1:"12",x2:"12",y1:"8",y2:"12",key:"1pkeuh"}],["line",{x1:"12",x2:"12.01",y1:"16",y2:"16",key:"4dfq90"}]]);/**
  * @license lucide-react v0.323.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
- */const Se=P("ArrowLeftRight",[["path",{d:"M8 3 4 7l4 4",key:"9rb6wj"}],["path",{d:"M4 7h16",key:"6tx8e3"}],["path",{d:"m16 21 4-4-4-4",key:"siv7j2"}],["path",{d:"M20 17H4",key:"h6l3hr"}]]);/**
+ */const Me=E("ArrowLeftRight",[["path",{d:"M8 3 4 7l4 4",key:"9rb6wj"}],["path",{d:"M4 7h16",key:"6tx8e3"}],["path",{d:"m16 21 4-4-4-4",key:"siv7j2"}],["path",{d:"M20 17H4",key:"h6l3hr"}]]);/**
  * @license lucide-react v0.323.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
- */const D=P("CreditCard",[["rect",{width:"20",height:"14",x:"2",y:"5",rx:"2",key:"ynyp8z"}],["line",{x1:"2",x2:"22",y1:"10",y2:"10",key:"1b3vmo"}]]),ze=X`
+ */const U=E("CreditCard",[["rect",{width:"20",height:"14",x:"2",y:"5",rx:"2",key:"ynyp8z"}],["line",{x1:"2",x2:"22",y1:"10",y2:"10",key:"1b3vmo"}]]),ae="lafranciago:carrito",P=new Set;let c=[],D=!1;const L=()=>P.forEach(e=>e()),A=()=>{try{window.sessionStorage.setItem(ae,JSON.stringify(c))}catch{}},Ie=()=>{try{const e=window.sessionStorage.getItem(ae);if(!e)return[...x];const i=JSON.parse(e);return Array.isArray(i)?i:[...x]}catch{return[...x]}},Pe=()=>{D||(D=!0,c=Ie())};function Ee(e){c=c.filter(i=>i.id!==e),A(),L()}function Te(e,i){c=c.map(t=>{if(t.id!==e||!t.available)return t;const s=Math.min(Math.max(0,t.quantity+i),re(t.saleUnit));return{...t,quantity:s,subtotal:Math.round(t.price*we(t.saleUnit,s))}}),A(),L()}function Le(){c=[],A(),L()}function Ae(){const[e,i]=u.useState(c);return u.useEffect(()=>{Pe(),i(c);const t=()=>i(c);return P.add(t),()=>{P.delete(t)}},[]),e}const Fe=_`
   from { opacity: 0; }
   to { opacity: 1; }
-`,Me=X`
+`,He=_`
   from { opacity: 0; transform: translateY(0.5rem) scale(0.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
-`,Ie=a.div`
+`,Re=a.div`
   position: fixed;
   inset: 0;
   z-index: ${({theme:e})=>e.zIndex.header+40};
@@ -29,12 +29,12 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
   padding: ${({theme:e})=>e.spacing[4]};
   background: rgba(5, 8, 22, 0.56);
   backdrop-filter: blur(6px);
-  animation: ${ze} 160ms ease-out;
+  animation: ${Fe} 160ms ease-out;
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
-`,Pe=a.div`
+`,qe=a.div`
   width: 100%;
   max-width: 22rem;
   padding: ${({theme:e})=>e.spacing[4]};
@@ -44,30 +44,30 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
   box-shadow: ${({theme:e})=>e.shadow.lg};
   text-align: center;
 
-  ${$};
-  animation: ${Me} 180ms ease-out;
+  ${j};
+  animation: ${He} 180ms ease-out;
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
-`,Te=a.h2`
+`,Be=a.h2`
   margin: 0;
   font-family: ${({theme:e})=>e.typography.fontFamily.heading};
   font-size: ${({theme:e})=>e.typography.size.lg};
   font-weight: ${({theme:e})=>e.typography.weight.extrabold};
   letter-spacing: -0.02em;
   color: ${({theme:e})=>e.color.text};
-`,Ee=a.p`
+`,Oe=a.p`
   margin: ${({theme:e})=>e.spacing[1]} 0 0;
   color: ${({theme:e})=>e.color.textSoft};
   font-size: ${({theme:e})=>e.typography.size.sm};
   line-height: 1.45;
-`,Fe=a.div`
+`,Ge=a.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${({theme:e})=>e.spacing[2]};
   margin-top: ${({theme:e})=>e.spacing[4]};
-`,Le=a.button`
+`,Ne=a.button`
   min-height: 2.75rem;
   padding: 0 ${({theme:e})=>e.spacing[3]};
   border: 1px solid ${({theme:e})=>e.color.border};
@@ -84,7 +84,7 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
     background: ${({theme:e})=>e.color.surfaceMuted};
     border-color: ${({theme:e})=>e.color.borderStrong};
   }
-`,Ae=a.button`
+`,Ue=a.button`
   min-height: 2.75rem;
   padding: 0 ${({theme:e})=>e.spacing[3]};
   border: 0;
@@ -106,10 +106,10 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
     outline: 2px solid ${({theme:e})=>e.color.text};
     outline-offset: 2px;
   }
-`;function He({open:e,title:s,text:i,confirmLabel:n="Aceptar",cancelLabel:d="Cancelar",onConfirm:c,onCancel:l}){return m.useEffect(()=>{if(!e)return;const p=w=>{w.key==="Escape"&&l()};return document.addEventListener("keydown",p),()=>document.removeEventListener("keydown",p)},[l,e]),e?r.jsx(Ie,{onClick:l,role:"presentation",children:r.jsxs(Pe,{role:"alertdialog","aria-modal":"true","aria-label":s,onClick:p=>p.stopPropagation(),children:[r.jsx(Te,{children:s}),i?r.jsx(Ee,{children:i}):null,r.jsxs(Fe,{children:[r.jsx(Le,{type:"button",onClick:l,children:d}),r.jsx(Ae,{type:"button",onClick:c,autoFocus:!0,children:n})]})]})}):null}const Re=a.div`
+`;function De({open:e,title:i,text:t,confirmLabel:s="Aceptar",cancelLabel:d="Cancelar",onConfirm:p,onCancel:l}){return u.useEffect(()=>{if(!e)return;const g=C=>{C.key==="Escape"&&l()};return document.addEventListener("keydown",g),()=>document.removeEventListener("keydown",g)},[l,e]),e?r.jsx(Re,{onClick:l,role:"presentation",children:r.jsxs(qe,{role:"alertdialog","aria-modal":"true","aria-label":i,onClick:g=>g.stopPropagation(),children:[r.jsx(Be,{children:i}),t?r.jsx(Oe,{children:t}):null,r.jsxs(Ge,{children:[r.jsx(Ne,{type:"button",onClick:l,children:d}),r.jsx(Ue,{type:"button",onClick:p,autoFocus:!0,children:s})]})]})}):null}const Qe=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[2]};
-`,qe=a(j)`
+`,Ye=a(w)`
   position: relative;
   overflow: hidden;
   border-color: ${({theme:e})=>e.mode==="dark"?"rgba(107, 157, 255, 0.22)":"rgba(0, 71, 231, 0.12)"};
@@ -127,20 +127,20 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
     background: ${({theme:e})=>e.mode==="dark"?"radial-gradient(circle, rgba(107, 157, 255, 0.16) 0%, rgba(107, 157, 255, 0.02) 55%, transparent 70%)":"radial-gradient(circle, rgba(0, 71, 231, 0.12) 0%, rgba(0, 71, 231, 0.02) 55%, transparent 70%)"};
     pointer-events: none;
   }
-`,z=a(Z)`
+`,z=a(ee)`
   padding: ${({theme:e})=>e.spacing[3]};
 
   @media (min-width: ${({theme:e})=>e.breakpoints.lg}) {
     padding: ${({theme:e})=>e.spacing[4]};
   }
-`,Be=a(Z)`
+`,We=a(ee)`
   padding: ${({theme:e})=>e.spacing[2]} ${({theme:e})=>e.spacing[3]};
-`,Oe=a.div`
+`,Je=a.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: ${({theme:e})=>e.spacing[2]};
-`,Ue=a.button`
+`,Ke=a.button`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,12 +161,12 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
     border-color: ${({theme:e})=>e.color.primary};
     background: ${({theme:e})=>e.color.primarySoft};
   }
-`,De=a.div`
+`,Ve=a.div`
   position: relative;
   z-index: 1;
   display: grid;
   gap: ${({theme:e})=>e.spacing[2]};
-`,Ge=a.div`
+`,Xe=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
 
@@ -175,14 +175,14 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
     align-items: start;
     gap: ${({theme:e})=>e.spacing[3]};
   }
-`,Ne=a.div`
+`,Ze=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
 `;a.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({theme:e})=>e.spacing[1]};
-`;const u=a.span`
+`;const m=a.span`
   display: inline-flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[1]};
@@ -210,7 +210,7 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
 
   &:not([data-tone]) {
     ${T};
-    ${$};
+    ${j};
   }
 
   &[data-tone='brand'] {
@@ -218,11 +218,11 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
     border-color: rgba(0, 71, 231, 0.18);
     color: ${({theme:e})=>e.color.primary};
   }
-`,Qe=a.div`
+`,_e=a.div`
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: ${({theme:e})=>e.spacing[1]};
-`,We=a.div`
+`,er=a.div`
   display: grid;
   justify-items: center;
   gap: 0.35rem;
@@ -239,7 +239,7 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
     background: ${({theme:e})=>e.color.primarySoft};
     color: ${({theme:e})=>e.color.primary};
   }
-`,Ye=a.span`
+`,rr=a.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -255,15 +255,15 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
     background: ${({theme:e})=>e.color.brand};
     color: ${({theme:e})=>e.color.onPrimary};
   }
-`,Ve=a.span`
+`,ar=a.span`
   font-size: 0.6875rem;
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
   line-height: 1.05;
-`,Ke=a.div`
+`,tr=a.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({theme:e})=>e.spacing[1]};
-`,Je=a.div`
+`,or=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[2]};
   align-items: start;
@@ -271,33 +271,33 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
   @media (min-width: ${({theme:e})=>e.breakpoints.lg}) {
     grid-template-columns: minmax(0, 1.35fr) minmax(20rem, 0.65fr);
   }
-`,G=a.div`
+`,Q=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[2]};
-`,Xe=a(j)`
+`,ir=a(w)`
   overflow: hidden;
-`,Ze=a.div`
+`,nr=a.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: ${({theme:e})=>e.spacing[2]};
   margin-bottom: ${({theme:e})=>e.spacing[2]};
-`,N=a.div`
+`,Y=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
   min-width: 0;
-`,Q=a.h2`
+`,W=a.h2`
   margin: 0;
   font-family: ${({theme:e})=>e.typography.fontFamily.heading};
   font-size: ${({theme:e})=>e.typography.size.lg};
   line-height: ${({theme:e})=>e.typography.lineHeight.tight};
   letter-spacing: -0.03em;
   color: ${({theme:e})=>e.color.text};
-`,W=a.p`
+`,J=a.p`
   margin: 0;
   color: ${({theme:e})=>e.color.textMuted};
   font-size: ${({theme:e})=>e.typography.size.sm};
-`,_e=a.span`
+`,sr=a.span`
   display: inline-flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[1]};
@@ -313,8 +313,8 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
 
   /* Tiempo estimado: destacado con el neón del modo NOCHE. */
   ${T};
-  ${$};
-`,er=a.div`
+  ${j};
+`,lr=a.div`
   display: grid;
 
   > * + * {
@@ -322,12 +322,12 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
     padding-top: ${({theme:e})=>e.spacing[2]};
     border-top: 1px solid ${({theme:e})=>e.color.border};
   }
-`,rr=a.div`
+`,dr=a.div`
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: ${({theme:e})=>e.spacing[2]};
   min-width: 0;
-`,ar=a.div`
+`,cr=a.div`
   position: relative;
   flex: 0 0 auto;
   width: 4rem;
@@ -337,7 +337,7 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
   background: ${({theme:e})=>e.color.surfaceMuted};
   box-shadow: ${({theme:e})=>e.shadow.sm};
   overflow: hidden;
-`,tr=a.img`
+`,pr=a.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -347,16 +347,16 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
   font-size: ${({theme:e})=>e.typography.size.sm};
   font-weight: ${({theme:e})=>e.typography.weight.extrabold};
   letter-spacing: -0.04em;
-`;const or=a.div`
+`;const gr=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
   min-width: 0;
-`,ir=a.div`
+`,hr=a.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: ${({theme:e})=>e.spacing[2]};
-`,nr=a.h3`
+`,ur=a.h3`
   margin: 0;
   color: ${({theme:e})=>e.color.text};
   font-family: ${({theme:e})=>e.typography.fontFamily.heading};
@@ -364,17 +364,17 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
   line-height: ${({theme:e})=>e.typography.lineHeight.tight};
   font-weight: ${({theme:e})=>e.typography.weight.bold};
   letter-spacing: -0.02em;
-`,sr=a.span`
+`,mr=a.span`
   color: ${({theme:e})=>e.color.primary};
   font-family: ${({theme:e})=>e.typography.fontFamily.heading};
   font-size: ${({theme:e})=>e.typography.size.lg};
   font-weight: ${({theme:e})=>e.typography.weight.bold};
   white-space: nowrap;
-`,lr=a.div`
+`,yr=a.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({theme:e})=>e.spacing[1]};
-`,dr=a.span`
+`,br=a.span`
   display: inline-flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[1]};
@@ -406,14 +406,14 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
     background: ${({theme:e})=>e.color.primarySoft};
     color: ${({theme:e})=>e.color.primary};
   }
-`,cr=a.div`
+`,xr=a.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: ${({theme:e})=>e.spacing[2]};
   color: ${({theme:e})=>e.color.textMuted};
   font-size: ${({theme:e})=>e.typography.size.xs};
-`,Y=a.span`
+`,K=a.span`
   display: inline-flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[1]};
@@ -429,7 +429,7 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
   &[data-tone='danger'] {
     color: ${({theme:e})=>e.color.danger};
   }
-`,pr=a(j)`
+`,fr=a(w)`
   overflow: hidden;
   background:
     ${({theme:e})=>e.mode==="dark"?"linear-gradient(180deg, rgba(107, 157, 255, 0.10) 0%, rgba(17, 26, 46, 0.98) 60%)":"linear-gradient(180deg, rgba(0, 71, 231, 0.05) 0%, rgba(255, 255, 255, 0.98) 60%)"};
@@ -439,7 +439,7 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
     top: calc(var(--marketplace-topbar-height, ${({theme:e})=>e.layout.topBarHeight}) + ${({theme:e})=>e.spacing[2]});
     align-self: start;
   }
-`,gr=a.div`
+`,$r=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[2]};
 `;a.p`
@@ -447,14 +447,14 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
   color: ${({theme:e})=>e.color.textMuted};
   font-size: ${({theme:e})=>e.typography.size.sm};
   line-height: ${({theme:e})=>e.typography.lineHeight.snug};
-`;const hr=a.div`
+`;const jr=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
   padding: ${({theme:e})=>e.spacing[2]};
   border-radius: ${({theme:e})=>e.radius.lg};
   border: 1px solid ${({theme:e})=>e.color.border};
   background: ${({theme:e})=>e.color.surface};
-`,ur=a.div`
+`,wr=a.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -462,17 +462,17 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
   font-size: ${({theme:e})=>e.typography.size.sm};
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
   color: ${({theme:e})=>e.color.text};
-`,mr=a.span`
+`,Cr=a.span`
   color: ${({theme:e})=>e.color.textMuted};
   font-size: ${({theme:e})=>e.typography.size.xs};
   font-weight: ${({theme:e})=>e.typography.weight.semibold};
-`,br=a.div`
+`,vr=a.div`
   position: relative;
   height: 0.625rem;
   border-radius: ${({theme:e})=>e.radius.full};
   background: ${({theme:e})=>e.color.surfaceMuted};
   overflow: hidden;
-`,xr=a.div`
+`,kr=a.div`
   width: ${({$value:e})=>`${Math.max(0,Math.min(100,e))}%`};
   height: 100%;
   border-radius: inherit;
@@ -483,10 +483,10 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
   display: grid;
   gap: ${({theme:e})=>e.spacing[2]};
   padding: ${({theme:e})=>e.spacing[2]} 0;
-`,yr=a.div`
+`,Sr=a.div`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
-`,x=a.div`
+`,b=a.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -501,11 +501,11 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
     color: ${({theme:e})=>e.color.text};
     font-size: ${({theme:e})=>e.typography.size.base};
   }
-`,fr=a.div`
+`,zr=a.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${({theme:e})=>e.spacing[1]};
-`,$r=a.div`
+`,Mr=a.div`
   display: flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[1]};
@@ -521,31 +521,31 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
   > svg {
     flex: 0 0 auto;
   }
-`,K=a.div`
+`,X=a.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({theme:e})=>e.spacing[1]};
-`,jr=de`
+`,Ir=pe`
   display: grid;
   gap: ${({theme:e})=>e.spacing[1]};
 
   @media (min-width: ${({theme:e})=>e.breakpoints.sm}) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-`,wr=a.div`
-  ${jr}
-`,I=a(le)`
+`,Pr=a.div`
+  ${Ir}
+`,I=a(ce)`
   padding: ${({theme:e})=>e.spacing[4]} 0;
 
   @media (min-width: ${({theme:e})=>e.breakpoints.lg}) {
     padding: ${({theme:e})=>e.spacing[5]} 0;
   }
-`,vr=a.div`
+`,Er=a.div`
   display: inline-flex;
   align-items: center;
   gap: ${({theme:e})=>e.spacing[1]};
   flex: 0 0 auto;
-`,Cr=a.button`
+`,Tr=a.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -560,21 +560,21 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
   transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease;
 
   ${T};
-  ${$};
+  ${j};
 
   &:hover {
     border-color: ${({theme:e})=>e.color.danger};
     background: rgba(220, 38, 38, 0.08);
     color: ${({theme:e})=>e.color.danger};
   }
-`,kr=a.div`
+`,Lr=a.div`
   display: inline-flex;
   align-items: center;
   gap: 0.1rem;
   padding: 0.15rem;
   border-radius: ${({theme:e})=>e.radius.full};
   background: ${({theme:e})=>e.color.primarySoft};
-`,J=a.button`
+`,Z=a.button`
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -608,10 +608,10 @@ import{a8 as P,q as a,a9 as $,aa as X,j as r,J as le,Y as j,ab as Z,ac as T,G as
     color: ${({theme:e})=>e.color.textSoft};
     cursor: not-allowed;
   }
-`,Sr=a.span`
+`,Ar=a.span`
   min-width: 3.5rem;
   text-align: center;
   color: ${({theme:e})=>e.color.primary};
   font-size: ${({theme:e})=>e.typography.size.xs};
   font-weight: ${({theme:e})=>e.typography.weight.bold};
-`,f=15e3,ee=200,re=e=>{const s=e.match(/\d+/);return Number((s==null?void 0:s[0])??0)},zr=(e=_)=>{const s=new Map;return e.forEach(i=>{const n=s.get(i.store);if(n){n.items.push(i),n.itemCount+=i.quantity,n.subtotal+=i.subtotal,n.availableCount+=i.available?1:0,n.unavailableCount+=i.available?0:1;return}s.set(i.store,{store:i.store,items:[i],itemCount:i.quantity,subtotal:i.subtotal,etaLabel:i.eta,availableCount:i.available?1:0,unavailableCount:i.available?0:1})}),[...s.values()].map(i=>{const n=i.items.map(l=>re(l.eta)).filter(Boolean),d=n.length?Math.min(...n):0,c=n.length?Math.max(...n):0;return{...i,etaLabel:n.length<=1||d===c?`${d||0} min`:`${d}–${c} min`}})},Mr=e=>{const s=e.reduce((l,p)=>l+p.subtotal,0),i=s>=f?0:1200,n=e.map(l=>re(l.eta)).filter(Boolean),d=n.length?Math.min(...n):0,c=n.length?Math.max(...n):0;return{subtotal:s,deliveryFee:i,total:s+i+ee,totalUnits:e.filter(l=>l.available).length,unavailableItems:e.filter(l=>!l.available).length,deliveryWindow:n.length?d===c?`${d} min`:`${d}–${c} min`:"Pendiente",freeShippingRemaining:Math.max(f-s,0),freeShippingProgress:Math.min(s/f*100,100)}},Ir=[{label:"Carrito",state:"active"},{label:"Dirección",state:"idle"},{label:"Entrega",state:"idle"},{label:"Pago",state:"idle"},{label:"Confirmar",state:"idle"}],Pr=[{label:"Crédito",icon:D},{label:"Débito",icon:D},{label:"Transferencia",icon:Se}],Tr=[{label:"Precio final",icon:Ce},{label:"Seguí tu pedido",icon:y}],Er=["Delivery GO","Entrega comercio","Sin retiro"];function Br(){var A;const[e,s]=m.useState(_),[i,n]=m.useState(null),[d,c]=m.useState(!1),l=fe(),p=m.useMemo(()=>zr(e),[e]),{subtotal:w,deliveryFee:ae,total:te,totalUnits:E,unavailableItems:F,deliveryWindow:oe,freeShippingRemaining:v,freeShippingProgress:ie}=m.useMemo(()=>Mr(e),[e]),L=(o,t)=>{s(C=>C.map(g=>{if(g.id!==o||!g.available)return g;const H=Math.min(Math.max(0,g.quantity+t),U(g.saleUnit));return{...g,quantity:H,subtotal:Math.round(g.price*je(g.saleUnit,H))}}))},ne=()=>{we(e),l("/pedidos")},se=o=>{s(t=>t.filter(C=>C.id!==o)),n(null)};return p.length===0?r.jsx(R,{showSearch:!1,children:r.jsx(I,{children:r.jsx(k,{children:r.jsx(ce,{icon:q,title:"Tu carrito está vacío",text:"Explorá los negocios de La Francia y armá tu pedido.",ctaLabel:"Explorar negocios",ctaTo:"/comercios"})})})}):r.jsxs(R,{showSearch:!1,children:[r.jsxs(Re,{children:[r.jsx(I,{children:r.jsx(k,{children:r.jsx(qe,{children:r.jsx(z,{children:r.jsxs(De,{children:[r.jsxs(Ge,{children:[r.jsx(Ne,{children:r.jsx(pe,{children:"Carrito"})}),r.jsxs(Ke,{children:[r.jsxs(u,{"data-tone":"brand",children:[r.jsx(q,{size:14,"aria-hidden":"true"})," ",E," ",E===1?"producto":"productos"]}),r.jsxs(u,{"data-tone":F>0?"warning":"success",children:[r.jsx(ke,{size:14,"aria-hidden":"true"})," ",F," sin stock"]}),r.jsxs(u,{children:[r.jsx(y,{size:14,"aria-hidden":"true"})," ",oe]})]})]}),r.jsx(Qe,{"aria-label":"Progreso de compra",children:Ir.map((o,t)=>r.jsxs(We,{"data-state":o.state,children:[r.jsx(Ye,{"data-state":o.state,children:t+1}),r.jsx(Ve,{children:o.label})]},o.label))})]})})})})}),r.jsx(I,{children:r.jsx(k,{children:r.jsxs(Je,{children:[r.jsx(G,{children:p.map(o=>r.jsx(Xe,{children:r.jsxs(z,{children:[r.jsxs(Ze,{children:[r.jsxs(N,{children:[r.jsx(Q,{children:o.store}),r.jsxs(W,{children:[o.itemCount," ítems · ",o.unavailableCount," pendientes"]})]}),r.jsxs(_e,{children:[r.jsx(y,{size:14,"aria-hidden":"true"})," ",o.etaLabel]})]}),r.jsx(er,{children:o.items.map(t=>r.jsxs(rr,{children:[r.jsx(ar,{children:r.jsx(tr,{src:ge(t.categoryId),alt:t.product,loading:"lazy"})}),r.jsxs(or,{children:[r.jsxs(ir,{children:[r.jsxs("div",{style:{minWidth:0},children:[r.jsx(nr,{children:t.product}),r.jsx(he,{children:t.store})]}),r.jsxs(vr,{children:[r.jsx(sr,{children:t.available?h(t.subtotal):"—"}),r.jsx(Cr,{type:"button","aria-label":`Quitar ${t.product} del carrito`,onClick:()=>n(t.id),children:r.jsx(ue,{size:15,"aria-hidden":"true"})})]})]}),r.jsxs(lr,{children:[r.jsxs(kr,{children:[r.jsx(J,{type:"button",onClick:()=>L(t.id,-1),disabled:!t.available||t.quantity<=0,"aria-label":`Quitar cantidad de ${t.product}`,children:r.jsx(ve,{size:14,"aria-hidden":"true"})}),r.jsx(Sr,{"aria-live":"polite",children:t.available?$e(t.saleUnit,t.quantity):"0 unid."}),r.jsx(J,{type:"button",onClick:()=>L(t.id,1),disabled:!t.available||t.quantity>=U(t.saleUnit),"aria-label":`Agregar cantidad de ${t.product}`,children:r.jsx(B,{size:14,"aria-hidden":"true"})})]}),r.jsx(dr,{"data-tone":t.statusTone,children:t.statusLabel})]}),r.jsxs(cr,{children:[r.jsxs(Y,{children:[r.jsx(y,{size:14,"aria-hidden":"true"}),t.eta]}),t.statusTone==="success"?r.jsx(Y,{children:"Listo para sumar al pedido"}):t.statusTone==="warning"?r.jsx(V,{"data-tone":"warning",children:"Pocas unidades"}):r.jsx(V,{"data-tone":"danger",children:"Sin stock"})]})]})]},t.id))})]})},o.store))}),r.jsx(pr,{children:r.jsx(z,{children:r.jsxs(gr,{children:[r.jsx(b,{children:"Resumen"}),r.jsxs(hr,{children:[r.jsxs(ur,{children:[r.jsx("span",{children:"Envío gratis"}),r.jsx("strong",{children:v>0?`${h(v)} faltan`:"Ya lo alcanzaste"})]}),r.jsx(br,{children:r.jsx(xr,{$value:ie})}),r.jsxs(mr,{children:["Umbral estimado ",h(f)," ·"," ",v>0?"te falta poco para liberarlo":"el envío ya queda liberado"]})]}),r.jsxs(yr,{children:[r.jsxs(x,{children:[r.jsx("span",{children:"Subtotal"}),r.jsx("span",{children:h(w)})]}),r.jsxs(x,{children:[r.jsx("span",{children:"Envío estimado"}),r.jsx("span",{children:h(ae)})]}),r.jsxs(x,{children:[r.jsx("span",{children:"Cargo de servicio"}),r.jsx("span",{children:h(ee)})]}),r.jsxs(x,{"data-emphasis":"true",children:[r.jsx("strong",{children:"Total estimado"}),r.jsx(me,{children:h(te)})]})]}),r.jsx(fr,{children:Tr.map(o=>{const t=o.icon;return r.jsxs($r,{children:[r.jsx(t,{size:16,"aria-hidden":"true"}),r.jsx("span",{children:o.label})]},o.label)})}),r.jsxs(M,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Dirección"}),r.jsx(S,{children:"Elegí dónde recibir"})]}),r.jsxs(G,{children:[O.map(o=>r.jsx(j,{children:r.jsx(Be,{children:r.jsxs(Oe,{children:[r.jsxs(N,{children:[r.jsx(Q,{children:o.label}),r.jsx(W,{children:o.address})]}),r.jsx(u,{"data-tone":o.primary?"brand":"success",children:o.primary?"Principal":"Guardada"})]})})},o.id)),r.jsxs(Ue,{type:"button",onClick:()=>c(!0),children:[r.jsx(B,{size:18,"aria-hidden":"true"}),"Agregar una dirección nueva"]})]})]}),r.jsxs(M,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Entrega"}),r.jsx(S,{children:"Cómo llega el pedido"})]}),r.jsx(K,{children:Er.map(o=>r.jsx(u,{"data-tone":"brand",children:o},o))})]}),r.jsxs(M,{children:[r.jsxs("div",{children:[r.jsx(b,{children:"Pago"}),r.jsx(S,{children:"Elegí el medio de pago"})]}),r.jsx(K,{children:Pr.map(o=>{const t=o.icon;return r.jsxs(u,{"data-tone":"brand",children:[r.jsx(t,{size:14,"aria-hidden":"true"}),o.label]},o.label)})})]}),r.jsxs(wr,{children:[r.jsx(be,{as:"button",type:"button",onClick:ne,children:"Confirmar pedido"}),r.jsx(xe,{to:"/",children:"Seguir comprando"})]})]})})})]})})})]}),r.jsx(He,{open:i!==null,title:"¿Deseás eliminar este artículo?",text:"Se va a quitar del carrito.",onCancel:()=>n(null),onConfirm:()=>i&&se(i)}),r.jsx(ye,{open:d,currentId:((A=O[0])==null?void 0:A.id)??"",startOnNew:!0,onClose:()=>c(!1),onSelect:()=>c(!1)})]})}export{Br as CartScreen};
+`,$=15e3,te=200,oe=e=>{const i=e.match(/\d+/);return Number((i==null?void 0:i[0])??0)},Fr=(e=x)=>{const i=new Map;return e.forEach(t=>{const s=i.get(t.store);if(s){s.items.push(t),s.itemCount+=t.quantity,s.subtotal+=t.subtotal,s.availableCount+=t.available?1:0,s.unavailableCount+=t.available?0:1;return}i.set(t.store,{store:t.store,items:[t],itemCount:t.quantity,subtotal:t.subtotal,etaLabel:t.eta,availableCount:t.available?1:0,unavailableCount:t.available?0:1})}),[...i.values()].map(t=>{const s=t.items.map(l=>oe(l.eta)).filter(Boolean),d=s.length?Math.min(...s):0,p=s.length?Math.max(...s):0;return{...t,etaLabel:s.length<=1||d===p?`${d||0} min`:`${d}–${p} min`}})},Hr=e=>{const i=e.reduce((l,g)=>l+g.subtotal,0),t=i>=$?0:1200,s=e.map(l=>oe(l.eta)).filter(Boolean),d=s.length?Math.min(...s):0,p=s.length?Math.max(...s):0;return{subtotal:i,deliveryFee:t,total:i+t+te,totalUnits:e.filter(l=>l.available).length,unavailableItems:e.filter(l=>!l.available).length,deliveryWindow:s.length?d===p?`${d} min`:`${d}–${p} min`:"Pendiente",freeShippingRemaining:Math.max($-i,0),freeShippingProgress:Math.min(i/$*100,100)}},Rr=[{label:"Carrito",state:"active"},{label:"Dirección",state:"idle"},{label:"Entrega",state:"idle"},{label:"Pago",state:"idle"},{label:"Confirmar",state:"idle"}],qr=[{label:"Crédito",icon:U},{label:"Débito",icon:U},{label:"Transferencia",icon:Me}],Br=[{label:"Precio final",icon:Se},{label:"Seguí tu pedido",icon:f}],Or=["Delivery GO","Entrega comercio","Sin retiro"];function Wr(){var q;const e=Ae(),[i,t]=u.useState(null),[s,d]=u.useState(!1),p=je(),l=u.useMemo(()=>Fr(e),[e]),{subtotal:g,deliveryFee:C,total:ie,totalUnits:F,unavailableItems:H,deliveryWindow:ne,freeShippingRemaining:v,freeShippingProgress:se}=u.useMemo(()=>Hr(e),[e]),R=Te,le=()=>{ve(e),Le(),p("/pedidos")},de=n=>{Ee(n),t(null)};return l.length===0?r.jsx(B,{showSearch:!1,children:r.jsx(I,{children:r.jsx(k,{children:r.jsx(ge,{icon:O,title:"Tu carrito está vacío",text:"Explorá los negocios de La Francia y armá tu pedido.",ctaLabel:"Explorar negocios",ctaTo:"/comercios"})})})}):r.jsxs(B,{showSearch:!1,children:[r.jsxs(Qe,{children:[r.jsx(I,{children:r.jsx(k,{children:r.jsx(Ye,{children:r.jsx(z,{children:r.jsxs(Ve,{children:[r.jsxs(Xe,{children:[r.jsx(Ze,{children:r.jsx(he,{children:"Carrito"})}),r.jsxs(tr,{children:[r.jsxs(m,{"data-tone":"brand",children:[r.jsx(O,{size:14,"aria-hidden":"true"})," ",F," ",F===1?"producto":"productos"]}),r.jsxs(m,{"data-tone":H>0?"warning":"success",children:[r.jsx(ze,{size:14,"aria-hidden":"true"})," ",H," sin stock"]}),r.jsxs(m,{children:[r.jsx(f,{size:14,"aria-hidden":"true"})," ",ne]})]})]}),r.jsx(_e,{"aria-label":"Progreso de compra",children:Rr.map((n,o)=>r.jsxs(er,{"data-state":n.state,children:[r.jsx(rr,{"data-state":n.state,children:o+1}),r.jsx(ar,{children:n.label})]},n.label))})]})})})})}),r.jsx(I,{children:r.jsx(k,{children:r.jsxs(or,{children:[r.jsx(Q,{children:l.map(n=>r.jsx(ir,{children:r.jsxs(z,{children:[r.jsxs(nr,{children:[r.jsxs(Y,{children:[r.jsx(W,{children:n.store}),r.jsxs(J,{children:[n.itemCount," ítems · ",n.unavailableCount," pendientes"]})]}),r.jsxs(sr,{children:[r.jsx(f,{size:14,"aria-hidden":"true"})," ",n.etaLabel]})]}),r.jsx(lr,{children:n.items.map(o=>r.jsxs(dr,{children:[r.jsx(cr,{children:r.jsx(pr,{src:ue(o.categoryId),alt:o.product,loading:"lazy"})}),r.jsxs(gr,{children:[r.jsxs(hr,{children:[r.jsxs("div",{style:{minWidth:0},children:[r.jsx(ur,{children:o.product}),r.jsx(me,{children:o.store})]}),r.jsxs(Er,{children:[r.jsx(mr,{children:o.available?h(o.subtotal):"—"}),r.jsx(Tr,{type:"button","aria-label":`Quitar ${o.product} del carrito`,onClick:()=>t(o.id),children:r.jsx(ye,{size:15,"aria-hidden":"true"})})]})]}),r.jsxs(yr,{children:[r.jsxs(Lr,{children:[r.jsx(Z,{type:"button",onClick:()=>R(o.id,-1),disabled:!o.available||o.quantity<=0,"aria-label":`Quitar cantidad de ${o.product}`,children:r.jsx(ke,{size:14,"aria-hidden":"true"})}),r.jsx(Ar,{"aria-live":"polite",children:o.available?Ce(o.saleUnit,o.quantity):"0 unid."}),r.jsx(Z,{type:"button",onClick:()=>R(o.id,1),disabled:!o.available||o.quantity>=re(o.saleUnit),"aria-label":`Agregar cantidad de ${o.product}`,children:r.jsx(G,{size:14,"aria-hidden":"true"})})]}),r.jsx(br,{"data-tone":o.statusTone,children:o.statusLabel})]}),r.jsxs(xr,{children:[r.jsxs(K,{children:[r.jsx(f,{size:14,"aria-hidden":"true"}),o.eta]}),o.statusTone==="success"?r.jsx(K,{children:"Listo para sumar al pedido"}):o.statusTone==="warning"?r.jsx(V,{"data-tone":"warning",children:"Pocas unidades"}):r.jsx(V,{"data-tone":"danger",children:"Sin stock"})]})]})]},o.id))})]})},n.store))}),r.jsx(fr,{children:r.jsx(z,{children:r.jsxs($r,{children:[r.jsx(y,{children:"Resumen"}),r.jsxs(jr,{children:[r.jsxs(wr,{children:[r.jsx("span",{children:"Envío gratis"}),r.jsx("strong",{children:v>0?`${h(v)} faltan`:"Ya lo alcanzaste"})]}),r.jsx(vr,{children:r.jsx(kr,{$value:se})}),r.jsxs(Cr,{children:["Umbral estimado ",h($)," ·"," ",v>0?"te falta poco para liberarlo":"el envío ya queda liberado"]})]}),r.jsxs(Sr,{children:[r.jsxs(b,{children:[r.jsx("span",{children:"Subtotal"}),r.jsx("span",{children:h(g)})]}),r.jsxs(b,{children:[r.jsx("span",{children:"Envío estimado"}),r.jsx("span",{children:h(C)})]}),r.jsxs(b,{children:[r.jsx("span",{children:"Cargo de servicio"}),r.jsx("span",{children:h(te)})]}),r.jsxs(b,{"data-emphasis":"true",children:[r.jsx("strong",{children:"Total estimado"}),r.jsx(be,{children:h(ie)})]})]}),r.jsx(zr,{children:Br.map(n=>{const o=n.icon;return r.jsxs(Mr,{children:[r.jsx(o,{size:16,"aria-hidden":"true"}),r.jsx("span",{children:n.label})]},n.label)})}),r.jsxs(M,{children:[r.jsxs("div",{children:[r.jsx(y,{children:"Dirección"}),r.jsx(S,{children:"Elegí dónde recibir"})]}),r.jsxs(Q,{children:[N.map(n=>r.jsx(w,{children:r.jsx(We,{children:r.jsxs(Je,{children:[r.jsxs(Y,{children:[r.jsx(W,{children:n.label}),r.jsx(J,{children:n.address})]}),r.jsx(m,{"data-tone":n.primary?"brand":"success",children:n.primary?"Principal":"Guardada"})]})})},n.id)),r.jsxs(Ke,{type:"button",onClick:()=>d(!0),children:[r.jsx(G,{size:18,"aria-hidden":"true"}),"Agregar una dirección nueva"]})]})]}),r.jsxs(M,{children:[r.jsxs("div",{children:[r.jsx(y,{children:"Entrega"}),r.jsx(S,{children:"Cómo llega el pedido"})]}),r.jsx(X,{children:Or.map(n=>r.jsx(m,{"data-tone":"brand",children:n},n))})]}),r.jsxs(M,{children:[r.jsxs("div",{children:[r.jsx(y,{children:"Pago"}),r.jsx(S,{children:"Elegí el medio de pago"})]}),r.jsx(X,{children:qr.map(n=>{const o=n.icon;return r.jsxs(m,{"data-tone":"brand",children:[r.jsx(o,{size:14,"aria-hidden":"true"}),n.label]},n.label)})})]}),r.jsxs(Pr,{children:[r.jsx(xe,{as:"button",type:"button",onClick:le,children:"Confirmar pedido"}),r.jsx(fe,{to:"/",children:"Seguir comprando"})]})]})})})]})})})]}),r.jsx(De,{open:i!==null,title:"¿Deseás eliminar este artículo?",text:"Se va a quitar del carrito.",onCancel:()=>t(null),onConfirm:()=>i&&de(i)}),r.jsx($e,{open:s,currentId:((q=N[0])==null?void 0:q.id)??"",startOnNew:!0,onClose:()=>d(!1),onSelect:()=>d(!1)})]})}export{Wr as CartScreen};
