@@ -171,10 +171,15 @@ export const ScrollRail = styled.div`
   -webkit-overflow-scrolling: touch;
   padding-bottom: ${({ theme }) => theme.spacing[1]};
   scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
   scrollbar-width: none;
 
   > * {
     scroll-snap-align: start;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    scroll-behavior: auto;
   }
 
   &::-webkit-scrollbar {
@@ -231,10 +236,15 @@ export const FilterRow = styled.div`
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
   padding-bottom: ${({ theme }) => theme.spacing[1]};
+  scroll-behavior: smooth;
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
     display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    scroll-behavior: auto;
   }
 `;
 
