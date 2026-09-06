@@ -1,0 +1,26 @@
+name = "lafranciago-api"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+# La base y el bucket se crean con:
+#   npx wrangler d1 create lafranciago
+#   npx wrangler r2 bucket create lafranciago-media
+# y después se pega acá el database_id que devuelve el primer comando.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "lafranciago"
+database_id = "PEGAR_ACA_EL_ID_QUE_DEVUELVE_WRANGLER"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "lafranciago-media"
+
+[vars]
+# Orígenes que pueden llamar a la API. Sin comodín: con credenciales, un "*"
+# dejaría que cualquier sitio leyera los datos del usuario.
+ORIGENES_PERMITIDOS = "https://nicoeliceche.github.io,http://localhost:8081"
+
+# Entorno local para desarrollo: usa una copia de la base en disco.
+[env.dev]
+vars = { ORIGENES_PERMITIDOS = "http://localhost:8081" }
