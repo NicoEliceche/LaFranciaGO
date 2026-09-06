@@ -10,7 +10,7 @@ compatibility_date = "2026-09-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "lafranciago"
-database_id = "PEGAR_ACA_EL_ID_QUE_DEVUELVE_WRANGLER"
+database_id = "76f9f320-492e-4be8-ba5c-8bea0eeed09a"
 
 [[r2_buckets]]
 binding = "MEDIA"

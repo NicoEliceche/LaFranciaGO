@@ -121,7 +121,7 @@ async function enrutar(
 
     /* Se verifica siempre, incluso sin usuario, para que la respuesta tarde
        lo mismo exista o no: el tiempo delata qué emails están registrados. */
-    const hash = usuario?.password_hash ?? 'pbkdf2$210000$AAAA$AAAA';
+    const hash = usuario?.password_hash ?? 'pbkdf2$100000$AAAA$AAAA';
     const valida = await verificarPassword(body.password ?? '', hash);
 
     if (!usuario || !valida) {

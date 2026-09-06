@@ -71,12 +71,18 @@ export const slugify = (value: string) =>
 /**
  * Hash con PBKDF2, que viene en la plataforma y no necesita dependencias.
  *
- * 210.000 iteraciones es lo que recomienda OWASP para PBKDF2-SHA512: hace que
- * probar contraseñas a lo bruto sea caro incluso si alguien se lleva la base.
+ * 100.000 iteraciones es el máximo que admite el runtime de Workers: por
+ * encima de eso rechaza la operación. OWASP recomienda 210.000 para
+ * PBKDF2-SHA512, así que se usa el tope disponible y se compensa exigiendo
+ * contraseñas de al menos 8 caracteres.
+ *
  * El salt es único por usuario, así que dos personas con la misma contraseña
- * tienen hashes distintos y no se pueden usar tablas precalculadas.
+ * tienen hashes distintos y no sirven las tablas precalculadas.
+ *
+ * Si más adelante hace falta más margen, la salida es mover el hash a scrypt
+ * o Argon2 vía WebAssembly, que no tienen este tope.
  */
-const ITERACIONES = 210_000;
+const ITERACIONES = 100_000;
 
 export async function hashPassword(password: string) {
   const salt = crypto.getRandomValues(new Uint8Array(16));

@@ -102,9 +102,13 @@ npm run dev          # API en http://127.0.0.1:8787
 producto y qué escalón; el servidor busca el precio y calcula el total. Sin
 esto, cualquiera podría pedir con el precio que quisiera.
 
-**Las contraseñas se guardan con PBKDF2-SHA512 y 210.000 iteraciones**, que es
-lo que recomienda OWASP. Cada una lleva su salt, así dos personas con la misma
-contraseña tienen hashes distintos.
+**Las contraseñas se guardan con PBKDF2-SHA512 y 100.000 iteraciones**, que es
+el máximo que admite el runtime de Workers: por encima de eso rechaza la
+operación. OWASP recomienda 210.000, así que se usa el tope disponible y se
+compensa exigiendo al menos 8 caracteres. Si hiciera falta más margen, la
+salida es mover el hash a scrypt o Argon2 por WebAssembly, que no tienen ese
+límite. Cada contraseña lleva su salt, así dos personas con la misma clave
+tienen hashes distintos.
 
 **El login tarda lo mismo exista o no el usuario.** Se verifica siempre contra
 un hash, incluso cuando el email no está registrado: si respondiera más rápido
@@ -121,7 +125,7 @@ aprobarse.
 
 ## Verificado
 
-Probado sobre el Worker corriendo con base local:
+Probado contra la API publicada, con base y bucket reales:
 
 - Registro, login, sesión por cookie y rechazo sin sesión (401)
 - Contraseña incorrecta rechazada (401)
