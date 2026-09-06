@@ -6,6 +6,8 @@ import { GoogleIcon } from '@shared/components/icons/GoogleIcon';
 import { hayBackend } from '@core/data/services/apiClient';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
+import { PanelLoginDialog } from '../components/PanelLoginDialog';
+import { PanelLoginEnlace } from '../components/PanelLoginDialogStyled';
 import { ingresarConGoogle, useSesion } from '../sessionStore';
 import { Card, CardPad, CardText, CardTitle, SectionInner } from '../ui';
 import { CompactSection } from './screenLayout';
@@ -41,6 +43,7 @@ export function AuthScreen() {
   );
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [panelAbierto, setPanelAbierto] = useState(false);
 
   const { entrar, registrar } = useSesion();
   const navigate = useNavigate();
@@ -204,6 +207,10 @@ export function AuthScreen() {
                     </FieldStack>
                   </form>
 
+                  <PanelLoginEnlace type="button" onClick={() => setPanelAbierto(true)}>
+                    Ingresar como Comercio / Delivery / Flete
+                  </PanelLoginEnlace>
+
                   <AuthCambio>
                     {esRegistro ? '¿Ya tenés cuenta?' : '¿Todavía no tenés cuenta?'}
                     <AuthCambioBoton
@@ -222,6 +229,8 @@ export function AuthScreen() {
           </AuthShell>
         </SectionInner>
       </CompactSection>
+
+      <PanelLoginDialog open={panelAbierto} onClose={() => setPanelAbierto(false)} />
     </MarketplaceFrame>
   );
 }

@@ -77,6 +77,13 @@ export function useSesion() {
     [],
   );
 
+  const entrarAlPanel = useCallback(
+    async (email: string, password: string, rol: string) => {
+      aplicar(await authApi.loginPanel({ email, password, rol }));
+    },
+    [],
+  );
+
   const salir = useCallback(async () => {
     try {
       await authApi.logout();
@@ -91,6 +98,7 @@ export function useSesion() {
     estado: snapshot.estado,
     conectado: snapshot.estado === 'conectado',
     entrar,
+    entrarAlPanel,
     registrar,
     salir,
     refrescar: recuperarSesion,

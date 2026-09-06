@@ -118,6 +118,9 @@ export const authApi = {
     api.post<UsuarioApi>('/auth/registro', datos),
   login: (datos: { email: string; password: string }) =>
     api.post<UsuarioApi>('/auth/login', datos),
+  /** Ingreso al panel: el backend comprueba que el rol sea el de la cuenta. */
+  loginPanel: (datos: { email: string; password: string; rol: string }) =>
+    api.post<UsuarioApi>('/auth/login-panel', datos),
   logout: () => api.post<{ ok: true }>('/auth/logout'),
   yo: () => api.get<UsuarioApi>('/auth/yo'),
 };

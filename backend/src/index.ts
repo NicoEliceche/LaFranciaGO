@@ -186,6 +186,62 @@ async function enrutar(
     return json({ ok: true }, {}, { ...cors, 'Set-Cookie': cookieBorrada() });
   }
 
+  if (ruta === '/auth/login-panel' && metodo === 'POST') {
+    const body = await leerJson<{ email?: string; password?: string; rol?: string }>(request);
+    const email = (body.email ?? '').trim().toLowerCase();
+    const rolPedido = String(body.rol ?? '');
+    const ip = request.headers.get('CF-Connecting-IP') ?? 'desconocida';
+
+    /* Sólo los roles que operan la app. "cliente" entra por el login común y
+       "admin" no se ofrece: quien administra ya sabe por dónde entrar. */
+    if (!['comercio', 'delivery', 'fletero'].includes(rolPedido)) {
+      return error('Elegí un tipo de cuenta válido.', 400, cors);
+    }
+
+    if (await intentosAgotados(env, email, ip)) {
+      return respuestaBloqueado(cors);
+    }
+
+    const usuario = await env.DB.prepare(
+      'SELECT id, email, nombre, rol, foto_url, password_hash FROM usuarios WHERE email = ?',
+    )
+      .bind(email)
+      .first<UsuarioSesion & { password_hash: string | null }>();
+
+    const hash = usuario?.password_hash ?? 'pbkdf2$100000$AAAA$AAAA';
+    const valida = await verificarPassword(body.password ?? '', hash);
+
+    /**
+     * El rol se comprueba contra la base, no se toma del formulario: si el
+     * desplegable definiera el permiso, cualquiera entraría como comercio.
+     *
+     * Y el mensaje es el mismo cuando la clave está mal que cuando el rol no
+     * corresponde: distinguirlos permitiría averiguar qué cuentas son de
+     * comercios probando emails.
+     */
+    if (!usuario || !valida || usuario.rol !== rolPedido) {
+      await registrarIntentoFallido(env, email, ip);
+
+      return error('Los datos no corresponden a una cuenta de ese tipo.', 401, cors);
+    }
+
+    await limpiarIntentos(env, email, ip);
+
+    const { token, expira } = await crearSesion(env, usuario.id);
+
+    return json(
+      {
+        id: usuario.id,
+        email: usuario.email,
+        nombre: usuario.nombre,
+        rol: usuario.rol,
+        foto_url: usuario.foto_url,
+      },
+      {},
+      { ...cors, 'Set-Cookie': cookieSesion(token, expira) },
+    );
+  }
+
   // ── Ingreso con Google ──
 
   if (ruta === '/auth/google' && metodo === 'GET') {
