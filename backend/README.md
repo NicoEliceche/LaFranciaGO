@@ -25,29 +25,39 @@ Se descartaron:
 
 ## Puesta en marcha
 
+Son dos comandos:
+
 ```bash
 cd backend
 npm install
-
-# Crear los recursos (una sola vez)
-npx wrangler d1 create lafranciago
-npx wrangler r2 bucket create lafranciago-media
-# Copiar el database_id que devuelve el primer comando en wrangler.toml
-
-# Crear las tablas
-npm run db:local     # base local, para desarrollo
-npm run db:remoto    # base en la nube
-
-# Desarrollo
-npm run dev          # queda en http://127.0.0.1:8787
-
-# Publicar
-npm run deploy
+npx wrangler login    # abre el navegador para autorizar
+npm run setup         # hace todo lo demás
 ```
 
-Después de publicar, en el frontend hay que definir `VITE_API_URL` con la URL
-del Worker. Sin esa variable la app sigue funcionando con datos locales, así
-que se puede desplegar el frontend antes que el backend.
+`npm run setup` crea la base y el bucket, escribe el `database_id` en
+`wrangler.toml`, crea las tablas, publica el Worker y te dice la URL que
+quedó. Se puede volver a correr sin romper nada: si algo ya existe, lo
+detecta y sigue.
+
+El `login` es el único paso manual, y no se puede evitar: los recursos quedan
+a nombre de tu cuenta, así que la autorización tiene que darla una persona.
+
+Después de publicar, creá un archivo `.env` en la raíz del proyecto (no en
+`backend/`) con la URL que devolvió el script:
+
+```
+VITE_API_URL=https://lafranciago-api.TU-SUBDOMINIO.workers.dev
+```
+
+Sin esa variable la app sigue funcionando con los datos de ejemplo, así que
+se puede desplegar el frontend antes que el backend.
+
+### Desarrollo
+
+```bash
+npm run db:local     # crea las tablas en una base local
+npm run dev          # API en http://127.0.0.1:8787
+```
 
 ## Endpoints
 
