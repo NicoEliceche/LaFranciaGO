@@ -3,6 +3,7 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { ThemeProvider } from '@core/theme';
 import { MarketplaceHomeScreen } from '@features/marketplace/screens/MarketplaceHomeScreen';
+import { RutaPrivada } from '@features/marketplace/components/RutaPrivada';
 
 /**
  * Sólo Inicio viaja en el bundle principal: es la primera pantalla y debe
@@ -76,24 +77,122 @@ function App() {
             <Route path="/comercios" element={<StoresDirectoryScreen />} />
             <Route path="/comercios/:storeId" element={<StoreProfileScreen />} />
             <Route path="/productos/:productId" element={<ProductDetailScreen />} />
-            <Route path="/pedidos" element={<MyOrdersScreen />} />
-            <Route path="/carrito" element={<CartScreen />} />
-            <Route path="/mandado" element={<ErrandScreen />} />
-            <Route path="/mandado/chat" element={<ErrandChatScreen />} />
-            <Route path="/favoritos" element={<FavoritesScreen />} />
-            <Route path="/notificaciones" element={<NotificationsScreen />} />
-            <Route path="/registro/comercio" element={<CommerceRegistrationScreen />} />
-            <Route path="/trabaja-con-nosotros" element={<DeliveryRegistrationScreen />} />
-            <Route path="/registro/fletero" element={<DeliveryRegistrationScreen role="fletero" />} />
+            <Route
+              path="/pedidos"
+              element={
+                <RutaPrivada>
+                  <MyOrdersScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/carrito"
+              element={
+                <RutaPrivada>
+                  <CartScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/mandado"
+              element={
+                <RutaPrivada>
+                  <ErrandScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/mandado/chat"
+              element={
+                <RutaPrivada>
+                  <ErrandChatScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/favoritos"
+              element={
+                <RutaPrivada>
+                  <FavoritesScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/notificaciones"
+              element={
+                <RutaPrivada>
+                  <NotificationsScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/registro/comercio"
+              element={
+                <RutaPrivada>
+                  <CommerceRegistrationScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/trabaja-con-nosotros"
+              element={
+                <RutaPrivada>
+                  <DeliveryRegistrationScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/registro/fletero"
+              element={
+                <RutaPrivada>
+                  <DeliveryRegistrationScreen role="fletero" />
+                </RutaPrivada>
+              }
+            />
             <Route
               path="/registro/delivery"
               element={<Navigate to="/trabaja-con-nosotros" replace />}
             />
-            <Route path="/mi-cuenta" element={<CustomerAccountScreen />} />
-            <Route path="/panel/comercio" element={<CommercePanelScreen />} />
-            <Route path="/panel/comercio/producto" element={<ProductFormScreen />} />
-            <Route path="/panel/repartidor" element={<DeliveryPanelScreen />} />
-            <Route path="/panel/admin" element={<AdminPanelScreen />} />
+            <Route
+              path="/mi-cuenta"
+              element={
+                <RutaPrivada>
+                  <CustomerAccountScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/panel/comercio"
+              element={
+                <RutaPrivada>
+                  <CommercePanelScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/panel/comercio/producto"
+              element={
+                <RutaPrivada>
+                  <ProductFormScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/panel/repartidor"
+              element={
+                <RutaPrivada>
+                  <DeliveryPanelScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/panel/admin"
+              element={
+                <RutaPrivada>
+                  <AdminPanelScreen />
+                </RutaPrivada>
+              }
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
