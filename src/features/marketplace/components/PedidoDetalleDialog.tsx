@@ -28,6 +28,10 @@ import {
  *
  * Muestra lo que armó el cliente, de dónde se retira y a dónde va: sin eso,
  * tomar un pedido es aceptar a ciegas un viaje que puede no convenir.
+ *
+ * Por eso tomar se decide únicamente acá: desde la tarjeta no se ve el
+ * volumen, y un pedido grande no entra en una moto igual que un flete de
+ * camión no entra en una camioneta.
  */
 
 type Props = {
@@ -35,9 +39,17 @@ type Props = {
   pedidoId: string | null;
   onClose: () => void;
   onTomar: (pedidoId: string) => Promise<void>;
+  /** Un fletero toma fletes, no pedidos: cambia cómo se nombra el viaje. */
+  esFletero?: boolean;
 };
 
-export function PedidoDetalleDialog({ open, pedidoId, onClose, onTomar }: Props) {
+export function PedidoDetalleDialog({
+  open,
+  pedidoId,
+  onClose,
+  onTomar,
+  esFletero = false,
+}: Props) {
   const [datos, setDatos] = useState<DetallePedidoApi | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tomando, setTomando] = useState(false);
@@ -83,7 +95,11 @@ export function PedidoDetalleDialog({ open, pedidoId, onClose, onTomar }: Props)
     try {
       await onTomar(pedidoId);
     } catch (fallo) {
-      setError(fallo instanceof Error ? fallo.message : 'No pudimos tomar el pedido.');
+      setError(
+        fallo instanceof Error
+          ? fallo.message
+          : `No pudimos tomar ${esFletero ? 'el flete' : 'el pedido'}.`,
+      );
     } finally {
       setTomando(false);
     }
@@ -94,12 +110,14 @@ export function PedidoDetalleDialog({ open, pedidoId, onClose, onTomar }: Props)
       <PanelDialogCard
         role="dialog"
         aria-modal="true"
-        aria-label="Detalle del pedido"
+        aria-label={esFletero ? 'Detalle del flete' : 'Detalle del pedido'}
         onClick={(evento) => evento.stopPropagation()}
       >
         <PanelDialogHeader>
           <div>
-            <CardTitle>Pedido {datos?.pedido.codigo ?? ''}</CardTitle>
+            <CardTitle>
+              {esFletero ? 'Flete' : 'Pedido'} {datos?.pedido.codigo ?? ''}
+            </CardTitle>
             <CardText>Mirá el detalle antes de tomarlo.</CardText>
           </div>
           <PanelDialogCerrar type="button" onClick={onClose} aria-label="Cerrar">
@@ -155,7 +173,7 @@ export function PedidoDetalleDialog({ open, pedidoId, onClose, onTomar }: Props)
               ))}
 
               <DetalleTotal>
-                <span>Total del pedido</span>
+                <span>Total {esFletero ? 'del flete' : 'del pedido'}</span>
                 <strong>{formatMoney(datos.pedido.total)}</strong>
               </DetalleTotal>
 
@@ -165,7 +183,7 @@ export function PedidoDetalleDialog({ open, pedidoId, onClose, onTomar }: Props)
             </DetalleBloque>
 
             <AuthEnviar type="button" onClick={() => void tomar()} disabled={tomando}>
-              {tomando ? 'Tomando…' : 'Tomar pedido'}
+              {tomando ? 'Tomando…' : esFletero ? 'Tomar flete' : 'Tomar pedido'}
             </AuthEnviar>
           </>
         ) : (

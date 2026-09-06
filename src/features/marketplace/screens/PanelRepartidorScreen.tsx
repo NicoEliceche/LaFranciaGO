@@ -20,11 +20,9 @@ import { CompactSection, SectionStack } from './screenLayout';
 import { AuthAviso } from './AuthScreenStyled';
 import {
   DistanciaChip,
-  PedidoAcciones,
   PedidoDato,
   PedidoDatos,
   PedidoTitulo,
-  TomarBoton,
   UbicacionAviso,
   VerDetalleBoton,
 } from './PanelRepartidorScreenStyled';
@@ -57,7 +55,10 @@ export function PanelRepartidorScreen() {
   const [detalle, setDetalle] = useState<string | null>(null);
   const [chat, setChat] = useState<PedidoDisponibleApi | null>(null);
 
+  /* Un fletero hace el mismo trabajo, pero lo suyo son fletes: la pantalla
+     es una sola y cambia sólo cómo nombra el viaje. */
   const esFletero = usuario?.rol === 'fletero';
+  const queCosa = esFletero ? 'fletes' : 'pedidos';
 
   const cargar = useCallback(async () => {
     try {
@@ -69,12 +70,12 @@ export function PanelRepartidorScreen() {
       setError(
         fallo instanceof ApiError && fallo.status === 404
           ? 'Esta sección es para repartidores y fleteros aprobados.'
-          : 'No pudimos cargar los pedidos.',
+          : `No pudimos cargar los ${queCosa}.`,
       );
     } finally {
       setCargando(false);
     }
-  }, [posicion]);
+  }, [posicion, queCosa]);
 
   /* Se pide la ubicación al entrar: sin ella la lista igual funciona, pero
      sin orden por cercanía, que es lo que hace útil la pantalla. */
@@ -129,7 +130,7 @@ export function PanelRepartidorScreen() {
         <SectionInner>
           <SectionStack>
             <SectionHeading
-              title="Pedidos disponibles"
+              title={esFletero ? 'Fletes disponibles' : 'Pedidos disponibles'}
               chip={cargando ? undefined : `${pedidos.length}`}
               subtitle={
                 esFletero
@@ -161,7 +162,7 @@ export function PanelRepartidorScreen() {
             {!cargando && pedidos.length === 0 && !error ? (
               <EmptyState
                 icon={PackageSearch}
-                title="No hay pedidos ahora"
+                title={esFletero ? 'No hay fletes ahora' : 'No hay pedidos ahora'}
                 text="Cuando entre uno cerca tuyo lo vas a ver acá."
                 dashed
               />
@@ -187,15 +188,9 @@ export function PanelRepartidorScreen() {
                       </PedidoDato>
                     </PedidoDatos>
 
-                    <PedidoAcciones>
-                      <VerDetalleBoton type="button" onClick={() => setDetalle(pedido.id)}>
-                        Ver detalles
-                      </VerDetalleBoton>
-
-                      <TomarBoton type="button" onClick={() => void tomar(pedido.id)}>
-                        Tomar pedido
-                      </TomarBoton>
-                    </PedidoAcciones>
+                    <VerDetalleBoton type="button" onClick={() => setDetalle(pedido.id)}>
+                      Ver detalle {esFletero ? 'del flete' : 'del pedido'}
+                    </VerDetalleBoton>
                   </SectionStack>
                 </CardPad>
               </Card>
@@ -209,6 +204,7 @@ export function PanelRepartidorScreen() {
         pedidoId={detalle}
         onClose={() => setDetalle(null)}
         onTomar={tomar}
+        esFletero={esFletero}
       />
 
       <ChatPedidoDialog

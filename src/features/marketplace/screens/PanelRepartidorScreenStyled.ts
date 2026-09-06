@@ -44,30 +44,12 @@ export const PedidoDato = styled.span`
   }
 `;
 
-export const PedidoAcciones = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: ${({ theme }) => theme.spacing[2]};
-`;
-
+/* Un solo botón: tomar el viaje se decide adentro del detalle, no acá.
+   Desde la tarjeta no se ve el volumen real, y aceptar a ciegas un pedido
+   que no entra en la moto (o un flete que era para un camión) es un
+   compromiso que después hay que deshacer. */
 export const VerDetalleBoton = styled.button`
-  min-height: 2.75rem;
-  border-radius: ${({ theme }) => theme.radius.full};
-  border: 1px solid ${({ theme }) => theme.color.border};
-  background: transparent;
-  color: ${({ theme }) => theme.color.text};
-  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
-  font-size: ${({ theme }) => theme.typography.size.sm};
-  font-weight: ${({ theme }) => theme.typography.weight.bold};
-  cursor: pointer;
-  transition: border-color 180ms ease;
-
-  &:hover {
-    border-color: ${({ theme }) => theme.color.primary};
-  }
-`;
-
-export const TomarBoton = styled.button`
+  width: 100%;
   min-height: 2.75rem;
   border: 0;
   border-radius: ${({ theme }) => theme.radius.full};
