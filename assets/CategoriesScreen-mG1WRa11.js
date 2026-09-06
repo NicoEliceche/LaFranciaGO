@@ -1,0 +1,10 @@
+import{q as m,e as l,m as d,s as u,j as r,M as p,f as h,S as o,g,C as x,h as j,i as S,E as f,k as C}from"./index-zg-QSFtH.js";import{r as i}from"./react-B1kPYQQd.js";const b=m.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: ${({theme:s})=>s.spacing[2]};
+
+  @media (min-width: ${({theme:s})=>s.breakpoints.md}) {
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    gap: ${({theme:s})=>s.spacing[3]};
+  }
+`;function $(){const[s,n]=i.useState(""),a=i.useMemo(()=>l.filter(e=>d(s,e.name,e.description)),[s]),c=i.useMemo(()=>{const e={};return u.forEach(t=>{e[t.categoryId]=(e[t.categoryId]??0)+1}),e},[]);return r.jsxs(p,{query:s,onQueryChange:n,children:[r.jsx(h,{children:r.jsx(o,{children:r.jsx(g,{value:s,onChange:n,placeholder:"Buscar un rubro"})})}),r.jsx(x,{children:r.jsx(o,{children:a.length>0?r.jsxs(r.Fragment,{children:[r.jsx(j,{title:"Categorías",chip:`${a.length}`,subtitle:"Elegí un rubro para ver los negocios."}),r.jsx(b,{children:a.map((e,t)=>r.jsx(S,{id:e.id,name:e.name,to:`/comercios?rubro=${e.id}`,count:c[e.id]??0,priority:t<6},e.id))})]}):r.jsx(f,{icon:C,title:"Sin rubros",text:"Probá con otro término.",dashed:!0})})})]})}export{$ as CategoriesScreen};
