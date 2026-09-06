@@ -791,11 +791,16 @@ async function enrutar(
     /* Sólo el cliente del pedido o el dueño del comercio pueden leer el chat:
        sin esta comprobación, cualquiera con el id vería la conversación. */
     const permitido = await env.DB.prepare(
+      /* Tres partes hablan de un pedido: el cliente, el comercio y quien lo
+         reparte. Sin incluir al repartidor, tomar un pedido abría un chat al
+         que después no podía escribir. */
       `SELECT 1 AS ok FROM pedidos p
          LEFT JOIN comercios c ON c.id = p.comercio_id
-        WHERE p.id = ? AND (p.usuario_id = ? OR c.usuario_id = ?)`,
+         LEFT JOIN envios e ON e.pedido_id = p.id
+        WHERE p.id = ?
+          AND (p.usuario_id = ? OR c.usuario_id = ? OR e.repartidor_id = ?)`,
     )
-      .bind(chatPedido[1], usuario.id, usuario.id)
+      .bind(chatPedido[1], usuario.id, usuario.id, usuario.id)
       .first();
 
     if (!permitido) {
@@ -831,11 +836,16 @@ async function enrutar(
     }
 
     const permitido = await env.DB.prepare(
+      /* Tres partes hablan de un pedido: el cliente, el comercio y quien lo
+         reparte. Sin incluir al repartidor, tomar un pedido abría un chat al
+         que después no podía escribir. */
       `SELECT 1 AS ok FROM pedidos p
          LEFT JOIN comercios c ON c.id = p.comercio_id
-        WHERE p.id = ? AND (p.usuario_id = ? OR c.usuario_id = ?)`,
+         LEFT JOIN envios e ON e.pedido_id = p.id
+        WHERE p.id = ?
+          AND (p.usuario_id = ? OR c.usuario_id = ? OR e.repartidor_id = ?)`,
     )
-      .bind(chatPedido[1], usuario.id, usuario.id)
+      .bind(chatPedido[1], usuario.id, usuario.id, usuario.id)
       .first();
 
     if (!permitido) {
@@ -858,6 +868,186 @@ async function enrutar(
       .run();
 
     return json({ id }, { status: 201 }, cors);
+  }
+
+  // ── Panel del repartidor ──
+
+  /**
+   * Pedidos esperando repartidor, ordenados por cercanía.
+   *
+   * La distancia se calcula acá y no en el navegador: así el orden es el
+   * mismo para todos y no depende de que el teléfono haga bien la cuenta.
+   */
+  if (ruta === '/delivery/disponibles' && metodo === 'GET') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    const lat = Number(url.searchParams.get('lat'));
+    const lon = Number(url.searchParams.get('lon'));
+
+    const { results } = await env.DB.prepare(
+      `SELECT p.id, p.codigo, p.direccion_texto, p.total_centavos, p.creado_en,
+              c.nombre AS comercio, c.direccion AS comercio_direccion,
+              c.lat AS comercio_lat, c.lon AS comercio_lon,
+              u.nombre AS cliente,
+              (SELECT COUNT(*) FROM pedido_items i WHERE i.pedido_id = p.id) AS items
+         FROM pedidos p
+         JOIN comercios c ON c.id = p.comercio_id
+         JOIN usuarios u ON u.id = p.usuario_id
+         LEFT JOIN envios e ON e.pedido_id = p.id
+        WHERE p.estado = 'proceso'
+          AND (e.id IS NULL OR e.estado = 'buscando')
+        ORDER BY p.creado_en DESC
+        LIMIT 50`,
+    ).all();
+
+    const conDistancia = results.map((fila) => {
+      const comercioLat = fila.comercio_lat as number | null;
+      const comercioLon = fila.comercio_lon as number | null;
+
+      /* Sin coordenadas del comercio o del repartidor no hay distancia que
+         calcular: se deja en null y esos van al final de la lista. */
+      const distancia =
+        Number.isFinite(lat) && Number.isFinite(lon) && comercioLat && comercioLon
+          ? distanciaKm(lat, lon, comercioLat, comercioLon)
+          : null;
+
+      return { ...fila, total: aPesos(Number(fila.total_centavos)), distanciaKm: distancia };
+    });
+
+    conDistancia.sort((a, b) => {
+      if (a.distanciaKm === null) {
+        return b.distanciaKm === null ? 0 : 1;
+      }
+
+      if (b.distanciaKm === null) {
+        return -1;
+      }
+
+      return a.distanciaKm - b.distanciaKm;
+    });
+
+    return json({ pedidos: conDistancia }, {}, cors);
+  }
+
+  const detallePedido = /^\/delivery\/pedidos\/([\w-]+)$/.exec(ruta);
+
+  if (detallePedido && metodo === 'GET') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    const pedido = await env.DB.prepare(
+      `SELECT p.id, p.codigo, p.direccion_texto, p.subtotal_centavos, p.envio_centavos,
+              p.total_centavos, p.metodo_pago, p.creado_en, p.usuario_id,
+              c.nombre AS comercio, c.direccion AS comercio_direccion,
+              c.telefono AS comercio_telefono,
+              u.nombre AS cliente, u.telefono AS cliente_telefono
+         FROM pedidos p
+         JOIN comercios c ON c.id = p.comercio_id
+         JOIN usuarios u ON u.id = p.usuario_id
+        WHERE p.id = ?`,
+    )
+      .bind(detallePedido[1])
+      .first();
+
+    if (!pedido) {
+      return error('Pedido no encontrado', 404, cors);
+    }
+
+    const { results: items } = await env.DB.prepare(
+      `SELECT nombre, precio_centavos, unidad_venta, escalon, subtotal_centavos
+         FROM pedido_items WHERE pedido_id = ?`,
+    )
+      .bind(detallePedido[1])
+      .all();
+
+    return json(
+      {
+        pedido: {
+          ...pedido,
+          subtotal: aPesos(Number(pedido.subtotal_centavos)),
+          envio: aPesos(Number(pedido.envio_centavos)),
+          total: aPesos(Number(pedido.total_centavos)),
+        },
+        items: items.map((item) => ({
+          ...item,
+          precio: aPesos(Number(item.precio_centavos)),
+          subtotal: aPesos(Number(item.subtotal_centavos)),
+        })),
+      },
+      {},
+      cors,
+    );
+  }
+
+  const tomar = /^\/delivery\/pedidos\/([\w-]+)\/tomar$/.exec(ruta);
+
+  if (tomar && metodo === 'POST') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    const body = await leerJson<{ lat?: number; lon?: number }>(request);
+
+    /* Si dos repartidores tocan "tomar" a la vez, el segundo tiene que
+       enterarse de que ya no está disponible en lugar de pisar al primero. */
+    const yaTomado = await env.DB.prepare(
+      "SELECT id FROM envios WHERE pedido_id = ? AND estado != 'buscando'",
+    )
+      .bind(tomar[1])
+      .first();
+
+    if (yaTomado) {
+      return error('Otro repartidor tomó este pedido.', 409, cors);
+    }
+
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM envios WHERE pedido_id = ?').bind(tomar[1]),
+      env.DB.prepare(
+        `INSERT INTO envios (id, pedido_id, repartidor_id, estado, lat, lon, ubicacion_en, asignado_en)
+         VALUES (?, ?, ?, 'asignado', ?, ?, datetime('now'), datetime('now'))`,
+      ).bind(
+        nuevoId(),
+        tomar[1],
+        repartidor.usuario.id,
+        Number.isFinite(body.lat) ? body.lat : null,
+        Number.isFinite(body.lon) ? body.lon : null,
+      ),
+    ]);
+
+    return json({ ok: true }, {}, cors);
+  }
+
+  /** Posición del repartidor, para el mapa que mira el comercio. */
+  if (ruta === '/delivery/ubicacion' && metodo === 'POST') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    const body = await leerJson<{ lat?: number; lon?: number }>(request);
+
+    if (!Number.isFinite(body.lat) || !Number.isFinite(body.lon)) {
+      return error('Faltan las coordenadas.', 400, cors);
+    }
+
+    await env.DB.prepare(
+      `UPDATE envios SET lat = ?, lon = ?, ubicacion_en = datetime('now')
+        WHERE repartidor_id = ? AND estado NOT IN ('entregado', 'cancelado')`,
+    )
+      .bind(body.lat, body.lon, repartidor.usuario.id)
+      .run();
+
+    return json({ ok: true }, {}, cors);
   }
 
   // ── Productos ──
@@ -1296,6 +1486,54 @@ async function comercioDelUsuario(
   }
 
   return { usuario, comercioId: comercio.id };
+}
+
+/** Exige que quien llama tenga alguno de los roles indicados, aprobado. */
+async function exigirRol(
+  request: Request,
+  env: Env,
+  cors: Record<string, string>,
+  roles: string[],
+): Promise<{ usuario: UsuarioSesion } | { respuesta: Response }> {
+  const usuario = await usuarioActual(request, env);
+
+  if (!usuario) {
+    return { respuesta: error('Necesitás iniciar sesión', 401, cors) };
+  }
+
+  const marcadores = roles.map(() => '?').join(',');
+  const tiene = await env.DB.prepare(
+    `SELECT 1 AS ok FROM usuario_roles
+      WHERE usuario_id = ? AND rol IN (${marcadores}) AND estado = 'aprobado'`,
+  )
+    .bind(usuario.id, ...roles)
+    .first();
+
+  if (!tiene) {
+    /* 404 y no 403: responder "prohibido" confirma que la ruta existe. */
+    return { respuesta: error('No encontrado', 404, cors) };
+  }
+
+  return { usuario };
+}
+
+/**
+ * Distancia en kilómetros entre dos puntos, por la fórmula del semiverseno.
+ *
+ * Para las distancias de un pueblo alcanza de sobra y no necesita ninguna
+ * biblioteca.
+ */
+function distanciaKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const radio = 6371;
+  const aRad = (grados: number) => (grados * Math.PI) / 180;
+  const dLat = aRad(lat2 - lat1);
+  const dLon = aRad(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(aRad(lat1)) * Math.cos(aRad(lat2)) * Math.sin(dLon / 2) ** 2;
+
+  return Math.round(radio * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 100) / 100;
 }
 
 async function leerJson<T>(request: Request): Promise<T> {

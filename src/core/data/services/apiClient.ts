@@ -247,6 +247,65 @@ export const operacionApi = {
     api.post<{ id: string }>(`/pedidos/${pedidoId}/mensajes`, { texto }),
 };
 
+export interface PedidoDisponibleApi {
+  id: string;
+  codigo: string;
+  direccion_texto: string;
+  total: number;
+  creado_en: string;
+  comercio: string;
+  comercio_direccion: string;
+  cliente: string;
+  items: number;
+  distanciaKm: number | null;
+}
+
+export interface DetallePedidoApi {
+  pedido: {
+    id: string;
+    codigo: string;
+    direccion_texto: string;
+    subtotal: number;
+    envio: number;
+    total: number;
+    metodo_pago: string | null;
+    comercio: string;
+    comercio_direccion: string;
+    comercio_telefono: string | null;
+    cliente: string;
+    cliente_telefono: string | null;
+  };
+  items: Array<{
+    nombre: string;
+    precio: number;
+    unidad_venta: string;
+    escalon: number;
+    subtotal: number;
+  }>;
+}
+
+export const deliveryApi = {
+  disponibles: (lat?: number, lon?: number) => {
+    const params = new URLSearchParams();
+
+    if (typeof lat === 'number' && typeof lon === 'number') {
+      params.set('lat', String(lat));
+      params.set('lon', String(lon));
+    }
+
+    const query = params.toString();
+
+    return api.get<{ pedidos: PedidoDisponibleApi[] }>(
+      `/delivery/disponibles${query ? `?${query}` : ''}`,
+    );
+  },
+  detalle: (id: string) => api.get<DetallePedidoApi>(`/delivery/pedidos/${id}`),
+  tomar: (id: string, lat?: number, lon?: number) =>
+    api.post<{ ok: true }>(`/delivery/pedidos/${id}/tomar`, { lat, lon }),
+  actualizarUbicacion: (lat: number, lon: number) =>
+    api.post<{ ok: true }>('/delivery/ubicacion', { lat, lon }),
+};
+
 export const pedidosApi = {
   listar: () => api.get<{ pedidos: PedidoApi[] }>('/pedidos'),
   crear: (datos: {

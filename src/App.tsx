@@ -63,6 +63,11 @@ const CommercePanelScreen = lazy(() =>
 const ProductFormScreen = lazy(() =>
   import('@features/marketplace/screens/ProductFormScreen').then((m) => ({ default: m.ProductFormScreen })),
 );
+const PanelRepartidorScreen = lazy(() =>
+  import('@features/marketplace/screens/PanelRepartidorScreen').then((m) => ({
+    default: m.PanelRepartidorScreen,
+  })),
+);
 const DeliveryPanelScreen = lazy(() =>
   import('@features/marketplace/screens/DeliveryPanelScreen').then((m) => ({ default: m.DeliveryPanelScreen })),
 );
@@ -197,6 +202,14 @@ function App() {
             />
             <Route
               path="/panel/repartidor"
+              element={
+                <RutaPrivada>
+                  <PanelRepartidorScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/panel/repartidor/metricas"
               element={
                 <RutaPrivada>
                   <DeliveryPanelScreen />
