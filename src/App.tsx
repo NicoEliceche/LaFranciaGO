@@ -61,6 +61,11 @@ const ProductFormScreen = lazy(() =>
 const DeliveryPanelScreen = lazy(() =>
   import('@features/marketplace/screens/DeliveryPanelScreen').then((m) => ({ default: m.DeliveryPanelScreen })),
 );
+const AdminPostulacionesScreen = lazy(() =>
+  import('@features/marketplace/screens/AdminPostulacionesScreen').then((m) => ({
+    default: m.AdminPostulacionesScreen,
+  })),
+);
 const AdminPanelScreen = lazy(() =>
   import('@features/marketplace/screens/AdminPanelScreen').then((m) => ({ default: m.AdminPanelScreen })),
 );
@@ -190,6 +195,14 @@ function App() {
               element={
                 <RutaPrivada>
                   <AdminPanelScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/panel/admin/postulaciones"
+              element={
+                <RutaPrivada>
+                  <AdminPostulacionesScreen />
                 </RutaPrivada>
               }
             />

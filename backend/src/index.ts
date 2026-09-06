@@ -215,11 +215,22 @@ async function enrutar(
      * El rol se comprueba contra la base, no se toma del formulario: si el
      * desplegable definiera el permiso, cualquiera entraría como comercio.
      *
-     * Y el mensaje es el mismo cuando la clave está mal que cuando el rol no
-     * corresponde: distinguirlos permitiría averiguar qué cuentas son de
-     * comercios probando emails.
+     * Una cuenta puede tener varios roles aprobados: el panadero que además
+     * reparte entra con el mismo email eligiendo comercio o delivery. Por eso
+     * se busca en usuario_roles y no en una columna del usuario.
      */
-    if (!usuario || !valida || usuario.rol !== rolPedido) {
+    const rolAprobado = usuario
+      ? await env.DB.prepare(
+          "SELECT estado FROM usuario_roles WHERE usuario_id = ? AND rol = ? AND estado = 'aprobado'",
+        )
+          .bind(usuario.id, rolPedido)
+          .first<{ estado: string }>()
+      : null;
+
+    /* El mensaje es el mismo cuando la clave está mal que cuando el rol no
+       corresponde: distinguirlos permitiría averiguar qué cuentas son de
+       comercios probando emails. */
+    if (!usuario || !valida || !rolAprobado) {
       await registrarIntentoFallido(env, email, ip);
 
       return error('Los datos no corresponden a una cuenta de ese tipo.', 401, cors);
@@ -234,7 +245,9 @@ async function enrutar(
         id: usuario.id,
         email: usuario.email,
         nombre: usuario.nombre,
-        rol: usuario.rol,
+        /* Se devuelve el rol con el que entró, no el de la cuenta: es el que
+           define qué panel se muestra. */
+        rol: rolPedido,
         foto_url: usuario.foto_url,
       },
       {},
@@ -373,6 +386,175 @@ async function enrutar(
     const usuario = await usuarioActual(request, env);
 
     return usuario ? json(usuario, {}, cors) : error('Sin sesión', 401, cors);
+  }
+
+  // ── Postulaciones ──
+
+  if (ruta === '/postulaciones' && metodo === 'POST') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const body = await leerJson<{ rol?: string; datos?: Record<string, unknown> }>(request);
+    const rol = String(body.rol ?? '');
+
+    if (!['comercio', 'delivery', 'fletero'].includes(rol)) {
+      return error('Elegí un tipo de cuenta válido.', 400, cors);
+    }
+
+    /* Si ya se postuló a ese rol se actualiza la que existe: así quien recibió
+       un pedido de cambios corrige y reenvía, sin duplicar el trámite. */
+    const previa = await env.DB.prepare(
+      'SELECT id, estado FROM postulaciones WHERE usuario_id = ? AND rol = ?',
+    )
+      .bind(usuario.id, rol)
+      .first<{ id: string; estado: string }>();
+
+    if (previa?.estado === 'aprobado') {
+      return error('Ya tenés ese tipo de cuenta aprobado.', 409, cors);
+    }
+
+    const datos = JSON.stringify(body.datos ?? {});
+
+    if (previa) {
+      await env.DB.prepare(
+        `UPDATE postulaciones
+            SET datos = ?, estado = 'pendiente', nota_revision = NULL,
+                actualizado_en = datetime('now')
+          WHERE id = ?`,
+      )
+        .bind(datos, previa.id)
+        .run();
+
+      return json({ id: previa.id, estado: 'pendiente' }, {}, cors);
+    }
+
+    const id = nuevoId();
+
+    await env.DB.batch([
+      env.DB.prepare(
+        'INSERT INTO postulaciones (id, usuario_id, rol, datos) VALUES (?, ?, ?, ?)',
+      ).bind(id, usuario.id, rol, datos),
+      /* El rol se crea pendiente junto con la postulación: así el login sabe
+         que existe pero todavía no habilita. */
+      env.DB.prepare(
+        "INSERT OR IGNORE INTO usuario_roles (id, usuario_id, rol, estado) VALUES (?, ?, ?, 'pendiente')",
+      ).bind(nuevoId(), usuario.id, rol),
+    ]);
+
+    return json({ id, estado: 'pendiente' }, { status: 201 }, cors);
+  }
+
+  if (ruta === '/postulaciones/mias' && metodo === 'GET') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT id, rol, estado, nota_revision, creado_en, actualizado_en
+         FROM postulaciones WHERE usuario_id = ? ORDER BY creado_en DESC`,
+    )
+      .bind(usuario.id)
+      .all();
+
+    return json({ postulaciones: results }, {}, cors);
+  }
+
+  // ── Administración ──
+
+  if (ruta === '/admin/postulaciones' && metodo === 'GET') {
+    const admin = await exigirAdmin(request, env, cors);
+
+    if ('respuesta' in admin) {
+      return admin.respuesta;
+    }
+
+    const estado = url.searchParams.get('estado') ?? 'pendiente';
+    const filtro = estado === 'todas' ? null : estado;
+
+    const { results } = await env.DB.prepare(
+      `SELECT p.id, p.rol, p.estado, p.datos, p.nota_revision, p.creado_en,
+              p.actualizado_en, u.nombre, u.email, u.telefono
+         FROM postulaciones p
+         JOIN usuarios u ON u.id = p.usuario_id
+        WHERE (? IS NULL OR p.estado = ?)
+        ORDER BY p.creado_en DESC
+        LIMIT 100`,
+    )
+      .bind(filtro, filtro)
+      .all();
+
+    return json(
+      {
+        postulaciones: results.map((fila) => ({
+          ...fila,
+          datos: JSON.parse(String(fila.datos ?? '{}')),
+        })),
+      },
+      {},
+      cors,
+    );
+  }
+
+  const revision = /^\/admin\/postulaciones\/([\w-]+)$/.exec(ruta);
+
+  if (revision && metodo === 'POST') {
+    const admin = await exigirAdmin(request, env, cors);
+
+    if ('respuesta' in admin) {
+      return admin.respuesta;
+    }
+
+    const body = await leerJson<{ decision?: string; nota?: string }>(request);
+    const decision = String(body.decision ?? '');
+
+    if (!['aprobado', 'rechazado', 'cambios'].includes(decision)) {
+      return error('Decisión no válida.', 400, cors);
+    }
+
+    /* Pedir cambios sin decir qué corregir deja a la persona sin saber qué
+       hacer, así que la nota es obligatoria en ese caso. */
+    const nota = String(body.nota ?? '').trim();
+
+    if (decision === 'cambios' && nota.length < 5) {
+      return error('Escribí qué hay que corregir.', 400, cors);
+    }
+
+    const postulacion = await env.DB.prepare(
+      'SELECT id, usuario_id, rol FROM postulaciones WHERE id = ?',
+    )
+      .bind(revision[1])
+      .first<{ id: string; usuario_id: string; rol: string }>();
+
+    if (!postulacion) {
+      return error('Postulación no encontrada.', 404, cors);
+    }
+
+    /* El rol pasa a aprobado sólo si la decisión lo es: con "cambios" queda
+       pendiente, para que no habilite el ingreso mientras tanto. */
+    const estadoRol =
+      decision === 'aprobado' ? 'aprobado' : decision === 'rechazado' ? 'rechazado' : 'pendiente';
+
+    await env.DB.batch([
+      env.DB.prepare(
+        `UPDATE postulaciones
+            SET estado = ?, nota_revision = ?, revisado_por = ?,
+                revisado_en = datetime('now'), actualizado_en = datetime('now')
+          WHERE id = ?`,
+      ).bind(decision, nota || null, admin.usuario.id, postulacion.id),
+      env.DB.prepare(
+        'UPDATE usuario_roles SET estado = ? WHERE usuario_id = ? AND rol = ?',
+      ).bind(estadoRol, postulacion.usuario_id, postulacion.rol),
+      env.DB.prepare(
+        'INSERT INTO revisiones (id, postulacion_id, admin_id, decision, nota) VALUES (?, ?, ?, ?, ?)',
+      ).bind(nuevoId(), postulacion.id, admin.usuario.id, decision, nota || null),
+    ]);
+
+    return json({ ok: true, estado: decision }, {}, cors);
   }
 
   // ── Comercios ──
@@ -818,6 +1000,39 @@ async function enrutar(
 }
 
 /* ── Ayudas ── */
+
+/**
+ * Exige que quien llama sea administrador.
+ *
+ * Se comprueba contra usuario_roles y no contra un dato de la petición: el
+ * panel de administración decide quién cobra y quién opera en el pueblo, así
+ * que el permiso tiene que salir de la base cada vez.
+ */
+async function exigirAdmin(
+  request: Request,
+  env: Env,
+  cors: Record<string, string>,
+): Promise<{ usuario: UsuarioSesion } | { respuesta: Response }> {
+  const usuario = await usuarioActual(request, env);
+
+  if (!usuario) {
+    return { respuesta: error('Necesitás iniciar sesión', 401, cors) };
+  }
+
+  const esAdmin = await env.DB.prepare(
+    "SELECT 1 AS ok FROM usuario_roles WHERE usuario_id = ? AND rol = 'admin' AND estado = 'aprobado'",
+  )
+    .bind(usuario.id)
+    .first();
+
+  if (!esAdmin) {
+    /* 404 y no 403: responder "prohibido" confirma que la ruta existe, y eso
+       le dice a quien prueba que vale la pena seguir intentando. */
+    return { respuesta: error('No encontrado', 404, cors) };
+  }
+
+  return { usuario };
+}
 
 async function leerJson<T>(request: Request): Promise<T> {
   try {

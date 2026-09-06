@@ -125,6 +125,39 @@ export const authApi = {
   yo: () => api.get<UsuarioApi>('/auth/yo'),
 };
 
+export interface PostulacionApi {
+  id: string;
+  rol: 'comercio' | 'delivery' | 'fletero';
+  estado: 'pendiente' | 'aprobado' | 'rechazado' | 'cambios';
+  datos: Record<string, string>;
+  nota_revision: string | null;
+  nombre: string;
+  email: string;
+  telefono: string | null;
+  creado_en: string;
+}
+
+export const postulacionesApi = {
+  crear: (rol: string, datos: Record<string, unknown>) =>
+    api.post<{ id: string; estado: string }>('/postulaciones', { rol, datos }),
+  mias: () =>
+    api.get<{
+      postulaciones: Array<{
+        id: string;
+        rol: string;
+        estado: string;
+        nota_revision: string | null;
+      }>;
+    }>('/postulaciones/mias'),
+};
+
+export const adminApi = {
+  postulaciones: (estado = 'pendiente') =>
+    api.get<{ postulaciones: PostulacionApi[] }>(`/admin/postulaciones?estado=${estado}`),
+  revisar: (id: string, decision: 'aprobado' | 'rechazado' | 'cambios', nota?: string) =>
+    api.post<{ ok: true; estado: string }>(`/admin/postulaciones/${id}`, { decision, nota }),
+};
+
 export const comerciosApi = {
   listar: (filtros: { rubro?: string; q?: string } = {}) => {
     const params = new URLSearchParams();
