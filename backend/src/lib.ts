@@ -7,6 +7,11 @@ export interface Env {
   MEDIA: R2Bucket;
   /** Orígenes permitidos, separados por coma. Sin comodín en producción. */
   ORIGENES_PERMITIDOS: string;
+  /** Credenciales de Google. Se cargan con `wrangler secret put`. */
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+  /** A dónde vuelve el usuario cuando termina el ingreso con Google. */
+  APP_URL: string;
 }
 
 /* ── Respuestas ── */

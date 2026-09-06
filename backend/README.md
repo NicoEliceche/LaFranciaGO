@@ -96,6 +96,30 @@ npm run dev          # API en http://127.0.0.1:8787
 | POST | `/media` | Sube una imagen o video |
 | GET | `/media/:clave` | Devuelve el archivo |
 
+## Ingreso con Google
+
+Falta cargar las credenciales para que funcione. En la
+[consola de Google Cloud](https://console.cloud.google.com/apis/credentials):
+
+1. **Crear credenciales → ID de cliente de OAuth → Aplicación web**
+2. En **URI de redireccionamiento autorizados**, agregar exactamente:
+
+   ```
+   https://lafranciago-api.lafranciago-api.workers.dev/auth/google/callback
+   ```
+
+3. Copiar el ID y el secreto, y cargarlos como secretos del Worker:
+
+   ```bash
+   cd backend
+   npx wrangler secret put GOOGLE_CLIENT_ID
+   npx wrangler secret put GOOGLE_CLIENT_SECRET
+   ```
+
+Van como secretos y no en `wrangler.toml` porque ese archivo se sube al
+repositorio. Hasta que se carguen, el botón de Google responde que no está
+configurado y el ingreso por email funciona igual.
+
 ## Decisiones de seguridad
 
 **Los precios se leen de la base, nunca del cliente.** El navegador manda qué
@@ -123,6 +147,22 @@ puede leer: un XSS no alcanza para robarla.
 **Los comercios nuevos quedan pendientes** y no aparecen en el buscador hasta
 aprobarse.
 
+**El login se bloquea tras 5 intentos fallidos** durante 15 minutos. Se cuenta
+por email y por IP a la vez: sólo por IP dejaría pasar ataques distribuidos, y
+sólo por email permitiría bloquear la cuenta de otra persona a propósito.
+
+**Las contraseñas se validan según OWASP**: largo mínimo de 8, rechazo de las
+más usadas en filtraciones, y prohibición de usar el propio nombre o email.
+No se exigen símbolos ni mayúsculas, porque esas reglas empujan a claves
+predecibles como "Password1!".
+
+**El ingreso con Google usa código de autorización con PKCE, canjeado en el
+servidor.** El token de Google nunca llega al navegador: se cambia por una
+sesión propia en cookie HttpOnly. El flujo implícito está desaconsejado desde
+OAuth 2.1 porque deja el token en la URL, donde queda en el historial y en los
+logs. El `state` corta el CSRF del redirect y se borra al usarse, así un
+código interceptado no sirve dos veces.
+
 ## Verificado
 
 Probado contra la API publicada, con base y bucket reales:
@@ -135,6 +175,11 @@ Probado contra la API publicada, con base y bucket reales:
 - Cargar productos en comercio ajeno rechazado (403)
 - Cada usuario ve sólo sus pedidos
 - Origen no permitido no recibe cabeceras CORS
+- Contraseñas rechazadas: comunes, cortas, y las que contienen el email
+- Bloqueo por fuerza bruta: corta en el sexto intento con HTTP 429, y entrar
+  bien limpia el contador
+- Registro, ingreso, persistencia de sesión al recargar y cierre de sesión,
+  probados desde la interfaz contra la API real
 
 ## Límites del plan gratuito
 

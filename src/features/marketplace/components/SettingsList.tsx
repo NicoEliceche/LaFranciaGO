@@ -18,12 +18,22 @@ type SettingsRowProps = {
   title: string;
   subtitle?: string;
   to?: string;
+  /** Acción de la fila cuando no navega a otra pantalla. */
+  onClick?: () => void;
   tone?: 'default' | 'danger';
   trailing?: ReactNode;
 };
 
 /** Fila de ajustes: ícono, texto y chevron. Es link si recibe `to`. */
-export function SettingsRow({ icon: Icon, title, subtitle, to, tone, trailing }: SettingsRowProps) {
+export function SettingsRow({
+  icon: Icon,
+  title,
+  subtitle,
+  to,
+  onClick,
+  tone,
+  trailing,
+}: SettingsRowProps) {
   const content = (
     <>
       <SettingsRowIcon data-tone={tone ?? 'default'}>
@@ -45,6 +55,16 @@ export function SettingsRow({ icon: Icon, title, subtitle, to, tone, trailing }:
 
   if (to) {
     return <SettingsRowLink to={to}>{content}</SettingsRowLink>;
+  }
+
+  /* Con acción se renderiza como botón, no como div con onClick: así funciona
+     con teclado y el lector de pantalla lo anuncia como algo pulsable. */
+  if (onClick) {
+    return (
+      <SettingsRowShell as="button" type="button" onClick={onClick}>
+        {content}
+      </SettingsRowShell>
+    );
   }
 
   return <SettingsRowShell>{content}</SettingsRowShell>;

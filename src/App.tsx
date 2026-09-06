@@ -9,6 +9,9 @@ import { MarketplaceHomeScreen } from '@features/marketplace/screens/Marketplace
  * pintar cuanto antes. El resto se descarga al navegar, lo que baja el peso
  * inicial sin cambiar nada de la interfaz.
  */
+const AuthScreen = lazy(() =>
+  import('@features/marketplace/screens/AuthScreen').then((m) => ({ default: m.AuthScreen })),
+);
 const CategoriesScreen = lazy(() =>
   import('@features/marketplace/screens/CategoriesScreen').then((m) => ({ default: m.CategoriesScreen })),
 );
@@ -68,6 +71,7 @@ function App() {
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<MarketplaceHomeScreen />} />
+            <Route path="/ingresar" element={<AuthScreen />} />
             <Route path="/categorias" element={<CategoriesScreen />} />
             <Route path="/comercios" element={<StoresDirectoryScreen />} />
             <Route path="/comercios/:storeId" element={<StoreProfileScreen />} />

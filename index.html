@@ -27,11 +27,13 @@
                style-src 'self' 'unsafe-inline';
                img-src 'self' data: blob: https://*.tile.openstreetmap.org;
                font-src 'self';
-               connect-src 'self' https://photon.komoot.io https://nominatim.openstreetmap.org;
+               connect-src 'self' https://lafranciago-api.lafranciago-api.workers.dev
+                           https://photon.komoot.io https://nominatim.openstreetmap.org;
                media-src 'self' blob:;
                object-src 'none';
                base-uri 'self';
                form-action 'self';
+               frame-src https://accounts.google.com;
                upgrade-insecure-requests"
     />
     <!-- No filtrar la ruta completa a sitios externos al navegar o pedir tiles. -->

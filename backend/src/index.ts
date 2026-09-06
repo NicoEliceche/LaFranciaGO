@@ -15,6 +15,18 @@ import {
   usuarioActual,
   verificarPassword,
 } from './lib';
+import {
+  canjearCodigoGoogle,
+  generarPkce,
+  intentosAgotados,
+  limpiarIntentos,
+  nuevoEstado,
+  paginaCierre,
+  registrarIntentoFallido,
+  respuestaBloqueado,
+  validarEmail,
+  validarPassword,
+} from './auth';
 
 /**
  * API de LaFranciaGO.
@@ -79,8 +91,18 @@ async function enrutar(
     const password = body.password ?? '';
     const nombre = (body.nombre ?? '').trim();
 
-    if (!email.includes('@') || password.length < 8 || !nombre) {
-      return error('Revisá el email, el nombre y que la contraseña tenga 8 caracteres.', 400, cors);
+    if (!validarEmail(email)) {
+      return error('Revisá el email.', 400, cors);
+    }
+
+    if (nombre.length < 2 || nombre.length > 80) {
+      return error('Poné tu nombre.', 400, cors);
+    }
+
+    const problema = validarPassword(password, email, nombre);
+
+    if (problema) {
+      return error(problema, 400, cors);
     }
 
     const existe = await env.DB.prepare('SELECT id FROM usuarios WHERE email = ?')
@@ -112,6 +134,12 @@ async function enrutar(
   if (ruta === '/auth/login' && metodo === 'POST') {
     const body = await leerJson<{ email?: string; password?: string }>(request);
     const email = (body.email ?? '').trim().toLowerCase();
+    /* Cloudflare pone la IP real acá; sin ella el límite sería sólo por email. */
+    const ip = request.headers.get('CF-Connecting-IP') ?? 'desconocida';
+
+    if (await intentosAgotados(env, email, ip)) {
+      return respuestaBloqueado(cors);
+    }
 
     const usuario = await env.DB.prepare(
       'SELECT id, email, nombre, rol, foto_url, password_hash FROM usuarios WHERE email = ?',
@@ -125,8 +153,12 @@ async function enrutar(
     const valida = await verificarPassword(body.password ?? '', hash);
 
     if (!usuario || !valida) {
+      await registrarIntentoFallido(env, email, ip);
+
       return error('Email o contraseña incorrectos.', 401, cors);
     }
+
+    await limpiarIntentos(env, email, ip);
 
     const { token, expira } = await crearSesion(env, usuario.id);
 
@@ -152,6 +184,133 @@ async function enrutar(
     }
 
     return json({ ok: true }, {}, { ...cors, 'Set-Cookie': cookieBorrada() });
+  }
+
+  // ── Ingreso con Google ──
+
+  if (ruta === '/auth/google' && metodo === 'GET') {
+    if (!env.GOOGLE_CLIENT_ID) {
+      return error('El ingreso con Google no está configurado.', 503, cors);
+    }
+
+    const { verificador, desafio } = await generarPkce();
+    const estado = nuevoEstado();
+
+    /* El verificador queda en el servidor hasta que Google devuelva el
+       código: si viajara al navegador, PKCE dejaría de proteger nada. */
+    await env.DB.prepare(
+      'INSERT INTO oauth_estados (estado, verificador, destino, expira_en) VALUES (?, ?, ?, ?)',
+    )
+      .bind(
+        estado,
+        verificador,
+        url.searchParams.get('destino') ?? '/',
+        new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      )
+      .run();
+
+    const redirectUri = `${url.origin}/auth/google/callback`;
+    const autorizacion = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+
+    autorizacion.search = new URLSearchParams({
+      client_id: env.GOOGLE_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: 'openid email profile',
+      state: estado,
+      code_challenge: desafio,
+      code_challenge_method: 'S256',
+      /* Muestra el selector de cuenta: en un teléfono compartido, entrar
+         siempre con la última cuenta usada es un problema. */
+      prompt: 'select_account',
+    }).toString();
+
+    return Response.redirect(autorizacion.toString(), 302);
+  }
+
+  if (ruta === '/auth/google/callback' && metodo === 'GET') {
+    const origenApp = env.APP_URL || 'https://nicoeliceche.github.io';
+    const codigo = url.searchParams.get('code');
+    const estado = url.searchParams.get('state');
+
+    if (!codigo || !estado) {
+      return paginaCierre(false, 'Faltan datos en la respuesta de Google.', origenApp);
+    }
+
+    /* El estado se borra al usarlo: así un código interceptado no sirve dos
+       veces, y de paso se comprueba que la vuelta corresponde a una salida
+       que originó esta misma app. */
+    const guardado = await env.DB.prepare(
+      'SELECT verificador, destino, expira_en FROM oauth_estados WHERE estado = ?',
+    )
+      .bind(estado)
+      .first<{ verificador: string; destino: string; expira_en: string }>();
+
+    await env.DB.prepare('DELETE FROM oauth_estados WHERE estado = ?').bind(estado).run();
+
+    if (!guardado || new Date(guardado.expira_en) < new Date()) {
+      return paginaCierre(false, 'El ingreso venció. Probá de nuevo.', origenApp);
+    }
+
+    const perfil = await canjearCodigoGoogle(
+      codigo,
+      guardado.verificador,
+      env,
+      `${url.origin}/auth/google/callback`,
+    );
+
+    if (!perfil?.email) {
+      return paginaCierre(false, 'No pudimos leer tu cuenta de Google.', origenApp);
+    }
+
+    /* Un email sin verificar en Google no prueba nada: aceptarlo permitiría
+       apropiarse de la cuenta de otra persona registrada con ese correo. */
+    if (!perfil.email_verified) {
+      return paginaCierre(false, 'Tu email de Google no está verificado.', origenApp);
+    }
+
+    const email = perfil.email.trim().toLowerCase();
+
+    /* Si ya entró con Google antes, se usa esa identidad. */
+    const identidad = await env.DB.prepare(
+      "SELECT usuario_id FROM identidades WHERE proveedor = 'google' AND proveedor_id = ?",
+    )
+      .bind(perfil.sub)
+      .first<{ usuario_id: string }>();
+
+    let usuarioId = identidad?.usuario_id ?? null;
+
+    if (!usuarioId) {
+      /* Si ya existe una cuenta con ese email, se vincula en lugar de crear
+         una duplicada: Google ya verificó que el correo es suyo. */
+      const existente = await env.DB.prepare('SELECT id FROM usuarios WHERE email = ?')
+        .bind(email)
+        .first<{ id: string }>();
+
+      usuarioId = existente?.id ?? nuevoId();
+
+      if (!existente) {
+        await env.DB.prepare(
+          `INSERT INTO usuarios (id, email, password_hash, nombre, foto_url, email_verificado)
+           VALUES (?, ?, NULL, ?, ?, 1)`,
+        )
+          .bind(usuarioId, email, perfil.name?.trim() || email.split('@')[0], perfil.picture ?? null)
+          .run();
+      }
+
+      await env.DB.prepare(
+        "INSERT INTO identidades (id, usuario_id, proveedor, proveedor_id) VALUES (?, ?, 'google', ?)",
+      )
+        .bind(nuevoId(), usuarioId, perfil.sub)
+        .run();
+    }
+
+    const { token, expira } = await crearSesion(env, usuarioId);
+    const respuesta = paginaCierre(true, 'Ingresaste con Google.', origenApp);
+
+    respuesta.headers.append('Set-Cookie', cookieSesion(token, expira));
+
+    return respuesta;
   }
 
   if (ruta === '/auth/yo' && metodo === 'GET') {

@@ -20,6 +20,13 @@ bucket_name = "lafranciago-media"
 # Orígenes que pueden llamar a la API. Sin comodín: con credenciales, un "*"
 # dejaría que cualquier sitio leyera los datos del usuario.
 ORIGENES_PERMITIDOS = "https://nicoeliceche.github.io,http://localhost:8081"
+# A dónde vuelve el usuario al terminar el ingreso con Google.
+APP_URL = "https://nicoeliceche.github.io"
+
+# Las credenciales de Google NO van acá: son secretos y este archivo se sube
+# al repositorio. Se cargan una sola vez con:
+#   npx wrangler secret put GOOGLE_CLIENT_ID
+#   npx wrangler secret put GOOGLE_CLIENT_SECRET
 
 # Entorno local para desarrollo: usa una copia de la base en disco.
 [env.dev]

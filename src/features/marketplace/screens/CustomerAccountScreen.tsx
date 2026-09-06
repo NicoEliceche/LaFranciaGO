@@ -3,6 +3,7 @@ import {
   Bell,
   Camera,
   Heart,
+  LogIn,
   LogOut,
   MapPin,
   PackageSearch,
@@ -23,6 +24,7 @@ import { addresses } from '../marketplaceContent';
 import { Avatar, AvatarImage } from '@shared/components/Media';
 import { IMAGE_ACCEPT, processImage, validateImageFile } from '@core/data/services/mediaService';
 import { useProfilePhoto } from '../profileStore';
+import { useSesion } from '../sessionStore';
 import { SectionInner } from '../ui';
 import { CompactSection, SectionStack } from './screenLayout';
 import {
@@ -41,6 +43,7 @@ import {
 const primaryAddress = addresses.find((address) => address.primary) ?? addresses[0];
 
 export function CustomerAccountScreen() {
+  const { usuario, conectado, salir } = useSesion();
   const { photo, setPhoto, clearPhoto } = useProfilePhoto();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -130,8 +133,10 @@ export function CustomerAccountScreen() {
             </AvatarSlot>
 
             <AccountProfileCopy>
-              <AccountProfileName>Vecino de La Francia</AccountProfileName>
-              <AccountProfileMail>cuenta@lafranciago.com</AccountProfileMail>
+              <AccountProfileName>{usuario?.nombre ?? 'Vecino de La Francia'}</AccountProfileName>
+              <AccountProfileMail>
+                {usuario?.email ?? 'Entrá para guardar tus pedidos'}
+              </AccountProfileMail>
               <AccountProfileTag>Cliente</AccountProfileTag>
               {error ? <AvatarError role="status">{error}</AvatarError> : null}
             </AccountProfileCopy>
@@ -174,7 +179,11 @@ export function CustomerAccountScreen() {
             <SectionHeading title="Mis datos" />
 
             <SettingsList>
-              <SettingsRow icon={UserRound} title="Nombre visible" subtitle="Vecino de La Francia" />
+              <SettingsRow
+                icon={UserRound}
+                title="Nombre visible"
+                subtitle={usuario?.nombre ?? 'Vecino de La Francia'}
+              />
               <SettingsRow
                 icon={MapPin}
                 title="Tus direcciones"
@@ -223,7 +232,23 @@ export function CustomerAccountScreen() {
       <CompactSection>
         <SectionInner>
           <SettingsList>
-            <SettingsRow icon={LogOut} title="Cerrar sesión" tone="danger" />
+            {conectado ? (
+              <SettingsRow
+                icon={LogOut}
+                title="Cerrar sesión"
+                tone="danger"
+                onClick={() => {
+                  void salir();
+                }}
+              />
+            ) : (
+              <SettingsRow
+                icon={LogIn}
+                title="Entrar o crear cuenta"
+                subtitle="Para guardar direcciones y seguir pedidos"
+                to="/ingresar"
+              />
+            )}
           </SettingsList>
         </SectionInner>
       </CompactSection>
