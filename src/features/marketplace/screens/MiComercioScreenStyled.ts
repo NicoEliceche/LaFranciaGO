@@ -111,3 +111,86 @@ export const ProductoBotonIcono = styled.button`
     border-color: ${({ theme }) => theme.color.danger};
   }
 `;
+
+// ── Secciones del panel ──
+
+export const SeccionRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing[1]};
+`;
+
+export const SeccionChip = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[1]};
+  min-height: 2.5rem;
+  padding: 0 ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.surface};
+  color: ${({ theme }) => theme.color.textMuted};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: ${({ theme }) => theme.typography.weight.semibold};
+  cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease;
+
+  &[data-active='true'] {
+    border-color: ${({ theme }) => theme.color.primary};
+    background: ${({ theme }) => theme.color.primarySoft};
+    color: ${({ theme }) => theme.color.primary};
+  }
+`;
+
+/** Mensajes sin leer: el número tiene que verse sin buscar. */
+export const SeccionBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.3rem;
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.danger};
+  color: #ffffff;
+  font-size: 0.6875rem;
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+`;
+
+export const EstadoChip = styled.span`
+  flex: 0 0 auto;
+  padding: 0.2rem ${({ theme }) => theme.spacing[2]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.surfaceMuted};
+  color: ${({ theme }) => theme.color.textMuted};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.semibold};
+  white-space: nowrap;
+
+  &[data-estado='proceso'],
+  &[data-estado='en_camino'],
+  &[data-estado='asignado'] {
+    color: ${({ theme }) => theme.color.primary};
+  }
+
+  &[data-estado='terminado'],
+  &[data-estado='entregado'] {
+    color: ${({ theme }) => theme.color.success};
+  }
+
+  &[data-estado='cancelado'] {
+    color: ${({ theme }) => theme.color.danger};
+  }
+`;
+
+/** El mapa necesita alto explícito: sin esto Leaflet no dibuja nada. */
+export const MapaCaja = styled.div`
+  height: 18rem;
+  border-radius: ${({ theme }) => theme.radius.lg};
+  overflow: hidden;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    height: 24rem;
+  }
+`;

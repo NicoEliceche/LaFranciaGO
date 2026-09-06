@@ -19,6 +19,12 @@ import { type FormEvent, useMemo, useState } from 'react';
 import { searchTradeCategories } from '@core/data/tradeCategories';
 import { registerBusiness, type RegisteredBusiness } from '../businessStore';
 import {
+  ApiError,
+  hayBackend,
+  mediaApi,
+  postulacionesApi,
+} from '@core/data/services/apiClient';
+import {
   IMAGE_ACCEPT,
   MEDIA_LIMITS,
   VIDEO_ACCEPT,
@@ -180,6 +186,9 @@ export function CommerceRegistrationScreen() {
   } = useMediaUpload();
 
   const [registered, setRegistered] = useState<RegisteredBusiness | null>(null);
+  const [enviado, setEnviado] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
 
   const tradeMatches = useMemo(() => searchTradeCategories(tradeQuery), [tradeQuery]);
 
@@ -190,8 +199,12 @@ export function CommerceRegistrationScreen() {
    * son casi veinte y la mayoría no necesita reaccionar mientras se escribe.
    * Los que sí (CUIT, rubro, mapa) ya tienen su propio estado.
    */
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (enviando) {
+      return;
+    }
 
     const data = new FormData(event.currentTarget);
     const value = (name: string) => String(data.get(name) ?? '').trim();
@@ -202,23 +215,75 @@ export function CommerceRegistrationScreen() {
       return;
     }
 
-    const business = registerBusiness({
-      name: value('nombreComercial') || legalName,
-      taxId: taxId,
-      category: tradeQuery.trim(),
-      categoryId: slugifyTrade(tradeQuery),
-      address: mapAddress || value('direccion'),
-      phone: value('telefono'),
+    const datos = {
+      nombre: value('nombreComercial') || legalName,
+      razonSocial: legalName,
+      cuit: taxId,
+      rubro: tradeQuery.trim(),
+      rubroId: slugifyTrade(tradeQuery),
+      direccion: mapAddress || value('direccion'),
+      telefono: value('telefono'),
       email: value('email'),
-      hours: value('horario'),
-      zone: value('zona'),
-      description: value('descripcion'),
-      social: value('social'),
-      payments: value('pagos'),
-    });
+      horario: value('horario'),
+      zona: value('zona'),
+      descripcion: value('descripcion'),
+      redes: value('social'),
+      mediosPago: value('pagos'),
+    };
 
-    setRegistered(business);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    /* Sin backend la app sigue funcionando con el store local: así la demo
+       no se rompe si todavía no está configurado. */
+    if (!hayBackend()) {
+      setRegistered(
+        registerBusiness({
+          name: datos.nombre,
+          taxId,
+          category: datos.rubro,
+          categoryId: datos.rubroId,
+          address: datos.direccion,
+          phone: datos.telefono,
+          email: datos.email,
+          hours: datos.horario,
+          zone: datos.zona,
+          description: datos.descripcion,
+          social: datos.redes,
+          payments: datos.mediosPago,
+        }),
+      );
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      return;
+    }
+
+    setEnviando(true);
+    setErrorEnvio(null);
+
+    try {
+      /* Las fotos se suben antes que la postulación: si algo falla, no queda
+         un trámite creado apuntando a archivos que no existen. */
+      const fotosSubidas = await Promise.all(
+        photos.map(async (foto, indice) => {
+          const { url } = await mediaApi.subir(foto.blob, `local-${indice}.webp`);
+
+          return url;
+        }),
+      );
+
+      await postulacionesApi.crear('comercio', { ...datos, fotos: fotosSubidas });
+
+      setEnviado(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (fallo) {
+      setErrorEnvio(
+        fallo instanceof ApiError && fallo.status === 401
+          ? 'Necesitás iniciar sesión para postular tu comercio.'
+          : fallo instanceof Error
+            ? fallo.message
+            : 'No pudimos enviar la postulación.',
+      );
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -242,6 +307,25 @@ export function CommerceRegistrationScreen() {
         <SectionInner>
           <RegistrationGrid>
             <FormCard>
+              {enviado ? (
+                <RegisteredNotice role="status">
+                  <RegisteredTitle>
+                    <Check size={18} aria-hidden="true" />
+                    Postulación enviada
+                  </RegisteredTitle>
+                  <CardText>
+                    La estamos revisando. Si falta algo te lo pedimos por acá mismo, y
+                    cuando aprobemos vas a poder cargar tus productos.
+                  </CardText>
+                </RegisteredNotice>
+              ) : null}
+
+              {errorEnvio ? (
+                <RegisteredNotice role="alert" data-tono="error">
+                  <CardText>{errorEnvio}</CardText>
+                </RegisteredNotice>
+              ) : null}
+
               {registered ? (
                 <RegisteredNotice role="status">
                   <RegisteredTitle>
@@ -606,7 +690,9 @@ export function CommerceRegistrationScreen() {
                   </Card>
 
                   <ActionRow>
-                    <Button type="submit">Enviar y pasar a pago</Button>
+                    <Button type="submit" disabled={enviando}>
+                      {enviando ? 'Enviando…' : 'Enviar postulación'}
+                    </Button>
                     <LinkButton to="/comercios">Volver al marketplace</LinkButton>
                   </ActionRow>
                 </FieldStack>

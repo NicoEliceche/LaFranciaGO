@@ -8,7 +8,7 @@ import {
   formatBytes,
 } from '@core/data/services/mediaService';
 import { SALE_UNITS, SALE_UNIT_OPTIONS, priceSuffix } from '@core/data/saleUnits';
-import type { ProductoApi } from '@core/data/services/apiClient';
+import { type ProductoApi, mediaApi } from '@core/data/services/apiClient';
 import { useMediaUpload } from '@shared/hooks/useMediaUpload';
 import type { SaleUnitId } from '@shared/types/saleUnit.types';
 
@@ -120,16 +120,32 @@ export function ProductoDialog({ open, producto, onClose, onGuardar }: Props) {
     setGuardando(true);
 
     try {
+      /* Se suben las fotos nuevas y se conservan las que ya tenía: editar
+         sólo el precio no debe borrarle las imágenes. */
+      const nuevas = await Promise.all(
+        photos.map(async (foto, indice) => {
+          const { url } = await mediaApi.subir(foto.blob, `producto-${indice}.webp`);
+
+          return url;
+        }),
+      );
+
+      let videoUrl = producto?.video_url ?? null;
+
+      if (video?.blob) {
+        const subido = await mediaApi.subir(video.blob, 'producto.mp4');
+
+        videoUrl = subido.url;
+      }
+
       await onGuardar({
         nombre: String(datos.get('nombre') ?? '').trim(),
         descripcion: String(datos.get('descripcion') ?? '').trim(),
         precio,
         unidadVenta: unidad,
         stock: datos.get('stock') ? Number(datos.get('stock')) : null,
-        /* Las fotos nuevas se suben aparte; acá van las que ya tenía, para no
-           perderlas al editar sólo el precio. */
-        fotos: producto?.fotos ?? [],
-        videoUrl: producto?.video_url ?? null,
+        fotos: [...(producto?.fotos ?? []), ...nuevas],
+        videoUrl,
       });
 
       onClose();

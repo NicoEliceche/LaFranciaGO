@@ -708,6 +708,158 @@ async function enrutar(
     );
   }
 
+  /**
+   * Pedidos del comercio, con su envío y los mensajes sin leer.
+   *
+   * Todo junto en una consulta: el panel muestra las tres cosas a la vez, y
+   * pedirlas por separado obligaría a tres viajes por cada carga.
+   */
+  if (ruta === '/mi-comercio/pedidos' && metodo === 'GET') {
+    const comercio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in comercio) {
+      return comercio.respuesta;
+    }
+
+    const estado = url.searchParams.get('estado');
+
+    const { results } = await env.DB.prepare(
+      `SELECT p.id, p.codigo, p.estado, p.total_centavos, p.direccion_texto,
+              p.creado_en, u.nombre AS cliente, u.telefono AS cliente_telefono,
+              e.estado AS envio_estado, e.lat, e.lon, e.ubicacion_en,
+              r.nombre AS repartidor,
+              (SELECT COUNT(*) FROM pedido_mensajes m
+                WHERE m.pedido_id = p.id AND m.leido = 0 AND m.autor_id != ?) AS sin_leer,
+              (SELECT COUNT(*) FROM pedido_items i WHERE i.pedido_id = p.id) AS items
+         FROM pedidos p
+         JOIN usuarios u ON u.id = p.usuario_id
+         LEFT JOIN envios e ON e.pedido_id = p.id
+         LEFT JOIN usuarios r ON r.id = e.repartidor_id
+        WHERE p.comercio_id = ?
+          AND (? IS NULL OR p.estado = ?)
+        ORDER BY p.creado_en DESC
+        LIMIT 60`,
+    )
+      .bind(comercio.usuario.id, comercio.comercioId, estado, estado)
+      .all();
+
+    return json(
+      {
+        pedidos: results.map((fila) => ({
+          ...fila,
+          total: aPesos(Number(fila.total_centavos)),
+        })),
+      },
+      {},
+      cors,
+    );
+  }
+
+  /** Envíos en curso, para el mapa de seguimiento. */
+  if (ruta === '/mi-comercio/envios' && metodo === 'GET') {
+    const comercio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in comercio) {
+      return comercio.respuesta;
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT e.id, e.estado, e.lat, e.lon, e.ubicacion_en, e.asignado_en, e.entregado_en,
+              p.codigo, p.direccion_texto, u.nombre AS repartidor, u.telefono
+         FROM envios e
+         JOIN pedidos p ON p.id = e.pedido_id
+         LEFT JOIN usuarios u ON u.id = e.repartidor_id
+        WHERE p.comercio_id = ?
+          AND e.estado NOT IN ('entregado', 'cancelado')
+        ORDER BY e.creado_en DESC`,
+    )
+      .bind(comercio.comercioId)
+      .all();
+
+    return json({ envios: results }, {}, cors);
+  }
+
+  const chatPedido = /^\/pedidos\/([\w-]+)\/mensajes$/.exec(ruta);
+
+  if (chatPedido && metodo === 'GET') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    /* Sólo el cliente del pedido o el dueño del comercio pueden leer el chat:
+       sin esta comprobación, cualquiera con el id vería la conversación. */
+    const permitido = await env.DB.prepare(
+      `SELECT 1 AS ok FROM pedidos p
+         LEFT JOIN comercios c ON c.id = p.comercio_id
+        WHERE p.id = ? AND (p.usuario_id = ? OR c.usuario_id = ?)`,
+    )
+      .bind(chatPedido[1], usuario.id, usuario.id)
+      .first();
+
+    if (!permitido) {
+      return error('No encontrado', 404, cors);
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT m.id, m.texto, m.tipo, m.media_url, m.autor_id, m.creado_en,
+              u.nombre AS autor
+         FROM pedido_mensajes m
+         JOIN usuarios u ON u.id = m.autor_id
+        WHERE m.pedido_id = ?
+        ORDER BY m.creado_en`,
+    )
+      .bind(chatPedido[1])
+      .all();
+
+    /* Al abrir el chat se marcan como leídos los del otro. */
+    await env.DB.prepare(
+      'UPDATE pedido_mensajes SET leido = 1 WHERE pedido_id = ? AND autor_id != ?',
+    )
+      .bind(chatPedido[1], usuario.id)
+      .run();
+
+    return json({ mensajes: results, yo: usuario.id }, {}, cors);
+  }
+
+  if (chatPedido && metodo === 'POST') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const permitido = await env.DB.prepare(
+      `SELECT 1 AS ok FROM pedidos p
+         LEFT JOIN comercios c ON c.id = p.comercio_id
+        WHERE p.id = ? AND (p.usuario_id = ? OR c.usuario_id = ?)`,
+    )
+      .bind(chatPedido[1], usuario.id, usuario.id)
+      .first();
+
+    if (!permitido) {
+      return error('No encontrado', 404, cors);
+    }
+
+    const body = await leerJson<{ texto?: string; tipo?: string; mediaUrl?: string }>(request);
+    const texto = String(body.texto ?? '').trim().slice(0, 2000);
+
+    if (!texto && !body.mediaUrl) {
+      return error('El mensaje está vacío.', 400, cors);
+    }
+
+    const id = nuevoId();
+
+    await env.DB.prepare(
+      'INSERT INTO pedido_mensajes (id, pedido_id, autor_id, texto, tipo, media_url) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+      .bind(id, chatPedido[1], usuario.id, texto || null, body.tipo ?? 'texto', body.mediaUrl ?? null)
+      .run();
+
+    return json({ id }, { status: 201 }, cors);
+  }
+
   // ── Productos ──
 
   if (ruta === '/productos' && metodo === 'POST') {
@@ -1119,6 +1271,31 @@ async function exigirAdmin(
   }
 
   return { usuario };
+}
+
+/** Devuelve el comercio de quien llama, o el error que corresponda. */
+async function comercioDelUsuario(
+  request: Request,
+  env: Env,
+  cors: Record<string, string>,
+): Promise<{ usuario: UsuarioSesion; comercioId: string } | { respuesta: Response }> {
+  const usuario = await usuarioActual(request, env);
+
+  if (!usuario) {
+    return { respuesta: error('Necesitás iniciar sesión', 401, cors) };
+  }
+
+  const comercio = await env.DB.prepare(
+    'SELECT id FROM comercios WHERE usuario_id = ? ORDER BY creado_en DESC LIMIT 1',
+  )
+    .bind(usuario.id)
+    .first<{ id: string }>();
+
+  if (!comercio) {
+    return { respuesta: error('Todavía no tenés comercio', 404, cors) };
+  }
+
+  return { usuario, comercioId: comercio.id };
 }
 
 async function leerJson<T>(request: Request): Promise<T> {

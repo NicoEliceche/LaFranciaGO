@@ -1,18 +1,23 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Pencil, Plus, PackageSearch, Store, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { MessageSquare, Pencil, Plus, PackageSearch, Store, Truck, X } from 'lucide-react';
 
 import {
   type ComercioApi,
+  type EnvioApi,
+  type PedidoComercioApi,
   type ProductoApi,
   miComercioApi,
+  operacionApi,
 } from '@core/data/services/apiClient';
 import { formatMoney } from '@shared/utils/format';
 import { priceSuffix, stepLabel } from '@core/data/saleUnits';
 import type { SaleUnitId } from '@shared/types/saleUnit.types';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
+import { ChatPedidoDialog } from '../components/ChatPedidoDialog';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
+import { EnviosMapa } from '../components/EnviosMapa';
 import { ProductoDialog } from '../components/ProductoDialog';
 import { SectionHeading } from '../components/SectionHeading';
 import { Avatar } from '@shared/components/Media';
@@ -24,6 +29,8 @@ import {
   ComercioDato,
   ComercioDatos,
   ComercioNombre,
+  EstadoChip,
+  MapaCaja,
   NuevoProductoBoton,
   ProductoAcciones,
   ProductoBotonIcono,
@@ -31,20 +38,70 @@ import {
   ProductoInfo,
   ProductoNombre,
   ProductoPrecio,
+  SeccionBadge,
+  SeccionChip,
+  SeccionRow,
 } from './MiComercioScreenStyled';
 
 /**
- * Panel del comercio: sus datos y su catálogo.
+ * Panel del comercio.
  *
- * Es lo primero que ve quien entra como comercio, así que muestra lo que
- * necesita para operar: quién es y qué está vendiendo, con las acciones a
- * mano.
+ * Cuatro secciones en una sola pantalla, con pestañas: el comercio trabaja
+ * mirando esto todo el día y saltar entre rutas distintas para ver un pedido
+ * y contestar un mensaje sería incómodo.
  */
+
+type Seccion = 'productos' | 'pedidos' | 'chats' | 'envios';
+
+const SECCIONES: Array<{ id: Seccion; nombre: string }> = [
+  { id: 'productos', nombre: 'Productos' },
+  { id: 'pedidos', nombre: 'Pedidos' },
+  { id: 'chats', nombre: 'Chats' },
+  { id: 'envios', nombre: 'Envíos' },
+];
+
+/* Cada cuánto se vuelven a pedir los datos que cambian solos. */
+const REFRESCO_MS = 12_000;
+
+const ESTADO_NOMBRE: Record<string, string> = {
+  proceso: 'En proceso',
+  terminado: 'Entregado',
+  cancelado: 'Cancelado',
+};
+
+const ENVIO_NOMBRE: Record<string, string> = {
+  buscando: 'Buscando repartidor',
+  asignado: 'Asignado',
+  retirado: 'Retirado',
+  en_camino: 'En camino',
+  entregado: 'Entregado',
+};
+
+/** "hace 2 min": una ubicación de hace media hora no dice dónde está ahora. */
+const desdeCuando = (iso: string) => {
+  const minutos = Math.round((Date.now() - new Date(iso.replace(' ', 'T') + 'Z').getTime()) / 60000);
+
+  if (minutos < 1) {
+    return 'ahora mismo';
+  }
+
+  if (minutos < 60) {
+    return `hace ${minutos} min`;
+  }
+
+  return `hace ${Math.round(minutos / 60)} h`;
+};
+
 export function MiComercioScreen() {
   const [comercio, setComercio] = useState<ComercioApi | null>(null);
   const [productos, setProductos] = useState<ProductoApi[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [seccion, setSeccion] = useState<Seccion>('productos');
+  const [pedidos, setPedidos] = useState<PedidoComercioApi[]>([]);
+  const [envios, setEnvios] = useState<EnvioApi[]>([]);
+  const [chat, setChat] = useState<PedidoComercioApi | null>(null);
 
   const [dialogoAbierto, setDialogoAbierto] = useState(false);
   const [editando, setEditando] = useState<ProductoApi | null>(null);
@@ -69,6 +126,43 @@ export function MiComercioScreen() {
   useEffect(() => {
     void cargar();
   }, [cargar]);
+
+  /* Pedidos y envíos se refrescan solos: el comercio deja el panel abierto
+     mientras atiende, y tiene que ver entrar los pedidos sin recargar. */
+  useEffect(() => {
+    if (!comercio || seccion === 'productos') {
+      return undefined;
+    }
+
+    const traer = async () => {
+      try {
+        if (seccion === 'pedidos' || seccion === 'chats') {
+          const { pedidos: filas } = await operacionApi.pedidos();
+
+          setPedidos(filas);
+        }
+
+        if (seccion === 'envios') {
+          const { envios: filas } = await operacionApi.envios();
+
+          setEnvios(filas);
+        }
+      } catch {
+        /* Un fallo puntual del refresco no debe borrar lo que ya se ve. */
+      }
+    };
+
+    void traer();
+
+    const temporizador = window.setInterval(traer, REFRESCO_MS);
+
+    return () => window.clearInterval(temporizador);
+  }, [comercio, seccion]);
+
+  const sinLeer = useMemo(
+    () => pedidos.reduce((suma, pedido) => suma + Number(pedido.sin_leer ?? 0), 0),
+    [pedidos],
+  );
 
   const guardar = async (datos: Record<string, unknown>) => {
     if (editando) {
@@ -119,9 +213,7 @@ export function MiComercioScreen() {
                       <ComercioDatos>
                         <ComercioDato>{comercio.rubro_nombre}</ComercioDato>
                         <ComercioDato>{comercio.direccion}</ComercioDato>
-                        {comercio.horario ? (
-                          <ComercioDato>{comercio.horario}</ComercioDato>
-                        ) : null}
+                        {comercio.horario ? <ComercioDato>{comercio.horario}</ComercioDato> : null}
                       </ComercioDatos>
                     </div>
                   </ComercioCabecera>
@@ -139,6 +231,24 @@ export function MiComercioScreen() {
             ) : null}
 
             {comercio ? (
+              <SeccionRow>
+                {SECCIONES.map((item) => (
+                  <SeccionChip
+                    key={item.id}
+                    type="button"
+                    data-active={seccion === item.id}
+                    onClick={() => setSeccion(item.id)}
+                  >
+                    {item.nombre}
+                    {item.id === 'chats' && sinLeer > 0 ? (
+                      <SeccionBadge>{sinLeer}</SeccionBadge>
+                    ) : null}
+                  </SeccionChip>
+                ))}
+              </SeccionRow>
+            ) : null}
+
+            {comercio && seccion === 'productos' ? (
               <>
                 <SectionHeading
                   title="Tus productos"
@@ -177,8 +287,6 @@ export function MiComercioScreen() {
                             {producto.unidad_venta !== 'unidad'
                               ? priceSuffix(producto.unidad_venta as SaleUnitId)
                               : 'c/u'}
-                            {/* El primer escalón dice cómo se pide: "1/4" en
-                                pan, "1 unid." en gaseosas. */}
                             {' · desde '}
                             {stepLabel(producto.unidad_venta as SaleUnitId, 0)}
                           </ProductoPrecio>
@@ -211,9 +319,153 @@ export function MiComercioScreen() {
                 ))}
               </>
             ) : null}
+
+            {comercio && seccion === 'pedidos' ? (
+              <>
+                <SectionHeading
+                  title="Pedidos"
+                  chip={`${pedidos.length}`}
+                  subtitle="Lo que está entrando ahora."
+                />
+
+                {pedidos.length === 0 ? (
+                  <EmptyState
+                    icon={PackageSearch}
+                    title="Sin pedidos"
+                    text="Cuando alguien te compre, aparece acá."
+                    dashed
+                  />
+                ) : null}
+
+                {pedidos.map((pedido) => (
+                  <Card key={pedido.id}>
+                    <CardPad>
+                      <ProductoFila>
+                        <ProductoInfo>
+                          <ProductoNombre>
+                            {pedido.codigo} · {pedido.cliente}
+                          </ProductoNombre>
+                          <ProductoPrecio>
+                            {formatMoney(pedido.total)} · {pedido.items}{' '}
+                            {pedido.items === 1 ? 'producto' : 'productos'} ·{' '}
+                            {pedido.direccion_texto}
+                          </ProductoPrecio>
+                        </ProductoInfo>
+
+                        <EstadoChip data-estado={pedido.estado}>
+                          {ESTADO_NOMBRE[pedido.estado] ?? pedido.estado}
+                        </EstadoChip>
+                      </ProductoFila>
+                    </CardPad>
+                  </Card>
+                ))}
+              </>
+            ) : null}
+
+            {comercio && seccion === 'chats' ? (
+              <>
+                <SectionHeading
+                  title="Conversaciones"
+                  subtitle="Consultas de tus clientes sobre cada pedido."
+                />
+
+                {pedidos.length === 0 ? (
+                  <EmptyState
+                    icon={MessageSquare}
+                    title="Sin conversaciones"
+                    text="Se abre una por cada pedido que recibas."
+                    dashed
+                  />
+                ) : null}
+
+                {pedidos.map((pedido) => (
+                  <Card key={pedido.id}>
+                    <CardPad>
+                      <ProductoFila>
+                        <ProductoInfo>
+                          <ProductoNombre>{pedido.cliente}</ProductoNombre>
+                          <ProductoPrecio>
+                            Pedido {pedido.codigo}
+                            {pedido.cliente_telefono ? ` · ${pedido.cliente_telefono}` : ''}
+                          </ProductoPrecio>
+                        </ProductoInfo>
+
+                        <ProductoAcciones>
+                          {pedido.sin_leer > 0 ? (
+                            <SeccionBadge>{pedido.sin_leer}</SeccionBadge>
+                          ) : null}
+                          <ProductoBotonIcono
+                            type="button"
+                            onClick={() => setChat(pedido)}
+                            aria-label={`Abrir chat con ${pedido.cliente}`}
+                          >
+                            <MessageSquare size={15} aria-hidden="true" />
+                          </ProductoBotonIcono>
+                        </ProductoAcciones>
+                      </ProductoFila>
+                    </CardPad>
+                  </Card>
+                ))}
+              </>
+            ) : null}
+
+            {comercio && seccion === 'envios' ? (
+              <>
+                <SectionHeading
+                  title="Envíos en curso"
+                  chip={`${envios.length}`}
+                  subtitle="Dónde va cada pedido que salió."
+                />
+
+                {envios.length === 0 ? (
+                  <EmptyState
+                    icon={Truck}
+                    title="Nada en camino"
+                    text="Cuando un repartidor tome un pedido lo vas a ver acá."
+                    dashed
+                  />
+                ) : (
+                  <MapaCaja>
+                    <EnviosMapa envios={envios} />
+                  </MapaCaja>
+                )}
+
+                {envios.map((envio) => (
+                  <Card key={envio.id}>
+                    <CardPad>
+                      <ProductoFila>
+                        <ProductoInfo>
+                          <ProductoNombre>
+                            {envio.repartidor ?? 'Buscando repartidor'}
+                          </ProductoNombre>
+                          <ProductoPrecio>
+                            Pedido {envio.codigo} · {envio.direccion_texto}
+                            {envio.ubicacion_en
+                              ? ` · ${desdeCuando(envio.ubicacion_en)}`
+                              : ' · sin ubicación todavía'}
+                          </ProductoPrecio>
+                        </ProductoInfo>
+
+                        <EstadoChip data-estado={envio.estado}>
+                          {ENVIO_NOMBRE[envio.estado] ?? envio.estado}
+                        </EstadoChip>
+                      </ProductoFila>
+                    </CardPad>
+                  </Card>
+                ))}
+              </>
+            ) : null}
           </SectionStack>
         </SectionInner>
       </CompactSection>
+
+      <ChatPedidoDialog
+        open={chat !== null}
+        pedidoId={chat?.id ?? null}
+        codigo={chat?.codigo ?? ''}
+        cliente={chat?.cliente ?? ''}
+        onClose={() => setChat(null)}
+      />
 
       <ProductoDialog
         open={dialogoAbierto}

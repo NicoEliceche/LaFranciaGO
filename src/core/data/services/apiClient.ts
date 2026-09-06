@@ -194,6 +194,59 @@ export const miComercioApi = {
   borrarProducto: (id: string) => api.delete<{ ok: true }>(`/productos/${id}`),
 };
 
+export interface PedidoComercioApi {
+  id: string;
+  codigo: string;
+  estado: 'proceso' | 'terminado' | 'cancelado';
+  total: number;
+  direccion_texto: string;
+  creado_en: string;
+  cliente: string;
+  cliente_telefono: string | null;
+  envio_estado: string | null;
+  lat: number | null;
+  lon: number | null;
+  ubicacion_en: string | null;
+  repartidor: string | null;
+  sin_leer: number;
+  items: number;
+}
+
+export interface EnvioApi {
+  id: string;
+  estado: string;
+  lat: number | null;
+  lon: number | null;
+  ubicacion_en: string | null;
+  asignado_en: string | null;
+  codigo: string;
+  direccion_texto: string;
+  repartidor: string | null;
+  telefono: string | null;
+}
+
+export interface MensajeApi {
+  id: string;
+  texto: string | null;
+  tipo: string;
+  media_url: string | null;
+  autor_id: string;
+  autor: string;
+  creado_en: string;
+}
+
+export const operacionApi = {
+  pedidos: (estado?: string) =>
+    api.get<{ pedidos: PedidoComercioApi[] }>(
+      `/mi-comercio/pedidos${estado ? `?estado=${estado}` : ''}`,
+    ),
+  envios: () => api.get<{ envios: EnvioApi[] }>('/mi-comercio/envios'),
+  mensajes: (pedidoId: string) =>
+    api.get<{ mensajes: MensajeApi[]; yo: string }>(`/pedidos/${pedidoId}/mensajes`),
+  enviarMensaje: (pedidoId: string, texto: string) =>
+    api.post<{ id: string }>(`/pedidos/${pedidoId}/mensajes`, { texto }),
+};
+
 export const pedidosApi = {
   listar: () => api.get<{ pedidos: PedidoApi[] }>('/pedidos'),
   crear: (datos: {

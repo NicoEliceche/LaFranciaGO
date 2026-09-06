@@ -35,6 +35,35 @@ export const MapCanvas = styled.div`
     cursor: grab;
   }
 
+  /* Repartidor en el mapa de seguimiento: un punto que late, para que se
+     note que la posición es en vivo y no una foto vieja. */
+  .lfg-repartidor__punto {
+    display: block;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 3px solid #ffffff;
+    background: ${({ theme }) => theme.color.success};
+    box-shadow: 0 2px 8px rgba(5, 8, 22, 0.45);
+    animation: lfg-latido 2s ease-in-out infinite;
+  }
+
+  @keyframes lfg-latido {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.18);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lfg-repartidor__punto {
+      animation: none;
+    }
+  }
+
   .lfg-pin:active {
     cursor: grabbing;
   }

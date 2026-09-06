@@ -27,6 +27,8 @@ export type UploadedVideo = {
   url: string;
   bytes: number;
   name: string;
+  /** El archivo original, para subirlo cuando se guarde. */
+  blob: Blob;
 };
 
 export function useMediaUpload() {
@@ -110,7 +112,7 @@ export function useMediaUpload() {
     const url = URL.createObjectURL(file);
 
     objectUrls.current.add(url);
-    setVideo({ url, bytes: file.size, name: file.name });
+    setVideo({ url, bytes: file.size, name: file.name, blob: file });
   }, []);
 
   const removePhoto = useCallback((id: string) => {

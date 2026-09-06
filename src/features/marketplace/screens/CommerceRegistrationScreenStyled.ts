@@ -206,6 +206,10 @@ export const RegisteredNotice = styled.div`
   border-radius: ${({ theme }) => theme.radius.lg};
   border: 1px solid ${({ theme }) => theme.color.success};
   background: ${({ theme }) => theme.color.surfaceMuted};
+
+  &[data-tono='error'] {
+    border-color: ${({ theme }) => theme.color.danger};
+  }
 `;
 
 export const RegisteredTitle = styled.strong`
