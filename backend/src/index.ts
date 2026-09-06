@@ -674,6 +674,40 @@ async function enrutar(
     return json({ id, nombre, estado: 'pendiente' }, { status: 201 }, cors);
   }
 
+  // ── Mi comercio ──
+
+  if (ruta === '/mi-comercio' && metodo === 'GET') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const comercio = await env.DB.prepare(
+      'SELECT * FROM comercios WHERE usuario_id = ? ORDER BY creado_en DESC LIMIT 1',
+    )
+      .bind(usuario.id)
+      .first();
+
+    if (!comercio) {
+      return json({ comercio: null, productos: [] }, {}, cors);
+    }
+
+    const { results: productos } = await env.DB.prepare(
+      `SELECT id, categoria_id, nombre, descripcion, precio_centavos, unidad_venta,
+              fotos, video_url, stock, activo
+         FROM productos WHERE comercio_id = ? ORDER BY creado_en DESC`,
+    )
+      .bind(comercio.id)
+      .all();
+
+    return json(
+      { comercio: comercioSalida(comercio), productos: productos.map(productoSalida) },
+      {},
+      cors,
+    );
+  }
+
   // ── Productos ──
 
   if (ruta === '/productos' && metodo === 'POST') {
@@ -719,6 +753,59 @@ async function enrutar(
       .run();
 
     return json({ id }, { status: 201 }, cors);
+  }
+
+  const producto = /^\/productos\/([\w-]+)$/.exec(ruta);
+
+  if (producto && (metodo === 'PATCH' || metodo === 'DELETE')) {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    /* Se comprueba la propiedad en la misma consulta: sin el join, alguien
+       podría editar el producto de otro comercio conociendo su id. */
+    const propio = await env.DB.prepare(
+      `SELECT p.id FROM productos p
+         JOIN comercios c ON c.id = p.comercio_id
+        WHERE p.id = ? AND c.usuario_id = ?`,
+    )
+      .bind(producto[1], usuario.id)
+      .first();
+
+    if (!propio) {
+      return error('Ese producto no es tuyo', 403, cors);
+    }
+
+    if (metodo === 'DELETE') {
+      await env.DB.prepare('DELETE FROM productos WHERE id = ?').bind(producto[1]).run();
+
+      return json({ ok: true }, {}, cors);
+    }
+
+    const body = await leerJson<Record<string, unknown>>(request);
+
+    await env.DB.prepare(
+      `UPDATE productos
+          SET nombre = ?, descripcion = ?, precio_centavos = ?, unidad_venta = ?,
+              fotos = ?, video_url = ?, stock = ?, categoria_id = ?
+        WHERE id = ?`,
+    )
+      .bind(
+        String(body.nombre ?? ''),
+        body.descripcion ?? null,
+        aCentavos(Number(body.precio ?? 0)),
+        String(body.unidadVenta ?? 'unidad'),
+        JSON.stringify(body.fotos ?? []),
+        body.videoUrl ?? null,
+        body.stock ?? null,
+        body.categoriaId ?? null,
+        producto[1],
+      )
+      .run();
+
+    return json({ ok: true }, {}, cors);
   }
 
   // ── Pedidos ──

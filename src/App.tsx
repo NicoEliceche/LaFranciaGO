@@ -52,6 +52,11 @@ const CommerceRegistrationScreen = lazy(() =>
 const DeliveryRegistrationScreen = lazy(() =>
   import('@features/marketplace/screens/DeliveryRegistrationScreen').then((m) => ({ default: m.DeliveryRegistrationScreen })),
 );
+const MiComercioScreen = lazy(() =>
+  import('@features/marketplace/screens/MiComercioScreen').then((m) => ({
+    default: m.MiComercioScreen,
+  })),
+);
 const CommercePanelScreen = lazy(() =>
   import('@features/marketplace/screens/CommercePanelScreen').then((m) => ({ default: m.CommercePanelScreen })),
 );
@@ -168,6 +173,14 @@ function App() {
             />
             <Route
               path="/panel/comercio"
+              element={
+                <RutaPrivada>
+                  <MiComercioScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/panel/comercio/metricas"
               element={
                 <RutaPrivada>
                   <CommercePanelScreen />

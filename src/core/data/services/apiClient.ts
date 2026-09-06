@@ -184,6 +184,16 @@ export const comerciosApi = {
     api.post<{ id: string; nombre: string; estado: string }>('/comercios', datos),
 };
 
+export const miComercioApi = {
+  ver: () =>
+    api.get<{ comercio: ComercioApi | null; productos: ProductoApi[] }>('/mi-comercio'),
+  crearProducto: (datos: Record<string, unknown>) =>
+    api.post<{ id: string }>('/productos', datos),
+  editarProducto: (id: string, datos: Record<string, unknown>) =>
+    api.patch<{ ok: true }>(`/productos/${id}`, datos),
+  borrarProducto: (id: string) => api.delete<{ ok: true }>(`/productos/${id}`),
+};
+
 export const pedidosApi = {
   listar: () => api.get<{ pedidos: PedidoApi[] }>('/pedidos'),
   crear: (datos: {
