@@ -609,11 +609,27 @@ async function enrutar(
       .bind(comercioDetalle[1])
       .all();
 
+    /* Las ofertas viajan con el comercio: el perfil las lista y además cada
+       producto necesita saber si está en una para mostrar el precio tachado.
+       Pedirlas aparte serían dos viajes para pintar la misma pantalla. */
+    const { results: filasOfertas } = await env.DB.prepare(
+      `SELECT id, tipo, titulo, descripcion, porcentaje, cantidad,
+              precio_final_centavos, precio_lista_centavos, foto_url
+         FROM ofertas
+        WHERE comercio_id = ? AND activa = 1
+          AND (desde IS NULL OR desde <= datetime('now'))
+          AND (hasta IS NULL OR hasta >= datetime('now'))
+        ORDER BY creado_en DESC`,
+    )
+      .bind(comercioDetalle[1])
+      .all<FilaOferta>();
+
     return json(
       {
         comercio: comercioSalida(comercio),
         categorias,
         productos: productos.map(productoSalida),
+        ofertas: await conProductos(env, filasOfertas),
       },
       {},
       cors,
@@ -1050,6 +1066,233 @@ async function enrutar(
     return json({ ok: true }, {}, cors);
   }
 
+  // ── Ofertas ──
+  //
+  // El precio de lista lo calcula el servidor leyendo los productos de la
+  // base, nunca lo que mande el cliente: si viniera del formulario, cualquiera
+  // podría declarar un "antes" inventado para simular un descuento enorme.
+
+  const ofertasComercio = /^\/comercios\/([\w-]+)\/ofertas$/.exec(ruta);
+
+  if (ofertasComercio && metodo === 'GET') {
+    const { results } = await env.DB.prepare(
+      `SELECT id, tipo, titulo, descripcion, porcentaje, cantidad,
+              precio_final_centavos, precio_lista_centavos, foto_url
+         FROM ofertas
+        WHERE comercio_id = ? AND activa = 1
+          AND (desde IS NULL OR desde <= datetime('now'))
+          AND (hasta IS NULL OR hasta >= datetime('now'))
+        ORDER BY creado_en DESC`,
+    )
+      .bind(ofertasComercio[1])
+      .all<FilaOferta>();
+
+    return json({ ofertas: await conProductos(env, results) }, {}, cors);
+  }
+
+  if (ruta === '/mi-comercio/ofertas' && metodo === 'GET') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    /* El comercio ve también las vencidas y las apagadas: son suyas y puede
+       querer volver a encenderlas. */
+    const { results } = await env.DB.prepare(
+      `SELECT id, tipo, titulo, descripcion, porcentaje, cantidad,
+              precio_final_centavos, precio_lista_centavos, foto_url,
+              desde, hasta, activa
+         FROM ofertas WHERE comercio_id = ? ORDER BY creado_en DESC`,
+    )
+      .bind(propio.comercioId)
+      .all<FilaOferta>();
+
+    return json({ ofertas: await conProductos(env, results) }, {}, cors);
+  }
+
+  if (ruta === '/mi-comercio/ofertas' && metodo === 'POST') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    const body = await leerJson<{
+      tipo?: string;
+      titulo?: string;
+      descripcion?: string;
+      porcentaje?: number;
+      cantidad?: number;
+      precioFinal?: number;
+      fotoUrl?: string;
+      desde?: string;
+      hasta?: string;
+      productos?: Array<{ productoId?: string; unidades?: number }>;
+    }>(request);
+
+    const tipo = String(body.tipo ?? '');
+    const titulo = String(body.titulo ?? '').trim();
+    const elegidos = Array.isArray(body.productos) ? body.productos : [];
+
+    if (!['descuento', 'combo', 'cantidad'].includes(tipo)) {
+      return error('Tipo de oferta desconocido.', 400, cors);
+    }
+
+    if (!titulo) {
+      return error('La oferta necesita un título.', 400, cors);
+    }
+
+    if (elegidos.length === 0) {
+      return error('Elegí al menos un producto.', 400, cors);
+    }
+
+    /* El descuento y la promo por cantidad son sobre un producto: si llegaran
+       varios, el precio de lista dejaría de significar lo que dice. */
+    if (tipo !== 'combo' && elegidos.length > 1) {
+      return error('Este tipo de oferta es sobre un solo producto.', 400, cors);
+    }
+
+    const ids = [...new Set(elegidos.map((elegido) => String(elegido.productoId ?? '')))];
+    const marcadores = ids.map(() => '?').join(',');
+
+    /* Los productos tienen que ser de este comercio: sin la condición se
+       podría armar una oferta sobre el catálogo de otro. */
+    const { results: productos } = await env.DB.prepare(
+      `SELECT id, precio_centavos FROM productos
+        WHERE id IN (${marcadores}) AND comercio_id = ? AND activo = 1`,
+    )
+      .bind(...ids, propio.comercioId)
+      .all<{ id: string; precio_centavos: number }>();
+
+    if (productos.length !== ids.length) {
+      return error('Alguno de los productos no es de tu comercio.', 400, cors);
+    }
+
+    const precioDe = new Map(productos.map((fila) => [fila.id, fila.precio_centavos]));
+
+    const cantidad =
+      tipo === 'cantidad' ? Math.trunc(Number(body.cantidad ?? 0)) : null;
+
+    if (tipo === 'cantidad' && (!cantidad || cantidad < 2)) {
+      return error('La promo por cantidad arranca en 2 unidades.', 400, cors);
+    }
+
+    let lista = 0;
+
+    for (const elegido of elegidos) {
+      const unidades =
+        tipo === 'cantidad'
+          ? (cantidad as number)
+          : Math.max(1, Math.trunc(Number(elegido.unidades ?? 1)));
+
+      lista += (precioDe.get(String(elegido.productoId ?? '')) ?? 0) * unidades;
+    }
+
+    /* En el descuento el final sale del porcentaje, así el número que se pinta
+       sobre la foto y lo que se cobra no pueden discrepar. */
+    let porcentaje: number | null = null;
+    let final: number;
+
+    if (tipo === 'descuento') {
+      porcentaje = Math.trunc(Number(body.porcentaje ?? 0));
+
+      if (porcentaje < 1 || porcentaje > 90) {
+        return error('El descuento va entre 1 % y 90 %.', 400, cors);
+      }
+
+      final = Math.round((lista * (100 - porcentaje)) / 100);
+    } else {
+      final = aCentavos(Number(body.precioFinal ?? 0));
+
+      if (final <= 0) {
+        return error('Poné el precio final de la oferta.', 400, cors);
+      }
+
+      if (final > lista) {
+        return error('El precio final tiene que ser menor al de lista.', 400, cors);
+      }
+    }
+
+    const id = nuevoId();
+
+    await env.DB.prepare(
+      `INSERT INTO ofertas
+        (id, comercio_id, tipo, titulo, descripcion, porcentaje, cantidad,
+         precio_final_centavos, precio_lista_centavos, foto_url, desde, hasta)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        id,
+        propio.comercioId,
+        tipo,
+        titulo,
+        body.descripcion ?? null,
+        porcentaje,
+        cantidad,
+        final,
+        lista,
+        body.fotoUrl ?? null,
+        body.desde ?? null,
+        body.hasta ?? null,
+      )
+      .run();
+
+    await env.DB.batch(
+      elegidos.map((elegido) =>
+        env.DB.prepare(
+          'INSERT INTO oferta_productos (oferta_id, producto_id, unidades) VALUES (?, ?, ?)',
+        ).bind(
+          id,
+          String(elegido.productoId ?? ''),
+          tipo === 'combo' ? Math.max(1, Math.trunc(Number(elegido.unidades ?? 1))) : 1,
+        ),
+      ),
+    );
+
+    return json(
+      { id, precioLista: aPesos(lista), precioFinal: aPesos(final) },
+      { status: 201 },
+      cors,
+    );
+  }
+
+  const ofertaPropia = /^\/mi-comercio\/ofertas\/([\w-]+)$/.exec(ruta);
+
+  if (ofertaPropia && (metodo === 'DELETE' || metodo === 'PATCH')) {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    const suya = await env.DB.prepare(
+      'SELECT id FROM ofertas WHERE id = ? AND comercio_id = ?',
+    )
+      .bind(ofertaPropia[1], propio.comercioId)
+      .first();
+
+    if (!suya) {
+      return error('Esa oferta no es tuya', 403, cors);
+    }
+
+    if (metodo === 'DELETE') {
+      await env.DB.prepare('DELETE FROM ofertas WHERE id = ?').bind(ofertaPropia[1]).run();
+
+      return json({ ok: true }, {}, cors);
+    }
+
+    /* Lo único editable es encenderla o apagarla: cambiarle el precio a una
+       oferta viva confundiría a quien ya la vio. Para otra promo, otra oferta. */
+    const body = await leerJson<{ activa?: boolean }>(request);
+
+    await env.DB.prepare('UPDATE ofertas SET activa = ? WHERE id = ?')
+      .bind(body.activa ? 1 : 0, ofertaPropia[1])
+      .run();
+
+    return json({ ok: true }, {}, cors);
+  }
+
   // ── Productos ──
 
   if (ruta === '/productos' && metodo === 'POST') {
@@ -1221,6 +1464,14 @@ async function enrutar(
 
       return { producto, escalon: item.escalon, linea };
     });
+
+    /* Las ofertas se aplican acá y no en el navegador por lo mismo que los
+       precios: es lo que se cobra. Se descuenta del subtotal en lugar de
+       tocar cada línea, así el pedido sigue mostrando qué se pidió y a qué
+       precio de lista, y aparte cuánto se ahorró. */
+    const descuento = await descuentoDeOfertas(env, body.comercioId, lineas);
+
+    subtotal = Math.max(0, subtotal - descuento);
 
     const envio = subtotal >= 1_500_000 ? 0 : 120_000;
     const pedidoId = nuevoId();
@@ -1486,6 +1737,220 @@ async function comercioDelUsuario(
   }
 
   return { usuario, comercioId: comercio.id };
+}
+
+/**
+ * Cuánto baja el pedido por las ofertas vigentes del comercio.
+ *
+ * Cada tipo se aplica distinto:
+ *
+ *   descuento → un porcentaje sobre lo que se lleve de ese producto.
+ *   cantidad  → sólo por paquetes completos: si la promo es 3 y lleva 7,
+ *               se cobran dos paquetes y una unidad suelta.
+ *   combo     → hace falta llevar todo lo que incluye; si falta algo, no
+ *               es el combo y no corresponde el precio del combo.
+ *
+ * Se calcula sobre unidades enteras: un producto por peso ("medio kilo de
+ * pan") no entra en promos por cantidad ni en combos, porque "3 x medio kilo"
+ * no es lo que el comercio quiso ofrecer.
+ */
+async function descuentoDeOfertas(
+  env: Env,
+  comercioId: string,
+  lineas: Array<{
+    producto: { id: string; precio_centavos: number; unidad_venta: string };
+    escalon: number;
+    linea: number;
+  }>,
+) {
+  const { results: ofertas } = await env.DB.prepare(
+    `SELECT id, tipo, porcentaje, cantidad, precio_final_centavos, precio_lista_centavos
+       FROM ofertas
+      WHERE comercio_id = ? AND activa = 1
+        AND (desde IS NULL OR desde <= datetime('now'))
+        AND (hasta IS NULL OR hasta >= datetime('now'))`,
+  )
+    .bind(comercioId)
+    .all<{
+      id: string;
+      tipo: string;
+      porcentaje: number | null;
+      cantidad: number | null;
+      precio_final_centavos: number;
+      precio_lista_centavos: number;
+    }>();
+
+  if (ofertas.length === 0) {
+    return 0;
+  }
+
+  const marcadores = ofertas.map(() => '?').join(',');
+  const { results: incluidos } = await env.DB.prepare(
+    `SELECT oferta_id, producto_id, unidades FROM oferta_productos
+      WHERE oferta_id IN (${marcadores})`,
+  )
+    .bind(...ofertas.map((oferta) => oferta.id))
+    .all<{ oferta_id: string; producto_id: string; unidades: number }>();
+
+  /* Cuántas unidades enteras hay de cada producto en el carrito. */
+  const enCarrito = new Map<string, number>();
+
+  for (const linea of lineas) {
+    if (linea.producto.unidad_venta !== 'unidad' && linea.producto.unidad_venta !== 'docena') {
+      continue;
+    }
+
+    const unidades = linea.escalon + 1;
+
+    enCarrito.set(linea.producto.id, (enCarrito.get(linea.producto.id) ?? 0) + unidades);
+  }
+
+  const gastadoPorProducto = new Map<string, number>();
+  let total = 0;
+
+  for (const oferta of ofertas) {
+    const partes = incluidos.filter((fila) => fila.oferta_id === oferta.id);
+
+    if (partes.length === 0) {
+      continue;
+    }
+
+    if (oferta.tipo === 'descuento') {
+      const parte = partes[0];
+      /* El porcentaje va sobre lo que efectivamente se lleve, sea media
+         docena o tres unidades: es un descuento sobre ese producto. */
+      const gastado = lineas
+        .filter((linea) => linea.producto.id === parte.producto_id)
+        .reduce((suma, linea) => suma + linea.linea, 0);
+
+      total += Math.round((gastado * (oferta.porcentaje ?? 0)) / 100);
+      continue;
+    }
+
+    /* Combo y promo por cantidad se cuentan en paquetes: cuántas veces
+       entra la oferta completa en lo que hay en el carrito. */
+    const veces = Math.min(
+      ...partes.map((parte) => {
+        const necesarias =
+          oferta.tipo === 'cantidad' ? (oferta.cantidad ?? 1) : parte.unidades;
+        const disponibles =
+          (enCarrito.get(parte.producto_id) ?? 0) -
+          (gastadoPorProducto.get(parte.producto_id) ?? 0);
+
+        return Math.floor(disponibles / Math.max(1, necesarias));
+      }),
+    );
+
+    if (veces < 1) {
+      continue;
+    }
+
+    /* Las unidades ya usadas por esta oferta no vuelven a contar para otra:
+       si no, dos promos sobre el mismo producto se descontarían dos veces. */
+    for (const parte of partes) {
+      const necesarias =
+        oferta.tipo === 'cantidad' ? (oferta.cantidad ?? 1) : parte.unidades;
+
+      gastadoPorProducto.set(
+        parte.producto_id,
+        (gastadoPorProducto.get(parte.producto_id) ?? 0) + necesarias * veces,
+      );
+    }
+
+    total += (oferta.precio_lista_centavos - oferta.precio_final_centavos) * veces;
+  }
+
+  return total;
+}
+
+/** Fila cruda de la tabla de ofertas, tal como sale de la base. */
+type FilaOferta = {
+  id: string;
+  tipo: string;
+  titulo: string;
+  descripcion: string | null;
+  porcentaje: number | null;
+  cantidad: number | null;
+  precio_final_centavos: number;
+  precio_lista_centavos: number;
+  foto_url: string | null;
+  desde?: string | null;
+  hasta?: string | null;
+  activa?: number;
+};
+
+/**
+ * Le pega a cada oferta los productos que incluye.
+ *
+ * En una sola consulta para todas: con una por oferta, un comercio con veinte
+ * promociones haría veintiuna vueltas a la base para pintar una pantalla.
+ */
+async function conProductos(env: Env, ofertas: FilaOferta[]) {
+  if (ofertas.length === 0) {
+    return [];
+  }
+
+  const marcadores = ofertas.map(() => '?').join(',');
+  const { results: filas } = await env.DB.prepare(
+    `SELECT op.oferta_id, op.producto_id, op.unidades, p.nombre, p.fotos,
+            p.precio_centavos, p.unidad_venta
+       FROM oferta_productos op
+       JOIN productos p ON p.id = op.producto_id
+      WHERE op.oferta_id IN (${marcadores})`,
+  )
+    .bind(...ofertas.map((oferta) => oferta.id))
+    .all<{
+      oferta_id: string;
+      producto_id: string;
+      unidades: number;
+      nombre: string;
+      fotos: string;
+      precio_centavos: number;
+      unidad_venta: string;
+    }>();
+
+  const porOferta = new Map<string, typeof filas>();
+
+  for (const fila of filas) {
+    const lista = porOferta.get(fila.oferta_id) ?? [];
+
+    lista.push(fila);
+    porOferta.set(fila.oferta_id, lista);
+  }
+
+  return ofertas.map((oferta) => ({
+    id: oferta.id,
+    tipo: oferta.tipo,
+    titulo: oferta.titulo,
+    descripcion: oferta.descripcion,
+    porcentaje: oferta.porcentaje,
+    cantidad: oferta.cantidad,
+    precioFinal: aPesos(Number(oferta.precio_final_centavos)),
+    precioLista: aPesos(Number(oferta.precio_lista_centavos)),
+    fotoUrl: oferta.foto_url,
+    desde: oferta.desde ?? null,
+    hasta: oferta.hasta ?? null,
+    activa: oferta.activa === undefined ? true : oferta.activa === 1,
+    productos: (porOferta.get(oferta.id) ?? []).map((fila) => ({
+      id: fila.producto_id,
+      nombre: fila.nombre,
+      unidades: Number(fila.unidades),
+      precio: aPesos(Number(fila.precio_centavos)),
+      unidadVenta: fila.unidad_venta,
+      foto: leerPrimeraFoto(fila.fotos),
+    })),
+  }));
+}
+
+/** La primera foto del producto, para ilustrar la oferta sin cargar todas. */
+function leerPrimeraFoto(fotos: string) {
+  try {
+    const lista = JSON.parse(fotos) as unknown;
+
+    return Array.isArray(lista) && typeof lista[0] === 'string' ? lista[0] : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Exige que quien llama tenga alguno de los roles indicados, aprobado. */

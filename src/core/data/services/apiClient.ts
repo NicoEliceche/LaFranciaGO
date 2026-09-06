@@ -179,10 +179,54 @@ export const comerciosApi = {
       comercio: ComercioApi;
       categorias: Array<{ id: string; nombre: string; unidad_venta: string }>;
       productos: ProductoApi[];
+      ofertas: OfertaApi[];
     }>(`/comercios/${id}`),
   crear: (datos: Record<string, unknown>) =>
     api.post<{ id: string; nombre: string; estado: string }>('/comercios', datos),
 };
+
+/** Los tres tipos de promoción que puede armar un comercio. */
+export type TipoOferta = 'descuento' | 'combo' | 'cantidad';
+
+export interface OfertaProductoApi {
+  id: string;
+  nombre: string;
+  unidades: number;
+  precio: number;
+  unidadVenta: string;
+  foto: string | null;
+}
+
+export interface OfertaApi {
+  id: string;
+  tipo: TipoOferta;
+  titulo: string;
+  descripcion: string | null;
+  /** Sólo en 'descuento': es el número que se pinta sobre la foto. */
+  porcentaje: number | null;
+  /** Sólo en 'cantidad': cuántas unidades hay que llevar. */
+  cantidad: number | null;
+  precioFinal: number;
+  precioLista: number;
+  fotoUrl: string | null;
+  desde: string | null;
+  hasta: string | null;
+  activa: boolean;
+  productos: OfertaProductoApi[];
+}
+
+export interface NuevaOferta {
+  tipo: TipoOferta;
+  titulo: string;
+  descripcion?: string;
+  porcentaje?: number;
+  cantidad?: number;
+  precioFinal?: number;
+  fotoUrl?: string;
+  desde?: string;
+  hasta?: string;
+  productos: Array<{ productoId: string; unidades?: number }>;
+}
 
 export const miComercioApi = {
   ver: () =>
@@ -192,6 +236,15 @@ export const miComercioApi = {
   editarProducto: (id: string, datos: Record<string, unknown>) =>
     api.patch<{ ok: true }>(`/productos/${id}`, datos),
   borrarProducto: (id: string) => api.delete<{ ok: true }>(`/productos/${id}`),
+  ofertas: () => api.get<{ ofertas: OfertaApi[] }>('/mi-comercio/ofertas'),
+  crearOferta: (datos: NuevaOferta) =>
+    api.post<{ id: string; precioLista: number; precioFinal: number }>(
+      '/mi-comercio/ofertas',
+      datos as unknown as Record<string, unknown>,
+    ),
+  borrarOferta: (id: string) => api.delete<{ ok: true }>(`/mi-comercio/ofertas/${id}`),
+  activarOferta: (id: string, activa: boolean) =>
+    api.patch<{ ok: true }>(`/mi-comercio/ofertas/${id}`, { activa }),
 };
 
 export interface PedidoComercioApi {

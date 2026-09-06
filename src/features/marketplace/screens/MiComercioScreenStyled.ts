@@ -194,3 +194,75 @@ export const MapaCaja = styled.div`
     height: 24rem;
   }
 `;
+
+// ── Ofertas del comercio ──
+
+export const OfertaCabecera = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  margin-bottom: 0.35rem;
+
+  > strong {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+    font-size: ${({ theme }) => theme.typography.size.sm};
+    overflow-wrap: anywhere;
+  }
+`;
+
+export const OfertaTipoChip = styled.span`
+  flex: 0 0 auto;
+  padding: 0.15rem ${({ theme }) => theme.spacing[2]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.primarySoft};
+  color: ${({ theme }) => theme.color.primary};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  white-space: nowrap;
+
+  /* Una oferta apagada se ve apagada: si no, el comercio cree que está
+     publicada y no entiende por qué nadie la usa. */
+  &[data-apagada='true'] {
+    background: ${({ theme }) => theme.color.surfaceMuted};
+    color: ${({ theme }) => theme.color.textMuted};
+  }
+`;
+
+export const OfertaSello = styled.span`
+  flex: 0 0 auto;
+  padding: 0.15rem ${({ theme }) => theme.spacing[2]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.brand};
+  color: ${({ theme }) => theme.color.onPrimary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+`;
+
+export const OfertaPrecios = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: ${({ theme }) => theme.spacing[2]};
+  flex-wrap: wrap;
+
+  > s {
+    color: ${({ theme }) => theme.color.textMuted};
+    font-size: ${({ theme }) => theme.typography.size.xs};
+  }
+
+  > strong {
+    color: ${({ theme }) => theme.color.primary};
+    font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+    font-size: ${({ theme }) => theme.typography.size.base};
+  }
+`;
+
+export const OfertaDetalle = styled.p`
+  margin: 0.2rem 0 0;
+  color: ${({ theme }) => theme.color.textSoft};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+`;

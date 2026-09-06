@@ -1,9 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { MessageSquare, Pencil, Plus, PackageSearch, Store, Truck, X } from 'lucide-react';
+import {
+  BadgePercent,
+  MessageSquare,
+  Pencil,
+  Plus,
+  PackageSearch,
+  Store,
+  ToggleLeft,
+  ToggleRight,
+  Truck,
+  X,
+} from 'lucide-react';
 
 import {
   type ComercioApi,
   type EnvioApi,
+  type NuevaOferta,
+  type OfertaApi,
   type PedidoComercioApi,
   type ProductoApi,
   miComercioApi,
@@ -18,6 +31,7 @@ import { ChatPedidoDialog } from '../components/ChatPedidoDialog';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { EnviosMapa } from '../components/EnviosMapa';
+import { OfertaDialog } from '../components/OfertaDialog';
 import { ProductoDialog } from '../components/ProductoDialog';
 import { SectionHeading } from '../components/SectionHeading';
 import { Avatar } from '@shared/components/Media';
@@ -32,6 +46,11 @@ import {
   EstadoChip,
   MapaCaja,
   NuevoProductoBoton,
+  OfertaCabecera,
+  OfertaDetalle,
+  OfertaPrecios,
+  OfertaSello,
+  OfertaTipoChip,
   ProductoAcciones,
   ProductoBotonIcono,
   ProductoFila,
@@ -51,10 +70,11 @@ import {
  * y contestar un mensaje sería incómodo.
  */
 
-type Seccion = 'productos' | 'pedidos' | 'chats' | 'envios';
+type Seccion = 'productos' | 'ofertas' | 'pedidos' | 'chats' | 'envios';
 
 const SECCIONES: Array<{ id: Seccion; nombre: string }> = [
   { id: 'productos', nombre: 'Productos' },
+  { id: 'ofertas', nombre: 'Ofertas' },
   { id: 'pedidos', nombre: 'Pedidos' },
   { id: 'chats', nombre: 'Chats' },
   { id: 'envios', nombre: 'Envíos' },
@@ -62,6 +82,29 @@ const SECCIONES: Array<{ id: Seccion; nombre: string }> = [
 
 /* Cada cuánto se vuelven a pedir los datos que cambian solos. */
 const REFRESCO_MS = 12_000;
+
+const TIPO_NOMBRE: Record<string, string> = {
+  descuento: 'Descuento',
+  combo: 'Combo',
+  cantidad: 'Por cantidad',
+};
+
+/** Una línea que diga en criollo qué hay que llevar para que la oferta valga. */
+function describirOferta(oferta: OfertaApi) {
+  const nombres = oferta.productos.map((fila) => fila.nombre);
+
+  if (oferta.tipo === 'cantidad') {
+    return `Llevando ${oferta.cantidad} unidades de ${nombres[0] ?? 'ese producto'}.`;
+  }
+
+  if (oferta.tipo === 'combo') {
+    return oferta.productos
+      .map((fila) => (fila.unidades > 1 ? `${fila.unidades} × ${fila.nombre}` : fila.nombre))
+      .join(' + ');
+  }
+
+  return `${oferta.porcentaje}% menos en ${nombres[0] ?? 'ese producto'}.`;
+}
 
 const ESTADO_NOMBRE: Record<string, string> = {
   proceso: 'En proceso',
@@ -103,9 +146,41 @@ export function MiComercioScreen() {
   const [envios, setEnvios] = useState<EnvioApi[]>([]);
   const [chat, setChat] = useState<PedidoComercioApi | null>(null);
 
+  const [ofertas, setOfertas] = useState<OfertaApi[]>([]);
+  const [ofertaAbierta, setOfertaAbierta] = useState(false);
+  const [ofertaPorBorrar, setOfertaPorBorrar] = useState<OfertaApi | null>(null);
+
   const [dialogoAbierto, setDialogoAbierto] = useState(false);
   const [editando, setEditando] = useState<ProductoApi | null>(null);
   const [porBorrar, setPorBorrar] = useState<ProductoApi | null>(null);
+
+  const crearOferta = async (datos: NuevaOferta) => {
+    await miComercioApi.crearOferta(datos);
+
+    const { ofertas: filas } = await miComercioApi.ofertas();
+
+    setOfertas(filas);
+  };
+
+  const alternarOferta = async (oferta: OfertaApi) => {
+    /* Se apaga en pantalla antes de que conteste el servidor: es un
+       interruptor, y esperar medio segundo lo hace sentir roto. */
+    setOfertas((previas) =>
+      previas.map((fila) =>
+        fila.id === oferta.id ? { ...fila, activa: !fila.activa } : fila,
+      ),
+    );
+
+    try {
+      await miComercioApi.activarOferta(oferta.id, !oferta.activa);
+    } catch {
+      setOfertas((previas) =>
+        previas.map((fila) =>
+          fila.id === oferta.id ? { ...fila, activa: oferta.activa } : fila,
+        ),
+      );
+    }
+  };
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -116,6 +191,16 @@ export function MiComercioScreen() {
       setComercio(datos.comercio);
       setProductos(datos.productos);
       setError(null);
+
+      /* Las ofertas se piden aparte y sin cortar la pantalla si fallan: el
+         panel sirve igual para cargar productos y despachar pedidos. */
+      try {
+        const { ofertas: filas } = await miComercioApi.ofertas();
+
+        setOfertas(filas);
+      } catch {
+        setOfertas([]);
+      }
     } catch {
       setError('No pudimos cargar tu comercio.');
     } finally {
@@ -320,6 +405,84 @@ export function MiComercioScreen() {
               </>
             ) : null}
 
+            {comercio && seccion === 'ofertas' ? (
+              <>
+                <SectionHeading
+                  title="Ofertas"
+                  chip={`${ofertas.length}`}
+                  subtitle="Promociones que ve el cliente en tu comercio."
+                />
+
+                <NuevoProductoBoton type="button" onClick={() => setOfertaAbierta(true)}>
+                  <Plus size={18} aria-hidden="true" />
+                  Crear nueva oferta
+                </NuevoProductoBoton>
+
+                {ofertas.length === 0 && !cargando ? (
+                  <EmptyState
+                    icon={BadgePercent}
+                    title="Sin ofertas"
+                    text="Armá un descuento, un combo o una promo por cantidad."
+                    dashed
+                  />
+                ) : null}
+
+                {ofertas.map((oferta) => (
+                  <Card key={oferta.id}>
+                    <CardPad>
+                      <ProductoFila>
+                        <ProductoInfo>
+                          <OfertaCabecera>
+                            <strong>{oferta.titulo}</strong>
+                            {oferta.porcentaje ? (
+                              <OfertaSello>-{oferta.porcentaje}%</OfertaSello>
+                            ) : null}
+                            <OfertaTipoChip data-apagada={!oferta.activa}>
+                              {oferta.activa ? TIPO_NOMBRE[oferta.tipo] : 'Apagada'}
+                            </OfertaTipoChip>
+                          </OfertaCabecera>
+
+                          <OfertaPrecios>
+                            <s>{formatMoney(oferta.precioLista)}</s>
+                            <strong>{formatMoney(oferta.precioFinal)}</strong>
+                          </OfertaPrecios>
+
+                          <OfertaDetalle>{describirOferta(oferta)}</OfertaDetalle>
+                        </ProductoInfo>
+
+                        <ProductoAcciones>
+                          <ProductoBotonIcono
+                            type="button"
+                            onClick={() => void alternarOferta(oferta)}
+                            aria-label={
+                              oferta.activa
+                                ? `Apagar ${oferta.titulo}`
+                                : `Encender ${oferta.titulo}`
+                            }
+                          >
+                            {oferta.activa ? (
+                              <ToggleRight size={17} aria-hidden="true" />
+                            ) : (
+                              <ToggleLeft size={17} aria-hidden="true" />
+                            )}
+                          </ProductoBotonIcono>
+
+                          <ProductoBotonIcono
+                            type="button"
+                            data-tono="danger"
+                            onClick={() => setOfertaPorBorrar(oferta)}
+                            aria-label={`Borrar ${oferta.titulo}`}
+                          >
+                            <X size={15} aria-hidden="true" />
+                          </ProductoBotonIcono>
+                        </ProductoAcciones>
+                      </ProductoFila>
+                    </CardPad>
+                  </Card>
+                ))}
+              </>
+            ) : null}
+
             {comercio && seccion === 'pedidos' ? (
               <>
                 <SectionHeading
@@ -458,6 +621,32 @@ export function MiComercioScreen() {
           </SectionStack>
         </SectionInner>
       </CompactSection>
+
+      <OfertaDialog
+        open={ofertaAbierta}
+        productos={productos}
+        onClose={() => setOfertaAbierta(false)}
+        onGuardar={crearOferta}
+      />
+
+      <ConfirmDialog
+        open={ofertaPorBorrar !== null}
+        title="Borrar la oferta"
+        text={`"${ofertaPorBorrar?.titulo ?? ''}" deja de estar disponible para los clientes.`}
+        confirmLabel="Borrar"
+        onCancel={() => setOfertaPorBorrar(null)}
+        onConfirm={async () => {
+          if (!ofertaPorBorrar) {
+            return;
+          }
+
+          await miComercioApi.borrarOferta(ofertaPorBorrar.id);
+          setOfertas((previas) =>
+            previas.filter((fila) => fila.id !== ofertaPorBorrar.id),
+          );
+          setOfertaPorBorrar(null);
+        }}
+      />
 
       <ChatPedidoDialog
         open={chat !== null}
