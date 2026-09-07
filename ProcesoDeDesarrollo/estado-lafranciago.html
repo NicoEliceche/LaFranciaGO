@@ -1,0 +1,891 @@
+<meta charset="utf-8">
+<title>Estado de LaFranciaGO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+
+<style>
+  /* Paleta y tipografías del propio proyecto: este informe tiene que
+     parecerse a la app de la que habla. */
+  :root {
+    --marca: #0047E7;
+    --marca-suave: #EAF1FF;
+    --fondo: #F5F7FB;
+    --fondo-alt: #EEF3FA;
+    --superficie: #FFFFFF;
+    --borde: #D7E0ED;
+    --borde-fuerte: #B8C3D8;
+    --texto: #0B1020;
+    --texto-medio: #465067;
+    --texto-suave: #6B7280;
+    --listo: #0F9D58;
+    --listo-fondo: #E6F4EC;
+    --parcial: #B45309;
+    --parcial-fondo: #FDF0DC;
+    --falta: #B91C1C;
+    --falta-fondo: #FCEAEA;
+    --sombra: 0 1px 2px rgba(5, 8, 22, 0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --marca: #5B8CFF;
+      --marca-suave: #16213F;
+      --fondo: #050816;
+      --fondo-alt: #0B1020;
+      --superficie: #0F1730;
+      --borde: #1E2A47;
+      --borde-fuerte: #2C3A5C;
+      --texto: #F3F6FC;
+      --texto-medio: #A8B4CC;
+      --texto-suave: #8492AD;
+      --listo: #34D399;
+      --listo-fondo: #10281F;
+      --parcial: #FBBF24;
+      --parcial-fondo: #2A2010;
+      --falta: #F87171;
+      --falta-fondo: #2A1315;
+      --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --marca: #5B8CFF;
+    --marca-suave: #16213F;
+    --fondo: #050816;
+    --fondo-alt: #0B1020;
+    --superficie: #0F1730;
+    --borde: #1E2A47;
+    --borde-fuerte: #2C3A5C;
+    --texto: #F3F6FC;
+    --texto-medio: #A8B4CC;
+    --texto-suave: #8492AD;
+    --listo: #34D399;
+    --listo-fondo: #10281F;
+    --parcial: #FBBF24;
+    --parcial-fondo: #2A2010;
+    --falta: #F87171;
+    --falta-fondo: #2A1315;
+    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .hoja {
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 5rem;
+  }
+
+  /* ── Encabezado ── */
+
+  .portada {
+    display: grid;
+    gap: 0.5rem;
+    padding-bottom: 1.75rem;
+    border-bottom: 2px solid var(--texto);
+  }
+
+  .marca {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--marca);
+  }
+
+  h1 {
+    margin: 0;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: clamp(1.9rem, 5vw, 2.6rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .bajada {
+    margin: 0;
+    max-width: 46rem;
+    color: var(--texto-medio);
+    font-size: 1.05rem;
+  }
+
+  .fecha {
+    color: var(--texto-suave);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Resumen de arriba ── */
+
+  .cifras {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  .cifra {
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--borde);
+    background: var(--superficie);
+    box-shadow: var(--sombra);
+  }
+
+  .cifra b {
+    display: block;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 1.75rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cifra span {
+    display: block;
+    margin-top: 0.35rem;
+    color: var(--texto-suave);
+    font-size: 0.8rem;
+  }
+
+  /* ── Secciones ── */
+
+  h2 {
+    margin: 3.5rem 0 0.25rem;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    margin: 2rem 0 0.75rem;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .rol-nota {
+    margin: 0 0 1.25rem;
+    color: var(--texto-medio);
+    max-width: 46rem;
+  }
+
+  /* La lista de lo que hace cada rol, en lenguaje de todos los días.
+
+     El punto va dibujado con ::before posicionado y no como columna de una
+     grilla: cada ítem mezcla un <b> con texto suelto, y en grilla ese texto
+     se iba a una fila propia de 18px de ancho, quedando una palabra por
+     línea. Con el punto fuera del flujo, el texto es un párrafo normal. */
+  .hace {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hace li {
+    position: relative;
+    padding-left: 1.35rem;
+    color: var(--texto-medio);
+  }
+
+  .hace li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.6rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--listo);
+  }
+
+  .hace b { color: var(--texto); }
+
+  /* ── Tablas de funcionalidades ── */
+
+  .tabla-caja {
+    overflow-x: auto;
+    border: 1px solid var(--borde);
+    border-radius: 0.75rem;
+    background: var(--superficie);
+    box-shadow: var(--sombra);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  th {
+    padding: 0.7rem 1rem;
+    text-align: left;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+    border-bottom: 1px solid var(--borde);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--borde);
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: 0; }
+
+  td:first-child {
+    font-weight: 600;
+    min-width: 13rem;
+  }
+
+  td.detalle {
+    color: var(--texto-medio);
+    font-size: 0.86rem;
+  }
+
+  td.num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    color: var(--texto-suave);
+    font-size: 0.82rem;
+  }
+
+  .estado {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .estado.listo { background: var(--listo-fondo); color: var(--listo); }
+  .estado.parcial { background: var(--parcial-fondo); color: var(--parcial); }
+  .estado.falta { background: var(--falta-fondo); color: var(--falta); }
+
+  /* ── Bloques de pendientes ── */
+
+  .pendientes {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding: 1rem 1.25rem;
+    border-left: 3px solid var(--marca);
+    background: var(--fondo-alt);
+    border-radius: 0 0.5rem 0.5rem 0;
+  }
+
+  .pendientes h4 {
+    margin: 0;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+  }
+
+  .pendientes ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .pendientes li { color: var(--texto-medio); }
+  .pendientes strong { color: var(--texto); }
+
+  /* ── Cierre ── */
+
+  .cierre {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--texto);
+  }
+
+  .nota {
+    margin-top: 1.5rem;
+    padding: 1rem 1.25rem;
+    border: 1px dashed var(--borde-fuerte);
+    border-radius: 0.6rem;
+    color: var(--texto-medio);
+    font-size: 0.9rem;
+  }
+
+  .nota strong { color: var(--texto); }
+
+  a { color: var(--marca); }
+
+  @media (max-width: 40rem) {
+    td:first-child { min-width: 10rem; }
+    .hoja { padding-top: 1.75rem; }
+  }
+</style>
+
+<div class="hoja">
+
+  <header class="portada">
+    <div class="marca">LaFranciaGO · Estado del desarrollo</div>
+    <h1>Qué tiene la aplicación hoy</h1>
+    <p class="bajada">
+      Todo lo que puede hacer cada tipo de cuenta, explicado en criollo, más el
+      listado completo de funcionalidades para poder cotizar el trabajo.
+    </p>
+    <div class="fecha">Actualizado el 7 de septiembre de 2026</div>
+  </header>
+
+  <section class="cifras" aria-label="Resumen">
+    <div class="cifra"><b>4</b><span>tipos de cuenta funcionando</span></div>
+    <div class="cifra"><b>62</b><span>funcionalidades entregadas</span></div>
+    <div class="cifra"><b>24</b><span>pantallas</span></div>
+    <div class="cifra"><b>39</b><span>servicios en el servidor</span></div>
+    <div class="cifra"><b>26</b><span>tablas de base de datos</span></div>
+  </section>
+
+  <!-- ══════════ PARTE 1: QUÉ HACE CADA UNO ══════════ -->
+
+  <h2>Lo que puede hacer cada uno</h2>
+  <p class="rol-nota">
+    Esta parte está contada como se lo explicarías a un vecino: qué ve y qué
+    puede hacer cada persona que entra a la aplicación.
+  </p>
+
+  <h3>El vecino que compra</h3>
+  <ul class="hace">
+    <li><b>Entra con su correo o con Google</b>, y si se olvida la contraseña la recupera por mail.</li>
+    <li><b>Recorre los comercios del pueblo</b> por rubro, con buscador y favoritos.</li>
+    <li><b>Ve los precios reales</b> y las ofertas: descuentos, combos y promociones por cantidad.</li>
+    <li><b>Arma el carrito</b> pidiendo como se pide de verdad: medio kilo de pan, una docena de facturas, dos gaseosas.</li>
+    <li><b>Elige cómo quiere que le llegue</b>: como venga, todo junto en auto, o fraccionado en varias entregas para recibir antes. Ve cuánto sale cada opción antes de decidir.</li>
+    <li><b>Paga en la aplicación</b> con tarjeta o dinero en cuenta, o en efectivo al recibir.</li>
+    <li><b>Sigue el pedido en un mapa</b>: ve dónde está el repartidor, en vivo, y en qué punto va el comercio.</li>
+    <li><b>Recibe avisos</b> cuando lo están preparando, cuando está listo, cuando sale y cuando llega.</li>
+    <li><b>Habla con el comercio</b> por un chat adentro de la aplicación.</li>
+    <li><b>Pide mandados</b>: encargos que no son de un comercio, como buscar una garrafa.</li>
+  </ul>
+
+  <h3>El comercio</h3>
+  <ul class="hace">
+    <li><b>Se da de alta</b> con sus datos y espera la aprobación.</li>
+    <li><b>Carga sus productos</b> con hasta cinco fotos y un video cada uno, y elige cómo se venden: por kilo, por medio kilo, por docena o por unidad.</li>
+    <li><b>Arma promociones</b> de tres tipos, y las ve como las va a ver el cliente antes de publicarlas. Las puede apagar y encender cuando quiera.</li>
+    <li><b>Recibe los pedidos</b> con un aviso apenas entran.</li>
+    <li><b>Avisa en qué punto está</b>: "empecé a prepararlo" y "está listo", y el cliente se entera al instante.</li>
+    <li><b>Ve cómo viene su negocio</b>: ventas de hoy y de la semana, ticket promedio y lo que más se vendió.</li>
+    <li><b>Habla con sus clientes</b> por chat.</li>
+    <li><b>Ve en un mapa</b> por dónde va cada repartidor que lleva sus pedidos.</li>
+    <li><b>Decide si un pedido se puede partir</b> cuando un repartidor lo pide y la aplicación calculó que sí le entraba.</li>
+  </ul>
+
+  <h3>El delivery</h3>
+  <ul class="hace">
+    <li><b>Se registra</b> y espera la aprobación.</li>
+    <li><b>Dice si trabaja en moto o en auto</b>, y la aplicación le muestra qué pedidos le entran y cuáles no.</li>
+    <li><b>Ve los pedidos ordenados por cercanía</b> a donde está parado.</li>
+    <li><b>Mira el detalle completo antes de aceptar</b>: qué lleva, a dónde va, cuánto ocupa y cómo paga el cliente.</li>
+    <li><b>Marca cada paso</b>: retiré, salí, entregué.</li>
+    <li><b>Puede pedir partir un pedido</b> si no le entra. Si la aplicación calculó que sí, lo decide el comercio.</li>
+    <li><b>Habla con el cliente</b> por chat desde que toma el pedido.</li>
+    <li><b>Comparte su ubicación</b> mientras trabaja, que es lo que alimenta el mapa del cliente y del comercio.</li>
+  </ul>
+
+  <h3>El fletero</h3>
+  <ul class="hace">
+    <li><b>Usa el mismo panel que el delivery</b>, porque el trabajo es el mismo. Cambia el vocabulario: dice "flete" donde el otro dice "pedido".</li>
+    <li><b>Declara si tiene camioneta o camión</b>, y ve qué le entra según eso.</li>
+    <li><b>Toma, sigue y entrega</b> con los mismos pasos.</li>
+  </ul>
+
+  <h3>Administración (Diego)</h3>
+  <ul class="hace">
+    <li><b>Aprueba o rechaza</b> a los comercios, delivery y fleteros que se postulan, y les puede pedir cambios.</li>
+    <li><b>Ve los números de la plataforma</b>: pedidos, ventas, comisión ganada y ticket promedio, comparados contra el período anterior.</li>
+    <li><b>Ve qué necesita atención</b>: postulaciones sin revisar, pedidos que llevan más de dos horas sin repartidor, pedidos de fraccionamiento sin resolver.</li>
+    <li><b>Ve el ranking de comercios</b>: cuánto vendió cada uno en el último mes.</li>
+    <li><b>Destaca o suspende un comercio</b> desde el mismo panel.</li>
+  </ul>
+
+  <!-- ══════════ PARTE 2: PARA COTIZAR ══════════ -->
+
+  <h2>Listado para cotizar</h2>
+  <p class="rol-nota">
+    Todo lo desarrollado, por tipo de cuenta. La columna de la derecha indica
+    cuántas piezas de software tiene cada funcionalidad, como referencia de
+    tamaño: una pieza es una pantalla, un servicio del servidor o una tabla.
+  </p>
+
+  <h3>Base común</h3>
+  <div class="tabla-caja">
+    <table>
+      <thead>
+        <tr><th scope="col">Funcionalidad</th><th scope="col">Estado</th><th scope="col">Qué incluye</th><th scope="col">Piezas</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Registro e ingreso</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Correo y contraseña, e ingreso con Google. Contraseñas cifradas, límite de intentos, sesión segura.</td>
+          <td class="num">6</td>
+        </tr>
+        <tr>
+          <td>Recuperar contraseña</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Enlace por correo que vale una hora y se usa una sola vez. Al cambiarla se cierran todas las sesiones abiertas.</td>
+          <td class="num">4</td>
+        </tr>
+        <tr>
+          <td>Varios roles en una cuenta</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Una persona puede ser comercio y cliente a la vez, y cambiar de uno a otro sin volver a entrar.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Notificaciones</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Avisos de pedidos, envíos, pagos y postulaciones, con contador de no leídos.</td>
+          <td class="num">4</td>
+        </tr>
+        <tr>
+          <td>Chat interno</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Entre cliente, comercio y repartidor sobre cada pedido. La venta no se va a WhatsApp.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Direcciones guardadas</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Con mapa para marcar el punto exacto y botón de "usar mi ubicación".</td>
+          <td class="num">4</td>
+        </tr>
+        <tr>
+          <td>Diseño para celular y computadora</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Todas las pantallas funcionan en las dos, con modo claro y oscuro.</td>
+          <td class="num">24</td>
+        </tr>
+        <tr>
+          <td>Se instala como aplicación</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Se agrega a la pantalla de inicio del teléfono sin pasar por las tiendas.</td>
+          <td class="num">2</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Usuario final</h3>
+  <div class="tabla-caja">
+    <table>
+      <thead>
+        <tr><th scope="col">Funcionalidad</th><th scope="col">Estado</th><th scope="col">Qué incluye</th><th scope="col">Piezas</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Portada con ofertas</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Categorías, comercios destacados y las promociones vigentes de todos los negocios.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Catálogo por comercio</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Productos agrupados por sección, con su unidad de venta y las ofertas marcadas.</td>
+          <td class="num">4</td>
+        </tr>
+        <tr>
+          <td>Buscador</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Por comercio, rubro y producto, con orden por cercanía y filtros.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Detalle de producto</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Con comparación de precio del mismo producto en otros comercios del pueblo.</td>
+          <td class="num">2</td>
+        </tr>
+        <tr>
+          <td>Favoritos</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Corazón en cada comercio y pantalla propia con los guardados.</td>
+          <td class="num">4</td>
+        </tr>
+        <tr>
+          <td>Carrito y unidades de venta</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Cantidades como se piden en el pueblo: por kilo, medio kilo, docena o unidad, según el rubro.</td>
+          <td class="num">4</td>
+        </tr>
+        <tr>
+          <td>Elegir cómo llega</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Como venga, todo junto en auto, o fraccionado. Cada opción con su precio a la vista.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Pago con Mercado Pago</td>
+          <td><span class="estado parcial">Falta la clave</span></td>
+          <td class="detalle">El circuito está hecho y probado. Falta cargar las credenciales de la cuenta.</td>
+          <td class="num">6</td>
+        </tr>
+        <tr>
+          <td>Seguimiento en vivo</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Mapa con el repartidor moviéndose, más los pasos del pedido de punta a punta.</td>
+          <td class="num">4</td>
+        </tr>
+        <tr>
+          <td>Historial de pedidos</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Con filtros por estado y actualización automática.</td>
+          <td class="num">2</td>
+        </tr>
+        <tr>
+          <td>Mandados</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Encargos sin comercio detrás, con chat para coordinar.</td>
+          <td class="num">5</td>
+        </tr>
+        <tr>
+          <td>Reseñas y puntaje</td>
+          <td><span class="estado falta">Falta</span></td>
+          <td class="detalle">Las tarjetas tienen lugar para la estrella, pero nadie puede puntuar todavía.</td>
+          <td class="num">—</td>
+        </tr>
+        <tr>
+          <td>Cancelar un pedido</td>
+          <td><span class="estado falta">Falta</span></td>
+          <td class="detalle">Una vez confirmado, el cliente no tiene cómo darlo de baja.</td>
+          <td class="num">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Comercio</h3>
+  <div class="tabla-caja">
+    <table>
+      <thead>
+        <tr><th scope="col">Funcionalidad</th><th scope="col">Estado</th><th scope="col">Qué incluye</th><th scope="col">Piezas</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Alta y aprobación</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Formulario con CUIT con formato automático, buscador sobre 64 rubros argentinos y dirección en mapa.</td>
+          <td class="num">5</td>
+        </tr>
+        <tr>
+          <td>Resumen del negocio</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Ventas de hoy y de la semana comparadas con el período anterior, ticket promedio y ranking de productos.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Gestión de productos</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Alta, edición y baja, con hasta 5 fotos y 1 video por producto, comprimidos automáticamente.</td>
+          <td class="num">6</td>
+        </tr>
+        <tr>
+          <td>Promociones</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Descuento, combo y promo por cantidad, con vista previa y encendido/apagado. Se cobran solas.</td>
+          <td class="num">7</td>
+        </tr>
+        <tr>
+          <td>Pedidos entrantes</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Con aviso al entrar y actualización automática.</td>
+          <td class="num">2</td>
+        </tr>
+        <tr>
+          <td>Estados de preparación</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">"Empecé a prepararlo" y "está listo", con aviso al cliente y al repartidor.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Chats con clientes</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Lista de conversaciones con contador de mensajes sin leer.</td>
+          <td class="num">2</td>
+        </tr>
+        <tr>
+          <td>Mapa de envíos</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Dónde va cada repartidor con sus pedidos, actualizado solo.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Resolver fraccionamientos</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Aprobar o rechazar cuando un repartidor pide partir un pedido que sí le entraba.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Cobrar en su cuenta</td>
+          <td><span class="estado parcial">Falta la clave</span></td>
+          <td class="detalle">Conecta su Mercado Pago y cobra directo, con la comisión retenida automáticamente.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Editar sus datos</td>
+          <td><span class="estado falta">Falta</span></td>
+          <td class="detalle">Para cambiar dirección, teléfono o logo hay que tocar la base de datos.</td>
+          <td class="num">—</td>
+        </tr>
+        <tr>
+          <td>Horarios de atención</td>
+          <td><span class="estado falta">Falta</span></td>
+          <td class="detalle">El horario es un texto libre: la aplicación no sabe si está abierto ahora.</td>
+          <td class="num">—</td>
+        </tr>
+        <tr>
+          <td>Control de stock</td>
+          <td><span class="estado parcial">A medias</span></td>
+          <td class="detalle">El stock se carga pero no baja solo al venderse.</td>
+          <td class="num">1</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Delivery y flete</h3>
+  <div class="tabla-caja">
+    <table>
+      <thead>
+        <tr><th scope="col">Funcionalidad</th><th scope="col">Estado</th><th scope="col">Qué incluye</th><th scope="col">Piezas</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Alta y aprobación</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Mismo circuito para delivery y flete, revisado por administración.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Tipo de vehículo</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Moto o auto para delivery; camioneta o camión para fletes. Decide qué pedidos puede tomar.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Cálculo de capacidad</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Cada producto declara cuánto ocupa y la aplicación calcula si el pedido entra en el vehículo. La medida de la moto sale de las cajas de reparto reales.</td>
+          <td class="num">4</td>
+        </tr>
+        <tr>
+          <td>Pedidos por cercanía</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Ordenados según dónde está parado, calculado en el servidor.</td>
+          <td class="num">2</td>
+        </tr>
+        <tr>
+          <td>Detalle antes de tomar</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Qué lleva, a dónde va, cuánto ocupa y cómo paga el cliente.</td>
+          <td class="num">2</td>
+        </tr>
+        <tr>
+          <td>Fraccionar pedidos</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Si no le entra se parte solo. Si la aplicación calculó que sí, lo decide el comercio: evita que se fraccione de más para cobrar dos veces.</td>
+          <td class="num">5</td>
+        </tr>
+        <tr>
+          <td>Tomar y entregar</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Retiré, salí, entregué. Al entregar se cierra el pedido y se le avisa al cliente.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Compartir ubicación</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Cada 45 segundos mientras trabaja. Alimenta el mapa del cliente y del comercio.</td>
+          <td class="num">2</td>
+        </tr>
+        <tr>
+          <td>Cuánto ganó</td>
+          <td><span class="estado falta">Falta</span></td>
+          <td class="detalle">No hay pantalla de ganancias ni historial de lo entregado.</td>
+          <td class="num">—</td>
+        </tr>
+        <tr>
+          <td>Cola separada de fletes</td>
+          <td><span class="estado parcial">A medias</span></td>
+          <td class="detalle">El fletero ve la misma lista que el delivery: una mudanza aparece entre pedidos de almacén.</td>
+          <td class="num">1</td>
+        </tr>
+        <tr>
+          <td>Presupuestar un flete</td>
+          <td><span class="estado falta">Falta</span></td>
+          <td class="detalle">Un flete se cotiza según volumen y distancia, no tiene precio fijo.</td>
+          <td class="num">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Administración</h3>
+  <div class="tabla-caja">
+    <table>
+      <thead>
+        <tr><th scope="col">Funcionalidad</th><th scope="col">Estado</th><th scope="col">Qué incluye</th><th scope="col">Piezas</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Revisar postulaciones</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Aprobar, rechazar o pedir cambios, con aviso automático a quien se postuló.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Números de la plataforma</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Pedidos, ventas, comisión ganada y ticket promedio, comparados con el período anterior.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Lo que necesita atención</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Postulaciones sin revisar, pedidos trabados hace más de dos horas, fraccionamientos pendientes.</td>
+          <td class="num">1</td>
+        </tr>
+        <tr>
+          <td>Ranking de comercios</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Cuánto vendió cada uno en los últimos 30 días.</td>
+          <td class="num">1</td>
+        </tr>
+        <tr>
+          <td>Destacar y suspender</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Un comercio destacado sube en las búsquedas; uno suspendido deja de aparecer pero conserva su historial.</td>
+          <td class="num">2</td>
+        </tr>
+        <tr>
+          <td>Ver todos los pedidos</td>
+          <td><span class="estado falta">Falta</span></td>
+          <td class="detalle">Para poder responder cuando alguien reclama.</td>
+          <td class="num">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Seguridad e infraestructura</h3>
+  <div class="tabla-caja">
+    <table>
+      <thead>
+        <tr><th scope="col">Funcionalidad</th><th scope="col">Estado</th><th scope="col">Qué incluye</th><th scope="col">Piezas</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Precios calculados en el servidor</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Lo que manda el navegador no decide cuánto se cobra. Verificado: enviar un precio falso no cambia el total.</td>
+          <td class="num">2</td>
+        </tr>
+        <tr>
+          <td>Aislamiento entre cuentas</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Nadie ve ni toca los pedidos, productos o chats de otro. Verificado caso por caso.</td>
+          <td class="num">—</td>
+        </tr>
+        <tr>
+          <td>Buenas prácticas de contraseñas</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Cifrado fuerte, validación según recomendaciones internacionales, límite de intentos.</td>
+          <td class="num">3</td>
+        </tr>
+        <tr>
+          <td>Servidor y base de datos</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Sobre Cloudflare: sin demoras de arranque y sin pausas por inactividad. Todo en capa gratuita.</td>
+          <td class="num">39</td>
+        </tr>
+        <tr>
+          <td>Almacenamiento de fotos y videos</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Con compresión automática antes de subir, para no gastar datos del comercio.</td>
+          <td class="num">2</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════ CIERRE ══════════ -->
+
+  <section class="cierre">
+    <h2 style="margin-top:0">Lo que falta</h2>
+
+    <div class="pendientes">
+      <h4>Para poder cobrar</h4>
+      <ul>
+        <li><strong>Cargar las credenciales de Mercado Pago.</strong> Es lo único que separa a los pagos de estar funcionando. El circuito está hecho y probado con datos de prueba.</li>
+      </ul>
+    </div>
+
+    <div class="pendientes">
+      <h4>Lo que más se va a notar</h4>
+      <ul>
+        <li><strong>Editar los datos del comercio.</strong> Es lo primero que va a pedir cualquiera que se dé de alta.</li>
+        <li><strong>Horarios reales.</strong> Hoy todos los comercios figuran abiertos siempre, incluso a las 3 de la mañana.</li>
+        <li><strong>Reseñas.</strong> Es lo que hace que un comercio se destaque por mérito y no sólo por plan pagado.</li>
+        <li><strong>Ganancias del repartidor.</strong> Sin esto no sabe cuánto hizo en la semana ni puede reclamar si algo no cierra.</li>
+      </ul>
+    </div>
+
+    <div class="pendientes">
+      <h4>Ajustes más chicos</h4>
+      <ul>
+        <li><strong>Separar la cola de fletes.</strong> Hoy una mudanza aparece entre los pedidos de almacén.</li>
+        <li><strong>Cancelar un pedido</strong> desde la aplicación, tanto el cliente como el comercio.</li>
+        <li><strong>Descontar el stock</strong> automáticamente al venderse.</li>
+        <li><strong>Ver todos los pedidos</strong> desde administración, para responder reclamos.</li>
+      </ul>
+    </div>
+
+    <p class="nota">
+      <strong>Sobre el reparto del pago.</strong> Mercado Pago permite dividir un cobro
+      entre más de dos cuentas, pero sólo para cuentas con acuerdo comercial: hay que
+      pedirlo. Con lo disponible para cualquiera, cada comercio cobra lo suyo y una
+      comisión va a la cuenta de la plataforma. Por eso cada pedido guarda por separado
+      cuánto corresponde al envío: cuando se defina cómo se le paga al repartidor, el
+      dato ya está listo.
+    </p>
+
+    <p class="nota">
+      <strong>Sobre el hosting.</strong> Hoy todo corre en capas gratuitas: el sitio en
+      GitHub, y el servidor, la base de datos y los archivos en Cloudflare. No hay costo
+      mensual mientras el volumen sea el de un pueblo. Lo único que se paga si se quiere
+      es el dominio propio.
+    </p>
+  </section>
+
+</div>
