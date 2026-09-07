@@ -6,7 +6,9 @@ export type SortMode = 'relevancia' | 'cercania' | 'precio' | 'puntuacion' | 'en
  * negocios como los productos, así el mismo criterio sirve para ambos.
  */
 export interface RankableStore {
-  distanceKm: number;
+  /* Puede faltar: sin ubicación del cliente no hay distancia que calcular.
+     El motor la trata como "lejos" en vez de romper el orden con NaN. */
+  distanceKm?: number;
   openNow: boolean;
   /** Plan pagado: mejora la posición sólo dentro del radio cercano. */
   premium?: boolean;

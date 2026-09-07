@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 
 import { maxStepIndex, stepFactor } from '@core/data/saleUnits';
 
-import { cartItems as initialItems } from './marketplaceContent';
+import type { SaleUnitId } from '@shared/types/saleUnit.types';
+
 import type { CartItem } from './marketplace.types';
 
 /**
@@ -16,7 +17,10 @@ import type { CartItem } from './marketplace.types';
  * medio armar pertenece a esa visita. Cerrar el navegador y volver una semana
  * después con productos viejos adentro confunde más de lo que ayuda.
  *
- * Cuando exista backend, este archivo es el único punto a reemplazar.
+ * Arranca vacío. Antes venía con productos de ejemplo, que servían para ver
+ * la pantalla mientras no había backend; ahora el pedido se crea de verdad y
+ * esos productos no existen en la base: confirmarlos fallaría, y el cliente
+ * vería en su carrito cosas que nunca puso.
  */
 
 const STORAGE_KEY = 'lafranciago:carrito';
@@ -40,15 +44,15 @@ const load = () => {
     const saved = window.sessionStorage.getItem(STORAGE_KEY);
 
     if (!saved) {
-      return [...initialItems];
+      return [];
     }
 
     const parsed = JSON.parse(saved) as unknown;
 
     /* Lo guardado se valida: puede venir de una versión anterior del formato. */
-    return Array.isArray(parsed) ? (parsed as CartItem[]) : [...initialItems];
+    return Array.isArray(parsed) ? (parsed as CartItem[]) : [];
   } catch {
-    return [...initialItems];
+    return [];
   }
 };
 
@@ -58,6 +62,74 @@ const ensureLoaded = () => {
     items = load();
   }
 };
+
+/** Lo que hace falta saber de un producto para ponerlo en el carrito. */
+export type ProductoParaCarrito = {
+  id: string;
+  product: string;
+  store: string;
+  storeId: string;
+  categoryId: string;
+  price: number;
+  saleUnit?: SaleUnitId;
+  available?: boolean;
+  eta?: string;
+};
+
+/**
+ * Suma un producto al carrito.
+ *
+ * Si ya estaba, sube el escalón en lugar de repetir la línea: dos entradas
+ * del mismo producto obligarían al cliente a sumar de cabeza cuánto lleva.
+ *
+ * El escalón se limita a lo que permite la unidad de venta, igual que en el
+ * carrito: no se puede pedir cinco kilos de pan si la escala llega a cuatro.
+ */
+export function addToCart(producto: ProductoParaCarrito, escalones = 1) {
+  ensureLoaded();
+
+  const unidad = producto.saleUnit ?? 'unidad';
+  const tope = maxStepIndex(unidad);
+  const existente = items.find((item) => item.id === producto.id);
+
+  if (existente) {
+    const escalon = Math.min(existente.quantity + escalones, tope);
+
+    items = items.map((item) =>
+      item.id === producto.id
+        ? {
+            ...item,
+            quantity: escalon,
+            subtotal: Math.round(item.price * stepFactor(unidad, escalon)),
+          }
+        : item,
+    );
+  } else {
+    const escalon = Math.min(Math.max(escalones - 1, 0), tope);
+
+    items = [
+      ...items,
+      {
+        id: producto.id,
+        product: producto.product,
+        store: producto.store,
+        storeId: producto.storeId,
+        categoryId: producto.categoryId,
+        price: producto.price,
+        saleUnit: unidad,
+        quantity: escalon,
+        subtotal: Math.round(producto.price * stepFactor(unidad, escalon)),
+        available: producto.available ?? true,
+        eta: producto.eta ?? '15-25 min',
+        statusLabel: producto.available === false ? 'Sin stock' : 'En stock',
+        statusTone: producto.available === false ? 'danger' : 'success',
+      },
+    ];
+  }
+
+  persist();
+  notify();
+}
 
 /** Quita un producto del carrito. */
 export function removeCartItem(id: string) {

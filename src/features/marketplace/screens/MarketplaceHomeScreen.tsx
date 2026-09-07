@@ -12,7 +12,8 @@ import { PromoSplitButton } from '../components/PromoSplitButton';
 import { SearchBar } from '../components/SearchBar';
 import { SectionHeading } from '../components/SectionHeading';
 import { StoreCard } from '../components/StoreCard';
-import { categories, featuredStores, nearbyOffers } from '../../home/homeContent';
+import { categories } from '../../home/homeContent';
+import { useHomeData } from '../useHomeData';
 import { matchesQuery } from '../marketplace.utils';
 import { rankResults } from '@core/data/rankingService';
 import { ScrollRail as HScrollRail } from '@shared/components/ScrollRail';
@@ -43,6 +44,10 @@ export function MarketplaceHomeScreen() {
   const [query, setQuery] = useState('');
   const { sortMode } = useSortPreference();
 
+  /* Comercios y ofertas salen de la base: son los que el comercio administra
+     desde su panel, no una lista escrita en el código. */
+  const { featuredStores, nearbyOffers, cargando } = useHomeData();
+
   const normalizedQuery = query.trim();
   const isSearching = normalizedQuery.length > 0;
 
@@ -68,7 +73,7 @@ export function MarketplaceHomeScreen() {
         ),
         sortMode,
       ),
-    [normalizedQuery, sortMode],
+    [featuredStores, normalizedQuery, sortMode],
   );
 
   const visibleOffers = useMemo(
@@ -77,11 +82,16 @@ export function MarketplaceHomeScreen() {
         nearbyOffers.filter((offer) => matchesQuery(normalizedQuery, offer.product, offer.store)),
         sortMode,
       ),
-    [normalizedQuery, sortMode],
+    [nearbyOffers, normalizedQuery, sortMode],
   );
 
+  /* Mientras cargan los datos no se dice "no hay nada": sería un cartel de
+     medio segundo que contradice lo que aparece justo después. */
   const hasResults =
-    visibleCategories.length > 0 || visibleStores.length > 0 || visibleOffers.length > 0;
+    cargando ||
+    visibleCategories.length > 0 ||
+    visibleStores.length > 0 ||
+    visibleOffers.length > 0;
 
   return (
     <MarketplaceFrame

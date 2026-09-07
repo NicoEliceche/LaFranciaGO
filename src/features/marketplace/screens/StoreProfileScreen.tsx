@@ -23,7 +23,10 @@ import { EmptyState } from '../components/EmptyState';
 import { SectionHeading } from '../components/SectionHeading';
 import { StoreHero } from '../components/StoreHero';
 import { findStoreById, formatDistance, formatMoney } from '../marketplace.utils';
-import { customerOrders, stores } from '../marketplaceContent';
+import { customerOrders } from '../marketplaceContent';
+import { addToCart } from '../cartStore';
+import { useStoreCatalog } from '../useStoreCatalog';
+import { useStores } from '../useStores';
 import {
   AccentBadge,
   Badge,
@@ -916,8 +919,26 @@ const findStoreCatalog = (storeId: string) => storeCatalogs[storeId] ?? storeCat
 export function StoreProfileScreen() {
   const { storeId = '' } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const store = useMemo(() => findStoreById(storeId) ?? stores[0], [storeId]);
-  const fullCatalog = useMemo(() => findStoreCatalog(store.id), [store.id]);
+  const { stores } = useStores();
+  const store = useMemo(
+    () => stores.find((fila) => fila.id === storeId) ?? findStoreById(storeId) ?? stores[0],
+    [storeId, stores],
+  );
+
+  /* El catálogo sale de la base: son los productos que el comercio publicó
+     desde su panel, con las ofertas que tenga vigentes. */
+  const { secciones, cargando: cargandoCatalogo } = useStoreCatalog(storeId);
+
+  const fullCatalog = useMemo(
+    () => ({
+      intro: store?.summary ?? '',
+      /* Si la base todavía no responde, se usa el catálogo de ejemplo: una
+         ficha de comercio vacía no se puede recorrer, y el resto de la
+         pantalla (datos, horarios, contacto) sigue sirviendo igual. */
+      sections: secciones.length > 0 ? secciones : findStoreCatalog(storeId).sections,
+    }),
+    [secciones, store, storeId],
+  );
 
   /* Al venir desde "Mis pedidos" se mira un pedido concreto. */
   const orderId = searchParams.get('pedido');
@@ -1093,8 +1114,35 @@ export function StoreProfileScreen() {
     setSelectedProductId(productId);
   };
 
-  const addToCart = (productId: string) => {
-    updateQuantity(productId, 1);
+  /**
+   * Suma el producto al carrito de verdad.
+   *
+   * Antes esto sólo movía un contador de la pantalla: el botón decía
+   * "Agregado" y el carrito seguía vacío. Se notaba poco porque el carrito
+   * arrancaba con productos de ejemplo; ahora que arranca vacío y el pedido
+   * se crea contra la base, tiene que escribir donde corresponde.
+   */
+  const agregarAlCarrito = (productId: string, escalones = 1) => {
+    const producto = allProducts.find((item) => item.id === productId);
+
+    if (!producto) {
+      return;
+    }
+
+    addToCart(
+      {
+        id: producto.id,
+        product: producto.name,
+        store: store.name,
+        storeId: store.id,
+        categoryId: producto.categoryId,
+        price: producto.price,
+        saleUnit: producto.saleUnit,
+      },
+      escalones,
+    );
+
+    updateQuantity(productId, escalones);
   };
 
   return (
@@ -1193,7 +1241,7 @@ export function StoreProfileScreen() {
                             : product.badge
                         }
                         quantity={quantities[product.id] ?? 0}
-                        onAdd={(units) => updateQuantity(product.id, units)}
+                        onAdd={(units) => agregarAlCarrito(product.id, units)}
                         priority={sectionIndex === 0 && index < 4}
                       />
                     ))}
@@ -1230,7 +1278,7 @@ export function StoreProfileScreen() {
                   categoryId={product.categoryId}
                   badge={product.badge}
                   quantity={quantities[product.id] ?? 0}
-                  onAdd={(units) => updateQuantity(product.id, units)}
+                  onAdd={(units) => agregarAlCarrito(product.id, units)}
                 />
               ))}
             </HScrollRail>

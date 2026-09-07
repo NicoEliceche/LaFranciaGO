@@ -8,7 +8,8 @@ import { EmptyState } from '../components/EmptyState';
 import { SearchBar } from '../components/SearchBar';
 import { SectionHeading } from '../components/SectionHeading';
 import { StoreCard } from '../components/StoreCard';
-import { categories, quickFilters, stores } from '../marketplaceContent';
+import { categories, quickFilters } from '../marketplaceContent';
+import { useStores } from '../useStores';
 import { matchesQuery } from '../marketplace.utils';
 import { SORT_OPTIONS, rankResults } from '@core/data/rankingService';
 import { useSortPreference } from '@shared/hooks/useSortPreference';
@@ -43,6 +44,8 @@ export function StoresDirectoryScreen() {
     [rubroId],
   );
 
+  const { stores, cargando } = useStores();
+
   const filteredStores = useMemo(
     () =>
       rankResults(
@@ -53,7 +56,7 @@ export function StoresDirectoryScreen() {
           ),
         sortMode,
       ),
-    [query, rubro, sortMode],
+    [query, rubro, sortMode, stores],
   );
 
   const clearRubro = () => {
@@ -62,7 +65,9 @@ export function StoresDirectoryScreen() {
     setSearchParams(next, { replace: true });
   };
 
-  const hasResults = filteredStores.length > 0;
+  /* Mientras cargan no se dice "sin resultados": el cartel duraría lo que
+     tarda la respuesta y contradiría lo que aparece después. */
+  const hasResults = cargando || filteredStores.length > 0;
 
   return (
     <MarketplaceFrame

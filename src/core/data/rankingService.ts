@@ -21,7 +21,14 @@ export const PREMIUM_RADIUS_KM = 5;
  */
 const DISTANCE_BUCKET_KM = 0.7;
 
-const bucketOf = (distanceKm: number) => Math.floor(distanceKm / DISTANCE_BUCKET_KM);
+/* Sin distancia conocida, el comercio va a la franja más lejana en lugar de
+   producir NaN: una comparación con NaN devuelve siempre 0 y desordena la
+   lista entera sin que se note. */
+const bucketOf = (distanceKm: number | undefined) =>
+  distanceKm === undefined ? Number.MAX_SAFE_INTEGER : Math.floor(distanceKm / DISTANCE_BUCKET_KM);
+
+/** La distancia para comparar: desconocida cuenta como lejos. */
+const distanciaDe = (store: RankableStore) => store.distanceKm ?? Number.MAX_SAFE_INTEGER;
 
 /**
  * Un Premium sólo se adelanta frente a negocios de su MISMA franja: nunca
@@ -30,7 +37,7 @@ const bucketOf = (distanceKm: number) => Math.floor(distanceKm / DISTANCE_BUCKET
  * a caminar de más.
  */
 const premiumRank = (store: RankableStore) =>
-  store.premium && store.distanceKm <= PREMIUM_RADIUS_KM ? 0 : 1;
+  store.premium && distanciaDe(store) <= PREMIUM_RADIUS_KM ? 0 : 1;
 
 /** Los negocios abiertos van antes que los cerrados, en cualquier orden. */
 const byOpenFirst = (a: RankableStore, b: RankableStore) => {
@@ -65,7 +72,7 @@ const byRelevance = (a: RankableStore, b: RankableStore) => {
     return premiumDiff;
   }
 
-  const distanceDiff = a.distanceKm - b.distanceKm;
+  const distanceDiff = distanciaDe(a) - distanciaDe(b);
 
   if (Math.abs(distanceDiff) > 0.05) {
     return distanceDiff;
@@ -75,7 +82,7 @@ const byRelevance = (a: RankableStore, b: RankableStore) => {
 };
 
 const byDistance = (a: RankableStore, b: RankableStore) =>
-  byOpenFirst(a, b) || a.distanceKm - b.distanceKm;
+  byOpenFirst(a, b) || distanciaDe(a) - distanciaDe(b);
 
 const byPrice = (a: RankableStore, b: RankableStore) =>
   byOpenFirst(a, b) || (a.price ?? a.minOrder ?? 0) - (b.price ?? b.minOrder ?? 0);

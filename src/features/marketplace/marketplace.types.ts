@@ -65,8 +65,10 @@ export interface StoreProfile {
   address: string;
   phone: string;
   hours: string;
-  distanceKm: number;
-  rating: number;
+  /** Falta hasta saber dónde está el cliente: no es cero, es desconocida. */
+  distanceKm?: number;
+  /** Falta hasta que haya reseñas. */
+  rating?: number;
   openNow: boolean;
   delivery: boolean;
   pickup: boolean;
@@ -121,6 +123,10 @@ export interface CartItem {
   id: string;
   product: string;
   store: string;
+  /* Id del comercio en la base. Hace falta para crear el pedido: el nombre
+     no alcanza, y derivarlo del texto rompe con cualquier tilde o cambio de
+     nombre. Es opcional porque los carritos guardados de antes no lo traen. */
+  storeId?: string;
   categoryId: string;
   /** Precio del escalón base: de una unidad, o del kilo si se vende por peso. */
   price: number;

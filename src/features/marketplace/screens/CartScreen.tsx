@@ -20,6 +20,8 @@ import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { EmptyState } from '../components/EmptyState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { categoryImage } from '@shared/utils/media';
+import { hayBackend, pedidosApi } from '@core/data/services/apiClient';
+
 import { addresses, cartItems } from '../marketplaceContent';
 import type { CartItem } from '../marketplace.types';
 import { formatMoney } from '../marketplace.utils';
@@ -208,6 +210,8 @@ const deliveryMethods = [
 export function CartScreen() {
   const items = useCart();
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
+  const [confirmando, setConfirmando] = useState(false);
+  const [errorPedido, setErrorPedido] = useState<string | null>(null);
   /* Alta de dirección: abre la misma hoja del header, en el paso de alta. */
   const [addressSheetOpen, setAddressSheetOpen] = useState(false);
   const navigate = useNavigate();
@@ -227,12 +231,71 @@ export function CartScreen() {
 
   const changeQuantity = changeCartQuantity;
 
-  /* Genera el pedido y lleva al historial, donde ya aparece el nuevo. */
-  const confirmOrder = () => {
-    placeOrder(items);
-    /* El carrito se vacía: lo pedido ya vive en "Mis pedidos". */
-    clearCart();
-    navigate('/pedidos');
+  /**
+   * Crea el pedido de verdad y lleva al historial.
+   *
+   * Se crea uno por comercio: cada uno prepara y entrega lo suyo, así que un
+   * carrito con productos de dos negocios genera dos pedidos.
+   *
+   * El total lo calcula el servidor leyendo precios y ofertas de la base. El
+   * carrito muestra un estimado; el que vale es el que vuelve, porque es el
+   * que se cobra.
+   */
+  const confirmOrder = async () => {
+    if (confirmando) {
+      return;
+    }
+
+    setConfirmando(true);
+    setErrorPedido(null);
+
+    const disponibles = items.filter((item) => item.available);
+
+    /* Sin backend configurado se sigue con el registro local: la app tiene
+       que poder mostrarse aunque no haya API detrás. */
+    if (!hayBackend() || disponibles.some((item) => !item.storeId)) {
+      placeOrder(items);
+      clearCart();
+      navigate('/pedidos');
+
+      return;
+    }
+
+    const porComercio = new Map<string, typeof disponibles>();
+
+    for (const item of disponibles) {
+      const grupo = porComercio.get(item.storeId!) ?? [];
+
+      grupo.push(item);
+      porComercio.set(item.storeId!, grupo);
+    }
+
+    try {
+      for (const [comercioId, grupo] of porComercio) {
+        await pedidosApi.crear({
+          comercioId,
+          /* La pantalla todavía no guarda cuál se eligió: los chips de
+             dirección y pago son decorativos. Va la principal del cliente,
+             que es a donde se entrega salvo que diga otra cosa. */
+          direccionTexto: addresses.find((fila) => fila.primary)?.address ?? addresses[0]?.address,
+          items: grupo.map((item) => ({
+            productoId: item.id,
+            escalon: item.quantity,
+          })),
+        });
+      }
+
+      clearCart();
+      navigate('/pedidos');
+    } catch (fallo) {
+      /* El carrito no se vacía si falló: perder lo armado sería peor que
+         volver a intentar. */
+      setErrorPedido(
+        fallo instanceof Error ? fallo.message : 'No pudimos confirmar el pedido.',
+      );
+    } finally {
+      setConfirmando(false);
+    }
   };
 
   const removeItem = (id: string) => {
@@ -532,8 +595,13 @@ export function CartScreen() {
                     </CartSummarySection>
 
                     <CartActions>
-                      <PrimaryButton as="button" type="button" onClick={confirmOrder}>
-                        Confirmar pedido
+                      <PrimaryButton
+                        as="button"
+                        type="button"
+                        onClick={() => void confirmOrder()}
+                        disabled={confirmando}
+                      >
+                        {confirmando ? 'Confirmando…' : 'Confirmar pedido'}
                       </PrimaryButton>
                       <LinkButton to="/">Seguir comprando</LinkButton>
                     </CartActions>

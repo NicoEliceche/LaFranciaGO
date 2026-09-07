@@ -228,6 +228,17 @@ export interface NuevaOferta {
   productos: Array<{ productoId: string; unidades?: number }>;
 }
 
+/** Una oferta vista desde la portada: incluye de qué comercio es. */
+export interface OfertaPortadaApi extends OfertaApi {
+  comercioId: string;
+  comercio: string;
+  rubroId: string;
+}
+
+export const ofertasApi = {
+  portada: () => api.get<{ ofertas: OfertaPortadaApi[] }>('/ofertas'),
+};
+
 export const miComercioApi = {
   ver: () =>
     api.get<{ comercio: ComercioApi | null; productos: ProductoApi[] }>('/mi-comercio'),

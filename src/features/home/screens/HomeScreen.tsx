@@ -1008,7 +1008,14 @@ export function HomeScreen() {
   );
   const displayedLocationLabel = `${selectedLocation?.label ?? 'Sin ubicación'} - ${locationRadiusLabel}`;
 
-  const matchesDistanceFilter = (distanceKm: number) => {
+  const matchesDistanceFilter = (distanceKm: number | undefined) => {
+    /* Sin distancia conocida el comercio pasa el filtro: esconder algo por un
+       dato que todavía no tenemos lo haría desaparecer sin que el cliente
+       entienda por qué. Cuando haya ubicación, el filtro vuelve a decidir. */
+    if (distanceKm === undefined) {
+      return true;
+    }
+
     switch (distanceFilter) {
       case 'near':
         return distanceKm <= 1;
@@ -1339,14 +1346,21 @@ export function HomeScreen() {
       return list;
     }
 
+    /* Un comercio sin distancia o sin puntaje no desordena la lista: cuenta
+       como lejos y como sin calificar, y queda al final. */
+    const lejos = (valor: number | undefined) => valor ?? Number.MAX_SAFE_INTEGER;
+    const puntaje = (valor: number | undefined) => valor ?? 0;
+
     return list.sort((a, b) => {
       switch (sortMode) {
         case 'closest':
-          return a.distanceKm - b.distanceKm;
+          return lejos(a.distanceKm) - lejos(b.distanceKm);
         case 'cheapest':
           return a.etaMin - b.etaMin;
         case 'discount':
-          return b.rating - a.rating || a.distanceKm - b.distanceKm;
+          return (
+            puntaje(b.rating) - puntaje(a.rating) || lejos(a.distanceKm) - lejos(b.distanceKm)
+          );
         default:
           return 0;
       }

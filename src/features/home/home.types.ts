@@ -62,8 +62,10 @@ export interface HomeFeaturedStore {
   logoLabel: string;
   etaMin: number;
   etaMax: number;
-  distanceKm: number;
-  rating: number;
+  /** Falta hasta saber dónde está el cliente. */
+  distanceKm?: number;
+  /** Falta hasta que haya reseñas. */
+  rating?: number;
   delivery: boolean;
   pickup: boolean;
   openNow: boolean;

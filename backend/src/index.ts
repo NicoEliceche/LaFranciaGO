@@ -564,7 +564,7 @@ async function enrutar(
     const busqueda = url.searchParams.get('q');
 
     let sql =
-      "SELECT id, nombre, rubro_id, rubro_nombre, direccion, lat, lon, horario, zona, descripcion, logo_url, premium, minimo_centavos FROM comercios WHERE estado = 'aprobado'";
+      "SELECT id, nombre, rubro_id, rubro_nombre, direccion, lat, lon, telefono, horario, zona, descripcion, logo_url, premium, minimo_centavos FROM comercios WHERE estado = 'aprobado'";
     const params: unknown[] = [];
 
     if (rubro) {
@@ -581,7 +581,24 @@ async function enrutar(
 
     const { results } = await env.DB.prepare(sql).bind(...params).all();
 
-    return json({ comercios: results.map(comercioSalida) }, {}, cors);
+    /* Cada tarjeta muestra tres productos con su precio: es lo que hace que
+       la lista sirva para decidir sin entrar a cada comercio. Se traen todos
+       de una consulta y no una por comercio. */
+    const destacados = await destacadosDe(
+      env,
+      results.map((fila) => String(fila.id)),
+    );
+
+    return json(
+      {
+        comercios: results.map((fila) => ({
+          ...comercioSalida(fila),
+          destacados: destacados.get(String(fila.id)) ?? [],
+        })),
+      },
+      {},
+      cors,
+    );
   }
 
   const comercioDetalle = /^\/comercios\/([\w-]+)$/.exec(ruta);
@@ -1064,6 +1081,39 @@ async function enrutar(
       .run();
 
     return json({ ok: true }, {}, cors);
+  }
+
+  /* Las ofertas de toda la app, para la portada. Van con el nombre del
+     comercio porque en Inicio la tarjeta se ve fuera de contexto: sin saber
+     de quién es, la oferta no sirve para decidir. */
+  if (ruta === '/ofertas' && metodo === 'GET') {
+    const { results } = await env.DB.prepare(
+      `SELECT o.id, o.tipo, o.titulo, o.descripcion, o.porcentaje, o.cantidad,
+              o.precio_final_centavos, o.precio_lista_centavos, o.foto_url,
+              o.comercio_id, c.nombre AS comercio, c.rubro_id
+         FROM ofertas o
+         JOIN comercios c ON c.id = o.comercio_id
+        WHERE o.activa = 1 AND c.estado = 'aprobado'
+          AND (o.desde IS NULL OR o.desde <= datetime('now'))
+          AND (o.hasta IS NULL OR o.hasta >= datetime('now'))
+        ORDER BY c.premium DESC, o.creado_en DESC
+        LIMIT 30`,
+    ).all<FilaOferta & { comercio_id: string; comercio: string; rubro_id: string }>();
+
+    const conProductosDeCadaUna = await conProductos(env, results);
+
+    return json(
+      {
+        ofertas: conProductosDeCadaUna.map((oferta, indice) => ({
+          ...oferta,
+          comercioId: results[indice].comercio_id,
+          comercio: results[indice].comercio,
+          rubroId: results[indice].rubro_id,
+        })),
+      },
+      {},
+      cors,
+    );
   }
 
   // ── Ofertas ──
@@ -1861,6 +1911,55 @@ async function descuentoDeOfertas(
   }
 
   return total;
+}
+
+/**
+ * Tres productos por comercio para ilustrar la tarjeta.
+ *
+ * Una sola consulta para todos: con una por comercio, listar veinte
+ * comercios serían veintiún viajes a la base. Se piden ordenados y se
+ * recorta a tres en memoria, que es más barato que un ranking en SQLite.
+ */
+async function destacadosDe(env: Env, comercioIds: string[]) {
+  const porComercio = new Map<
+    string,
+    Array<{ id: string; nombre: string; precio: number; foto: string | null }>
+  >();
+
+  if (comercioIds.length === 0) {
+    return porComercio;
+  }
+
+  const marcadores = comercioIds.map(() => '?').join(',');
+  const { results } = await env.DB.prepare(
+    `SELECT id, comercio_id, nombre, precio_centavos, fotos FROM productos
+      WHERE comercio_id IN (${marcadores}) AND activo = 1
+      ORDER BY comercio_id, creado_en`,
+  )
+    .bind(...comercioIds)
+    .all<{
+      id: string;
+      comercio_id: string;
+      nombre: string;
+      precio_centavos: number;
+      fotos: string;
+    }>();
+
+  for (const fila of results) {
+    const lista = porComercio.get(fila.comercio_id) ?? [];
+
+    if (lista.length < 3) {
+      lista.push({
+        id: fila.id,
+        nombre: fila.nombre,
+        precio: aPesos(Number(fila.precio_centavos)),
+        foto: leerPrimeraFoto(fila.fotos),
+      });
+      porComercio.set(fila.comercio_id, lista);
+    }
+  }
+
+  return porComercio;
 }
 
 /** Fila cruda de la tabla de ofertas, tal como sale de la base. */

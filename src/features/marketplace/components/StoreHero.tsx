@@ -23,8 +23,10 @@ type StoreHeroProps = {
   categoryId?: string;
   address: string;
   hours: string;
-  distanceKm: number;
-  rating: number;
+  /** Falta hasta saber dónde está el cliente: entonces no se muestra. */
+  distanceKm?: number;
+  /** Falta hasta que haya reseñas: entonces no se muestra la estrella. */
+  rating?: number;
   openNow: boolean;
   minOrder: number;
 };
@@ -51,10 +53,12 @@ export function StoreHero({
           <StoreHeroOpenBadge data-open={openNow}>
             {openNow ? 'Abierto ahora' : 'Cerrado'}
           </StoreHeroOpenBadge>
-          <StoreHeroRatingBadge>
-            <Star size={13} aria-hidden="true" fill="currentColor" />
-            {rating.toFixed(1)}
-          </StoreHeroRatingBadge>
+          {rating !== undefined ? (
+            <StoreHeroRatingBadge>
+              <Star size={13} aria-hidden="true" fill="currentColor" />
+              {rating.toFixed(1)}
+            </StoreHeroRatingBadge>
+          ) : null}
         </MediaOverlayTop>
 
         <StoreHeroLogoWrap>
@@ -67,7 +71,8 @@ export function StoreHero({
       <StoreHeroBody>
         <StoreHeroName>{name}</StoreHeroName>
         <StoreHeroSubtitle>
-          {category} · {formatDistance(distanceKm)}
+          {category}
+          {distanceKm !== undefined ? ` · ${formatDistance(distanceKm)}` : ''}
         </StoreHeroSubtitle>
 
         <StoreHeroInfoRow>

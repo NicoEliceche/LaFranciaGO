@@ -6,7 +6,8 @@ import { CategoryTile } from '../components/CategoryTile';
 import { EmptyState } from '../components/EmptyState';
 import { SearchBar } from '../components/SearchBar';
 import { SectionHeading } from '../components/SectionHeading';
-import { categories, stores } from '../marketplaceContent';
+import { categories } from '../marketplaceContent';
+import { useStores } from '../useStores';
 import { matchesQuery } from '../marketplace.utils';
 import { SectionInner } from '../ui';
 
@@ -27,6 +28,8 @@ import { CategoryGrid } from './CategoriesScreenStyled';
 export function CategoriesScreen() {
   const [query, setQuery] = useState('');
 
+  const { stores } = useStores();
+
   const visibleCategories = useMemo(
     () => categories.filter((category) => matchesQuery(query, category.name, category.description)),
     [query],
@@ -41,7 +44,7 @@ export function CategoriesScreen() {
     });
 
     return counts;
-  }, []);
+  }, [stores]);
 
   return (
     <MarketplaceFrame query={query} onQueryChange={setQuery}>
