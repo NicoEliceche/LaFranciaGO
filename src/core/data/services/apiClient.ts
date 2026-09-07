@@ -94,6 +94,8 @@ export interface ProductoApi {
   descripcion: string | null;
   precio: number;
   unidad_venta: string;
+  /** Cuánto ocupa: decide si el pedido entra en una moto. */
+  tamano?: string;
   fotos: string[];
   video_url: string | null;
   stock: number | null;
@@ -167,6 +169,11 @@ export const adminApi = {
     api.get<{ postulaciones: PostulacionApi[] }>(`/admin/postulaciones?estado=${estado}`),
   revisar: (id: string, decision: 'aprobado' | 'rechazado' | 'cambios', nota?: string) =>
     api.post<{ ok: true; estado: string }>(`/admin/postulaciones/${id}`, { decision, nota }),
+  /** Los números de la plataforma: qué necesita atención y cómo viene todo. */
+  metricas: () => api.get<MetricasAdminApi>('/admin/metricas'),
+  /** Suspender un comercio o marcarlo destacado. */
+  actualizarComercio: (id: string, datos: { estado?: string; premium?: boolean }) =>
+    api.patch<{ ok: true }>(`/admin/comercios/${id}`, datos),
 };
 
 export const comerciosApi = {
@@ -260,6 +267,10 @@ export const miComercioApi = {
   borrarProducto: (id: string) => api.delete<{ ok: true }>(`/productos/${id}`),
   ofertas: () => api.get<{ ofertas: OfertaApi[] }>('/mi-comercio/ofertas'),
   metricas: () => api.get<MetricasComercioApi>('/mi-comercio/metricas'),
+  fraccionamientos: () =>
+    api.get<{ fraccionamientos: FraccionamientoApi[] }>('/mi-comercio/fraccionamientos'),
+  resolverFraccionamiento: (id: string, decision: 'aprobado' | 'rechazado') =>
+    api.post<{ ok: true; estado: string }>(`/mi-comercio/fraccionamientos/${id}`, { decision }),
   crearOferta: (datos: NuevaOferta) =>
     api.post<{ id: string; precioLista: number; precioFinal: number }>(
       '/mi-comercio/ofertas',
@@ -337,6 +348,14 @@ export const operacionApi = {
 };
 
 export interface PedidoDisponibleApi {
+  /* Cuánto ocupa y si le entra a quien mira: decide si puede tomarlo. */
+  litros?: number;
+  entraEnTuVehiculo?: boolean;
+  viajes?: number;
+  vehiculos?: Vehiculo[];
+  preferencia_envio?: PreferenciaEnvio;
+  parte_numero?: number | null;
+  partes_total?: number | null;
   id: string;
   codigo: string;
   direccion_texto: string;
@@ -373,6 +392,17 @@ export interface DetallePedidoApi {
   }>;
 }
 
+export interface FraccionamientoApi {
+  id: string;
+  partes: number;
+  motivo: string | null;
+  entraba: number;
+  creado_en: string;
+  codigo: string;
+  volumen_litros: number;
+  repartidor: string;
+}
+
 export const deliveryApi = {
   disponibles: (lat?: number, lon?: number) => {
     const params = new URLSearchParams();
@@ -384,7 +414,7 @@ export const deliveryApi = {
 
     const query = params.toString();
 
-    return api.get<{ pedidos: PedidoDisponibleApi[] }>(
+    return api.get<{ pedidos: PedidoDisponibleApi[]; vehiculo: Vehiculo }>(
       `/delivery/disponibles${query ? `?${query}` : ''}`,
     );
   },
@@ -398,6 +428,17 @@ export const deliveryApi = {
   /** Avanza al paso siguiente: retirado, en camino, entregado. */
   avanzar: (envioId: string, estado: EstadoEnvio) =>
     api.post<{ ok: true; estado: EstadoEnvio }>(`/delivery/envios/${envioId}/estado`, { estado }),
+  /** Con qué vehículo trabaja: decide qué pedidos puede tomar. */
+  verVehiculo: () =>
+    api.get<{ roles: Array<{ rol: string; vehiculo: Vehiculo | null }> }>('/delivery/vehiculo'),
+  elegirVehiculo: (vehiculo: Vehiculo, rol: 'delivery' | 'fletero') =>
+    api.post<{ ok: true; vehiculo: Vehiculo }>('/delivery/vehiculo', { vehiculo, rol }),
+  /** Pide partir un pedido. Si la app dice que entraba, lo decide el comercio. */
+  pedirFraccionar: (pedidoId: string, partes: number, motivo?: string) =>
+    api.post<{ ok: true; estado: 'pendiente' | 'aprobado'; partes: number }>(
+      `/delivery/pedidos/${pedidoId}/fraccionar`,
+      { partes, motivo },
+    ),
 };
 
 /** Los pasos por los que pasa un envío, en orden. */
@@ -428,8 +469,17 @@ export const pedidosApi = {
     direccionTexto?: string;
     direccionId?: string;
     metodoPago?: string;
+    preferenciaEnvio?: PreferenciaEnvio;
     items: Array<{ productoId: string; escalon: number }>;
-  }) => api.post<{ id: string; codigo: string; total: number }>('/pedidos', datos),
+  }) =>
+    api.post<{
+      id: string;
+      codigo: string;
+      total: number;
+      litros: number;
+      partes: number;
+      vehiculos: Vehiculo[];
+    }>('/pedidos', datos),
 };
 
 export const direccionesApi = {
@@ -456,6 +506,83 @@ export interface NotificacionApi {
   enlace: string | null;
   leida_en: string | null;
   creado_en: string;
+}
+
+/** Qué vehículos hay, por tipo de cuenta. */
+export type Vehiculo = 'moto' | 'auto' | 'camioneta' | 'camion';
+
+/** Qué prefiere el cliente para su entrega. */
+export type PreferenciaEnvio = 'cualquiera' | 'auto' | 'fraccionar';
+
+export const NOMBRE_VEHICULO: Record<Vehiculo, string> = {
+  moto: 'Moto',
+  auto: 'Auto',
+  camioneta: 'Camioneta',
+  camion: 'Camión',
+};
+
+export interface SeguimientoApi {
+  pedido: {
+    codigo: string;
+    estado: string;
+    direccion_texto: string;
+    parte_numero: number | null;
+    partes_total: number | null;
+    comercio: string;
+    comercio_direccion: string;
+    comercio_lat: number | null;
+    comercio_lon: number | null;
+    destino_lat: number | null;
+    destino_lon: number | null;
+    envio_estado: string | null;
+    lat: number | null;
+    lon: number | null;
+    ubicacion_en: string | null;
+    asignado_en: string | null;
+    repartidor: string | null;
+    repartidor_telefono: string | null;
+    vehiculo: Vehiculo | null;
+  };
+  partes: Array<{
+    id: string;
+    codigo: string;
+    parte_numero: number;
+    estado: string;
+    envio_estado: string | null;
+    lat: number | null;
+    lon: number | null;
+    ubicacion_en: string | null;
+    repartidor: string | null;
+  }>;
+}
+
+export const seguimientoApi = {
+  ver: (pedidoId: string) => api.get<SeguimientoApi>(`/pedidos/${pedidoId}/seguimiento`),
+};
+
+export interface MetricasAdminApi {
+  hoy: { pedidos: number; ventas: number; comision: number };
+  ayer: { pedidos: number; ventas: number };
+  semana: { pedidos: number; ventas: number; comision: number };
+  semanaPrevia: { pedidos: number; ventas: number };
+  comisionTotal: number;
+  ticketPromedio: number;
+  pendientes: {
+    postulaciones: number;
+    fraccionamientos: number;
+    pedidosTrabados: number;
+    comercios: number;
+  };
+  reparto: { activos: number; entregasSemana: number; enCurso: number; registrados: number };
+  comercios: Array<{
+    id: string;
+    nombre: string;
+    rubro: string;
+    premium: boolean;
+    estado: string;
+    pedidos: number;
+    ventas: number;
+  }>;
 }
 
 export const notificacionesApi = {

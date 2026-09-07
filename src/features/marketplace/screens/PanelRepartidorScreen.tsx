@@ -1,11 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
-import { MapPin, PackageCheck, PackageSearch, RefreshCw } from 'lucide-react';
+import {
+  Bike,
+  Car,
+  MapPin,
+  PackageCheck,
+  PackageSearch,
+  RefreshCw,
+  Split,
+  Truck,
+} from 'lucide-react';
 
 import {
   ApiError,
   type EnvioAsignadoApi,
   type EstadoEnvio,
   type PedidoDisponibleApi,
+  type Vehiculo,
+  NOMBRE_VEHICULO,
   deliveryApi,
 } from '@core/data/services/apiClient';
 import { formatMoney } from '@shared/utils/format';
@@ -22,7 +33,9 @@ import { CompactSection, SectionStack } from './screenLayout';
 import { AuthAviso } from './AuthScreenStyled';
 import {
   AvanzarBoton,
+  CabeChip,
   DistanciaChip,
+  FraccionarBoton,
   PanelPestana,
   PanelPestanas,
   PasoEnvio,
@@ -31,6 +44,8 @@ import {
   PedidoDatos,
   PedidoTitulo,
   UbicacionAviso,
+  VehiculoBarra,
+  VehiculoOpcion,
   VerDetalleBoton,
 } from './PanelRepartidorScreenStyled';
 
@@ -63,6 +78,18 @@ const PASOS: Array<{ estado: EstadoEnvio; corto: string; accion: string }> = [
   { estado: 'entregado', corto: 'Entregado', accion: '' },
 ];
 
+/* Qué vehículos puede declarar, según su tipo de cuenta. */
+const VEHICULOS: Record<string, Array<{ id: Vehiculo; icono: typeof Bike }>> = {
+  delivery: [
+    { id: 'moto', icono: Bike },
+    { id: 'auto', icono: Car },
+  ],
+  fletero: [
+    { id: 'camioneta', icono: Truck },
+    { id: 'camion', icono: Truck },
+  ],
+};
+
 const indiceDe = (estado: EstadoEnvio) =>
   Math.max(0, PASOS.findIndex((paso) => paso.estado === estado));
 
@@ -78,6 +105,7 @@ export function PanelRepartidorScreen() {
   const [detalle, setDetalle] = useState<string | null>(null);
   const [chat, setChat] = useState<PedidoDisponibleApi | null>(null);
 
+  const [vehiculo, setVehiculo] = useState<Vehiculo | null>(null);
   const [envios, setEnvios] = useState<EnvioAsignadoApi[]>([]);
   const [pestana, setPestana] = useState<'disponibles' | 'mios'>('disponibles');
   const [avanzando, setAvanzando] = useState<string | null>(null);
@@ -92,11 +120,12 @@ export function PanelRepartidorScreen() {
       /* Las dos listas se piden juntas: son la misma pantalla, y traerlas
          por separado dejaría un momento en que un pedido tomado no está en
          ninguna de las dos. */
-      const [{ pedidos: filas }, { envios: mios }] = await Promise.all([
+      const [{ pedidos: filas, vehiculo: suVehiculo }, { envios: mios }] = await Promise.all([
         deliveryApi.disponibles(posicion?.lat, posicion?.lon),
         deliveryApi.misEnvios(),
       ]);
 
+      setVehiculo(suVehiculo);
       setPedidos(filas);
       setEnvios(mios);
       setError(null);
@@ -161,6 +190,41 @@ export function PanelRepartidorScreen() {
     }
   };
 
+  const elegirVehiculo = async (nuevo: Vehiculo) => {
+    setVehiculo(nuevo);
+
+    try {
+      await deliveryApi.elegirVehiculo(nuevo, esFletero ? 'fletero' : 'delivery');
+      await cargar();
+    } catch {
+      setError('No pudimos guardar tu vehículo.');
+    }
+  };
+
+  /**
+   * Pide partir un pedido en varias entregas.
+   *
+   * Si la app calculó que entraba en su vehículo, no se parte solo: lo decide
+   * el comercio, que tiene el pedido armado delante.
+   */
+  const pedirFraccionar = async (pedido: PedidoDisponibleApi) => {
+    const partes = Math.max(2, pedido.viajes ?? 2);
+
+    try {
+      const { estado } = await deliveryApi.pedirFraccionar(pedido.id, partes);
+
+      setError(
+        estado === 'aprobado'
+          ? null
+          : 'Le avisamos al comercio. Te contestamos cuando lo resuelva.',
+      );
+
+      await cargar();
+    } catch {
+      setError('No pudimos pedir el fraccionamiento.');
+    }
+  };
+
   const avanzar = async (envio: EnvioAsignadoApi) => {
     const siguiente = PASOS[indiceDe(envio.estado) + 1];
 
@@ -206,6 +270,28 @@ export function PanelRepartidorScreen() {
                   : 'Marcá cada paso a medida que avanzás.'
               }
             />
+
+            {/* Con qué trabaja hoy: decide qué pedidos puede tomar, así que
+                va antes que la lista. */}
+            <VehiculoBarra>
+              <span>Trabajás con</span>
+              {(VEHICULOS[esFletero ? 'fletero' : 'delivery'] ?? []).map((opcion) => {
+                const Icono = opcion.icono;
+
+                return (
+                  <VehiculoOpcion
+                    key={opcion.id}
+                    type="button"
+                    onClick={() => void elegirVehiculo(opcion.id)}
+                    data-activo={vehiculo === opcion.id}
+                    aria-pressed={vehiculo === opcion.id}
+                  >
+                    <Icono size={14} aria-hidden="true" />
+                    {NOMBRE_VEHICULO[opcion.id]}
+                  </VehiculoOpcion>
+                );
+              })}
+            </VehiculoBarra>
 
             <PanelPestanas>
               <PanelPestana
@@ -335,6 +421,15 @@ export function PanelRepartidorScreen() {
                   <SectionStack>
                     <PedidoTitulo>
                       <span>{pedido.comercio}</span>
+                      {/* Si le entra tal cual o va a tener que hacer varios
+                          viajes: es lo que decide si lo toma. */}
+                      {pedido.entraEnTuVehiculo === false ? (
+                        <CabeChip data-entra="false">
+                          {pedido.viajes} viajes
+                        </CabeChip>
+                      ) : typeof pedido.litros === 'number' && pedido.litros > 0 ? (
+                        <CabeChip data-entra="true">Entra</CabeChip>
+                      ) : null}
                       {typeof pedido.distanciaKm === 'number' ? (
                         <DistanciaChip>{pedido.distanciaKm} km</DistanciaChip>
                       ) : null}
@@ -352,6 +447,20 @@ export function PanelRepartidorScreen() {
                     <VerDetalleBoton type="button" onClick={() => setDetalle(pedido.id)}>
                       Ver detalle {esFletero ? 'del flete' : 'del pedido'}
                     </VerDetalleBoton>
+
+                    {/* Partirlo sólo se ofrece cuando hay algo que partir: con
+                        un solo producto no hay nada que repartir entre viajes. */}
+                    {(pedido.items ?? 0) > 1 ? (
+                      <FraccionarBoton
+                        type="button"
+                        onClick={() => void pedirFraccionar(pedido)}
+                      >
+                        <Split size={13} aria-hidden="true" />{' '}
+                        {pedido.entraEnTuVehiculo === false
+                          ? `Partir en ${pedido.viajes} entregas`
+                          : 'No me entra: pedir partirlo'}
+                      </FraccionarBoton>
+                    ) : null}
                   </SectionStack>
                 </CardPad>
               </Card>

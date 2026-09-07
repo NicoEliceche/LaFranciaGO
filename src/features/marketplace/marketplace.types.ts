@@ -132,6 +132,8 @@ export interface CartItem {
   price: number;
   /** Cómo se vende. Si falta, se asume por unidad. */
   saleUnit?: SaleUnitId;
+  /** Cuánto ocupa: decide si el pedido entra en una moto. */
+  tamano?: string;
   /**
    * Escalón elegido dentro de la unidad de venta, empezando en 0.
    * Por unidad, 0 es "1 unid."; por peso, 0 es "1/4".

@@ -34,6 +34,17 @@ import {
   usarPedidoRecuperacion,
 } from './recuperacion';
 import { crearPreferencia, guardarCuentaComercio, procesarAviso } from './pagos';
+import {
+  LITROS_POR_TAMANO,
+  NOMBRE_VEHICULO,
+  VEHICULOS_POR_ROL,
+  entraDeUnaVez,
+  litrosDeItems,
+  repartirEnPartes,
+  tamanoSugerido,
+  vehiculosQueEntran,
+  viajesNecesarios,
+} from './logistica';
 
 /**
  * API de LaFranciaGO.
@@ -312,6 +323,14 @@ async function enrutar(
 
     await limpiarIntentos(env, email, ip);
 
+    /* El rol con el que entró queda guardado: es desde dónde va a mirar la
+       app hasta que lo cambie. Sin esto, entrar como delivery mostraba el
+       panel pero la cuenta seguía figurando como cliente, y el selector de
+       "cambiar de cuenta" quedaba desfasado de lo que estaba viendo. */
+    await env.DB.prepare('UPDATE usuarios SET rol = ? WHERE id = ?')
+      .bind(rolPedido, usuario.id)
+      .run();
+
     const { token, expira } = await crearSesion(env, usuario.id);
 
     return json(
@@ -319,8 +338,6 @@ async function enrutar(
         id: usuario.id,
         email: usuario.email,
         nombre: usuario.nombre,
-        /* Se devuelve el rol con el que entró, no el de la cuenta: es el que
-           define qué panel se muestra. */
         rol: rolPedido,
         foto_url: usuario.foto_url,
       },
@@ -705,6 +722,192 @@ async function enrutar(
     return json({ ok: true, estado: decision }, {}, cors);
   }
 
+  /**
+   * Los números de la plataforma.
+   *
+   * Responde tres preguntas, en ese orden: qué necesita atención ahora, cómo
+   * viene el negocio, y quién está vendiendo. Lo accionable primero, porque
+   * es a lo que se entra.
+   */
+  if (ruta === '/admin/metricas' && metodo === 'GET') {
+    const admin = await exigirAdmin(request, env, cors);
+
+    if ('respuesta' in admin) {
+      return admin.respuesta;
+    }
+
+    /* Los cancelados no cuentan como venta. */
+    const totales = await env.DB.prepare(
+      `SELECT
+         COUNT(*) FILTER (WHERE date(creado_en) = date('now')) AS pedidos_hoy,
+         COALESCE(SUM(total_centavos) FILTER (WHERE date(creado_en) = date('now')), 0) AS ventas_hoy,
+         COUNT(*) FILTER (WHERE date(creado_en) = date('now', '-1 day')) AS pedidos_ayer,
+         COALESCE(SUM(total_centavos) FILTER (WHERE date(creado_en) = date('now', '-1 day')), 0) AS ventas_ayer,
+         COUNT(*) FILTER (WHERE creado_en >= datetime('now', '-7 days')) AS pedidos_semana,
+         COALESCE(SUM(total_centavos) FILTER (WHERE creado_en >= datetime('now', '-7 days')), 0) AS ventas_semana,
+         COUNT(*) FILTER (WHERE creado_en >= datetime('now', '-14 days') AND creado_en < datetime('now', '-7 days')) AS pedidos_semana_previa,
+         COALESCE(SUM(total_centavos) FILTER (WHERE creado_en >= datetime('now', '-14 days') AND creado_en < datetime('now', '-7 days')), 0) AS ventas_semana_previa
+       FROM pedidos
+      WHERE estado != 'cancelado' AND pedido_padre_id IS NULL`,
+    ).first<Record<string, number>>();
+
+    /* La comisión sale de los pagos aprobados: es plata que efectivamente
+       entró, no lo que se facturó. */
+    const comisiones = await env.DB.prepare(
+      `SELECT
+         COALESCE(SUM(comision_centavos) FILTER (WHERE date(creado_en) = date('now')), 0) AS hoy,
+         COALESCE(SUM(comision_centavos) FILTER (WHERE creado_en >= datetime('now', '-7 days')), 0) AS semana,
+         COALESCE(SUM(comision_centavos), 0) AS total
+       FROM pagos WHERE estado = 'aprobado'`,
+    ).first<Record<string, number>>();
+
+    /* Lo que necesita que alguien haga algo. */
+    const pendientes = await env.DB.prepare(
+      `SELECT
+         (SELECT COUNT(*) FROM postulaciones WHERE estado = 'pendiente') AS postulaciones,
+         (SELECT COUNT(*) FROM fraccionamientos WHERE estado = 'pendiente') AS fraccionamientos,
+         (SELECT COUNT(*) FROM pedidos p
+            LEFT JOIN envios e ON e.pedido_id = p.id
+           WHERE p.estado = 'proceso' AND p.creado_en < datetime('now', '-2 hours')
+             AND (e.id IS NULL OR e.estado = 'buscando')) AS pedidos_trabados,
+         (SELECT COUNT(*) FROM comercios WHERE estado = 'pendiente') AS comercios_pendientes`,
+    ).first<Record<string, number>>();
+
+    /* Quién está vendiendo: es lo que decide a quién llamar. */
+    const { results: comercios } = await env.DB.prepare(
+      `SELECT c.id, c.nombre, c.rubro_nombre, c.premium, c.estado,
+              COUNT(p.id) AS pedidos,
+              COALESCE(SUM(p.total_centavos), 0) AS ventas
+         FROM comercios c
+         LEFT JOIN pedidos p ON p.comercio_id = c.id
+              AND p.estado != 'cancelado'
+              AND p.pedido_padre_id IS NULL
+              AND p.creado_en >= datetime('now', '-30 days')
+        GROUP BY c.id
+        ORDER BY ventas DESC
+        LIMIT 20`,
+    ).all<{
+      id: string;
+      nombre: string;
+      rubro_nombre: string;
+      premium: number;
+      estado: string;
+      pedidos: number;
+      ventas: number;
+    }>();
+
+    /* Cómo viene el reparto. */
+    const reparto = await env.DB.prepare(
+      `SELECT
+         (SELECT COUNT(DISTINCT repartidor_id) FROM envios
+           WHERE asignado_en >= datetime('now', '-7 days')) AS activos,
+         (SELECT COUNT(*) FROM envios
+           WHERE estado = 'entregado' AND entregado_en >= datetime('now', '-7 days')) AS entregas_semana,
+         (SELECT COUNT(*) FROM envios WHERE estado NOT IN ('entregado', 'cancelado')) AS en_curso,
+         (SELECT COUNT(*) FROM usuario_roles
+           WHERE rol IN ('delivery', 'fletero') AND estado = 'aprobado') AS registrados`,
+    ).first<Record<string, number>>();
+
+    return json(
+      {
+        hoy: {
+          pedidos: Number(totales?.pedidos_hoy ?? 0),
+          ventas: aPesos(Number(totales?.ventas_hoy ?? 0)),
+          comision: aPesos(Number(comisiones?.hoy ?? 0)),
+        },
+        ayer: {
+          pedidos: Number(totales?.pedidos_ayer ?? 0),
+          ventas: aPesos(Number(totales?.ventas_ayer ?? 0)),
+        },
+        semana: {
+          pedidos: Number(totales?.pedidos_semana ?? 0),
+          ventas: aPesos(Number(totales?.ventas_semana ?? 0)),
+          comision: aPesos(Number(comisiones?.semana ?? 0)),
+        },
+        semanaPrevia: {
+          pedidos: Number(totales?.pedidos_semana_previa ?? 0),
+          ventas: aPesos(Number(totales?.ventas_semana_previa ?? 0)),
+        },
+        comisionTotal: aPesos(Number(comisiones?.total ?? 0)),
+        ticketPromedio:
+          Number(totales?.pedidos_semana ?? 0) > 0
+            ? aPesos(
+                Math.round(
+                  Number(totales?.ventas_semana ?? 0) / Number(totales?.pedidos_semana ?? 1),
+                ),
+              )
+            : 0,
+        pendientes: {
+          postulaciones: Number(pendientes?.postulaciones ?? 0),
+          fraccionamientos: Number(pendientes?.fraccionamientos ?? 0),
+          pedidosTrabados: Number(pendientes?.pedidos_trabados ?? 0),
+          comercios: Number(pendientes?.comercios_pendientes ?? 0),
+        },
+        reparto: {
+          activos: Number(reparto?.activos ?? 0),
+          entregasSemana: Number(reparto?.entregas_semana ?? 0),
+          enCurso: Number(reparto?.en_curso ?? 0),
+          registrados: Number(reparto?.registrados ?? 0),
+        },
+        comercios: comercios.map((fila) => ({
+          id: fila.id,
+          nombre: fila.nombre,
+          rubro: fila.rubro_nombre,
+          premium: Boolean(fila.premium),
+          estado: fila.estado,
+          pedidos: Number(fila.pedidos),
+          ventas: aPesos(Number(fila.ventas)),
+        })),
+      },
+      {},
+      cors,
+    );
+  }
+
+  /**
+   * Suspender un comercio o marcarlo destacado.
+   *
+   * Un comercio suspendido deja de aparecer en el buscador pero conserva sus
+   * pedidos: borrarlo perdería el historial de quienes le compraron.
+   */
+  const comercioAdmin = /^\/admin\/comercios\/([\w-]+)$/.exec(ruta);
+
+  if (comercioAdmin && metodo === 'PATCH') {
+    const admin = await exigirAdmin(request, env, cors);
+
+    if ('respuesta' in admin) {
+      return admin.respuesta;
+    }
+
+    const body = await leerJson<{ estado?: string; premium?: boolean }>(request);
+    const cambios: string[] = [];
+    const valores: unknown[] = [];
+
+    if (body.estado) {
+      if (!['aprobado', 'suspendido', 'rechazado', 'pendiente'].includes(body.estado)) {
+        return error('Ese estado no existe.', 400, cors);
+      }
+
+      cambios.push('estado = ?');
+      valores.push(body.estado);
+    }
+
+    if (typeof body.premium === 'boolean') {
+      cambios.push('premium = ?');
+      valores.push(body.premium ? 1 : 0);
+    }
+
+    if (cambios.length === 0) {
+      return error('No hay nada que cambiar.', 400, cors);
+    }
+
+    await env.DB.prepare(`UPDATE comercios SET ${cambios.join(', ')} WHERE id = ?`)
+      .bind(...valores, comercioAdmin[1])
+      .run();
+
+    return json({ ok: true }, {}, cors);
+  }
+
   // ── Comercios ──
 
   if (ruta === '/comercios' && metodo === 'GET') {
@@ -769,7 +972,9 @@ async function enrutar(
       .all();
 
     const { results: productos } = await env.DB.prepare(
-      'SELECT id, categoria_id, nombre, descripcion, precio_centavos, unidad_venta, fotos, video_url, stock FROM productos WHERE comercio_id = ? AND activo = 1',
+      `SELECT id, categoria_id, nombre, descripcion, precio_centavos, unidad_venta,
+              fotos, video_url, stock, COALESCE(tamano, 'mediano') AS tamano
+         FROM productos WHERE comercio_id = ? AND activo = 1`,
     )
       .bind(comercioDetalle[1])
       .all();
@@ -1069,8 +1274,22 @@ async function enrutar(
     const lat = Number(url.searchParams.get('lat'));
     const lon = Number(url.searchParams.get('lon'));
 
+    /* Con qué vehículo trabaja: decide qué pedidos puede llevar y cuáles se
+       le muestran como "necesitás un auto". */
+    const suVehiculo = await env.DB.prepare(
+      `SELECT rol, vehiculo FROM usuario_roles
+        WHERE usuario_id = ? AND rol IN ('delivery', 'fletero') AND estado = 'aprobado'
+        ORDER BY vehiculo IS NULL
+        LIMIT 1`,
+    )
+      .bind(repartidor.usuario.id)
+      .first<{ rol: string; vehiculo: string | null }>();
+
+    const vehiculo = suVehiculo?.vehiculo ?? (suVehiculo?.rol === 'fletero' ? 'camioneta' : 'moto');
+
     const { results } = await env.DB.prepare(
       `SELECT p.id, p.codigo, p.direccion_texto, p.total_centavos, p.creado_en,
+              p.volumen_litros, p.preferencia_envio, p.parte_numero, p.partes_total,
               c.nombre AS comercio, c.direccion AS comercio_direccion,
               c.lat AS comercio_lat, c.lon AS comercio_lon,
               u.nombre AS cliente,
@@ -1081,6 +1300,9 @@ async function enrutar(
          LEFT JOIN envios e ON e.pedido_id = p.id
         WHERE p.estado = 'proceso'
           AND (e.id IS NULL OR e.estado = 'buscando')
+          /* Un pedido partido se reparte por sus partes, no entero: si
+             apareciera el original, se entregaría dos veces lo mismo. */
+          AND p.id NOT IN (SELECT DISTINCT pedido_padre_id FROM pedidos WHERE pedido_padre_id IS NOT NULL)
         ORDER BY p.creado_en DESC
         LIMIT 50`,
     ).all();
@@ -1096,7 +1318,23 @@ async function enrutar(
           ? distanciaKm(lat, lon, comercioLat, comercioLon)
           : null;
 
-      return { ...fila, total: aPesos(Number(fila.total_centavos)), distanciaKm: distancia };
+      const litros = Number(fila.volumen_litros ?? 0);
+      const entra = entraDeUnaVez(litros, vehiculo);
+
+      return {
+        ...fila,
+        total: aPesos(Number(fila.total_centavos)),
+        distanciaKm: distancia,
+        litros,
+        /* Si le entra tal cual, o si va a tener que hacer más de un viaje. */
+        entraEnTuVehiculo: entra,
+        viajes: viajesNecesarios(litros, vehiculo),
+        /* Con qué vehículos entra de una: la tarjeta muestra el ícono. */
+        vehiculos: vehiculosQueEntran(
+          litros,
+          suVehiculo?.rol === 'fletero' ? 'fletero' : 'delivery',
+        ),
+      };
     });
 
     conDistancia.sort((a, b) => {
@@ -1111,7 +1349,7 @@ async function enrutar(
       return a.distanciaKm - b.distanciaKm;
     });
 
-    return json({ pedidos: conDistancia }, {}, cors);
+    return json({ pedidos: conDistancia, vehiculo }, {}, cors);
   }
 
   const detallePedido = /^\/delivery\/pedidos\/([\w-]+)$/.exec(ruta);
@@ -1360,6 +1598,247 @@ async function enrutar(
     return json({ ok: true, estado: esperado }, {}, cors);
   }
 
+  /**
+   * Con qué vehículo trabaja el repartidor.
+   *
+   * Decide qué pedidos puede tomar, así que se guarda en su rol y no en una
+   * preferencia del navegador: alguien podría declarar una camioneta desde el
+   * teléfono y llevarse un flete que no le entra.
+   */
+  if (ruta === '/delivery/vehiculo' && metodo === 'POST') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    const body = await leerJson<{ vehiculo?: string; rol?: string }>(request);
+    const vehiculo = String(body.vehiculo ?? '');
+    const rol = body.rol === 'fletero' ? 'fletero' : 'delivery';
+
+    if (!(VEHICULOS_POR_ROL[rol] ?? []).includes(vehiculo)) {
+      return error('Ese vehículo no corresponde a este tipo de cuenta.', 400, cors);
+    }
+
+    await env.DB.prepare(
+      'UPDATE usuario_roles SET vehiculo = ? WHERE usuario_id = ? AND rol = ?',
+    )
+      .bind(vehiculo, repartidor.usuario.id, rol)
+      .run();
+
+    return json({ ok: true, vehiculo }, {}, cors);
+  }
+
+  /** Qué vehículo tiene declarado. */
+  if (ruta === '/delivery/vehiculo' && metodo === 'GET') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    const { results } = await env.DB.prepare(
+      "SELECT rol, vehiculo FROM usuario_roles WHERE usuario_id = ? AND estado = 'aprobado'",
+    )
+      .bind(repartidor.usuario.id)
+      .all<{ rol: string; vehiculo: string | null }>();
+
+    return json({ roles: results }, {}, cors);
+  }
+
+  /**
+   * Pide partir un pedido en varias entregas.
+   *
+   * Si la app calculó que el pedido entra en su vehículo, no se parte solo:
+   * queda pendiente de que el comercio lo confirme. El comercio tiene el
+   * pedido armado delante y puede ver si de verdad no entraba —una caja de
+   * forma rara, algo frágil que no se puede apilar.
+   *
+   * El pedido queda guardado aunque se apruebe, para poder mirar después si
+   * alguien pide fraccionar sistemáticamente lo que sí le entra.
+   */
+  const pedirFraccionar = /^\/delivery\/pedidos\/([\w-]+)\/fraccionar$/.exec(ruta);
+
+  if (pedirFraccionar && metodo === 'POST') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    const body = await leerJson<{ partes?: number; motivo?: string }>(request);
+    const partes = Math.trunc(Number(body.partes ?? 0));
+
+    if (partes < 2 || partes > 5) {
+      return error('Se puede partir en 2 a 5 entregas.', 400, cors);
+    }
+
+    const pedido = await env.DB.prepare(
+      `SELECT p.id, p.codigo, p.volumen_litros, p.envio_centavos, p.total_centavos,
+              p.usuario_id, c.usuario_id AS comercio_usuario_id
+         FROM pedidos p
+         JOIN comercios c ON c.id = p.comercio_id
+        WHERE p.id = ? AND p.estado = 'proceso'`,
+    )
+      .bind(pedirFraccionar[1])
+      .first<{
+        id: string;
+        codigo: string;
+        volumen_litros: number;
+        envio_centavos: number;
+        total_centavos: number;
+        usuario_id: string;
+        comercio_usuario_id: string | null;
+      }>();
+
+    if (!pedido) {
+      return error('No encontrado', 404, cors);
+    }
+
+    /* Con qué vehículo trabaja: es contra eso que se mide si entra. */
+    const suRol = await env.DB.prepare(
+      "SELECT vehiculo FROM usuario_roles WHERE usuario_id = ? AND rol IN ('delivery', 'fletero') AND estado = 'aprobado' AND vehiculo IS NOT NULL LIMIT 1",
+    )
+      .bind(repartidor.usuario.id)
+      .first<{ vehiculo: string }>();
+
+    const vehiculo = suRol?.vehiculo ?? 'moto';
+    const entraba = entraDeUnaVez(Number(pedido.volumen_litros ?? 0), vehiculo);
+
+    const id = nuevoId();
+
+    await env.DB.prepare(
+      `INSERT INTO fraccionamientos (id, pedido_id, repartidor_id, partes, motivo, entraba, estado)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        id,
+        pedido.id,
+        repartidor.usuario.id,
+        partes,
+        String(body.motivo ?? '').slice(0, 300) || null,
+        entraba ? 1 : 0,
+        /* Si no entraba, la app ya sabe que hace falta: no se molesta al
+           comercio con algo que es evidente. */
+        entraba ? 'pendiente' : 'aprobado',
+      )
+      .run();
+
+    if (!entraba) {
+      await partirPedido(env, pedido.id, partes);
+
+      return json({ ok: true, estado: 'aprobado', partes }, {}, cors);
+    }
+
+    /* Entraba: lo decide el comercio. Se le avisa por notificación y queda
+       escrito en el chat del pedido, que es donde va a estar mirando. */
+    if (pedido.comercio_usuario_id) {
+      await avisar(env, pedido.comercio_usuario_id, {
+        tipo: 'pedido',
+        titulo: `Piden partir el pedido ${pedido.codigo}`,
+        texto: `${repartidor.usuario.nombre} quiere hacerlo en ${partes} entregas. Según lo cargado, entraba en su ${NOMBRE_VEHICULO[vehiculo]?.toLowerCase() ?? vehiculo}.`,
+        enlace: '/panel/comercio',
+      });
+    }
+
+    await env.DB.prepare(
+      'INSERT INTO pedido_mensajes (id, pedido_id, autor_id, texto) VALUES (?, ?, ?, ?)',
+    )
+      .bind(
+        nuevoId(),
+        pedido.id,
+        repartidor.usuario.id,
+        `Pido partir este pedido en ${partes} entregas.${body.motivo ? ` Motivo: ${String(body.motivo).slice(0, 200)}` : ''}`,
+      )
+      .run()
+      .catch(() => undefined);
+
+    return json({ ok: true, estado: 'pendiente', partes }, {}, cors);
+  }
+
+  /** El comercio resuelve un pedido de fraccionamiento. */
+  const resolverFraccion = /^\/mi-comercio\/fraccionamientos\/([\w-]+)$/.exec(ruta);
+
+  if (resolverFraccion && metodo === 'POST') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    const body = await leerJson<{ decision?: string }>(request);
+    const decision = body.decision === 'aprobado' ? 'aprobado' : 'rechazado';
+
+    /* Tiene que ser de un pedido suyo: sin el join, un comercio podría
+       resolver los de otro conociendo el id. */
+    const pedidoFraccion = await env.DB.prepare(
+      `SELECT f.id, f.pedido_id, f.partes, f.repartidor_id, p.codigo
+         FROM fraccionamientos f
+         JOIN pedidos p ON p.id = f.pedido_id
+        WHERE f.id = ? AND p.comercio_id = ? AND f.estado = 'pendiente'`,
+    )
+      .bind(resolverFraccion[1], propio.comercioId)
+      .first<{
+        id: string;
+        pedido_id: string;
+        partes: number;
+        repartidor_id: string;
+        codigo: string;
+      }>();
+
+    if (!pedidoFraccion) {
+      return error('No encontrado', 404, cors);
+    }
+
+    await env.DB.prepare(
+      "UPDATE fraccionamientos SET estado = ?, resuelto_en = datetime('now') WHERE id = ?",
+    )
+      .bind(decision, pedidoFraccion.id)
+      .run();
+
+    if (decision === 'aprobado') {
+      await partirPedido(env, pedidoFraccion.pedido_id, pedidoFraccion.partes);
+    }
+
+    await avisar(env, pedidoFraccion.repartidor_id, {
+      tipo: 'pedido',
+      titulo:
+        decision === 'aprobado'
+          ? `Aprobaron partir el ${pedidoFraccion.codigo}`
+          : `No aprobaron partir el ${pedidoFraccion.codigo}`,
+      texto:
+        decision === 'aprobado'
+          ? `Quedó en ${pedidoFraccion.partes} entregas.`
+          : 'El comercio dice que entra en un viaje.',
+      enlace: '/panel/repartidor',
+    });
+
+    return json({ ok: true, estado: decision }, {}, cors);
+  }
+
+  /** Los pedidos de fraccionamiento sin resolver, para el comercio. */
+  if (ruta === '/mi-comercio/fraccionamientos' && metodo === 'GET') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT f.id, f.partes, f.motivo, f.entraba, f.creado_en,
+              p.codigo, p.volumen_litros, u.nombre AS repartidor
+         FROM fraccionamientos f
+         JOIN pedidos p ON p.id = f.pedido_id
+         JOIN usuarios u ON u.id = f.repartidor_id
+        WHERE p.comercio_id = ? AND f.estado = 'pendiente'
+        ORDER BY f.creado_en DESC`,
+    )
+      .bind(propio.comercioId)
+      .all();
+
+    return json({ fraccionamientos: results }, {}, cors);
+  }
+
   /** Posición del repartidor, para el mapa que mira el comercio. */
   if (ruta === '/delivery/ubicacion' && metodo === 'POST') {
     const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
@@ -1592,6 +2071,67 @@ async function enrutar(
       .all();
 
     return json({ mensajes: results, yo: usuario.id }, {}, cors);
+  }
+
+  /**
+   * Dónde va el pedido, para el cliente.
+   *
+   * Devuelve la posición del repartidor y cuándo se informó: una ubicación de
+   * hace media hora no dice dónde está ahora, así que la pantalla necesita
+   * saber si el dato está fresco para no dibujar un punto que miente.
+   *
+   * Sólo lo ve el dueño del pedido: la posición de una persona no es dato
+   * público.
+   */
+  const seguimiento = /^\/pedidos\/([\w-]+)\/seguimiento$/.exec(ruta);
+
+  if (seguimiento && metodo === 'GET') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const fila = await env.DB.prepare(
+      `SELECT p.codigo, p.estado, p.direccion_texto, p.parte_numero, p.partes_total,
+              c.nombre AS comercio, c.direccion AS comercio_direccion,
+              c.lat AS comercio_lat, c.lon AS comercio_lon,
+              d.lat AS destino_lat, d.lon AS destino_lon,
+              e.estado AS envio_estado, e.lat, e.lon, e.ubicacion_en, e.asignado_en,
+              u.nombre AS repartidor, u.telefono AS repartidor_telefono,
+              r.vehiculo
+         FROM pedidos p
+         JOIN comercios c ON c.id = p.comercio_id
+         LEFT JOIN direcciones d ON d.id = p.direccion_id
+         LEFT JOIN envios e ON e.pedido_id = p.id
+         LEFT JOIN usuarios u ON u.id = e.repartidor_id
+         LEFT JOIN usuario_roles r ON r.usuario_id = e.repartidor_id
+              AND r.rol IN ('delivery', 'fletero') AND r.estado = 'aprobado'
+        WHERE p.id = ? AND p.usuario_id = ?`,
+    )
+      .bind(seguimiento[1], usuario.id)
+      .first<Record<string, unknown>>();
+
+    if (!fila) {
+      return error('No encontrado', 404, cors);
+    }
+
+    /* Las partes de un pedido dividido: cada una va por su cuenta y el
+       cliente quiere verlas todas. */
+    const { results: partes } = await env.DB.prepare(
+      `SELECT p.id, p.codigo, p.parte_numero, p.estado,
+              e.estado AS envio_estado, e.lat, e.lon, e.ubicacion_en,
+              u.nombre AS repartidor
+         FROM pedidos p
+         LEFT JOIN envios e ON e.pedido_id = p.id
+         LEFT JOIN usuarios u ON u.id = e.repartidor_id
+        WHERE p.pedido_padre_id = ?
+        ORDER BY p.parte_numero`,
+    )
+      .bind(seguimiento[1])
+      .all();
+
+    return json({ pedido: fila, partes }, {}, cors);
   }
 
   // ── Notificaciones ──
@@ -2244,10 +2784,10 @@ async function enrutar(
 
     /* Sólo el dueño puede cargar productos en su comercio. */
     const propio = await env.DB.prepare(
-      'SELECT id FROM comercios WHERE id = ? AND usuario_id = ?',
+      'SELECT id, rubro_id FROM comercios WHERE id = ? AND usuario_id = ?',
     )
       .bind(comercioId, usuario.id)
-      .first();
+      .first<{ id: string; rubro_id: string }>();
 
     if (!propio) {
       return error('Ese comercio no es tuyo', 403, cors);
@@ -2257,8 +2797,8 @@ async function enrutar(
 
     await env.DB.prepare(
       `INSERT INTO productos
-        (id, comercio_id, categoria_id, nombre, descripcion, precio_centavos, unidad_venta, fotos, video_url, stock)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, comercio_id, categoria_id, nombre, descripcion, precio_centavos, unidad_venta, fotos, video_url, stock, tamano)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
         id,
@@ -2271,6 +2811,10 @@ async function enrutar(
         JSON.stringify(body.fotos ?? []),
         body.videoUrl ?? null,
         body.stock ?? null,
+        /* Cuánto ocupa: decide si el pedido entra en una moto. Si el comercio
+           no lo declara se sugiere por rubro, para no sumarle un campo más a
+           cada alta. */
+        String(body.tamano ?? tamanoSugerido(propio.rubro_id, String(body.unidadVenta ?? 'unidad'))),
       )
       .run();
 
@@ -2311,7 +2855,8 @@ async function enrutar(
     await env.DB.prepare(
       `UPDATE productos
           SET nombre = ?, descripcion = ?, precio_centavos = ?, unidad_venta = ?,
-              fotos = ?, video_url = ?, stock = ?, categoria_id = ?
+              fotos = ?, video_url = ?, stock = ?, categoria_id = ?,
+              tamano = COALESCE(?, tamano)
         WHERE id = ?`,
     )
       .bind(
@@ -2323,6 +2868,7 @@ async function enrutar(
         body.videoUrl ?? null,
         body.stock ?? null,
         body.categoriaId ?? null,
+        body.tamano ?? null,
         producto[1],
       )
       .run();
@@ -2383,6 +2929,10 @@ async function enrutar(
       direccionId?: string;
       metodoPago?: string;
       items?: Array<{ productoId: string; escalon: number }>;
+      /* Qué prefiere el cliente: que venga cualquiera y acepta que se
+         fraccione, que espere un auto para recibir todo junto, o que se
+         parta en varias entregas para recibir antes. */
+      preferenciaEnvio?: 'cualquiera' | 'auto' | 'fraccionar';
     }>(request);
 
     const items = body.items ?? [];
@@ -2396,11 +2946,18 @@ async function enrutar(
     const ids = items.map((item) => item.productoId);
     const marcadores = ids.map(() => '?').join(',');
     const { results: productos } = await env.DB.prepare(
-      `SELECT id, nombre, precio_centavos, unidad_venta FROM productos
+      `SELECT id, nombre, precio_centavos, unidad_venta, COALESCE(tamano, 'mediano') AS tamano
+         FROM productos
         WHERE id IN (${marcadores}) AND comercio_id = ? AND activo = 1`,
     )
       .bind(...ids, body.comercioId)
-      .all<{ id: string; nombre: string; precio_centavos: number; unidad_venta: string }>();
+      .all<{
+        id: string;
+        nombre: string;
+        precio_centavos: number;
+        unidad_venta: string;
+        tamano: string;
+      }>();
 
     if (productos.length !== ids.length) {
       return error('Algún producto ya no está disponible.', 409, cors);
@@ -2427,7 +2984,32 @@ async function enrutar(
 
     subtotal = Math.max(0, subtotal - descuento);
 
-    const envio = subtotal >= 1_500_000 ? 0 : 120_000;
+    /* Cuánto ocupa lo que se pidió: de acá sale si entra en una moto y
+       cuántas entregas hacen falta. */
+    const litros = litrosDeItems(
+      lineas.map((linea) => ({
+        tamano: linea.producto.tamano,
+        unidad_venta: linea.producto.unidad_venta,
+        escalon: linea.escalon,
+      })),
+    );
+
+    const preferencia = body.preferenciaEnvio ?? 'cualquiera';
+
+    /* En cuántas entregas se va a partir. Si el cliente lo pidió, se parte
+       aunque entre: paga más envíos para recibir antes. Si no, se parte sólo
+       cuando no hay más remedio. */
+    const partes =
+      preferencia === 'fraccionar'
+        ? Math.max(2, viajesNecesarios(litros, 'moto'))
+        : preferencia === 'auto'
+          ? viajesNecesarios(litros, 'auto')
+          : 1;
+
+    /* Cada entrega se cobra: son viajes distintos hasta el comercio. El
+       cliente ve el total antes de confirmar. */
+    const envioUnitario = subtotal >= 1_500_000 ? 0 : 120_000;
+    const envio = envioUnitario * partes;
     const pedidoId = nuevoId();
     const codigo = `#${Date.now().toString().slice(-6)}`;
 
@@ -2437,8 +3019,9 @@ async function enrutar(
       env.DB.prepare(
         `INSERT INTO pedidos
           (id, codigo, usuario_id, comercio_id, direccion_id, direccion_texto,
-           subtotal_centavos, envio_centavos, total_centavos, metodo_pago)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           subtotal_centavos, envio_centavos, total_centavos, metodo_pago,
+           preferencia_envio, volumen_litros, partes_total)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         pedidoId,
         codigo,
@@ -2450,6 +3033,9 @@ async function enrutar(
         envio,
         subtotal + envio,
         body.metodoPago ?? null,
+        preferencia,
+        Math.round(litros * 10) / 10,
+        partes > 1 ? partes : null,
       ),
       ...lineas.map((linea) =>
         env.DB.prepare(
@@ -2487,7 +3073,16 @@ async function enrutar(
     }
 
     return json(
-      { id: pedidoId, codigo, total: aPesos(subtotal + envio) },
+      {
+        id: pedidoId,
+        codigo,
+        total: aPesos(subtotal + envio),
+        litros: Math.round(litros * 10) / 10,
+        partes,
+        /* Con qué vehículos entra de una sola vez: el cliente entiende por
+           qué su pedido puede tardar más o llegar en tandas. */
+        vehiculos: vehiculosQueEntran(litros),
+      },
       { status: 201 },
       cors,
     );
@@ -2973,6 +3568,129 @@ function avisar(
     .catch((fallo) => {
       console.warn('No se pudo dejar la notificación', fallo);
     });
+}
+
+/**
+ * Parte un pedido en varias entregas.
+ *
+ * Los items se reparten entre las partes y cada una queda como un pedido
+ * propio que apunta al original: así lo puede tomar un repartidor distinto y
+ * el cliente ve "parte 1 de 3" en lugar de tres pedidos sueltos.
+ *
+ * El original queda como cabecera —guarda el total y el pago— y sus items
+ * pasan a las partes, para que no se cuente dos veces lo mismo.
+ */
+async function partirPedido(env: Env, pedidoId: string, partes: number) {
+  const pedido = await env.DB.prepare(
+    `SELECT id, codigo, usuario_id, comercio_id, direccion_id, direccion_texto,
+            metodo_pago, envio_centavos
+       FROM pedidos WHERE id = ?`,
+  )
+    .bind(pedidoId)
+    .first<{
+      id: string;
+      codigo: string;
+      usuario_id: string;
+      comercio_id: string;
+      direccion_id: string | null;
+      direccion_texto: string;
+      metodo_pago: string | null;
+      envio_centavos: number;
+    }>();
+
+  if (!pedido) {
+    return;
+  }
+
+  const { results: items } = await env.DB.prepare(
+    `SELECT pi.id, pi.producto_id, pi.nombre, pi.precio_centavos, pi.unidad_venta,
+            pi.escalon, pi.subtotal_centavos,
+            COALESCE(pr.tamano, 'mediano') AS tamano
+       FROM pedido_items pi
+       LEFT JOIN productos pr ON pr.id = pi.producto_id
+      WHERE pi.pedido_id = ?`,
+  )
+    .bind(pedidoId)
+    .all<{
+      id: string;
+      producto_id: string | null;
+      nombre: string;
+      precio_centavos: number;
+      unidad_venta: string;
+      escalon: number;
+      subtotal_centavos: number;
+      tamano: string;
+    }>();
+
+  if (items.length < 2) {
+    /* Un solo producto no se puede repartir entre dos viajes. */
+    return;
+  }
+
+  const grupos = repartirEnPartes(
+    items.map((item) => ({
+      ...item,
+      litros: LITROS_POR_TAMANO[item.tamano] ?? LITROS_POR_TAMANO.mediano,
+    })),
+    partes,
+  );
+
+  const escrituras = [
+    env.DB.prepare('UPDATE pedidos SET partes_total = ? WHERE id = ?').bind(
+      grupos.length,
+      pedidoId,
+    ),
+  ];
+
+  grupos.forEach((grupo, indice) => {
+    const parteId = nuevoId();
+    const subtotalParte = grupo.items.reduce((suma, item) => suma + item.subtotal_centavos, 0);
+
+    escrituras.push(
+      env.DB.prepare(
+        `INSERT INTO pedidos
+          (id, codigo, usuario_id, comercio_id, direccion_id, direccion_texto,
+           subtotal_centavos, envio_centavos, total_centavos, metodo_pago,
+           pedido_padre_id, parte_numero, partes_total, volumen_litros)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).bind(
+        parteId,
+        `${pedido.codigo}-${indice + 1}`,
+        pedido.usuario_id,
+        pedido.comercio_id,
+        pedido.direccion_id,
+        pedido.direccion_texto,
+        subtotalParte,
+        /* El envío ya se cobró entero en el pedido original: las partes no
+           vuelven a cobrarlo. */
+        0,
+        subtotalParte,
+        pedido.metodo_pago,
+        pedidoId,
+        indice + 1,
+        grupos.length,
+        Math.round(grupo.litros * 10) / 10,
+      ),
+    );
+
+    for (const item of grupo.items) {
+      escrituras.push(
+        env.DB.prepare('UPDATE pedido_items SET pedido_id = ? WHERE id = ?').bind(
+          parteId,
+          item.id,
+        ),
+      );
+    }
+  });
+
+  await env.DB.batch(escrituras);
+
+  await avisar(env, pedido.usuario_id, {
+    tipo: 'envio',
+    titulo: `Tu pedido ${pedido.codigo} llega en ${grupos.length} entregas`,
+    texto: 'No entraba todo en un viaje. Te avisamos cuando salga cada una.',
+    enlace: '/pedidos',
+  });
 }
 
 /** Fila cruda de la tabla de ofertas, tal como sale de la base. */

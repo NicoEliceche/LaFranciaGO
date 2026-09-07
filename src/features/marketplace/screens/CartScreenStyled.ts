@@ -724,3 +724,85 @@ export const CartQtyValue = styled.span`
   font-size: ${({ theme }) => theme.typography.size.xs};
   font-weight: ${({ theme }) => theme.typography.weight.bold};
 `;
+
+// ── Cómo llega el pedido ──
+
+/**
+ * Las opciones de entrega, cada una con lo que implica.
+ *
+ * No son chips como los del pago: acá cada opción cambia cuánto sale y
+ * cuánto tarda, así que necesita una línea que lo explique.
+ */
+export const EnvioOpcion = styled.label`
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[3]};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: ${({ theme }) => theme.color.surface};
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+
+  &:hover { border-color: ${({ theme }) => theme.color.primary}; }
+
+  &[data-elegida='true'] {
+    border-color: ${({ theme }) => theme.color.primary};
+    background: ${({ theme }) => theme.color.primarySoft};
+  }
+
+  > input {
+    margin: 0.2rem 0 0;
+    accent-color: ${({ theme }) => theme.color.primary};
+  }
+`;
+
+export const EnvioTexto = styled.div`
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+
+  > strong {
+    font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+    font-size: ${({ theme }) => theme.typography.size.sm};
+  }
+
+  > span {
+    color: ${({ theme }) => theme.color.textSoft};
+    font-size: ${({ theme }) => theme.typography.size.xs};
+    line-height: 1.35;
+  }
+`;
+
+/** Cuánto suma esta opción al total. */
+export const EnvioPrecio = styled.span`
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  white-space: nowrap;
+  color: ${({ theme }) => theme.color.text};
+`;
+
+/**
+ * Aviso de que el pedido no entra en una moto.
+ *
+ * No es un error: es información que cambia la decisión. Por eso va en tono
+ * neutro y no en rojo.
+ */
+export const EnvioAviso = styled.p`
+  display: flex;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing[2]};
+  margin: 0;
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: ${({ theme }) => theme.color.surfaceMuted};
+  color: ${({ theme }) => theme.color.textMuted};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  line-height: 1.4;
+
+  > svg { flex: 0 0 auto; margin-top: 0.1rem; }
+`;

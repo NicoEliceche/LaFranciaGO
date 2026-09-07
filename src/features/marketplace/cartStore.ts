@@ -72,6 +72,7 @@ export type ProductoParaCarrito = {
   categoryId: string;
   price: number;
   saleUnit?: SaleUnitId;
+  tamano?: string;
   available?: boolean;
   eta?: string;
 };
@@ -117,6 +118,7 @@ export function addToCart(producto: ProductoParaCarrito, escalones = 1) {
         categoryId: producto.categoryId,
         price: producto.price,
         saleUnit: unidad,
+        tamano: producto.tamano,
         quantity: escalon,
         subtotal: Math.round(producto.price * stepFactor(unidad, escalon)),
         available: producto.available ?? true,

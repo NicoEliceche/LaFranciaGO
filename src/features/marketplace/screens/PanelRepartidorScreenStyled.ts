@@ -207,3 +207,104 @@ export const PanelPestana = styled.button`
     color: ${({ theme }) => theme.color.primary};
   }
 `;
+
+// ── Vehículo del repartidor ──
+
+/**
+ * Con qué trabaja hoy.
+ *
+ * Decide qué pedidos puede tomar, así que va arriba de todo: es lo primero
+ * que hay que confirmar al abrir el panel.
+ */
+export const VehiculoBarra = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.surfaceMuted};
+
+  > span {
+    flex: 1 1 auto;
+    color: ${({ theme }) => theme.color.textSoft};
+    font-size: ${({ theme }) => theme.typography.size.xs};
+    font-weight: ${({ theme }) => theme.typography.weight.bold};
+  }
+`;
+
+export const VehiculoOpcion = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  padding: 0 ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.surface};
+  color: ${({ theme }) => theme.color.textSoft};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+
+  &[data-activo='true'] {
+    border-color: ${({ theme }) => theme.color.primary};
+    background: ${({ theme }) => theme.color.primarySoft};
+    color: ${({ theme }) => theme.color.primary};
+  }
+`;
+
+/**
+ * Marca de si el pedido le entra.
+ *
+ * En verde cuando entra tal cual, en ámbar cuando va a tener que hacer más de
+ * un viaje: el repartidor decide con eso antes de tocar nada.
+ */
+export const CabeChip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  padding: 0.15rem ${({ theme }) => theme.spacing[2]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  white-space: nowrap;
+  background: ${({ theme }) => theme.color.surfaceMuted};
+  color: ${({ theme }) => theme.color.textSoft};
+
+  &[data-entra='true'] {
+    background: rgba(52, 211, 153, 0.16);
+    color: ${({ theme }) => theme.color.success};
+  }
+
+  &[data-entra='false'] {
+    background: rgba(217, 119, 6, 0.16);
+    color: ${({ theme }) => theme.color.warning};
+  }
+`;
+
+/** Pedir partir el pedido: acción secundaria, no compite con "tomar". */
+export const FraccionarBoton = styled.button`
+  width: 100%;
+  min-height: 2.5rem;
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px dashed ${({ theme }) => theme.color.border};
+  background: transparent;
+  color: ${({ theme }) => theme.color.textSoft};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.color.primary};
+    color: ${({ theme }) => theme.color.primary};
+  }
+`;

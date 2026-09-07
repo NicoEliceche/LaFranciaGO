@@ -77,6 +77,8 @@ type CatalogProduct = {
   price: number;
   /** Cómo se vende. Si falta, se asume por unidad. */
   saleUnit?: SaleUnitId;
+  /** Cuánto ocupa: decide si el pedido entra en una moto. */
+  tamano?: string;
   tone: CatalogTone;
   badge?: string;
   suggestions: string[];
@@ -1138,6 +1140,7 @@ export function StoreProfileScreen() {
         categoryId: producto.categoryId,
         price: producto.price,
         saleUnit: producto.saleUnit,
+        tamano: producto.tamano,
       },
       escalones,
     );

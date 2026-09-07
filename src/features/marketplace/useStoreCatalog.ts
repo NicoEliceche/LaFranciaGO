@@ -50,6 +50,7 @@ export type ProductoCatalogo = {
   suggestions: string[];
   foto: string | null;
   stock: number | null;
+  tamano?: string;
   oferta: OfertaDeProducto | null;
 };
 
@@ -173,6 +174,7 @@ export function useStoreCatalog(comercioId: string): Resultado {
             suggestions: [],
             foto: producto.fotos?.[0] ?? null,
             stock: producto.stock,
+            tamano: producto.tamano,
             oferta: oferta ? etiquetaDe(oferta, producto.precio) : null,
           };
         };

@@ -8,6 +8,7 @@ import {
   AlertCircle,
   ArrowLeftRight,
   CreditCard,
+  Info,
   Minus,
   Plus,
   ShieldCheck,
@@ -21,7 +22,13 @@ import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { EmptyState } from '../components/EmptyState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { categoryImage } from '@shared/utils/media';
-import { hayBackend, pagosApi, pedidosApi } from '@core/data/services/apiClient';
+import {
+  type PreferenciaEnvio,
+  hayBackend,
+  pagosApi,
+  pedidosApi,
+} from '@core/data/services/apiClient';
+import { entraDeUnaVez, litrosDeItems, viajesNecesarios } from '@core/data/volumen';
 
 import { cartItems } from '../marketplaceContent';
 import { useDirecciones } from '../useDirecciones';
@@ -33,6 +40,10 @@ import {
   CartCardPad,
   CartChip,
   CartChipBoton,
+  EnvioAviso,
+  EnvioOpcion,
+  EnvioPrecio,
+  EnvioTexto,
   CartGrid,
   CartHeroCard,
   CartHeroCopy,
@@ -249,6 +260,28 @@ export function CartScreen() {
      sería adivinar. */
   const [direccionId, setDireccionId] = useState<string | null>(null);
   const [entrega, setEntrega] = useState(deliveryMethods[0]);
+  const [preferencia, setPreferencia] = useState<PreferenciaEnvio>('cualquiera');
+
+  /* Cuánto ocupa lo que hay en el carrito, para saber si entra en una moto.
+     Se calcula acá y no en el servidor para que el número cambie a medida
+     que el cliente suma cosas, sin esperar una respuesta por cada toque. */
+  const litros = useMemo(
+    () => litrosDeItems(items.filter((item) => item.available)),
+    [items],
+  );
+
+  const entraEnMoto = entraDeUnaVez(litros, 'moto');
+  const entraEnAuto = entraDeUnaVez(litros, 'auto');
+
+  /* Cuántas entregas salen con cada opción, para poder mostrar el precio. */
+  const partesPorOpcion: Record<PreferenciaEnvio, number> = {
+    cualquiera: 1,
+    auto: viajesNecesarios(litros, 'auto'),
+    fraccionar: Math.max(2, viajesNecesarios(litros, 'moto')),
+  };
+
+  const partes = partesPorOpcion[preferencia];
+
   const [pago, setPago] = useState<string>(paymentMethods[0].id);
 
   const direccionElegida =
@@ -272,6 +305,12 @@ export function CartScreen() {
     freeShippingRemaining,
     freeShippingProgress,
   } = useMemo(() => buildTotals(items), [items]);
+
+  /* Cada entrega es un viaje al comercio, así que se cobra. El cliente ve el
+     total antes de confirmar: sin esto, elegiría "que llegue antes" sin saber
+     que le sale el doble de envío. */
+  const envioTotal = deliveryFee * partes;
+  const totalConEnvio = total - deliveryFee + envioTotal;
 
   const changeQuantity = changeCartQuantity;
 
@@ -336,6 +375,7 @@ export function CartScreen() {
           /* Cómo llega y cómo paga van juntos en el pedido: el comercio
              necesita los dos para prepararlo y cobrarlo. */
           metodoPago: `${paymentMethods.find((fila) => fila.id === pago)?.label ?? pago} · ${entrega}`,
+          preferenciaEnvio: preferencia,
           items: grupo.map((item) => ({
             productoId: item.id,
             escalon: item.quantity,
@@ -582,8 +622,13 @@ export function CartScreen() {
                         <span>{formatMoney(subtotal)}</span>
                       </CartTotalRow>
                       <CartTotalRow>
-                        <span>Envío estimado</span>
-                        <span>{formatMoney(deliveryFee)}</span>
+                        {/* Cada entrega es un viaje al comercio: si se
+                            fracciona, se cobran todos. */}
+                        <span>
+                          Envío estimado
+                          {partes > 1 ? ` · ${partes} entregas` : ''}
+                        </span>
+                        <span>{formatMoney(envioTotal)}</span>
                       </CartTotalRow>
                       <CartTotalRow>
                         <span>Cargo de servicio</span>
@@ -591,7 +636,7 @@ export function CartScreen() {
                       </CartTotalRow>
                       <CartTotalRow data-emphasis="true">
                         <strong>Total estimado</strong>
-                        <StrongPrice>{formatMoney(total)}</StrongPrice>
+                        <StrongPrice>{formatMoney(totalConEnvio)}</StrongPrice>
                       </CartTotalRow>
                     </CartTotalsList>
 
@@ -667,6 +712,85 @@ export function CartScreen() {
                           </CartChipBoton>
                         ))}
                       </CartPaymentRail>
+
+                      {/* Con qué vehículo entra lo que armó. Un pedido que no
+                          entra en una moto va a esperar más o llegar en
+                          tandas, y eso el cliente tiene que saberlo antes de
+                          confirmar, no después. */}
+                      {litros > 0 && !entraEnMoto ? (
+                        <EnvioAviso>
+                          <Info size={14} aria-hidden="true" />
+                          <span>
+                            Lo que llevás ocupa unos {litros} litros: no entra en la caja
+                            de una moto.{' '}
+                            {entraEnAuto
+                              ? 'Va a esperar un repartidor en auto, o llegar en varias entregas.'
+                              : 'Va a llegar en varias entregas.'}
+                          </span>
+                        </EnvioAviso>
+                      ) : null}
+
+                      <CartStack>
+                        <EnvioOpcion data-elegida={preferencia === 'cualquiera'}>
+                          <input
+                            type="radio"
+                            name="preferencia-envio"
+                            checked={preferencia === 'cualquiera'}
+                            onChange={() => setPreferencia('cualquiera')}
+                          />
+                          <EnvioTexto>
+                            <strong>Como venga</strong>
+                            <span>
+                              {entraEnMoto
+                                ? 'Lo toma el primero que pase, en moto o en auto.'
+                                : 'Lo toma quien pueda llevarlo. Puede tardar un poco más.'}
+                            </span>
+                          </EnvioTexto>
+                          <EnvioPrecio>{formatMoney(deliveryFee)}</EnvioPrecio>
+                        </EnvioOpcion>
+
+                        {/* Sólo tiene sentido ofrecer "todo junto" cuando hace
+                            falta: si ya entra en una moto, es la misma cosa. */}
+                        {!entraEnMoto && entraEnAuto ? (
+                          <EnvioOpcion data-elegida={preferencia === 'auto'}>
+                            <input
+                              type="radio"
+                              name="preferencia-envio"
+                              checked={preferencia === 'auto'}
+                              onChange={() => setPreferencia('auto')}
+                            />
+                            <EnvioTexto>
+                              <strong>Todo junto, en auto</strong>
+                              <span>Esperás a que lo tome alguien en auto y te llega completo.</span>
+                            </EnvioTexto>
+                            <EnvioPrecio>{formatMoney(deliveryFee)}</EnvioPrecio>
+                          </EnvioOpcion>
+                        ) : null}
+
+                        {/* Fraccionar sólo se ofrece si hay más de una cosa
+                            que repartir: con un solo producto no hay nada que
+                            partir. */}
+                        {items.filter((item) => item.available).length > 1 ? (
+                          <EnvioOpcion data-elegida={preferencia === 'fraccionar'}>
+                            <input
+                              type="radio"
+                              name="preferencia-envio"
+                              checked={preferencia === 'fraccionar'}
+                              onChange={() => setPreferencia('fraccionar')}
+                            />
+                            <EnvioTexto>
+                              <strong>Fraccionar para recibir antes</strong>
+                              <span>
+                                Se parte en {partesPorOpcion.fraccionar} entregas que pueden tomar
+                                repartidores distintos. Pagás un envío por cada una.
+                              </span>
+                            </EnvioTexto>
+                            <EnvioPrecio>
+                              {formatMoney(deliveryFee * partesPorOpcion.fraccionar)}
+                            </EnvioPrecio>
+                          </EnvioOpcion>
+                        ) : null}
+                      </CartStack>
                     </CartSummarySection>
 
                     <CartSummarySection>
