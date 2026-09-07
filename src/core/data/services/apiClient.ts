@@ -67,6 +67,8 @@ export interface UsuarioApi {
   nombre: string;
   rol: string;
   foto_url: string | null;
+  /** Con qué roles puede entrar. Llega en /auth/yo; en login todavía no. */
+  roles?: string[];
 }
 
 export interface ComercioApi {
@@ -129,6 +131,9 @@ export const authApi = {
     api.post<{ ok: true; mensaje: string }>('/auth/recuperar', { email }),
   confirmarRecuperacion: (token: string, password: string) =>
     api.post<{ ok: true }>('/auth/recuperar/confirmar', { token, password }),
+  /* Cambia desde qué rol se mira la app. No es un login nuevo: la persona
+     es la misma, sólo cambia el lugar desde el que mira. */
+  cambiarRol: (rol: string) => api.post<{ ok: true; rol: string }>('/auth/rol', { rol }),
 };
 
 export interface PostulacionApi {
@@ -254,6 +259,7 @@ export const miComercioApi = {
     api.patch<{ ok: true }>(`/productos/${id}`, datos),
   borrarProducto: (id: string) => api.delete<{ ok: true }>(`/productos/${id}`),
   ofertas: () => api.get<{ ofertas: OfertaApi[] }>('/mi-comercio/ofertas'),
+  metricas: () => api.get<MetricasComercioApi>('/mi-comercio/metricas'),
   crearOferta: (datos: NuevaOferta) =>
     api.post<{ id: string; precioLista: number; precioFinal: number }>(
       '/mi-comercio/ofertas',
@@ -263,6 +269,19 @@ export const miComercioApi = {
   activarOferta: (id: string, activa: boolean) =>
     api.patch<{ ok: true }>(`/mi-comercio/ofertas/${id}`, { activa }),
 };
+
+/** Los números del comercio, calculados sobre sus pedidos reales. */
+export interface MetricasComercioApi {
+  hoy: { pedidos: number; ventas: number };
+  ayer: { pedidos: number; ventas: number };
+  semana: { pedidos: number; ventas: number };
+  semanaPrevia: { pedidos: number; ventas: number };
+  enProceso: number;
+  productos: number;
+  ofertas: number;
+  ticketPromedio: number;
+  masVendidos: Array<{ nombre: string; unidades: number; total: number }>;
+}
 
 export interface PedidoComercioApi {
   id: string;
@@ -427,6 +446,36 @@ export const direccionesApi = {
     }>('/direcciones'),
   crear: (datos: { etiqueta: string; direccion: string; lat?: number; lon?: number }) =>
     api.post<{ id: string }>('/direcciones', datos),
+};
+
+export interface NotificacionApi {
+  id: string;
+  tipo: 'pedido' | 'envio' | 'oferta' | 'postulacion' | 'chat' | 'pago';
+  titulo: string;
+  texto: string | null;
+  enlace: string | null;
+  leida_en: string | null;
+  creado_en: string;
+}
+
+export const notificacionesApi = {
+  listar: () =>
+    api.get<{ notificaciones: NotificacionApi[]; sinLeer: number }>('/notificaciones'),
+  /** Sin ids se marcan todas: es lo que hace abrir el panel. */
+  marcarLeidas: (ids?: string[]) =>
+    api.post<{ ok: true }>('/notificaciones/leidas', { ids: ids ?? [] }),
+};
+
+export const pagosApi = {
+  /** Devuelve a dónde mandar al cliente para pagar. */
+  iniciar: (pedidoId: string) =>
+    api.post<{ url: string; preferenciaId: string }>(`/pedidos/${pedidoId}/pagar`),
+  estado: (pedidoId: string) =>
+    api.get<{ estado: string; metodo: string | null; monto: number | null }>(
+      `/pedidos/${pedidoId}/pago`,
+    ),
+  /** El comercio conecta su cuenta de Mercado Pago para cobrar. */
+  conectarComercio: () => api.get<{ url: string }>('/pagos/conectar'),
 };
 
 export const favoritosApi = {

@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BadgePercent,
+  BarChart3,
   MessageSquare,
+  TrendingDown,
+  TrendingUp,
   Pencil,
   Plus,
   PackageSearch,
@@ -15,6 +18,7 @@ import {
 import {
   type ComercioApi,
   type EnvioApi,
+  type MetricasComercioApi,
   type NuevaOferta,
   type OfertaApi,
   type PedidoComercioApi,
@@ -45,6 +49,11 @@ import {
   ComercioNombre,
   EstadoChip,
   MapaCaja,
+  MetricaCaja,
+  MetricaEtiqueta,
+  MetricaGrilla,
+  MetricaValor,
+  MetricaVariacion,
   NuevoProductoBoton,
   OfertaCabecera,
   OfertaDetalle,
@@ -57,6 +66,7 @@ import {
   ProductoInfo,
   ProductoNombre,
   ProductoPrecio,
+  RankingFila,
   SeccionBadge,
   SeccionChip,
   SeccionRow,
@@ -70,9 +80,10 @@ import {
  * y contestar un mensaje sería incómodo.
  */
 
-type Seccion = 'productos' | 'ofertas' | 'pedidos' | 'chats' | 'envios';
+type Seccion = 'resumen' | 'productos' | 'ofertas' | 'pedidos' | 'chats' | 'envios';
 
 const SECCIONES: Array<{ id: Seccion; nombre: string }> = [
+  { id: 'resumen', nombre: 'Resumen' },
   { id: 'productos', nombre: 'Productos' },
   { id: 'ofertas', nombre: 'Ofertas' },
   { id: 'pedidos', nombre: 'Pedidos' },
@@ -82,6 +93,25 @@ const SECCIONES: Array<{ id: Seccion; nombre: string }> = [
 
 /* Cada cuánto se vuelven a pedir los datos que cambian solos. */
 const REFRESCO_MS = 12_000;
+
+/**
+ * Cuánto cambió respecto del período anterior.
+ *
+ * Sin base previa no se inventa un "+100%": se muestra un guión, que es más
+ * honesto que un porcentaje sobre cero.
+ */
+function variacion(actual: number, previo: number) {
+  if (previo === 0) {
+    return { texto: actual > 0 ? 'sin comparación' : '—', tono: 'igual' as const };
+  }
+
+  const cambio = Math.round(((actual - previo) / previo) * 100);
+
+  return {
+    texto: `${cambio > 0 ? '+' : ''}${cambio}%`,
+    tono: cambio > 0 ? ('sube' as const) : cambio < 0 ? ('baja' as const) : ('igual' as const),
+  };
+}
 
 const TIPO_NOMBRE: Record<string, string> = {
   descuento: 'Descuento',
@@ -141,11 +171,12 @@ export function MiComercioScreen() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [seccion, setSeccion] = useState<Seccion>('productos');
+  const [seccion, setSeccion] = useState<Seccion>('resumen');
   const [pedidos, setPedidos] = useState<PedidoComercioApi[]>([]);
   const [envios, setEnvios] = useState<EnvioApi[]>([]);
   const [chat, setChat] = useState<PedidoComercioApi | null>(null);
 
+  const [metricas, setMetricas] = useState<MetricasComercioApi | null>(null);
   const [ofertas, setOfertas] = useState<OfertaApi[]>([]);
   const [ofertaAbierta, setOfertaAbierta] = useState(false);
   const [ofertaPorBorrar, setOfertaPorBorrar] = useState<OfertaApi | null>(null);
@@ -200,6 +231,14 @@ export function MiComercioScreen() {
         setOfertas(filas);
       } catch {
         setOfertas([]);
+      }
+
+      /* Las métricas tampoco cortan la pantalla si fallan: el comercio tiene
+         que poder despachar pedidos aunque los números no carguen. */
+      try {
+        setMetricas(await miComercioApi.metricas());
+      } catch {
+        setMetricas(null);
       }
     } catch {
       setError('No pudimos cargar tu comercio.');
@@ -402,6 +441,135 @@ export function MiComercioScreen() {
                     </CardPad>
                   </Card>
                 ))}
+              </>
+            ) : null}
+
+            {comercio && seccion === 'resumen' ? (
+              <>
+                <SectionHeading
+                  title="Resumen"
+                  subtitle="Cómo viene tu negocio."
+                />
+
+                {metricas ? (
+                  <>
+                    <MetricaGrilla>
+                      <MetricaCaja>
+                        <MetricaEtiqueta>Pedidos hoy</MetricaEtiqueta>
+                        <MetricaValor>{metricas.hoy.pedidos}</MetricaValor>
+                        {(() => {
+                          const v = variacion(metricas.hoy.pedidos, metricas.ayer.pedidos);
+
+                          return (
+                            <MetricaVariacion data-tono={v.tono}>
+                              {v.tono === 'sube' ? (
+                                <TrendingUp size={13} aria-hidden="true" />
+                              ) : v.tono === 'baja' ? (
+                                <TrendingDown size={13} aria-hidden="true" />
+                              ) : null}
+                              {v.texto} vs ayer
+                            </MetricaVariacion>
+                          );
+                        })()}
+                      </MetricaCaja>
+
+                      <MetricaCaja>
+                        <MetricaEtiqueta>Ventas hoy</MetricaEtiqueta>
+                        <MetricaValor>{formatMoney(metricas.hoy.ventas)}</MetricaValor>
+                        {(() => {
+                          const v = variacion(metricas.hoy.ventas, metricas.ayer.ventas);
+
+                          return (
+                            <MetricaVariacion data-tono={v.tono}>
+                              {v.tono === 'sube' ? (
+                                <TrendingUp size={13} aria-hidden="true" />
+                              ) : v.tono === 'baja' ? (
+                                <TrendingDown size={13} aria-hidden="true" />
+                              ) : null}
+                              {v.texto} vs ayer
+                            </MetricaVariacion>
+                          );
+                        })()}
+                      </MetricaCaja>
+
+                      <MetricaCaja>
+                        <MetricaEtiqueta>Ventas de la semana</MetricaEtiqueta>
+                        <MetricaValor>{formatMoney(metricas.semana.ventas)}</MetricaValor>
+                        {(() => {
+                          const v = variacion(
+                            metricas.semana.ventas,
+                            metricas.semanaPrevia.ventas,
+                          );
+
+                          return (
+                            <MetricaVariacion data-tono={v.tono}>
+                              {v.tono === 'sube' ? (
+                                <TrendingUp size={13} aria-hidden="true" />
+                              ) : v.tono === 'baja' ? (
+                                <TrendingDown size={13} aria-hidden="true" />
+                              ) : null}
+                              {v.texto} vs la anterior
+                            </MetricaVariacion>
+                          );
+                        })()}
+                      </MetricaCaja>
+
+                      <MetricaCaja>
+                        <MetricaEtiqueta>Ticket promedio</MetricaEtiqueta>
+                        <MetricaValor>{formatMoney(metricas.ticketPromedio)}</MetricaValor>
+                        <MetricaVariacion>últimos 7 días</MetricaVariacion>
+                      </MetricaCaja>
+                    </MetricaGrilla>
+
+                    <Card>
+                      <CardPad>
+                        <SectionStack>
+                          <ProductoNombre>Lo que más se vendió</ProductoNombre>
+
+                          {metricas.masVendidos.length === 0 ? (
+                            <ProductoPrecio>
+                              Todavía no hay ventas esta semana.
+                            </ProductoPrecio>
+                          ) : (
+                            metricas.masVendidos.map((fila) => (
+                              <RankingFila key={fila.nombre}>
+                                <span>{fila.nombre}</span>
+                                <small>{fila.unidades} unid.</small>
+                                <strong>{formatMoney(fila.total)}</strong>
+                              </RankingFila>
+                            ))
+                          )}
+                        </SectionStack>
+                      </CardPad>
+                    </Card>
+
+                    <MetricaGrilla>
+                      <MetricaCaja>
+                        <MetricaEtiqueta>En preparación</MetricaEtiqueta>
+                        <MetricaValor>{metricas.enProceso}</MetricaValor>
+                      </MetricaCaja>
+                      <MetricaCaja>
+                        <MetricaEtiqueta>Productos activos</MetricaEtiqueta>
+                        <MetricaValor>{metricas.productos}</MetricaValor>
+                      </MetricaCaja>
+                      <MetricaCaja>
+                        <MetricaEtiqueta>Ofertas vigentes</MetricaEtiqueta>
+                        <MetricaValor>{metricas.ofertas}</MetricaValor>
+                      </MetricaCaja>
+                      <MetricaCaja>
+                        <MetricaEtiqueta>Pedidos de la semana</MetricaEtiqueta>
+                        <MetricaValor>{metricas.semana.pedidos}</MetricaValor>
+                      </MetricaCaja>
+                    </MetricaGrilla>
+                  </>
+                ) : !cargando ? (
+                  <EmptyState
+                    icon={BarChart3}
+                    title="Sin datos todavía"
+                    text="Cuando entren pedidos vas a ver acá cómo viene tu negocio."
+                    dashed
+                  />
+                ) : null}
               </>
             ) : null}
 

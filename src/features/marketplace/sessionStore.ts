@@ -30,6 +30,23 @@ const aplicar = (siguiente: UsuarioApi | null) => {
   estado = siguiente ? 'conectado' : 'invitado';
   notify();
 
+  /* El login devuelve la cuenta pero no con qué roles puede entrar: eso lo
+     arma /auth/yo. Sin este completado, alguien que es comercio y cliente
+     entraba sin ver el cambio de cuenta hasta recargar la página. */
+  if (siguiente && !siguiente.roles) {
+    void authApi
+      .yo()
+      .then((completo) => {
+        /* Puede haber cambiado de usuario mientras tanto: sólo se aplica si
+           sigue siendo el mismo. */
+        if (usuario?.id === completo.id) {
+          usuario = completo;
+          notify();
+        }
+      })
+      .catch(() => undefined);
+  }
+
   /* Los favoritos son de quien está adentro. Sin esto, lo que se cargó antes
      de iniciar sesión (vacío, porque no había sesión) se quedaba pegado, y
      Favoritos decía "no guardaste nada" teniendo comercios guardados. */
@@ -95,6 +112,18 @@ export function useSesion() {
     [],
   );
 
+  /**
+   * Cambia desde qué rol se mira la app.
+   *
+   * Quien tiene comercio quiere ver su catálogo como lo ve un vecino, y quien
+   * reparte a veces quiere comprar. Es la misma sesión: sólo cambia el lugar
+   * desde el que mira, así que no hay que volver a entrar.
+   */
+  const cambiarRol = useCallback(async (rol: string) => {
+    await authApi.cambiarRol(rol);
+    await recuperarSesion();
+  }, []);
+
   const salir = useCallback(async () => {
     try {
       await authApi.logout();
@@ -111,6 +140,7 @@ export function useSesion() {
     entrar,
     entrarAlPanel,
     registrar,
+    cambiarRol,
     salir,
     refrescar: recuperarSesion,
   };

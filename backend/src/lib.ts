@@ -18,6 +18,15 @@ export interface Env {
   RESEND_API_KEY?: string;
   /** Remitente, del estilo "LaFranciaGO <hola@tudominio.com>". */
   CORREO_REMITENTE?: string;
+  /* ── Mercado Pago ──
+     El token de la plataforma cobra cuando el comercio todavía no conectó su
+     cuenta, y es con el que se consultan los pagos al recibir un aviso.
+     Client id y secret son de la aplicación, para conectar comercios. */
+  MP_ACCESS_TOKEN?: string;
+  MP_CLIENT_ID?: string;
+  MP_CLIENT_SECRET?: string;
+  /** Dirección pública de esta API, para los avisos y las vueltas de OAuth. */
+  API_PUBLIC_URL?: string;
 }
 
 /* ── Respuestas ── */

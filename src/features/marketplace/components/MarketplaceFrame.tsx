@@ -36,6 +36,8 @@ import { MotoDeliveryIcon } from '@shared/components/icons/MotoDeliveryIcon';
 
 import { useProfilePhoto } from '../profileStore';
 import { AddressSheet } from './AddressSheet';
+import { CuentaSidebar } from './CuentaSidebar';
+import { useNotificaciones } from '../useNotificaciones';
 import { SearchBar } from './SearchBar';
 import { GamerThemeToggle } from './GamerThemeToggle';
 
@@ -154,7 +156,7 @@ type NotificationSection = {
 
 const brandIconUrl = `${import.meta.env.BASE_URL}favicon.png`;
 const deliveryAddress = 'Av. San Martín 123';
-const notificationsCount = 3;
+
 const MENU_DRAWER_TRANSITION_MS = 420;
 const NOTIFICATIONS_TRANSITION_MS = 260;
 
@@ -278,6 +280,10 @@ export function MarketplaceFrame({
   onQueryChange,
   showSearch = true,
 }: MarketplaceFrameProps) {
+  /* Cuántos avisos sin leer tiene. Antes era un 3 fijo: mostraba novedades
+     a quien no tenía ninguna, y no se movía cuando llegaba una de verdad. */
+  const { sinLeer: notificationsCount } = useNotificaciones();
+
   const { isDarkMode, toggleMode } = useThemeMode();
   const { photo: profilePhoto } = useProfilePhoto();
   const navigate = useNavigate();
@@ -563,7 +569,9 @@ export function MarketplaceFrame({
                   aria-expanded={notificationsOpen || notificationsMounted}
                 >
                   <Bell size={18} aria-hidden="true" />
-                  <HeaderCircleBadge>{notificationsCount}</HeaderCircleBadge>
+                  {notificationsCount > 0 ? (
+                    <HeaderCircleBadge>{notificationsCount}</HeaderCircleBadge>
+                  ) : null}
                 </HeaderCircleButton>
 
                 <HeaderCircleLink to="/carrito" aria-label="Abrir carrito">
@@ -653,6 +661,8 @@ export function MarketplaceFrame({
           </DrawerSection>
 
           <div style={{ flex: 1 }} aria-hidden="true" />
+
+          <CuentaSidebar />
 
           <DrawerThemeSection>
             <GamerThemeToggle isDarkMode={isDarkMode} onToggle={toggleMode} />
@@ -769,6 +779,8 @@ export function MarketplaceFrame({
                   })}
                 </DrawerList>
               </DrawerSection>
+
+              <CuentaSidebar onNavegar={closeOverlays} />
 
               <DrawerThemeSection>
                 <GamerThemeToggle isDarkMode={isDarkMode} onToggle={toggleMode} />

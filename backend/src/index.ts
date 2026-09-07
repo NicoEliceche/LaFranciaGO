@@ -33,6 +33,7 @@ import {
   enviarCorreoRecuperacion,
   usarPedidoRecuperacion,
 } from './recuperacion';
+import { crearPreferencia, guardarCuentaComercio, procesarAviso } from './pagos';
 
 /**
  * API de LaFranciaGO.
@@ -458,7 +459,62 @@ async function enrutar(
   if (ruta === '/auth/yo' && metodo === 'GET') {
     const usuario = await usuarioActual(request, env);
 
-    return usuario ? json(usuario, {}, cors) : error('Sin sesión', 401, cors);
+    if (!usuario) {
+      return error('Sin sesión', 401, cors);
+    }
+
+    /* Con qué roles puede entrar esta persona. Una misma cuenta puede ser
+       cliente y comercio a la vez, y quien tiene comercio quiere mirar la app
+       como la ve un vecino: sin esta lista no habría cómo ofrecer el cambio. */
+    const { results: roles } = await env.DB.prepare(
+      "SELECT rol FROM usuario_roles WHERE usuario_id = ? AND estado = 'aprobado'",
+    )
+      .bind(usuario.id)
+      .all<{ rol: string }>();
+
+    return json(
+      {
+        ...usuario,
+        /* Cliente siempre está: cualquiera que tenga cuenta puede comprar. */
+        roles: ['cliente', ...roles.map((fila) => fila.rol).filter((rol) => rol !== 'cliente')],
+      },
+      {},
+      cors,
+    );
+  }
+
+  /**
+   * Cambia con qué rol se está mirando la app.
+   *
+   * No es un login nuevo: la sesión es la misma persona. Sólo cambia desde
+   * qué lugar mira, y por eso se comprueba que tenga ese rol aprobado en
+   * lugar de confiar en lo que mande el navegador.
+   */
+  if (ruta === '/auth/rol' && metodo === 'POST') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const body = await leerJson<{ rol?: string }>(request);
+    const rol = String(body.rol ?? '');
+
+    if (rol !== 'cliente') {
+      const aprobado = await env.DB.prepare(
+        "SELECT 1 AS ok FROM usuario_roles WHERE usuario_id = ? AND rol = ? AND estado = 'aprobado'",
+      )
+        .bind(usuario.id, rol)
+        .first();
+
+      if (!aprobado) {
+        return error('No tenés ese tipo de cuenta aprobado.', 403, cors);
+      }
+    }
+
+    await env.DB.prepare('UPDATE usuarios SET rol = ? WHERE id = ?').bind(rol, usuario.id).run();
+
+    return json({ ok: true, rol }, {}, cors);
   }
 
   // ── Postulaciones ──
@@ -626,6 +682,25 @@ async function enrutar(
         'INSERT INTO revisiones (id, postulacion_id, admin_id, decision, nota) VALUES (?, ?, ?, ?, ?)',
       ).bind(nuevoId(), postulacion.id, admin.usuario.id, decision, nota || null),
     ]);
+
+    /* La persona que se postuló tiene que enterarse: estuvo esperando una
+       respuesta, y con "pedimos cambios" además necesita saber cuáles. */
+    const TITULOS: Record<string, string> = {
+      aprobado: 'Tu solicitud fue aprobada',
+      rechazado: 'Tu solicitud fue rechazada',
+      cambios: 'Te pedimos algunos cambios',
+    };
+
+    await avisar(env, postulacion.usuario_id, {
+      tipo: 'postulacion',
+      titulo: TITULOS[decision] ?? 'Novedades de tu solicitud',
+      texto:
+        nota ||
+        (decision === 'aprobado'
+          ? 'Ya podés entrar con tu nueva cuenta.'
+          : 'Mirá el detalle en tu solicitud.'),
+      enlace: decision === 'aprobado' ? '/ingresar' : '/mi-cuenta',
+    });
 
     return json({ ok: true, estado: decision }, {}, cors);
   }
@@ -1129,6 +1204,23 @@ async function enrutar(
       ),
     ]);
 
+    /* El cliente quiere saber que su pedido ya tiene quién lo lleve: es la
+       diferencia entre esperar sabiendo y esperar sin noticias. */
+    const duenoPedido = await env.DB.prepare(
+      'SELECT usuario_id, codigo FROM pedidos WHERE id = ?',
+    )
+      .bind(tomar[1])
+      .first<{ usuario_id: string; codigo: string }>();
+
+    if (duenoPedido) {
+      await avisar(env, duenoPedido.usuario_id, {
+        tipo: 'envio',
+        titulo: `Tu pedido ${duenoPedido.codigo} ya tiene repartidor`,
+        texto: `${repartidor.usuario.nombre} lo va a llevar.`,
+        enlace: '/pedidos',
+      });
+    }
+
     return json({ ok: true }, {}, cors);
   }
 
@@ -1239,6 +1331,32 @@ async function enrutar(
 
     await env.DB.batch(escrituras);
 
+    /* Sólo dos pasos le importan al cliente: cuando sale y cuando llega.
+       "Retirado" es información del comercio, no suya. */
+    const TEXTO_CLIENTE: Record<string, { titulo: string; texto: string }> = {
+      en_camino: { titulo: 'Tu pedido va en camino', texto: 'Ya salió para tu dirección.' },
+      entregado: { titulo: 'Pedido entregado', texto: '¡Que lo disfrutes!' },
+    };
+
+    const paraCliente = TEXTO_CLIENTE[esperado];
+
+    if (paraCliente) {
+      const duenoPedido = await env.DB.prepare(
+        'SELECT usuario_id, codigo FROM pedidos WHERE id = ?',
+      )
+        .bind(envio.pedido_id)
+        .first<{ usuario_id: string; codigo: string }>();
+
+      if (duenoPedido) {
+        await avisar(env, duenoPedido.usuario_id, {
+          tipo: 'envio',
+          titulo: `${paraCliente.titulo} (${duenoPedido.codigo})`,
+          texto: paraCliente.texto,
+          enlace: '/pedidos',
+        });
+      }
+    }
+
     return json({ ok: true, estado: esperado }, {}, cors);
   }
 
@@ -1299,6 +1417,393 @@ async function enrutar(
     );
   }
 
+  // ── Mandados ──
+  //
+  // Un mandado es un encargo sin comercio detrás: "traeme pan de lo de Juan",
+  // "llevá este paquete". Por eso no tiene productos ni precio cerrado, y lo
+  // que se acuerda se habla por el chat.
+
+  if (ruta === '/mandados' && metodo === 'POST') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const body = await leerJson<{
+      descripcion?: string;
+      direccionTexto?: string;
+      lat?: number;
+      lon?: number;
+    }>(request);
+
+    const descripcion = String(body.descripcion ?? '').trim();
+
+    if (descripcion.length < 5) {
+      return error('Contá un poco más qué necesitás.', 400, cors);
+    }
+
+    const id = nuevoId();
+
+    await env.DB.prepare(
+      `INSERT INTO mandados (id, usuario_id, descripcion, direccion_texto, lat, lon)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        id,
+        usuario.id,
+        descripcion.slice(0, 500),
+        body.direccionTexto ?? null,
+        Number.isFinite(body.lat) ? body.lat : null,
+        Number.isFinite(body.lon) ? body.lon : null,
+      )
+      .run();
+
+    return json({ id }, { status: 201 }, cors);
+  }
+
+  /** Los mandados de quien está adentro. */
+  if (ruta === '/mandados' && metodo === 'GET') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT m.id, m.descripcion, m.direccion_texto, m.estado, m.creado_en,
+              u.nombre AS repartidor
+         FROM mandados m
+         LEFT JOIN usuarios u ON u.id = m.repartidor_id
+        WHERE m.usuario_id = ?
+        ORDER BY m.creado_en DESC LIMIT 30`,
+    )
+      .bind(usuario.id)
+      .all();
+
+    return json({ mandados: results }, {}, cors);
+  }
+
+  /** Los mandados sin tomar, para quien reparte. */
+  if (ruta === '/mandados/disponibles' && metodo === 'GET') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT m.id, m.descripcion, m.direccion_texto, m.lat, m.lon, m.creado_en,
+              u.nombre AS cliente
+         FROM mandados m
+         JOIN usuarios u ON u.id = m.usuario_id
+        WHERE m.estado = 'buscando'
+        ORDER BY m.creado_en DESC LIMIT 30`,
+    ).all();
+
+    return json({ mandados: results }, {}, cors);
+  }
+
+  const tomarMandado = /^\/mandados\/([\w-]+)\/tomar$/.exec(ruta);
+
+  if (tomarMandado && metodo === 'POST') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    /* Igual que con los pedidos: si dos lo toman a la vez, el segundo tiene
+       que enterarse en lugar de pisar al primero. */
+    const libre = await env.DB.prepare(
+      "SELECT usuario_id FROM mandados WHERE id = ? AND estado = 'buscando'",
+    )
+      .bind(tomarMandado[1])
+      .first<{ usuario_id: string }>();
+
+    if (!libre) {
+      return error('Otro repartidor tomó este mandado.', 409, cors);
+    }
+
+    await env.DB.prepare(
+      "UPDATE mandados SET estado = 'tomado', repartidor_id = ? WHERE id = ? AND estado = 'buscando'",
+    )
+      .bind(repartidor.usuario.id, tomarMandado[1])
+      .run();
+
+    await avisar(env, libre.usuario_id, {
+      tipo: 'envio',
+      titulo: 'Alguien tomó tu mandado',
+      texto: `${repartidor.usuario.nombre} se está ocupando.`,
+      enlace: '/mandado',
+    });
+
+    return json({ ok: true }, {}, cors);
+  }
+
+  /* El chat del mandado: lo que se acuerda se habla acá, porque un mandado no
+     tiene lista de productos donde dejarlo escrito. */
+  const chatMandado = /^\/mandados\/([\w-]+)\/mensajes$/.exec(ruta);
+
+  if (chatMandado && (metodo === 'GET' || metodo === 'POST')) {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    /* Sólo hablan los dos que están en el mandado. */
+    const permitido = await env.DB.prepare(
+      'SELECT 1 AS ok FROM mandados WHERE id = ? AND (usuario_id = ? OR repartidor_id = ?)',
+    )
+      .bind(chatMandado[1], usuario.id, usuario.id)
+      .first();
+
+    if (!permitido) {
+      return error('No encontrado', 404, cors);
+    }
+
+    if (metodo === 'POST') {
+      const body = await leerJson<{ texto?: string }>(request);
+      const texto = String(body.texto ?? '').trim();
+
+      if (!texto) {
+        return error('El mensaje está vacío.', 400, cors);
+      }
+
+      await env.DB.prepare(
+        'INSERT INTO mandado_mensajes (id, mandado_id, autor_id, texto) VALUES (?, ?, ?, ?)',
+      )
+        .bind(nuevoId(), chatMandado[1], usuario.id, texto.slice(0, 1000))
+        .run();
+
+      return json({ ok: true }, { status: 201 }, cors);
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT m.id, m.texto, m.tipo, m.media_url, m.creado_en, m.autor_id,
+              u.nombre AS autor
+         FROM mandado_mensajes m
+         JOIN usuarios u ON u.id = m.autor_id
+        WHERE m.mandado_id = ?
+        ORDER BY m.creado_en ASC LIMIT 200`,
+    )
+      .bind(chatMandado[1])
+      .all();
+
+    return json({ mensajes: results, yo: usuario.id }, {}, cors);
+  }
+
+  // ── Notificaciones ──
+
+  if (ruta === '/notificaciones' && metodo === 'GET') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT id, tipo, titulo, texto, enlace, leida_en, creado_en
+         FROM notificaciones WHERE usuario_id = ?
+        ORDER BY creado_en DESC LIMIT 50`,
+    )
+      .bind(usuario.id)
+      .all<Record<string, unknown>>();
+
+    const sinLeer = results.filter((fila) => !fila.leida_en).length;
+
+    return json({ notificaciones: results, sinLeer }, {}, cors);
+  }
+
+  /* Marcar leídas es del usuario sobre lo suyo: la condición por usuario
+     evita que alguien marque las de otro conociendo un id. */
+  if (ruta === '/notificaciones/leidas' && metodo === 'POST') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const body = await leerJson<{ ids?: string[] }>(request);
+    const ids = Array.isArray(body.ids) ? body.ids : [];
+
+    if (ids.length === 0) {
+      /* Sin lista, se marcan todas: es lo que hace abrir el panel. */
+      await env.DB.prepare(
+        "UPDATE notificaciones SET leida_en = datetime('now') WHERE usuario_id = ? AND leida_en IS NULL",
+      )
+        .bind(usuario.id)
+        .run();
+    } else {
+      const marcadores = ids.map(() => '?').join(',');
+
+      await env.DB.prepare(
+        `UPDATE notificaciones SET leida_en = datetime('now')
+          WHERE usuario_id = ? AND id IN (${marcadores})`,
+      )
+        .bind(usuario.id, ...ids)
+        .run();
+    }
+
+    return json({ ok: true }, {}, cors);
+  }
+
+  // ── Pagos ──
+
+  /**
+   * Inicia el cobro de un pedido y devuelve a dónde mandar al cliente.
+   *
+   * El pedido tiene que ser suyo y estar sin pagar: sin esas dos condiciones,
+   * cualquiera podría generar cobros sobre pedidos ajenos.
+   */
+  const pagarPedido = /^\/pedidos\/([\w-]+)\/pagar$/.exec(ruta);
+
+  if (pagarPedido && metodo === 'POST') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const pedido = await env.DB.prepare(
+      `SELECT id, codigo, subtotal_centavos, envio_centavos, total_centavos, comercio_id,
+              pago_estado
+         FROM pedidos WHERE id = ? AND usuario_id = ?`,
+    )
+      .bind(pagarPedido[1], usuario.id)
+      .first<{
+        id: string;
+        codigo: string;
+        subtotal_centavos: number;
+        envio_centavos: number;
+        total_centavos: number;
+        comercio_id: string;
+        pago_estado: string;
+      }>();
+
+    if (!pedido) {
+      return error('No encontrado', 404, cors);
+    }
+
+    if (pedido.pago_estado === 'aprobado') {
+      return error('Este pedido ya está pagado.', 409, cors);
+    }
+
+    const resultado = await crearPreferencia(env, pedido, {
+      email: usuario.email,
+      nombre: usuario.nombre,
+    });
+
+    if (!resultado.ok) {
+      return error(resultado.motivo, 502, cors);
+    }
+
+    return json({ url: resultado.url, preferenciaId: resultado.preferenciaId }, {}, cors);
+  }
+
+  /**
+   * Aviso de Mercado Pago cuando un pago cambia de estado.
+   *
+   * Es la fuente de verdad sobre si un pedido está pagado: la vuelta del
+   * navegador puede no ocurrir nunca —el cliente cierra la pestaña— y el pago
+   * estar hecho igual.
+   *
+   * Responde 200 siempre: un error hace que Mercado Pago reintente, y si el
+   * aviso viene mal formado reintentarlo no lo va a arreglar.
+   */
+  if (ruta === '/pagos/webhook' && metodo === 'POST') {
+    const cuerpo = await leerJson<{ type?: string; data?: { id?: string } }>(request);
+    const id = url.searchParams.get('data.id') ?? cuerpo.data?.id;
+    const tipo = url.searchParams.get('type') ?? cuerpo.type;
+
+    if (tipo === 'payment' && id) {
+      /* No se confía en lo que trae el aviso: sólo se toma el id y se le
+         pregunta a Mercado Pago cómo quedó realmente el pago. */
+      await procesarAviso(env, String(id));
+    }
+
+    return json({ ok: true }, {}, cors);
+  }
+
+  /** Cómo quedó el pago de un pedido, para mostrarlo al volver del checkout. */
+  const estadoPago = /^\/pedidos\/([\w-]+)\/pago$/.exec(ruta);
+
+  if (estadoPago && metodo === 'GET') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const fila = await env.DB.prepare(
+      `SELECT p.pago_estado, pg.metodo, pg.monto_centavos
+         FROM pedidos p
+         LEFT JOIN pagos pg ON pg.pedido_id = p.id
+        WHERE p.id = ? AND p.usuario_id = ?
+        ORDER BY pg.creado_en DESC LIMIT 1`,
+    )
+      .bind(estadoPago[1], usuario.id)
+      .first<{ pago_estado: string; metodo: string | null; monto_centavos: number | null }>();
+
+    if (!fila) {
+      return error('No encontrado', 404, cors);
+    }
+
+    return json(
+      {
+        estado: fila.pago_estado,
+        metodo: fila.metodo,
+        monto: fila.monto_centavos ? aPesos(Number(fila.monto_centavos)) : null,
+      },
+      {},
+      cors,
+    );
+  }
+
+  /** Empieza la conexión de la cuenta de Mercado Pago del comercio. */
+  if (ruta === '/pagos/conectar' && metodo === 'GET') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    if (!env.MP_CLIENT_ID) {
+      return error('Falta configurar la aplicación de Mercado Pago.', 503, cors);
+    }
+
+    /* El id del comercio viaja en el estado para saber a quién conectar
+       cuando Mercado Pago devuelva el código. */
+    const destino = new URL('https://auth.mercadopago.com.ar/authorization');
+
+    destino.searchParams.set('client_id', env.MP_CLIENT_ID);
+    destino.searchParams.set('response_type', 'code');
+    destino.searchParams.set('platform_id', 'mp');
+    destino.searchParams.set('state', propio.comercioId);
+    destino.searchParams.set('redirect_uri', `${env.API_PUBLIC_URL || ''}/pagos/conectar/vuelta`);
+
+    return json({ url: destino.toString() }, {}, cors);
+  }
+
+  /** Vuelta de Mercado Pago después de que el comercio autorizó. */
+  if (ruta === '/pagos/conectar/vuelta' && metodo === 'GET') {
+    const codigo = url.searchParams.get('code');
+    const comercioId = url.searchParams.get('state');
+    const app = env.APP_PUBLIC_URL || env.APP_URL;
+
+    if (!codigo || !comercioId) {
+      return Response.redirect(`${app}/#/panel/comercio?pago=error`, 302);
+    }
+
+    const resultado = await guardarCuentaComercio(env, comercioId, codigo);
+
+    return Response.redirect(
+      `${app}/#/panel/comercio?cobros=${resultado.ok ? 'ok' : 'error'}`,
+      302,
+    );
+  }
+
   // ── Ofertas ──
   //
   // El precio de lista lo calcula el servidor leyendo los productos de la
@@ -1321,6 +1826,106 @@ async function enrutar(
       .all<FilaOferta>();
 
     return json({ ofertas: await conProductos(env, results) }, {}, cors);
+  }
+
+  /**
+   * Los números del comercio.
+   *
+   * Se calculan sobre los pedidos reales en lugar de guardarse aparte: son
+   * pocos datos y una tabla de totales acumulados se desincroniza en cuanto
+   * se cancela un pedido.
+   *
+   * Se comparan hoy contra ayer y esta semana contra la anterior: un número
+   * suelto no dice si el negocio va bien, sólo cuánto vendió.
+   */
+  if (ruta === '/mi-comercio/metricas' && metodo === 'GET') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    /* Los cancelados no cuentan como venta: sumarlos mostraría un día bueno
+       que en realidad no entró. */
+    const totales = await env.DB.prepare(
+      `SELECT
+         COUNT(*) FILTER (WHERE date(creado_en) = date('now')) AS pedidos_hoy,
+         COALESCE(SUM(total_centavos) FILTER (WHERE date(creado_en) = date('now')), 0) AS ventas_hoy,
+         COUNT(*) FILTER (WHERE date(creado_en) = date('now', '-1 day')) AS pedidos_ayer,
+         COALESCE(SUM(total_centavos) FILTER (WHERE date(creado_en) = date('now', '-1 day')), 0) AS ventas_ayer,
+         COUNT(*) FILTER (WHERE creado_en >= datetime('now', '-7 days')) AS pedidos_semana,
+         COALESCE(SUM(total_centavos) FILTER (WHERE creado_en >= datetime('now', '-7 days')), 0) AS ventas_semana,
+         COUNT(*) FILTER (WHERE creado_en >= datetime('now', '-14 days') AND creado_en < datetime('now', '-7 days')) AS pedidos_semana_previa,
+         COALESCE(SUM(total_centavos) FILTER (WHERE creado_en >= datetime('now', '-14 days') AND creado_en < datetime('now', '-7 days')), 0) AS ventas_semana_previa,
+         COUNT(*) FILTER (WHERE estado = 'proceso') AS en_proceso
+       FROM pedidos WHERE comercio_id = ? AND estado != 'cancelado'`,
+    )
+      .bind(propio.comercioId)
+      .first<Record<string, number>>();
+
+    const catalogo = await env.DB.prepare(
+      `SELECT
+         (SELECT COUNT(*) FROM productos WHERE comercio_id = ? AND activo = 1) AS productos,
+         (SELECT COUNT(*) FROM ofertas WHERE comercio_id = ? AND activa = 1) AS ofertas`,
+    )
+      .bind(propio.comercioId, propio.comercioId)
+      .first<{ productos: number; ofertas: number }>();
+
+    /* Los productos más vendidos de la última semana: es lo que el comercio
+       mira para decidir qué reponer. */
+    const { results: masVendidos } = await env.DB.prepare(
+      `SELECT pi.nombre, SUM(pi.escalon + 1) AS unidades, SUM(pi.subtotal_centavos) AS total
+         FROM pedido_items pi
+         JOIN pedidos p ON p.id = pi.pedido_id
+        WHERE p.comercio_id = ? AND p.estado != 'cancelado'
+          AND p.creado_en >= datetime('now', '-7 days')
+        GROUP BY pi.nombre
+        ORDER BY unidades DESC
+        LIMIT 5`,
+    )
+      .bind(propio.comercioId)
+      .all<{ nombre: string; unidades: number; total: number }>();
+
+    return json(
+      {
+        hoy: {
+          pedidos: Number(totales?.pedidos_hoy ?? 0),
+          ventas: aPesos(Number(totales?.ventas_hoy ?? 0)),
+        },
+        ayer: {
+          pedidos: Number(totales?.pedidos_ayer ?? 0),
+          ventas: aPesos(Number(totales?.ventas_ayer ?? 0)),
+        },
+        semana: {
+          pedidos: Number(totales?.pedidos_semana ?? 0),
+          ventas: aPesos(Number(totales?.ventas_semana ?? 0)),
+        },
+        semanaPrevia: {
+          pedidos: Number(totales?.pedidos_semana_previa ?? 0),
+          ventas: aPesos(Number(totales?.ventas_semana_previa ?? 0)),
+        },
+        enProceso: Number(totales?.en_proceso ?? 0),
+        productos: Number(catalogo?.productos ?? 0),
+        ofertas: Number(catalogo?.ofertas ?? 0),
+        /* El ticket promedio sale de la semana: con los de hoy solos, un día
+           flojo daría un número que no dice nada. */
+        ticketPromedio:
+          Number(totales?.pedidos_semana ?? 0) > 0
+            ? aPesos(
+                Math.round(
+                  Number(totales?.ventas_semana ?? 0) / Number(totales?.pedidos_semana ?? 1),
+                ),
+              )
+            : 0,
+        masVendidos: masVendidos.map((fila) => ({
+          nombre: fila.nombre,
+          unidades: Number(fila.unidades),
+          total: aPesos(Number(fila.total)),
+        })),
+      },
+      {},
+      cors,
+    );
   }
 
   if (ruta === '/mi-comercio/ofertas' && metodo === 'GET') {
@@ -1524,6 +2129,105 @@ async function enrutar(
       .run();
 
     return json({ ok: true }, {}, cors);
+  }
+
+  /**
+   * Un producto con su comercio y dónde más conseguirlo.
+   *
+   * La comparación busca por nombre en otros comercios: es lo que hace útil
+   * la pantalla en un pueblo donde el mismo producto está en cuatro lugares
+   * a precios distintos. No es infalible —dos comercios pueden escribirlo
+   * diferente— pero acierta en lo que la gente compra todos los días.
+   */
+  const productoDetalle = /^\/productos\/([\w-]+)$/.exec(ruta);
+
+  if (productoDetalle && metodo === 'GET') {
+    const producto = await env.DB.prepare(
+      `SELECT p.id, p.nombre, p.descripcion, p.precio_centavos, p.unidad_venta,
+              p.fotos, p.video_url, p.stock, p.categoria_id,
+              c.id AS comercio_id, c.nombre AS comercio, c.direccion AS comercio_direccion,
+              c.rubro_id, c.minimo_centavos
+         FROM productos p
+         JOIN comercios c ON c.id = p.comercio_id
+        WHERE p.id = ? AND p.activo = 1 AND c.estado = 'aprobado'`,
+    )
+      .bind(productoDetalle[1])
+      .first<Record<string, unknown>>();
+
+    if (!producto) {
+      return error('Producto no encontrado', 404, cors);
+    }
+
+    /* El mismo producto en otros comercios, del más barato al más caro. */
+    const { results: enOtros } = await env.DB.prepare(
+      `SELECT p.id, p.precio_centavos, c.id AS comercio_id, c.nombre AS comercio,
+              c.direccion AS comercio_direccion
+         FROM productos p
+         JOIN comercios c ON c.id = p.comercio_id
+        WHERE lower(p.nombre) = lower(?) AND p.id != ? AND p.activo = 1
+          AND c.estado = 'aprobado'
+        ORDER BY p.precio_centavos ASC
+        LIMIT 5`,
+    )
+      .bind(String(producto.nombre), String(producto.id))
+      .all<{
+        id: string;
+        precio_centavos: number;
+        comercio_id: string;
+        comercio: string;
+        comercio_direccion: string;
+      }>();
+
+    /* Si está en oferta, se dice: es lo que cambia la decisión de comprar. */
+    const oferta = await env.DB.prepare(
+      `SELECT o.id, o.tipo, o.titulo, o.porcentaje, o.cantidad,
+              o.precio_final_centavos, o.precio_lista_centavos
+         FROM ofertas o
+         JOIN oferta_productos op ON op.oferta_id = o.id
+        WHERE op.producto_id = ? AND o.activa = 1
+          AND (o.desde IS NULL OR o.desde <= datetime('now'))
+          AND (o.hasta IS NULL OR o.hasta >= datetime('now'))
+        ORDER BY o.creado_en DESC LIMIT 1`,
+    )
+      .bind(String(producto.id))
+      .first<{
+        id: string;
+        tipo: string;
+        titulo: string;
+        porcentaje: number | null;
+        cantidad: number | null;
+        precio_final_centavos: number;
+        precio_lista_centavos: number;
+      }>();
+
+    return json(
+      {
+        producto: {
+          ...productoSalida(producto),
+          minimo: aPesos(Number(producto.minimo_centavos ?? 0)),
+        },
+        oferta: oferta
+          ? {
+              id: oferta.id,
+              tipo: oferta.tipo,
+              titulo: oferta.titulo,
+              porcentaje: oferta.porcentaje,
+              cantidad: oferta.cantidad,
+              precioFinal: aPesos(Number(oferta.precio_final_centavos)),
+              precioLista: aPesos(Number(oferta.precio_lista_centavos)),
+            }
+          : null,
+        enOtrosComercios: enOtros.map((fila) => ({
+          productoId: fila.id,
+          comercioId: fila.comercio_id,
+          comercio: fila.comercio,
+          direccion: fila.comercio_direccion,
+          precio: aPesos(Number(fila.precio_centavos)),
+        })),
+      },
+      {},
+      cors,
+    );
   }
 
   // ── Productos ──
@@ -1764,6 +2468,23 @@ async function enrutar(
         ),
       ),
     ]);
+
+    /* Al comercio le entra un pedido: es el aviso que hace que lo prepare.
+       Sin esto tendría que estar mirando el panel todo el día. */
+    const duenoComercio = await env.DB.prepare(
+      'SELECT usuario_id, nombre FROM comercios WHERE id = ?',
+    )
+      .bind(body.comercioId)
+      .first<{ usuario_id: string | null; nombre: string }>();
+
+    if (duenoComercio?.usuario_id) {
+      await avisar(env, duenoComercio.usuario_id, {
+        tipo: 'pedido',
+        titulo: `Pedido nuevo ${codigo}`,
+        texto: `${lineas.length} ${lineas.length === 1 ? 'producto' : 'productos'} · ${aPesos(subtotal + envio)}`,
+        enlace: '/panel/comercio',
+      });
+    }
 
     return json(
       { id: pedidoId, codigo, total: aPesos(subtotal + envio) },
@@ -2223,6 +2944,35 @@ async function lineasDePedidos(env: Env, pedidoIds: string[]) {
   }
 
   return porPedido;
+}
+
+/**
+ * Deja un aviso para alguien.
+ *
+ * Nunca corta lo que la app estaba haciendo: que falle una notificación no
+ * puede hacer fracasar un pedido. Por eso devuelve la promesa ya atrapada, y
+ * quien llama decide si esperarla.
+ */
+function avisar(
+  env: Env,
+  usuarioId: string,
+  aviso: { tipo: string; titulo: string; texto?: string; enlace?: string },
+) {
+  return env.DB.prepare(
+    'INSERT INTO notificaciones (id, usuario_id, tipo, titulo, texto, enlace) VALUES (?, ?, ?, ?, ?, ?)',
+  )
+    .bind(
+      nuevoId(),
+      usuarioId,
+      aviso.tipo,
+      aviso.titulo,
+      aviso.texto ?? null,
+      aviso.enlace ?? null,
+    )
+    .run()
+    .catch((fallo) => {
+      console.warn('No se pudo dejar la notificación', fallo);
+    });
 }
 
 /** Fila cruda de la tabla de ofertas, tal como sale de la base. */

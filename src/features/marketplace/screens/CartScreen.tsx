@@ -8,11 +8,12 @@ import {
   AlertCircle,
   ArrowLeftRight,
   CreditCard,
+  Minus,
+  Plus,
   ShieldCheck,
   ShoppingCart,
   Truck,
-  Minus,
-  Plus,
+  Wallet,
   X,
 } from 'lucide-react';
 
@@ -20,7 +21,7 @@ import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { EmptyState } from '../components/EmptyState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { categoryImage } from '@shared/utils/media';
-import { hayBackend, pedidosApi } from '@core/data/services/apiClient';
+import { hayBackend, pagosApi, pedidosApi } from '@core/data/services/apiClient';
 
 import { cartItems } from '../marketplaceContent';
 import { useDirecciones } from '../useDirecciones';
@@ -191,10 +192,35 @@ const checkoutSteps = [
   { label: 'Confirmar', state: 'idle' as const },
 ];
 
+/**
+ * Cómo paga el cliente.
+ *
+ * "Ahora" lleva a Mercado Pago y el pedido queda pagado antes de que el
+ * comercio lo prepare. "Al recibir" es lo que se hace hoy en el pueblo, y
+ * sacarlo dejaría afuera a quien no usa tarjeta.
+ */
 const paymentMethods = [
-  { label: 'Crédito', icon: CreditCard },
-  { label: 'Débito', icon: CreditCard },
-  { label: 'Transferencia', icon: ArrowLeftRight },
+  {
+    id: 'mercadopago',
+    label: 'Pagar ahora',
+    detalle: 'Tarjeta, débito o dinero en cuenta',
+    icon: CreditCard,
+    online: true,
+  },
+  {
+    id: 'efectivo',
+    label: 'Efectivo al recibir',
+    detalle: 'Le pagás al repartidor',
+    icon: Wallet,
+    online: false,
+  },
+  {
+    id: 'transferencia',
+    label: 'Transferencia',
+    detalle: 'Coordinás con el comercio',
+    icon: ArrowLeftRight,
+    online: false,
+  },
 ] as const;
 
 const trustPoints = [
@@ -223,7 +249,7 @@ export function CartScreen() {
      sería adivinar. */
   const [direccionId, setDireccionId] = useState<string | null>(null);
   const [entrega, setEntrega] = useState(deliveryMethods[0]);
-  const [pago, setPago] = useState<string>(paymentMethods[0].label);
+  const [pago, setPago] = useState<string>(paymentMethods[0].id);
 
   const direccionElegida =
     direcciones.find((fila) => fila.id === direccionId) ??
@@ -296,23 +322,49 @@ export function CartScreen() {
       porComercio.set(item.storeId!, grupo);
     }
 
+    const eligioOnline =
+      paymentMethods.find((fila) => fila.id === pago)?.online ?? false;
+
     try {
+      const creados: string[] = [];
+
       for (const [comercioId, grupo] of porComercio) {
-        await pedidosApi.crear({
+        const { id } = await pedidosApi.crear({
           comercioId,
           direccionId: direccionElegida?.id,
           direccionTexto: direccionElegida?.address,
           /* Cómo llega y cómo paga van juntos en el pedido: el comercio
              necesita los dos para prepararlo y cobrarlo. */
-          metodoPago: `${pago} · ${entrega}`,
+          metodoPago: `${paymentMethods.find((fila) => fila.id === pago)?.label ?? pago} · ${entrega}`,
           items: grupo.map((item) => ({
             productoId: item.id,
             escalon: item.quantity,
           })),
         });
+
+        creados.push(id);
       }
 
       clearCart();
+
+      /* Pagando en la app se va a Mercado Pago con el primer pedido. Un
+         carrito de dos comercios genera dos pedidos y hoy se paga el primero;
+         el resto queda listo para pagar desde "Mis pedidos". */
+      if (eligioOnline && creados[0]) {
+        try {
+          const { url } = await pagosApi.iniciar(creados[0]);
+
+          window.location.href = url;
+
+          return;
+        } catch {
+          /* El pedido ya existe: se avisa dónde pagarlo en vez de perderlo. */
+          navigate('/pedidos?pago=pendiente');
+
+          return;
+        }
+      }
+
       navigate('/pedidos');
     } catch (fallo) {
       /* El carrito no se vacía si falló: perder lo armado sería peor que
@@ -629,11 +681,12 @@ export function CartScreen() {
 
                           return (
                             <CartChipBoton
-                              key={method.label}
+                              key={method.id}
                               type="button"
-                              onClick={() => setPago(method.label)}
-                              data-elegido={pago === method.label}
-                              aria-pressed={pago === method.label}
+                              onClick={() => setPago(method.id)}
+                              data-elegido={pago === method.id}
+                              aria-pressed={pago === method.id}
+                              title={method.detalle}
                             >
                               <Icon size={14} aria-hidden="true" />
                               {method.label}
@@ -650,7 +703,11 @@ export function CartScreen() {
                         onClick={() => void confirmOrder()}
                         disabled={confirmando}
                       >
-                        {confirmando ? 'Confirmando…' : 'Confirmar pedido'}
+                        {confirmando
+                          ? 'Confirmando…'
+                          : paymentMethods.find((fila) => fila.id === pago)?.online
+                            ? 'Confirmar y pagar'
+                            : 'Confirmar pedido'}
                       </PrimaryButton>
                       <LinkButton to="/">Seguir comprando</LinkButton>
                     </CartActions>

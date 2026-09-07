@@ -266,3 +266,85 @@ export const OfertaDetalle = styled.p`
   line-height: 1.4;
   overflow-wrap: anywhere;
 `;
+
+// ── Métricas ──
+
+export const MetricaGrilla = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: ${({ theme }) => theme.spacing[2]};
+
+  @media (min-width: 48rem) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+`;
+
+export const MetricaCaja = styled.div`
+  display: grid;
+  gap: 0.15rem;
+  padding: ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.surface};
+`;
+
+export const MetricaEtiqueta = styled.span`
+  color: ${({ theme }) => theme.color.textSoft};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.semibold};
+`;
+
+export const MetricaValor = styled.strong`
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.xl};
+  line-height: 1.1;
+`;
+
+/**
+ * La variación contra el período anterior.
+ *
+ * Verde si subió, rojo si bajó, gris si no hay con qué comparar. Un número
+ * sin referencia no dice si el negocio va bien: dice cuánto vendió.
+ */
+export const MetricaVariacion = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: ${({ theme }) => theme.color.textMuted};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+
+  &[data-tono='sube'] {
+    color: ${({ theme }) => theme.color.success};
+  }
+
+  &[data-tono='baja'] {
+    color: ${({ theme }) => theme.color.danger};
+  }
+`;
+
+export const RankingFila = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[2]} 0;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  > span:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  > small {
+    flex: 0 0 auto;
+    color: ${({ theme }) => theme.color.textSoft};
+    font-size: ${({ theme }) => theme.typography.size.xs};
+  }
+`;

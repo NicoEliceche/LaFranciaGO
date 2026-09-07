@@ -27,11 +27,20 @@ APP_URL = "https://nicoeliceche.github.io"
 # por correo se arman con esto: con sólo el origen, el de recuperar contraseña
 # apuntaba a la raíz del dominio y daba 404.
 APP_PUBLIC_URL = "https://nicoeliceche.github.io/LaFranciaGO"
+# Dirección de esta misma API. Mercado Pago la usa para avisar cómo salió cada
+# pago, y para devolver al comercio después de conectar su cuenta.
+API_PUBLIC_URL = "https://lafranciago-api.lafranciago-api.workers.dev"
 
 # Las credenciales de Google NO van acá: son secretos y este archivo se sube
 # al repositorio. Se cargan una sola vez con:
 #   npx wrangler secret put GOOGLE_CLIENT_ID
 #   npx wrangler secret put GOOGLE_CLIENT_SECRET
+#
+# Lo mismo para el correo y para Mercado Pago:
+#   npx wrangler secret put RESEND_API_KEY
+#   npx wrangler secret put MP_ACCESS_TOKEN
+#   npx wrangler secret put MP_CLIENT_ID
+#   npx wrangler secret put MP_CLIENT_SECRET
 
 # Entorno local para desarrollo: usa una copia de la base en disco.
 [env.dev]

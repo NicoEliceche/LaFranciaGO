@@ -1,9 +1,19 @@
-import { useState } from 'react';
-import { BadgePercent, Bell, MapPin, PackageSearch, Store } from 'lucide-react';
+import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  BadgePercent,
+  Bell,
+  CreditCard,
+  MapPin,
+  MessageSquare,
+  PackageSearch,
+  UserCheck,
+} from 'lucide-react';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { EmptyState } from '../components/EmptyState';
 import { SectionHeading } from '../components/SectionHeading';
+import { marcarLeidas, useNotificaciones } from '../useNotificaciones';
 import { Section, SectionInner } from '../ui';
 import { SectionStack } from './screenLayout';
 import {
@@ -14,59 +24,71 @@ import {
   NotificationCardSubtitle,
   NotificationCardTitle,
   NotificationCardTop,
-  NotificationClearButton,
   NotificationFeed,
   NotificationUnreadDot,
 } from './NotificationsScreenStyled';
 
-type FeedItem = {
-  id: string;
-  title: string;
-  subtitle: string;
-  date: string;
-  unread: boolean;
-  icon: typeof Bell;
-};
+/**
+ * Las notificaciones de quien está adentro.
+ *
+ * Al abrir la pantalla se dan por leídas: si alguien las está mirando, ya se
+ * enteró, y dejarlas marcadas como nuevas obligaría a un gesto extra que no
+ * agrega nada.
+ */
 
-const initialFeed: FeedItem[] = [
-  {
-    id: 'n1',
-    title: 'Tu pedido va en camino',
-    subtitle: 'El repartidor ya retiró tu pedido de Almacén Juan.',
-    date: 'Hoy',
-    unread: true,
-    icon: MapPin,
-  },
-  {
-    id: 'n2',
-    title: 'Pedido confirmado',
-    subtitle: 'Panadería La Esquina aceptó tu pedido #1248.',
-    date: 'Hoy',
-    unread: true,
-    icon: PackageSearch,
-  },
-  {
-    id: 'n3',
-    title: 'Nueva oferta cerca tuyo',
-    subtitle: 'La Huerta bajó el precio de las verduras del día.',
-    date: 'Ayer',
-    unread: true,
-    icon: BadgePercent,
-  },
-  {
-    id: 'n4',
-    title: 'Nuevo comercio en LaFranciaGO',
-    subtitle: 'Carnicería Central ya está recibiendo pedidos.',
-    date: '12/08',
-    unread: false,
-    icon: Store,
-  },
-];
+const ICONOS = {
+  pedido: PackageSearch,
+  envio: MapPin,
+  oferta: BadgePercent,
+  postulacion: UserCheck,
+  chat: MessageSquare,
+  pago: CreditCard,
+} as const;
+
+/** "Hoy 09:14", "Ayer", "12/08": cuánto hace, en la forma más corta que sirva. */
+function cuando(iso: string) {
+  const fecha = new Date(iso.replace(' ', 'T') + 'Z');
+
+  if (Number.isNaN(fecha.getTime())) {
+    return '';
+  }
+
+  const dias = Math.floor((Date.now() - fecha.getTime()) / 86_400_000);
+
+  if (dias === 0) {
+    return fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  if (dias === 1) {
+    return 'Ayer';
+  }
+
+  return fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+}
 
 export function NotificationsScreen() {
-  const [feed, setFeed] = useState<FeedItem[]>(initialFeed);
+  const { notificaciones, sinLeer, cargadas } = useNotificaciones();
 
-  if (feed.length === 0) {
+  /* Se marcan al entrar, no al salir: quien abrió la pantalla ya las vio. */
+  useEffect(() => {
+    if (sinLeer > 0) {
+      void marcarLeidas();
+    }
+  }, [sinLeer]);
+
+  if (notificaciones.length === 0) {
+    /* Mientras cargan no se dice "no tenés": sería un cartel que dura lo que
+       la respuesta y contradice la lista que aparece después. */
+    if (!cargadas) {
+      return (
+        <MarketplaceFrame showSearch={false}>
+          <Section>
+            <SectionInner />
+          </Section>
+        </MarketplaceFrame>
+      );
+    }
+
     return (
       <MarketplaceFrame showSearch={false}>
         <Section>
@@ -74,7 +96,7 @@ export function NotificationsScreen() {
             <EmptyState
               icon={Bell}
               title="No tenés notificaciones"
-              text="Acá vas a ver el estado de tus pedidos y las ofertas cerca tuyo."
+              text="Acá vas a ver el estado de tus pedidos y las novedades de los comercios."
               ctaLabel="Explorar negocios"
               ctaTo="/comercios"
             />
@@ -91,32 +113,49 @@ export function NotificationsScreen() {
           <SectionStack>
             <SectionHeading
               title="Notificaciones"
-              chip={`${feed.filter((item) => item.unread).length} nuevas`}
+              chip={sinLeer > 0 ? `${sinLeer} nuevas` : undefined}
+              subtitle="Lo que pasó con tus pedidos y tu cuenta."
             />
 
-            <NotificationClearButton type="button" onClick={() => setFeed([])}>
-              Limpiar todo
-            </NotificationClearButton>
-
             <NotificationFeed>
-              {feed.map((item) => {
-                const Icon = item.icon;
+              {notificaciones.map((item) => {
+                const Icon = ICONOS[item.tipo] ?? Bell;
+                const sinLeerEsta = !item.leida_en;
 
-                return (
-                  <NotificationCard key={item.id} data-unread={item.unread}>
+                const contenido = (
+                  <>
                     <NotificationCardIcon>
                       <Icon size={18} aria-hidden="true" />
                     </NotificationCardIcon>
 
                     <NotificationCardCopy>
                       <NotificationCardTop>
-                        <NotificationCardTitle>{item.title}</NotificationCardTitle>
-                        <NotificationCardDate>{item.date}</NotificationCardDate>
+                        <NotificationCardTitle>{item.titulo}</NotificationCardTitle>
+                        <NotificationCardDate>{cuando(item.creado_en)}</NotificationCardDate>
                       </NotificationCardTop>
-                      <NotificationCardSubtitle>{item.subtitle}</NotificationCardSubtitle>
+                      {item.texto ? (
+                        <NotificationCardSubtitle>{item.texto}</NotificationCardSubtitle>
+                      ) : null}
                     </NotificationCardCopy>
 
-                    {item.unread ? <NotificationUnreadDot aria-label="Sin leer" /> : null}
+                    {sinLeerEsta ? <NotificationUnreadDot aria-label="Sin leer" /> : null}
+                  </>
+                );
+
+                /* Con enlace la tarjeta entera lleva a donde pasó la cosa:
+                   un aviso que no lleva a ningún lado obliga a buscar. */
+                return item.enlace ? (
+                  <NotificationCard
+                    key={item.id}
+                    as={Link}
+                    to={item.enlace}
+                    data-unread={sinLeerEsta}
+                  >
+                    {contenido}
+                  </NotificationCard>
+                ) : (
+                  <NotificationCard key={item.id} data-unread={sinLeerEsta}>
+                    {contenido}
                   </NotificationCard>
                 );
               })}
