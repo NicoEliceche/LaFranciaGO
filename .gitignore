@@ -19,3 +19,6 @@ restart.bat
 # Backend
 backend/node_modules/
 backend/.wrangler/
+# Secretos locales de Wrangler: van con `wrangler secret put`, nunca al repo.
+backend/.dev.vars
+backend/.dev.vars.*
