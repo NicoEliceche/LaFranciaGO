@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { LogIn, Mail, ShieldCheck, UserRound } from 'lucide-react';
 
 import { GoogleIcon } from '@shared/components/icons/GoogleIcon';
@@ -210,6 +210,14 @@ export function AuthScreen() {
                   <PanelLoginEnlace type="button" onClick={() => setPanelAbierto(true)}>
                     Ingresar como Comercio / Delivery / Flete
                   </PanelLoginEnlace>
+
+                  {/* Sólo al entrar: en el registro todavía no hay contraseña
+                      que recuperar. */}
+                  {!esRegistro ? (
+                    <AuthCambio>
+                      <Link to="/recuperar">¿Olvidaste tu contraseña?</Link>
+                    </AuthCambio>
+                  ) : null}
 
                   <AuthCambio>
                     {esRegistro ? '¿Ya tenés cuenta?' : '¿Todavía no tenés cuenta?'}

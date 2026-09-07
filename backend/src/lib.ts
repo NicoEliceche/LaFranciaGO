@@ -12,6 +12,12 @@ export interface Env {
   GOOGLE_CLIENT_SECRET: string;
   /** A dónde vuelve el usuario cuando termina el ingreso con Google. */
   APP_URL: string;
+  /** Dirección pública de la app, con subcarpeta, para los enlaces por correo. */
+  APP_PUBLIC_URL?: string;
+  /** Envío de correo para recuperar contraseña. Sin esto, no se manda nada. */
+  RESEND_API_KEY?: string;
+  /** Remitente, del estilo "LaFranciaGO <hola@tudominio.com>". */
+  CORREO_REMITENTE?: string;
 }
 
 /* ── Respuestas ── */
@@ -146,7 +152,7 @@ function comparacionConstante(a: Uint8Array, b: Uint8Array) {
   return diferencia === 0;
 }
 
-const aBase64 = (buffer: ArrayBuffer | Uint8Array) =>
+export const aBase64 = (buffer: ArrayBuffer | Uint8Array) =>
   btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
 const deBase64 = (value: string) =>

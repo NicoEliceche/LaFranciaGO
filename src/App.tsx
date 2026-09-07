@@ -13,6 +13,11 @@ import { RutaPrivada } from '@features/marketplace/components/RutaPrivada';
 const AuthScreen = lazy(() =>
   import('@features/marketplace/screens/AuthScreen').then((m) => ({ default: m.AuthScreen })),
 );
+const RecuperarScreen = lazy(() =>
+  import('@features/marketplace/screens/RecuperarScreen').then((m) => ({
+    default: m.RecuperarScreen,
+  })),
+);
 const CategoriesScreen = lazy(() =>
   import('@features/marketplace/screens/CategoriesScreen').then((m) => ({ default: m.CategoriesScreen })),
 );
@@ -88,6 +93,9 @@ function App() {
           <Routes>
             <Route path="/" element={<MarketplaceHomeScreen />} />
             <Route path="/ingresar" element={<AuthScreen />} />
+            {/* La misma pantalla pide el enlace y, con token, cambia la clave. */}
+            <Route path="/recuperar" element={<RecuperarScreen />} />
+            <Route path="/recuperar/:token" element={<RecuperarScreen />} />
             <Route path="/categorias" element={<CategoriesScreen />} />
             <Route path="/comercios" element={<StoresDirectoryScreen />} />
             <Route path="/comercios/:storeId" element={<StoreProfileScreen />} />

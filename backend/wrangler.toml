@@ -20,8 +20,13 @@ bucket_name = "lafranciago-media"
 # Orígenes que pueden llamar a la API. Sin comodín: con credenciales, un "*"
 # dejaría que cualquier sitio leyera los datos del usuario.
 ORIGENES_PERMITIDOS = "https://nicoeliceche.github.io,http://localhost:8081"
-# A dónde vuelve el usuario al terminar el ingreso con Google.
+# A dónde vuelve el usuario al terminar el ingreso con Google. Es el origen,
+# sin ruta: el ingreso con Google compara orígenes, no direcciones completas.
 APP_URL = "https://nicoeliceche.github.io"
+# La dirección donde vive la app, con su subcarpeta. Los enlaces que se mandan
+# por correo se arman con esto: con sólo el origen, el de recuperar contraseña
+# apuntaba a la raíz del dominio y daba 404.
+APP_PUBLIC_URL = "https://nicoeliceche.github.io/LaFranciaGO"
 
 # Las credenciales de Google NO van acá: son secretos y este archivo se sube
 # al repositorio. Se cargan una sola vez con:

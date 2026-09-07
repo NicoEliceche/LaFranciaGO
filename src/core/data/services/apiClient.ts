@@ -123,6 +123,12 @@ export const authApi = {
     api.post<UsuarioApi>('/auth/login-panel', datos),
   logout: () => api.post<{ ok: true }>('/auth/logout'),
   yo: () => api.get<UsuarioApi>('/auth/yo'),
+  /* Pide el enlace por correo. Responde igual exista o no la cuenta: la
+     respuesta no revela quién está registrado. */
+  recuperar: (email: string) =>
+    api.post<{ ok: true; mensaje: string }>('/auth/recuperar', { email }),
+  confirmarRecuperacion: (token: string, password: string) =>
+    api.post<{ ok: true }>('/auth/recuperar/confirmar', { token, password }),
 };
 
 export interface PostulacionApi {
@@ -368,7 +374,33 @@ export const deliveryApi = {
     api.post<{ ok: true }>(`/delivery/pedidos/${id}/tomar`, { lat, lon }),
   actualizarUbicacion: (lat: number, lon: number) =>
     api.post<{ ok: true }>('/delivery/ubicacion', { lat, lon }),
+  /** Los pedidos que este repartidor ya tomó y todavía tiene en la mano. */
+  misEnvios: () => api.get<{ envios: EnvioAsignadoApi[] }>('/delivery/mis-envios'),
+  /** Avanza al paso siguiente: retirado, en camino, entregado. */
+  avanzar: (envioId: string, estado: EstadoEnvio) =>
+    api.post<{ ok: true; estado: EstadoEnvio }>(`/delivery/envios/${envioId}/estado`, { estado }),
 };
+
+/** Los pasos por los que pasa un envío, en orden. */
+export type EstadoEnvio = 'asignado' | 'retirado' | 'en_camino' | 'entregado';
+
+export interface EnvioAsignadoApi {
+  id: string;
+  estado: EstadoEnvio;
+  asignado_en: string | null;
+  entregado_en: string | null;
+  pedido_id: string;
+  codigo: string;
+  direccion_texto: string;
+  total: number;
+  metodo_pago: string | null;
+  comercio: string;
+  comercio_direccion: string;
+  comercio_telefono: string | null;
+  cliente: string;
+  cliente_telefono: string | null;
+  items: number;
+}
 
 export const pedidosApi = {
   listar: () => api.get<{ pedidos: PedidoApi[] }>('/pedidos'),

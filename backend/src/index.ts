@@ -27,6 +27,12 @@ import {
   validarEmail,
   validarPassword,
 } from './auth';
+import {
+  crearPedidoRecuperacion,
+  duenoDelToken,
+  enviarCorreoRecuperacion,
+  usarPedidoRecuperacion,
+} from './recuperacion';
 
 /**
  * API de LaFranciaGO.
@@ -184,6 +190,73 @@ async function enrutar(
     }
 
     return json({ ok: true }, {}, { ...cors, 'Set-Cookie': cookieBorrada() });
+  }
+
+  /**
+   * Pide el enlace para recuperar la contraseña.
+   *
+   * Responde lo mismo exista o no la cuenta: si dijera "ese email no está
+   * registrado", cualquiera podría averiguar quién tiene cuenta probando
+   * direcciones.
+   */
+  if (ruta === '/auth/recuperar' && metodo === 'POST') {
+    const body = await leerJson<{ email?: string }>(request);
+    const email = (body.email ?? '').trim().toLowerCase();
+
+    const respuesta = json(
+      { ok: true, mensaje: 'Si esa cuenta existe, te llega un correo con el enlace.' },
+      {},
+      cors,
+    );
+
+    if (!email || !email.includes('@')) {
+      return respuesta;
+    }
+
+    const enlace = await crearPedidoRecuperacion(env, email, env.APP_PUBLIC_URL || env.APP_URL);
+
+    if (enlace) {
+      /* El envío no bloquea la respuesta: tardar en contestar según si la
+         cuenta existe también sería una forma de averiguarlo. */
+      await enviarCorreoRecuperacion(env, email, enlace);
+    }
+
+    return respuesta;
+  }
+
+  /** Cambia la contraseña con el token del enlace. */
+  if (ruta === '/auth/recuperar/confirmar' && metodo === 'POST') {
+    const body = await leerJson<{ token?: string; password?: string }>(request);
+    const token = String(body.token ?? '');
+    const password = String(body.password ?? '');
+
+    if (!token) {
+      return error('Falta el enlace de recuperación.', 400, cors);
+    }
+
+    /* La contraseña nueva pasa por las mismas reglas que en el registro: de
+       poco sirve recuperar la cuenta para dejarla con "123456". El dueño del
+       token se resuelve primero, para poder comprobar también que la
+       contraseña no contenga su propio email ni su nombre. */
+    const dueno = await duenoDelToken(env, token);
+
+    if (!dueno) {
+      return error('El enlace no es válido.', 400, cors);
+    }
+
+    const problema = validarPassword(password, dueno.email, dueno.nombre);
+
+    if (problema) {
+      return error(problema, 400, cors);
+    }
+
+    const resultado = await usarPedidoRecuperacion(env, token, password);
+
+    if (!resultado.ok) {
+      return error(resultado.motivo, 400, cors);
+    }
+
+    return json({ ok: true }, {}, cors);
   }
 
   if (ruta === '/auth/login-panel' && metodo === 'POST') {
@@ -1057,6 +1130,116 @@ async function enrutar(
     ]);
 
     return json({ ok: true }, {}, cors);
+  }
+
+  /**
+   * Los pedidos que este repartidor ya tomó y todavía no entregó.
+   *
+   * Son su trabajo del momento: sin esta lista, tomar un pedido lo hacía
+   * desaparecer de la pantalla y no quedaba dónde seguirlo ni cómo marcarlo
+   * entregado.
+   */
+  if (ruta === '/delivery/mis-envios' && metodo === 'GET') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT e.id, e.estado, e.asignado_en, e.entregado_en,
+              p.id AS pedido_id, p.codigo, p.direccion_texto, p.total_centavos,
+              p.metodo_pago,
+              c.nombre AS comercio, c.direccion AS comercio_direccion,
+              c.telefono AS comercio_telefono,
+              u.nombre AS cliente, u.telefono AS cliente_telefono,
+              (SELECT COUNT(*) FROM pedido_items pi WHERE pi.pedido_id = p.id) AS items
+         FROM envios e
+         JOIN pedidos p ON p.id = e.pedido_id
+         JOIN comercios c ON c.id = p.comercio_id
+         JOIN usuarios u ON u.id = p.usuario_id
+        WHERE e.repartidor_id = ? AND e.estado NOT IN ('entregado', 'cancelado')
+        ORDER BY e.asignado_en ASC`,
+    )
+      .bind(repartidor.usuario.id)
+      .all<Record<string, unknown>>();
+
+    return json(
+      {
+        envios: results.map((fila) => ({
+          ...fila,
+          total: aPesos(Number(fila.total_centavos)),
+        })),
+      },
+      {},
+      cors,
+    );
+  }
+
+  const avanzar = /^\/delivery\/envios\/([\w-]+)\/estado$/.exec(ruta);
+
+  if (avanzar && metodo === 'POST') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    const body = await leerJson<{ estado?: string }>(request);
+    const destino = String(body.estado ?? '');
+
+    /* El envío avanza en un orden: se retira del comercio, se sale, se
+       entrega. Saltear pasos dejaría un pedido "entregado" que el comercio
+       todavía no preparó, así que sólo se acepta el paso siguiente. */
+    const SIGUIENTE: Record<string, string> = {
+      asignado: 'retirado',
+      retirado: 'en_camino',
+      en_camino: 'entregado',
+    };
+
+    /* El envío tiene que ser suyo: sin esta condición, cualquier repartidor
+       podría dar por entregado el pedido de otro conociendo el id. */
+    const envio = await env.DB.prepare(
+      'SELECT id, estado, pedido_id FROM envios WHERE id = ? AND repartidor_id = ?',
+    )
+      .bind(avanzar[1], repartidor.usuario.id)
+      .first<{ id: string; estado: string; pedido_id: string }>();
+
+    if (!envio) {
+      return error('No encontrado', 404, cors);
+    }
+
+    const esperado = SIGUIENTE[envio.estado];
+
+    if (!esperado) {
+      return error('Este envío ya está cerrado.', 409, cors);
+    }
+
+    if (destino && destino !== esperado) {
+      return error(`Después de "${envio.estado}" viene "${esperado}".`, 409, cors);
+    }
+
+    const escrituras = [
+      env.DB.prepare(
+        `UPDATE envios
+            SET estado = ?, entregado_en = CASE WHEN ? = 'entregado' THEN datetime('now') ELSE entregado_en END
+          WHERE id = ?`,
+      ).bind(esperado, esperado, envio.id),
+    ];
+
+    /* Entregar cierra también el pedido: si sólo se cerrara el envío, el
+       cliente seguiría viendo "en proceso" con el paquete en la mano. */
+    if (esperado === 'entregado') {
+      escrituras.push(
+        env.DB.prepare("UPDATE pedidos SET estado = 'terminado' WHERE id = ?").bind(
+          envio.pedido_id,
+        ),
+      );
+    }
+
+    await env.DB.batch(escrituras);
+
+    return json({ ok: true, estado: esperado }, {}, cors);
   }
 
   /** Posición del repartidor, para el mapa que mira el comercio. */
