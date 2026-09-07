@@ -12,6 +12,8 @@ import { ApiError, authApi, hayBackend, type UsuarioApi } from '@core/data/servi
  * Sin backend configurado la app sigue funcionando sin sesión, como antes.
  */
 
+import { refrescarFavoritos } from './useFavoritos';
+
 export type EstadoSesion = 'cargando' | 'invitado' | 'conectado';
 
 const listeners = new Set<() => void>();
@@ -22,9 +24,18 @@ let consultado = false;
 const notify = () => listeners.forEach((listener) => listener());
 
 const aplicar = (siguiente: UsuarioApi | null) => {
+  const cambioDeUsuario = usuario?.id !== siguiente?.id;
+
   usuario = siguiente;
   estado = siguiente ? 'conectado' : 'invitado';
   notify();
+
+  /* Los favoritos son de quien está adentro. Sin esto, lo que se cargó antes
+     de iniciar sesión (vacío, porque no había sesión) se quedaba pegado, y
+     Favoritos decía "no guardaste nada" teniendo comercios guardados. */
+  if (cambioDeUsuario) {
+    void refrescarFavoritos();
+  }
 };
 
 /** Pregunta al backend quién es el usuario de la cookie actual. */

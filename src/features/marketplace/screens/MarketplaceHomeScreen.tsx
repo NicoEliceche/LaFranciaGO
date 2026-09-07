@@ -13,6 +13,7 @@ import { SearchBar } from '../components/SearchBar';
 import { SectionHeading } from '../components/SectionHeading';
 import { StoreCard } from '../components/StoreCard';
 import { categories } from '../../home/homeContent';
+import { alternarFavorito, useFavoritos } from '../useFavoritos';
 import { useHomeData } from '../useHomeData';
 import { matchesQuery } from '../marketplace.utils';
 import { rankResults } from '@core/data/rankingService';
@@ -47,6 +48,7 @@ export function MarketplaceHomeScreen() {
   /* Comercios y ofertas salen de la base: son los que el comercio administra
      desde su panel, no una lista escrita en el código. */
   const { featuredStores, nearbyOffers, cargando } = useHomeData();
+  const { favoritos } = useFavoritos();
 
   const normalizedQuery = query.trim();
   const isSearching = normalizedQuery.length > 0;
@@ -204,6 +206,8 @@ export function MarketplaceHomeScreen() {
               {visibleStores.map((store, index) => (
                 <StoreCard
                   key={store.id}
+                  favorito={favoritos.has(store.id)}
+                  onToggleFavorito={alternarFavorito}
                   id={store.id}
                   name={store.name}
                   category={store.category}

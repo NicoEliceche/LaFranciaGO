@@ -1,4 +1,5 @@
-import { Bike, Clock, Star } from 'lucide-react';
+import type { MouseEvent } from 'react';
+import { Bike, Clock, Heart, Star } from 'lucide-react';
 
 import { Avatar, MediaFrame, MediaImage, MediaOverlayTop } from '@shared/components/Media';
 import { categoryImage, initialsOf, toneFromId } from '@shared/utils/media';
@@ -7,6 +8,7 @@ import { formatDistance } from '@shared/utils/format';
 import {
   StoreBody,
   StoreCardShell,
+  StoreFavoritoBoton,
   StoreLogoWrap,
   StoreMeta,
   StoreMetaPill,
@@ -33,6 +35,9 @@ type StoreCardProps = {
   etaMax?: number;
   /** Carga inmediata para las tarjetas visibles al abrir la pantalla. */
   priority?: boolean;
+  /** Si ya está guardado. Sin el par de props, la tarjeta no muestra corazón. */
+  favorito?: boolean;
+  onToggleFavorito?: (id: string) => void;
 };
 
 /**
@@ -51,7 +56,17 @@ export function StoreCard({
   etaMin,
   etaMax,
   priority,
+  favorito,
+  onToggleFavorito,
 }: StoreCardProps) {
+  /* La tarjeta entera es un enlace: sin frenar el clic, guardar un comercio
+     también lo abriría. */
+  const alTocarCorazon = (evento: MouseEvent<HTMLButtonElement>) => {
+    evento.preventDefault();
+    evento.stopPropagation();
+    onToggleFavorito?.(id);
+  };
+
   return (
     <StoreCardShell to={to}>
       <MediaFrame $ratio="16 / 9">
@@ -79,6 +94,18 @@ export function StoreCard({
             {initialsOf(name)}
           </Avatar>
         </StoreLogoWrap>
+
+        {onToggleFavorito ? (
+          <StoreFavoritoBoton
+            type="button"
+            onClick={alTocarCorazon}
+            data-guardado={favorito}
+            aria-pressed={favorito}
+            aria-label={favorito ? `Quitar ${name} de favoritos` : `Guardar ${name} en favoritos`}
+          >
+            <Heart size={17} aria-hidden="true" fill={favorito ? 'currentColor' : 'none'} />
+          </StoreFavoritoBoton>
+        ) : null}
       </MediaFrame>
 
       <StoreBody>

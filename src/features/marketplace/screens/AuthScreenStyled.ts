@@ -10,8 +10,12 @@ export const AuthShell = styled.div`
 `;
 
 /**
- * Botón de Google sobre fondo blanco, como pide su guía de marca. El blanco se
- * mantiene también en modo oscuro para que el logo siga siendo reconocible.
+ * Botón de Google.
+ *
+ * Su guía de marca define dos variantes, clara y oscura, justamente para no
+ * clavar un rectángulo blanco en una pantalla oscura. Se usa la que
+ * corresponda al tema: el logo va a color en las dos, que es lo que lo hace
+ * reconocible, y el fondo acompaña al resto del formulario.
  */
 export const AuthGoogleBoton = styled.button`
   display: flex;
@@ -22,8 +26,8 @@ export const AuthGoogleBoton = styled.button`
   min-height: 3rem;
   border-radius: ${({ theme }) => theme.radius.lg};
   border: 1px solid ${({ theme }) => theme.color.border};
-  background: #ffffff;
-  color: #1f1f1f;
+  background: ${({ theme }) => theme.color.surface};
+  color: ${({ theme }) => theme.color.text};
   font-family: ${({ theme }) => theme.typography.fontFamily.heading};
   font-size: ${({ theme }) => theme.typography.size.sm};
   font-weight: ${({ theme }) => theme.typography.weight.bold};

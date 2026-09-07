@@ -29,6 +29,55 @@ export const StoreLogoWrap = styled.div`
   z-index: 2;
 `;
 
+/**
+ * Corazón de favorito, abajo a la derecha de la portada.
+ *
+ * Va enfrentado al logo, que ocupa la izquierda. El fondo oscuro translúcido
+ * lo despega de la foto: sin él, sobre una imagen clara el ícono desaparece.
+ *
+ * La tarjeta entera es un enlace, así que el botón frena el clic para que
+ * guardar un comercio no signifique también entrar en él.
+ */
+export const StoreFavoritoBoton = styled.button`
+  position: absolute;
+  right: ${({ theme }) => theme.spacing[2]};
+  bottom: ${({ theme }) => theme.spacing[2]};
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease;
+
+  &:hover {
+    background: rgba(15, 23, 42, 0.72);
+  }
+
+  /* Al guardar, el corazón se llena y da un salto corto: confirma el gesto
+     sin necesidad de un cartel. */
+  &[data-guardado='true'] {
+    color: ${({ theme }) => theme.color.danger};
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.primary};
+    outline-offset: 2px;
+  }
+`;
+
 export const StoreBody = styled.div`
   display: grid;
   gap: 0.15rem;

@@ -1463,7 +1463,24 @@ async function enrutar(
       .bind(usuario.id)
       .all();
 
-    return json({ pedidos: results.map(pedidoSalida) }, {}, cors);
+    /* Cada pedido viaja con lo que se compró: el historial muestra los
+       productos sin pedirlos aparte, y "volver a pedir" necesita saberlos.
+       Una sola consulta para todos los pedidos, no una por cada uno. */
+    const lineas = await lineasDePedidos(
+      env,
+      results.map((fila) => String(fila.id)),
+    );
+
+    return json(
+      {
+        pedidos: results.map((fila) => ({
+          ...pedidoSalida(fila),
+          items: lineas.get(String(fila.id)) ?? [],
+        })),
+      },
+      {},
+      cors,
+    );
   }
 
   if (ruta === '/pedidos' && metodo === 'POST') {
@@ -1960,6 +1977,58 @@ async function destacadosDe(env: Env, comercioIds: string[]) {
   }
 
   return porComercio;
+}
+
+/** Las líneas de varios pedidos, agrupadas por pedido, en una sola consulta. */
+async function lineasDePedidos(env: Env, pedidoIds: string[]) {
+  const porPedido = new Map<
+    string,
+    Array<{
+      productoId: string | null;
+      nombre: string;
+      precio: number;
+      unidadVenta: string;
+      escalon: number;
+      subtotal: number;
+    }>
+  >();
+
+  if (pedidoIds.length === 0) {
+    return porPedido;
+  }
+
+  const marcadores = pedidoIds.map(() => '?').join(',');
+  const { results } = await env.DB.prepare(
+    `SELECT pedido_id, producto_id, nombre, precio_centavos, unidad_venta, escalon,
+            subtotal_centavos
+       FROM pedido_items WHERE pedido_id IN (${marcadores})`,
+  )
+    .bind(...pedidoIds)
+    .all<{
+      pedido_id: string;
+      producto_id: string | null;
+      nombre: string;
+      precio_centavos: number;
+      unidad_venta: string;
+      escalon: number;
+      subtotal_centavos: number;
+    }>();
+
+  for (const fila of results) {
+    const lista = porPedido.get(fila.pedido_id) ?? [];
+
+    lista.push({
+      productoId: fila.producto_id,
+      nombre: fila.nombre,
+      precio: aPesos(Number(fila.precio_centavos)),
+      unidadVenta: fila.unidad_venta,
+      escalon: Number(fila.escalon),
+      subtotal: aPesos(Number(fila.subtotal_centavos)),
+    });
+    porPedido.set(fila.pedido_id, lista);
+  }
+
+  return porPedido;
 }
 
 /** Fila cruda de la tabla de ofertas, tal como sale de la base. */

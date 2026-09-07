@@ -9,6 +9,7 @@ import { SearchBar } from '../components/SearchBar';
 import { SectionHeading } from '../components/SectionHeading';
 import { StoreCard } from '../components/StoreCard';
 import { categories, quickFilters } from '../marketplaceContent';
+import { alternarFavorito, useFavoritos } from '../useFavoritos';
 import { useStores } from '../useStores';
 import { matchesQuery } from '../marketplace.utils';
 import { SORT_OPTIONS, rankResults } from '@core/data/rankingService';
@@ -45,6 +46,7 @@ export function StoresDirectoryScreen() {
   );
 
   const { stores, cargando } = useStores();
+  const { favoritos } = useFavoritos();
 
   const filteredStores = useMemo(
     () =>
@@ -141,6 +143,8 @@ export function StoresDirectoryScreen() {
                 {filteredStores.map((store, index) => (
                   <StoreCard
                     key={store.id}
+                    favorito={favoritos.has(store.id)}
+                    onToggleFavorito={alternarFavorito}
                     id={store.id}
                     name={store.name}
                     category={store.category}
