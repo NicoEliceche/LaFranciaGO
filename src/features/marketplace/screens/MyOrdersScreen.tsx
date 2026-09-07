@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { PackageSearch } from 'lucide-react';
+import { MapPin, PackageSearch } from 'lucide-react';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { EmptyState } from '../components/EmptyState';
@@ -10,7 +10,13 @@ import type { OrderState } from '../marketplace.types';
 import { FilterChip, SectionInner } from '../ui';
 import { ScrollRail } from '@shared/components/ScrollRail';
 
-import { CompactSection, OrderList, SearchSection } from './screenLayout';
+import {
+  CompactSection,
+  OrderList,
+  PedidoConSeguimiento,
+  SearchSection,
+  SeguirBoton,
+} from './screenLayout';
 
 type OrderTab = 'todos' | OrderState;
 
@@ -62,7 +68,18 @@ export function MyOrdersScreen() {
           {cargando && visibleOrders.length === 0 ? null : visibleOrders.length > 0 ? (
             <OrderList>
               {visibleOrders.map((order, index) => (
-                <OrderCard key={order.id} order={order} priority={index < 3} />
+                <PedidoConSeguimiento key={order.id}>
+                  <OrderCard order={order} priority={index < 3} />
+
+                  {/* Seguir en vivo sólo tiene sentido mientras está en
+                      camino: en uno entregado, el mapa no diría nada. */}
+                  {order.state === 'proceso' ? (
+                    <SeguirBoton to={`/pedidos/${order.id}/seguimiento`}>
+                      <MapPin size={15} aria-hidden="true" />
+                      Ver dónde va
+                    </SeguirBoton>
+                  ) : null}
+                </PedidoConSeguimiento>
               ))}
             </OrderList>
           ) : (

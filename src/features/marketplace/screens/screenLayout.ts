@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { CardPad, Section, SectionHeader } from '../ui';
@@ -249,4 +250,36 @@ export const PromoSplitRow = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${({ theme }) => theme.spacing[2]};
+`;
+
+/**
+ * Un pedido con su acción de seguimiento.
+ *
+ * La tarjeta entera es un enlace al comercio, así que el botón de seguir no
+ * puede ir adentro: iría a dos lugares con el mismo toque.
+ */
+export const PedidoConSeguimiento = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing[2]};
+`;
+
+export const SeguirBoton = styled(Link)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  min-height: 2.5rem;
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid ${({ theme }) => theme.color.primary};
+  background: ${({ theme }) => theme.color.primarySoft};
+  color: ${({ theme }) => theme.color.primary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  text-decoration: none;
+  transition: background-color 160ms ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.color.surfaceMuted};
+  }
 `;

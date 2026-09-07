@@ -18,6 +18,11 @@ const RecuperarScreen = lazy(() =>
     default: m.RecuperarScreen,
   })),
 );
+const SeguimientoScreen = lazy(() =>
+  import('@features/marketplace/screens/SeguimientoScreen').then((m) => ({
+    default: m.SeguimientoScreen,
+  })),
+);
 const CategoriesScreen = lazy(() =>
   import('@features/marketplace/screens/CategoriesScreen').then((m) => ({ default: m.CategoriesScreen })),
 );
@@ -105,6 +110,16 @@ function App() {
               element={
                 <RutaPrivada>
                   <MyOrdersScreen />
+                </RutaPrivada>
+              }
+            />
+            {/* Dónde va un pedido: es información de la cuenta, así que
+                pide sesión. */}
+            <Route
+              path="/pedidos/:pedidoId/seguimiento"
+              element={
+                <RutaPrivada>
+                  <SeguimientoScreen />
                 </RutaPrivada>
               }
             />

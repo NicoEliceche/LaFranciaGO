@@ -64,6 +64,56 @@ export const MapCanvas = styled.div`
     }
   }
 
+  /* ── Seguimiento del pedido ──
+
+     Tres puntos con roles distintos: de dónde sale, a dónde va, y quién lo
+     lleva. Se distinguen por forma además de color, para que se lean también
+     sin distinguir bien los tonos. */
+
+  .lfg-seg-comercio span,
+  .lfg-seg-destino span,
+  .lfg-seg-movil span {
+    display: block;
+    width: 1.15rem;
+    height: 1.15rem;
+    border: 3px solid #ffffff;
+    box-shadow: 0 2px 8px rgba(5, 8, 22, 0.45);
+  }
+
+  /* El comercio es un cuadrado: es un lugar fijo. */
+  .lfg-seg-comercio span {
+    border-radius: 0.3rem;
+    background: ${({ theme }) => theme.color.textMuted};
+  }
+
+  /* El destino, un rombo: es la meta. */
+  .lfg-seg-destino span {
+    border-radius: 0.25rem;
+    background: ${({ theme }) => theme.color.brand};
+    transform: rotate(45deg);
+  }
+
+  /* Quien lo lleva late, porque se está moviendo. */
+  .lfg-seg-movil span {
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.success};
+    animation: lfg-latido 2s ease-in-out infinite;
+  }
+
+  /* Una posición de hace rato no está latiendo: se apaga para no prometer
+     que el punto dice dónde está ahora. */
+  .lfg-seg-movil--viejo span {
+    background: ${({ theme }) => theme.color.textSoft};
+    animation: none;
+    opacity: 0.7;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lfg-seg-movil span {
+      animation: none;
+    }
+  }
+
   .lfg-pin:active {
     cursor: grabbing;
   }
