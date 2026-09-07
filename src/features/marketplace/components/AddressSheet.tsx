@@ -10,6 +10,7 @@ import type { GeoSuggestion } from '@shared/types/geo.types';
 
 import { addresses as savedAddresses } from '../addressesContent';
 import type { AddressBookEntry } from '../marketplace.types';
+import { guardarDireccion } from '../useDirecciones';
 /* El mapa pesa ~150 KB con Leaflet: se carga sólo al abrir el paso de alta. */
 const AddressMap = lazy(() => import('./AddressMap').then((m) => ({ default: m.AddressMap })));
 import { AddressNameDialog } from './AddressNameDialog';
@@ -193,16 +194,44 @@ export function AddressSheet({
     });
   };
 
-  const saveNewAddress = (name: string) => {
+  /**
+   * Guarda la dirección nueva en la cuenta del cliente.
+   *
+   * Va a la base y no sólo a la pantalla: una dirección cargada tiene que
+   * seguir estando la próxima vez que entre, y desde otro dispositivo. Con
+   * las coordenadas del pin, que es lo que después usa el repartidor.
+   */
+  const saveNewAddress = async (name: string) => {
+    const texto = query.trim();
+
+    setNamingOpen(false);
+
+    try {
+      const id = await guardarDireccion({
+        etiqueta: name,
+        direccion: texto,
+        lat: point?.lat,
+        lon: point?.lon,
+      });
+
+      if (id) {
+        onSelect(id, texto);
+        onClose();
+
+        return;
+      }
+    } catch {
+      /* Si no se pudo guardar, sirve para este pedido y se avisa al salir. */
+    }
+
     const entry: AddressBookEntry = {
       id: `custom-${Date.now()}`,
       label: name,
-      address: query.trim(),
+      address: texto,
       primary: false,
     };
 
     setExtraAddresses((current) => [...current, entry]);
-    setNamingOpen(false);
     onSelect(entry.id, entry.address);
     onClose();
   };

@@ -53,6 +53,41 @@ export const CartAddressPad = styled(CardPad)`
   padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
 `;
 
+/**
+ * Tarjeta de dirección elegible.
+ *
+ * Antes eran tarjetas muertas: se veían como opciones pero no se podían
+ * tocar, y el pedido salía siempre a la dirección principal. Ahora es un
+ * botón, y la elegida se marca con el borde de la marca.
+ */
+export const CartAddressOption = styled.button`
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: ${({ theme }) => theme.color.surface};
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.color.primary};
+  }
+
+  &[data-elegida='true'] {
+    border-color: ${({ theme }) => theme.color.primary};
+    background: ${({ theme }) => theme.color.primarySoft};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.primary};
+    outline-offset: 2px;
+  }
+`;
+
 export const CartAddressHeader = styled.div`
   display: flex;
   align-items: center;
@@ -111,6 +146,43 @@ export const CartHeroMeta = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing[1]};
+`;
+
+/** Chip elegible para entrega y pago: mismo aspecto, pero se puede tocar. */
+export const CartChipBoton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[1]};
+  min-height: 2.25rem;
+  padding: 0 ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.surfaceMuted};
+  color: ${({ theme }) => theme.color.text};
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: ${({ theme }) => theme.typography.weight.semibold};
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.color.primary};
+  }
+
+  &[data-elegido='true'] {
+    border-color: ${({ theme }) => theme.color.primary};
+    background: ${({ theme }) => theme.color.primarySoft};
+    color: ${({ theme }) => theme.color.primary};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.primary};
+    outline-offset: 2px;
+  }
 `;
 
 export const CartChip = styled.span`

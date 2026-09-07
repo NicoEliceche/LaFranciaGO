@@ -1617,8 +1617,18 @@ async function enrutar(
     const body = await leerJson<Record<string, unknown>>(request);
     const id = nuevoId();
 
+    /* La primera dirección de una cuenta queda como principal: es a donde se
+       entrega salvo que el cliente elija otra, y sin ninguna marcada el
+       carrito tendría que adivinar cuál usar. */
+    const tiene = await env.DB.prepare(
+      'SELECT 1 AS ok FROM direcciones WHERE usuario_id = ? LIMIT 1',
+    )
+      .bind(usuario.id)
+      .first();
+
     await env.DB.prepare(
-      'INSERT INTO direcciones (id, usuario_id, etiqueta, direccion, lat, lon) VALUES (?, ?, ?, ?, ?, ?)',
+      `INSERT INTO direcciones (id, usuario_id, etiqueta, direccion, lat, lon, es_principal)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
         id,
@@ -1627,6 +1637,7 @@ async function enrutar(
         String(body.direccion ?? ''),
         body.lat ?? null,
         body.lon ?? null,
+        tiene ? 0 : 1,
       )
       .run();
 

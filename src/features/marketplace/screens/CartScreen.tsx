@@ -22,7 +22,8 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { categoryImage } from '@shared/utils/media';
 import { hayBackend, pedidosApi } from '@core/data/services/apiClient';
 
-import { addresses, cartItems } from '../marketplaceContent';
+import { cartItems } from '../marketplaceContent';
+import { useDirecciones } from '../useDirecciones';
 import type { CartItem } from '../marketplace.types';
 import { formatMoney } from '../marketplace.utils';
 import { Card, CardText, CardTitle, LinkButton, PrimaryButton, SectionInner, SectionKicker, SectionText, SectionTitle, StrongPrice } from '../ui';
@@ -30,6 +31,7 @@ import {
   CartActions,
   CartCardPad,
   CartChip,
+  CartChipBoton,
   CartGrid,
   CartHeroCard,
   CartHeroCopy,
@@ -76,6 +78,7 @@ import {
   CartTotalsList,
   CartAddressHeader,
   CartAddressNewButton,
+  CartAddressOption,
   CartAddressPad,
   CartTrustGrid,
   CartTrustItem,
@@ -212,6 +215,21 @@ export function CartScreen() {
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
   const [errorPedido, setErrorPedido] = useState<string | null>(null);
+
+  const { direcciones, recargar: recargarDirecciones } = useDirecciones();
+
+  /* Lo que el cliente eligió. La dirección arranca sin elegir y toma la
+     principal en cuanto llegan: elegir por él antes de saber cuáles tiene
+     sería adivinar. */
+  const [direccionId, setDireccionId] = useState<string | null>(null);
+  const [entrega, setEntrega] = useState(deliveryMethods[0]);
+  const [pago, setPago] = useState<string>(paymentMethods[0].label);
+
+  const direccionElegida =
+    direcciones.find((fila) => fila.id === direccionId) ??
+    direcciones.find((fila) => fila.primary) ??
+    direcciones[0] ??
+    null;
   /* Alta de dirección: abre la misma hoja del header, en el paso de alta. */
   const [addressSheetOpen, setAddressSheetOpen] = useState(false);
   const navigate = useNavigate();
@@ -246,6 +264,14 @@ export function CartScreen() {
       return;
     }
 
+    /* Sin dirección el pedido no tiene a dónde ir. Se avisa en lugar de
+       mandarlo con un "a confirmar" que después nadie sabe resolver. */
+    if (hayBackend() && !direccionElegida) {
+      setErrorPedido('Elegí una dirección de entrega antes de confirmar.');
+
+      return;
+    }
+
     setConfirmando(true);
     setErrorPedido(null);
 
@@ -274,10 +300,11 @@ export function CartScreen() {
       for (const [comercioId, grupo] of porComercio) {
         await pedidosApi.crear({
           comercioId,
-          /* La pantalla todavía no guarda cuál se eligió: los chips de
-             dirección y pago son decorativos. Va la principal del cliente,
-             que es a donde se entrega salvo que diga otra cosa. */
-          direccionTexto: addresses.find((fila) => fila.primary)?.address ?? addresses[0]?.address,
+          direccionId: direccionElegida?.id,
+          direccionTexto: direccionElegida?.address,
+          /* Cómo llega y cómo paga van juntos en el pedido: el comercio
+             necesita los dos para prepararlo y cobrarlo. */
+          metodoPago: `${pago} · ${entrega}`,
           items: grupo.map((item) => ({
             productoId: item.id,
             escalon: item.quantity,
@@ -536,8 +563,14 @@ export function CartScreen() {
                       </div>
 
                       <CartStack>
-                        {addresses.map((address) => (
-                          <Card key={address.id}>
+                        {direcciones.map((address) => (
+                          <CartAddressOption
+                            key={address.id}
+                            type="button"
+                            onClick={() => setDireccionId(address.id)}
+                            data-elegida={direccionElegida?.id === address.id}
+                            aria-pressed={direccionElegida?.id === address.id}
+                          >
                             <CartAddressPad>
                               <CartAddressHeader>
                                 <CartStoreCopy>
@@ -545,11 +578,15 @@ export function CartScreen() {
                                   <CartStoreMeta>{address.address}</CartStoreMeta>
                                 </CartStoreCopy>
                                 <CartChip data-tone={address.primary ? 'brand' : 'success'}>
-                                  {address.primary ? 'Principal' : 'Guardada'}
+                                  {direccionElegida?.id === address.id
+                                    ? 'Elegida'
+                                    : address.primary
+                                      ? 'Principal'
+                                      : 'Guardada'}
                                 </CartChip>
                               </CartAddressHeader>
                             </CartAddressPad>
-                          </Card>
+                          </CartAddressOption>
                         ))}
 
                         <CartAddressNewButton type="button" onClick={() => setAddressSheetOpen(true)}>
@@ -567,9 +604,15 @@ export function CartScreen() {
 
                       <CartPaymentRail>
                         {deliveryMethods.map((method) => (
-                          <CartChip key={method} data-tone="brand">
+                          <CartChipBoton
+                            key={method}
+                            type="button"
+                            onClick={() => setEntrega(method)}
+                            data-elegido={entrega === method}
+                            aria-pressed={entrega === method}
+                          >
                             {method}
-                          </CartChip>
+                          </CartChipBoton>
                         ))}
                       </CartPaymentRail>
                     </CartSummarySection>
@@ -585,10 +628,16 @@ export function CartScreen() {
                           const Icon = method.icon;
 
                           return (
-                            <CartChip key={method.label} data-tone="brand">
+                            <CartChipBoton
+                              key={method.label}
+                              type="button"
+                              onClick={() => setPago(method.label)}
+                              data-elegido={pago === method.label}
+                              aria-pressed={pago === method.label}
+                            >
                               <Icon size={14} aria-hidden="true" />
                               {method.label}
-                            </CartChip>
+                            </CartChipBoton>
                           );
                         })}
                       </CartPaymentRail>
@@ -623,10 +672,16 @@ export function CartScreen() {
 
       <AddressSheet
         open={addressSheetOpen}
-        currentId={addresses[0]?.id ?? ''}
+        currentId={direccionElegida?.id ?? ''}
         startOnNew
         onClose={() => setAddressSheetOpen(false)}
-        onSelect={() => setAddressSheetOpen(false)}
+        onSelect={(id) => {
+          /* La nueva queda elegida y la lista se vuelve a pedir: si no,
+             habría que salir y entrar al carrito para verla. */
+          setDireccionId(id);
+          setAddressSheetOpen(false);
+          void recargarDirecciones();
+        }}
       />
     </MarketplaceFrame>
   );
