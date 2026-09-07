@@ -55,14 +55,56 @@ const ICONO_VEHICULO: Record<Vehiculo, typeof Bike> = {
   camion: Truck,
 };
 
-/** Los pasos que ve el cliente. "Retirado" es cosa del comercio. */
-const PASOS = [
-  { estado: 'buscando', titulo: 'Buscando repartidor', texto: 'Alguien lo va a tomar en breve.' },
-  { estado: 'asignado', titulo: 'Lo toma un repartidor', texto: 'Va camino al comercio.' },
-  { estado: 'retirado', titulo: 'Retirado del comercio', texto: 'Ya tiene tu pedido.' },
-  { estado: 'en_camino', titulo: 'En camino', texto: 'Va para tu dirección.' },
-  { estado: 'entregado', titulo: 'Entregado', texto: '¡Que lo disfrutes!' },
+/**
+ * El recorrido completo del pedido, del comercio a la puerta.
+ *
+ * Los dos primeros pasos son del comercio y el resto del envío: para el
+ * cliente es un solo viaje, aunque adentro sean dos cosas distintas.
+ */
+const PASOS: Array<{
+  /* De dónde sale el estado: el comercio prepara, el repartidor lleva. */
+  origen: 'preparacion' | 'envio';
+  estado: string;
+  titulo: string;
+  texto: string;
+}> = [
+  {
+    origen: 'preparacion',
+    estado: 'preparando',
+    titulo: 'Preparando tu pedido',
+    texto: 'El comercio lo está armando.',
+  },
+  {
+    origen: 'preparacion',
+    estado: 'listo',
+    titulo: 'Listo para retirar',
+    texto: 'Ya lo puede pasar a buscar el repartidor.',
+  },
+  {
+    origen: 'envio',
+    estado: 'asignado',
+    titulo: 'Lo toma un repartidor',
+    texto: 'Va camino al comercio.',
+  },
+  {
+    origen: 'envio',
+    estado: 'retirado',
+    titulo: 'Lo retiró del comercio',
+    texto: 'Ya tiene tu pedido.',
+  },
+  { origen: 'envio', estado: 'en_camino', titulo: 'En camino', texto: 'Va para tu dirección.' },
+  { origen: 'envio', estado: 'entregado', titulo: 'Entregado', texto: '¡Que lo disfrutes!' },
 ];
+
+/* Orden de cada estado dentro de su propia secuencia, para poder comparar. */
+const ORDEN_PREPARACION: Record<string, number> = { recibido: 0, preparando: 1, listo: 2 };
+const ORDEN_ENVIO: Record<string, number> = {
+  buscando: 0,
+  asignado: 1,
+  retirado: 2,
+  en_camino: 3,
+  entregado: 4,
+};
 
 /** Hace cuánto se informó la posición, en minutos. */
 function minutosDesde(iso: string | null) {
@@ -136,10 +178,26 @@ export function SeguimientoScreen() {
 
   const { pedido, partes } = datos;
   const estadoEnvio = pedido.envio_estado ?? 'buscando';
-  const indiceActual = Math.max(
-    0,
-    PASOS.findIndex((paso) => paso.estado === estadoEnvio),
+
+  /* Hasta dónde llegó cada secuencia por su cuenta. Las dos avanzan en
+     paralelo: el comercio puede seguir preparando mientras el repartidor ya
+     está yendo a buscarlo. */
+  const alcanzados = PASOS.map((paso, indice) =>
+    paso.origen === 'preparacion'
+      ? (ORDEN_PREPARACION[pedido.preparacion] ?? 0) >= (ORDEN_PREPARACION[paso.estado] ?? 0)
+        ? indice
+        : -1
+      : (ORDEN_ENVIO[estadoEnvio] ?? 0) >= (ORDEN_ENVIO[paso.estado] ?? 0)
+        ? indice
+        : -1,
   );
+
+  /* El corte es el paso más avanzado que se alcanzó, y todo lo anterior
+     cuenta como hecho. Sin esto quedaba un paso vacío en el medio de dos
+     marcados —el repartidor toma el pedido antes de que esté listo— y se
+     leía como un error de la app en lugar de como lo que es. */
+  const indiceActual = Math.max(0, ...alcanzados);
+  const hechos = PASOS.map((_, indice) => indice <= indiceActual);
 
   const minutos = minutosDesde(pedido.ubicacion_en);
   const fresca = minutos !== null && minutos <= FRESCURA_MINUTOS;
@@ -212,7 +270,7 @@ export function SeguimientoScreen() {
               <CardPad>
                 <Linea>
                   {PASOS.map((paso, indice) => {
-                    const hecho = indice <= indiceActual;
+                    const hecho = hechos[indice];
 
                     return (
                       <Paso key={paso.estado} data-hecho={hecho}>

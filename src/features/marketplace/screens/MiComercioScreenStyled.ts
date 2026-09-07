@@ -62,6 +62,24 @@ export const ProductoFila = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing[2]};
+
+  /* En un teléfono, el nombre y los chips no entran en la misma línea: el
+     nombre se partía en dos y quedaba ilegible. Se apilan, con los chips
+     debajo y alineados a la izquierda: estirados a todo el ancho parecen
+     barras y no etiquetas. */
+  @media (max-width: 30rem) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
+/** Los chips de estado, juntos: en móvil quedan en su propia línea. */
+export const ChipsFila = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  flex-wrap: wrap;
+  flex: 0 0 auto;
 `;
 
 export const ProductoInfo = styled.div`
@@ -346,5 +364,72 @@ export const RankingFila = styled.div`
     flex: 0 0 auto;
     color: ${({ theme }) => theme.color.textSoft};
     font-size: ${({ theme }) => theme.typography.size.xs};
+  }
+`;
+
+// ── Preparación del pedido ──
+
+/**
+ * En qué punto está el pedido dentro del comercio.
+ *
+ * Se distingue del estado general: un pedido puede estar "en proceso" y a la
+ * vez ya listo para retirar.
+ */
+export const PreparacionChip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  padding: 0.15rem ${({ theme }) => theme.spacing[2]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  white-space: nowrap;
+  background: ${({ theme }) => theme.color.surfaceMuted};
+  color: ${({ theme }) => theme.color.textSoft};
+
+  &[data-estado='preparando'] {
+    background: rgba(217, 119, 6, 0.16);
+    color: ${({ theme }) => theme.color.warning};
+  }
+
+  &[data-estado='listo'] {
+    background: rgba(52, 211, 153, 0.16);
+    color: ${({ theme }) => theme.color.success};
+  }
+`;
+
+/**
+ * El botón que avanza la preparación.
+ *
+ * Dice qué va a pasar al tocarlo, en la voz del comercio: "Empecé a
+ * prepararlo" y no "marcar como en preparación".
+ */
+export const PrepararBoton = styled.button`
+  width: 100%;
+  min-height: 2.5rem;
+  margin-top: ${({ theme }) => theme.spacing[2]};
+  border: 0;
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.brand};
+  color: ${({ theme }) => theme.color.onPrimary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  cursor: pointer;
+  transition: background-color 180ms ease;
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.color.brandHover};
+  }
+
+  /* Marcarlo listo es el paso que libera al repartidor: se distingue. */
+  &[data-final='true'] {
+    background: ${({ theme }) => theme.color.success};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: progress;
   }
 `;

@@ -22,6 +22,7 @@ import {
   type NuevaOferta,
   type OfertaApi,
   type PedidoComercioApi,
+  type Preparacion,
   type ProductoApi,
   miComercioApi,
   operacionApi,
@@ -46,6 +47,7 @@ import {
   ComercioCabecera,
   ComercioDato,
   ComercioDatos,
+  ChipsFila,
   ComercioNombre,
   EstadoChip,
   MapaCaja,
@@ -64,6 +66,8 @@ import {
   ProductoBotonIcono,
   ProductoFila,
   ProductoInfo,
+  PreparacionChip,
+  PrepararBoton,
   ProductoNombre,
   ProductoPrecio,
   RankingFila,
@@ -136,6 +140,24 @@ function describirOferta(oferta: OfertaApi) {
   return `${oferta.porcentaje}% menos en ${nombres[0] ?? 'ese producto'}.`;
 }
 
+/**
+ * Los pasos de la preparación, con lo que hay que tocar para avanzar.
+ *
+ * El botón habla en la voz del comercio —"Empecé a prepararlo"— y no en la
+ * del sistema, porque quien lo toca está atendiendo, no administrando.
+ */
+const PREPARACION: Record<Preparacion, { nombre: string; accion: string | null }> = {
+  recibido: { nombre: 'Recibido', accion: 'Empecé a prepararlo' },
+  preparando: { nombre: 'En preparación', accion: '¡Está listo!' },
+  listo: { nombre: 'Listo para retirar', accion: null },
+};
+
+const SIGUIENTE_PREPARACION: Record<Preparacion, Preparacion | null> = {
+  recibido: 'preparando',
+  preparando: 'listo',
+  listo: null,
+};
+
 const ESTADO_NOMBRE: Record<string, string> = {
   proceso: 'En proceso',
   terminado: 'Entregado',
@@ -179,6 +201,7 @@ export function MiComercioScreen() {
   const [metricas, setMetricas] = useState<MetricasComercioApi | null>(null);
   const [ofertas, setOfertas] = useState<OfertaApi[]>([]);
   const [ofertaAbierta, setOfertaAbierta] = useState(false);
+  const [preparando, setPreparando] = useState<string | null>(null);
   const [ofertaPorBorrar, setOfertaPorBorrar] = useState<OfertaApi | null>(null);
 
   const [dialogoAbierto, setDialogoAbierto] = useState(false);
@@ -191,6 +214,40 @@ export function MiComercioScreen() {
     const { ofertas: filas } = await miComercioApi.ofertas();
 
     setOfertas(filas);
+  };
+
+  /**
+   * Avanza la preparación de un pedido.
+   *
+   * El cambio se pinta antes de que conteste el servidor: el comercio está
+   * atendiendo y no puede quedarse mirando un botón que no reacciona.
+   */
+  const avanzarPreparacion = async (pedido: PedidoComercioApi) => {
+    const siguiente = SIGUIENTE_PREPARACION[pedido.preparacion];
+
+    if (!siguiente || preparando) {
+      return;
+    }
+
+    setPreparando(pedido.id);
+    setPedidos((previos) =>
+      previos.map((fila) =>
+        fila.id === pedido.id ? { ...fila, preparacion: siguiente } : fila,
+      ),
+    );
+
+    try {
+      await miComercioApi.prepararPedido(pedido.id, siguiente);
+    } catch {
+      setPedidos((previos) =>
+        previos.map((fila) =>
+          fila.id === pedido.id ? { ...fila, preparacion: pedido.preparacion } : fila,
+        ),
+      );
+      setError('No pudimos actualizar el pedido.');
+    } finally {
+      setPreparando(null);
+    }
   };
 
   const alternarOferta = async (oferta: OfertaApi) => {
@@ -683,10 +740,34 @@ export function MiComercioScreen() {
                           </ProductoPrecio>
                         </ProductoInfo>
 
-                        <EstadoChip data-estado={pedido.estado}>
-                          {ESTADO_NOMBRE[pedido.estado] ?? pedido.estado}
-                        </EstadoChip>
+                        {/* Dos chips distintos: en qué punto está adentro del
+                            comercio, y en qué punto está el pedido en general. */}
+                        <ChipsFila>
+                          <PreparacionChip data-estado={pedido.preparacion}>
+                            {PREPARACION[pedido.preparacion]?.nombre ?? pedido.preparacion}
+                          </PreparacionChip>
+
+                          <EstadoChip data-estado={pedido.estado}>
+                            {ESTADO_NOMBRE[pedido.estado] ?? pedido.estado}
+                          </EstadoChip>
+                        </ChipsFila>
                       </ProductoFila>
+
+                      {/* Sólo mientras haya algo que hacer: un pedido listo o
+                          cancelado no tiene paso siguiente. */}
+                      {pedido.estado === 'proceso' &&
+                      PREPARACION[pedido.preparacion]?.accion ? (
+                        <PrepararBoton
+                          type="button"
+                          onClick={() => void avanzarPreparacion(pedido)}
+                          disabled={preparando === pedido.id}
+                          data-final={pedido.preparacion === 'preparando'}
+                        >
+                          {preparando === pedido.id
+                            ? 'Guardando…'
+                            : PREPARACION[pedido.preparacion]?.accion}
+                        </PrepararBoton>
+                      ) : null}
                     </CardPad>
                   </Card>
                 ))}

@@ -91,9 +91,17 @@ export const StoreName = styled.h3`
   font-weight: ${({ theme }) => theme.typography.weight.bold};
   letter-spacing: -0.02em;
   color: ${({ theme }) => theme.color.text};
-  white-space: nowrap;
+
+  /* Dos líneas antes de recortar: el nombre del comercio es lo que la
+     persona está buscando, y en un teléfono "Panadería La Esquina" no entra
+     en una sola. La altura queda fija para que las tarjetas de una fila
+     mantengan la misma. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  min-height: 2.6em;
+  line-height: 1.3;
 `;
 
 export const StoreSubtitle = styled.span`

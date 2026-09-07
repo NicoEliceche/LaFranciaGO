@@ -267,6 +267,12 @@ export const miComercioApi = {
   borrarProducto: (id: string) => api.delete<{ ok: true }>(`/productos/${id}`),
   ofertas: () => api.get<{ ofertas: OfertaApi[] }>('/mi-comercio/ofertas'),
   metricas: () => api.get<MetricasComercioApi>('/mi-comercio/metricas'),
+  /** Avanza la preparación: recibido → preparando → listo. */
+  prepararPedido: (pedidoId: string, estado: Preparacion) =>
+    api.post<{ ok: true; preparacion: Preparacion }>(
+      `/mi-comercio/pedidos/${pedidoId}/preparacion`,
+      { estado },
+    ),
   fraccionamientos: () =>
     api.get<{ fraccionamientos: FraccionamientoApi[] }>('/mi-comercio/fraccionamientos'),
   resolverFraccionamiento: (id: string, decision: 'aprobado' | 'rechazado') =>
@@ -294,10 +300,14 @@ export interface MetricasComercioApi {
   masVendidos: Array<{ nombre: string; unidades: number; total: number }>;
 }
 
+/** En qué punto está el pedido dentro del comercio. */
+export type Preparacion = 'recibido' | 'preparando' | 'listo';
+
 export interface PedidoComercioApi {
   id: string;
   codigo: string;
   estado: 'proceso' | 'terminado' | 'cancelado';
+  preparacion: Preparacion;
   total: number;
   direccion_texto: string;
   creado_en: string;
@@ -525,6 +535,7 @@ export interface SeguimientoApi {
   pedido: {
     codigo: string;
     estado: string;
+    preparacion: Preparacion;
     direccion_texto: string;
     parte_numero: number | null;
     partes_total: number | null;

@@ -1110,7 +1110,7 @@ async function enrutar(
     const estado = url.searchParams.get('estado');
 
     const { results } = await env.DB.prepare(
-      `SELECT p.id, p.codigo, p.estado, p.total_centavos, p.direccion_texto,
+      `SELECT p.id, p.codigo, p.estado, p.preparacion, p.total_centavos, p.direccion_texto,
               p.creado_en, u.nombre AS cliente, u.telefono AS cliente_telefono,
               e.estado AS envio_estado, e.lat, e.lon, e.ubicacion_en,
               r.nombre AS repartidor,
@@ -1290,6 +1290,7 @@ async function enrutar(
     const { results } = await env.DB.prepare(
       `SELECT p.id, p.codigo, p.direccion_texto, p.total_centavos, p.creado_en,
               p.volumen_litros, p.preferencia_envio, p.parte_numero, p.partes_total,
+              p.preparacion,
               c.nombre AS comercio, c.direccion AS comercio_direccion,
               c.lat AS comercio_lat, c.lon AS comercio_lon,
               u.nombre AS cliente,
@@ -2093,7 +2094,8 @@ async function enrutar(
     }
 
     const fila = await env.DB.prepare(
-      `SELECT p.codigo, p.estado, p.direccion_texto, p.parte_numero, p.partes_total,
+      `SELECT p.codigo, p.estado, p.preparacion, p.direccion_texto,
+              p.parte_numero, p.partes_total,
               c.nombre AS comercio, c.direccion AS comercio_direccion,
               c.lat AS comercio_lat, c.lon AS comercio_lon,
               d.lat AS destino_lat, d.lon AS destino_lon,
@@ -2378,6 +2380,125 @@ async function enrutar(
    * Se comparan hoy contra ayer y esta semana contra la anterior: un número
    * suelto no dice si el negocio va bien, sólo cuánto vendió.
    */
+  /**
+   * El comercio dice en qué punto está el pedido.
+   *
+   * Va de "recibido" a "preparando" a "listo", en orden. Sin esto el cliente
+   * quedaba a ciegas entre que compraba y que salía el repartidor: veía "en
+   * proceso" sin saber si el comercio siquiera lo había visto.
+   *
+   * Cada paso le avisa al cliente, porque es información que estaba
+   * esperando. "Listo" además le avisa a quien lo va a llevar.
+   */
+  const prepararPedido = /^\/mi-comercio\/pedidos\/([\w-]+)\/preparacion$/.exec(ruta);
+
+  if (prepararPedido && metodo === 'POST') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    const body = await leerJson<{ estado?: string }>(request);
+    const destino = String(body.estado ?? '');
+
+    /* El pedido tiene que ser de su comercio: sin esta condición, se podría
+       marcar como listo el de otro conociendo el id. */
+    const pedido = await env.DB.prepare(
+      `SELECT id, codigo, usuario_id, preparacion, estado
+         FROM pedidos WHERE id = ? AND comercio_id = ?`,
+    )
+      .bind(prepararPedido[1], propio.comercioId)
+      .first<{
+        id: string;
+        codigo: string;
+        usuario_id: string;
+        preparacion: string;
+        estado: string;
+      }>();
+
+    if (!pedido) {
+      return error('No encontrado', 404, cors);
+    }
+
+    if (pedido.estado === 'cancelado') {
+      return error('Ese pedido está cancelado.', 409, cors);
+    }
+
+    /* Sólo se acepta el paso siguiente: marcar "listo" algo que nadie empezó
+       a preparar deja al cliente esperando un pedido que no existe. */
+    const SIGUIENTE: Record<string, string> = {
+      recibido: 'preparando',
+      preparando: 'listo',
+    };
+
+    const esperado = SIGUIENTE[pedido.preparacion];
+
+    if (!esperado) {
+      return error('Este pedido ya está listo.', 409, cors);
+    }
+
+    if (destino && destino !== esperado) {
+      return error(`Después de "${pedido.preparacion}" viene "${esperado}".`, 409, cors);
+    }
+
+    await env.DB.prepare(
+      `UPDATE pedidos
+          SET preparacion = ?,
+              preparando_en = CASE WHEN ? = 'preparando' THEN datetime('now') ELSE preparando_en END,
+              listo_en = CASE WHEN ? = 'listo' THEN datetime('now') ELSE listo_en END
+        WHERE id = ?`,
+    )
+      .bind(esperado, esperado, esperado, pedido.id)
+      .run();
+
+    /* El cliente estaba esperando saber esto. */
+    const AVISOS: Record<string, { titulo: string; texto: string }> = {
+      preparando: {
+        titulo: `Están preparando tu pedido ${pedido.codigo}`,
+        texto: 'El comercio ya lo está armando.',
+      },
+      listo: {
+        titulo: `¡Tu pedido ${pedido.codigo} está listo!`,
+        texto: 'Ya lo puede retirar el repartidor.',
+      },
+    };
+
+    const aviso = AVISOS[esperado];
+
+    if (aviso) {
+      await avisar(env, pedido.usuario_id, {
+        tipo: 'pedido',
+        titulo: aviso.titulo,
+        texto: aviso.texto,
+        enlace: `/pedidos/${pedido.id}/seguimiento`,
+      });
+    }
+
+    /* Al quedar listo, quien lo va a llevar tiene que enterarse: si ya lo
+       tomó, es su señal para ir a buscarlo. */
+    if (esperado === 'listo') {
+      const asignado = await env.DB.prepare(
+        `SELECT repartidor_id FROM envios
+          WHERE pedido_id = ? AND repartidor_id IS NOT NULL
+            AND estado NOT IN ('entregado', 'cancelado')`,
+      )
+        .bind(pedido.id)
+        .first<{ repartidor_id: string }>();
+
+      if (asignado?.repartidor_id) {
+        await avisar(env, asignado.repartidor_id, {
+          tipo: 'pedido',
+          titulo: `El pedido ${pedido.codigo} está listo`,
+          texto: 'Ya lo podés retirar del comercio.',
+          enlace: '/panel/repartidor',
+        });
+      }
+    }
+
+    return json({ ok: true, preparacion: esperado }, {}, cors);
+  }
+
   if (ruta === '/mi-comercio/metricas' && metodo === 'GET') {
     const propio = await comercioDelUsuario(request, env, cors);
 
