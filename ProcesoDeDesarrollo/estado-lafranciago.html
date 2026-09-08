@@ -354,15 +354,15 @@
       Todo lo que puede hacer cada tipo de cuenta, explicado en criollo, más el
       listado completo de funcionalidades para poder cotizar el trabajo.
     </p>
-    <div class="fecha">Actualizado el 7 de septiembre de 2026</div>
+    <div class="fecha">Actualizado el 8 de septiembre de 2026</div>
   </header>
 
   <section class="cifras" aria-label="Resumen">
     <div class="cifra"><b>4</b><span>tipos de cuenta funcionando</span></div>
-    <div class="cifra"><b>62</b><span>funcionalidades entregadas</span></div>
+    <div class="cifra"><b>63</b><span>funcionalidades entregadas</span></div>
     <div class="cifra"><b>24</b><span>pantallas</span></div>
-    <div class="cifra"><b>39</b><span>servicios en el servidor</span></div>
-    <div class="cifra"><b>26</b><span>tablas de base de datos</span></div>
+    <div class="cifra"><b>63</b><span>servicios en el servidor</span></div>
+    <div class="cifra"><b>28</b><span>tablas de base de datos</span></div>
   </section>
 
   <!-- ══════════ PARTE 1: QUÉ HACE CADA UNO ══════════ -->
@@ -383,7 +383,8 @@
     <li><b>Paga en la aplicación</b> con tarjeta o dinero en cuenta, o en efectivo al recibir.</li>
     <li><b>Sigue el pedido en un mapa</b>: ve dónde está el repartidor, en vivo, y en qué punto va el comercio.</li>
     <li><b>Recibe avisos</b> cuando lo están preparando, cuando está listo, cuando sale y cuando llega.</li>
-    <li><b>Habla con el comercio</b> por un chat adentro de la aplicación.</li>
+    <li><b>Habla con el comercio y con quien lleva el pedido</b> por un chat adentro de la aplicación.</li>
+    <li><b>Pide algo más sobre la marcha</b>: "ya que vas al kiosco, traeme un chocolate". Quien lo lleva dice si puede, lo compra y le muestra cuánto salió con la foto del ticket.</li>
     <li><b>Pide mandados</b>: encargos que no son de un comercio, como buscar una garrafa.</li>
   </ul>
 
@@ -408,7 +409,8 @@
     <li><b>Mira el detalle completo antes de aceptar</b>: qué lleva, a dónde va, cuánto ocupa y cómo paga el cliente.</li>
     <li><b>Marca cada paso</b>: retiré, salí, entregué.</li>
     <li><b>Puede pedir partir un pedido</b> si no le entra. Si la aplicación calculó que sí, lo decide el comercio.</li>
-    <li><b>Habla con el cliente</b> por chat desde que toma el pedido.</li>
+    <li><b>Habla con el cliente</b> por chat desde que toma el pedido, y queda anunciado en la conversación.</li>
+    <li><b>Acepta o rechaza los extras</b> que le piden en el camino, eligiendo el motivo de una lista. Si lo compra, carga el precio con la foto del ticket.</li>
     <li><b>Comparte su ubicación</b> mientras trabaja, que es lo que alimenta el mapa del cliente y del comercio.</li>
   </ul>
 
@@ -471,8 +473,14 @@
         <tr>
           <td>Chat interno</td>
           <td><span class="estado listo">Listo</span></td>
-          <td class="detalle">Entre cliente, comercio y repartidor sobre cada pedido. La venta no se va a WhatsApp.</td>
-          <td class="num">3</td>
+          <td class="detalle">Arranca entre cliente y comercio. Cuando alguien toma el pedido se suma al chat y queda avisado en la conversación; si se baja, deja de verlo y entra quien lo tome después. La venta no se va a WhatsApp.</td>
+          <td class="num">4</td>
+        </tr>
+        <tr>
+          <td>Extras del pedido</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">"Ya que vas al kiosco, traeme un chocolate". El cliente lo pide desde el chat, quien reparte acepta o explica por qué no, y carga cuánto salió con foto del ticket. Se cobra aparte.</td>
+          <td class="num">8</td>
         </tr>
         <tr>
           <td>Direcciones guardadas</td>
@@ -827,7 +835,7 @@
           <td>Servidor y base de datos</td>
           <td><span class="estado listo">Listo</span></td>
           <td class="detalle">Sobre Cloudflare: sin demoras de arranque y sin pausas por inactividad. Todo en capa gratuita.</td>
-          <td class="num">39</td>
+          <td class="num">63</td>
         </tr>
         <tr>
           <td>Almacenamiento de fotos y videos</td>
