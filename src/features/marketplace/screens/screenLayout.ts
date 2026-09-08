@@ -263,6 +263,69 @@ export const PedidoConSeguimiento = styled.div`
   gap: ${({ theme }) => theme.spacing[2]};
 `;
 
+/**
+ * Las acciones sobre un pedido, debajo de la tarjeta.
+ *
+ * Van en fila porque nunca son más de dos y competir por el ancho las hace
+ * más chicas de lo que un dedo necesita.
+ */
+export const PedidoAcciones = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing[2]};
+
+  > * {
+    flex: 1 1 10rem;
+  }
+`;
+
+/**
+ * Puntuar o dar de baja: mismo peso visual que "ver dónde va", porque son
+ * cosas que el cliente decide, no avisos que le damos.
+ */
+export const PedidoAccion = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  min-height: 2.5rem;
+  padding: 0 ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background: transparent;
+  color: ${({ theme }) => theme.color.textSoft};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  cursor: pointer;
+  transition: background-color 160ms ease;
+
+  /* Puntuar es lo que le pedimos al cliente cuando el pedido llegó bien. */
+  &[data-tono='puntuar'] {
+    border-color: ${({ theme }) => theme.color.warning};
+    color: ${({ theme }) => theme.color.warning};
+  }
+
+  /* Cancelar no se destaca: está disponible, no sugerido. */
+  &[data-tono='cancelar']:hover {
+    border-color: ${({ theme }) => theme.color.danger};
+    color: ${({ theme }) => theme.color.danger};
+  }
+
+  &:hover {
+    background: ${({ theme }) => theme.color.surfaceMuted};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
 export const SeguirBoton = styled(Link)`
   display: flex;
   align-items: center;

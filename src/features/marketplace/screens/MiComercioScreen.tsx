@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BadgePercent,
   BarChart3,
+  Clock,
+  Store as StoreIcono,
   MessageSquare,
   TrendingDown,
   TrendingUp,
@@ -18,6 +20,7 @@ import {
 import {
   type ComercioApi,
   type EnvioApi,
+  type HorarioApi,
   type MetricasComercioApi,
   type NuevaOferta,
   type OfertaApi,
@@ -47,8 +50,10 @@ import {
   ComercioCabecera,
   ComercioDato,
   ComercioDatos,
+  CampoFila,
   ChipsFila,
   ComercioNombre,
+  DiaFila,
   EstadoChip,
   MapaCaja,
   MetricaCaja,
@@ -71,6 +76,10 @@ import {
   ProductoNombre,
   ProductoPrecio,
   RankingFila,
+  StockCampo,
+  StockChip,
+  TramoBoton,
+  TramoFila,
   SeccionBadge,
   SeccionChip,
   SeccionRow,
@@ -84,10 +93,11 @@ import {
  * y contestar un mensaje sería incómodo.
  */
 
-type Seccion = 'resumen' | 'productos' | 'ofertas' | 'pedidos' | 'chats' | 'envios';
+type Seccion = 'resumen' | 'negocio' | 'productos' | 'ofertas' | 'pedidos' | 'chats' | 'envios';
 
 const SECCIONES: Array<{ id: Seccion; nombre: string }> = [
   { id: 'resumen', nombre: 'Resumen' },
+  { id: 'negocio', nombre: 'Mi negocio' },
   { id: 'productos', nombre: 'Productos' },
   { id: 'ofertas', nombre: 'Ofertas' },
   { id: 'pedidos', nombre: 'Pedidos' },
@@ -116,6 +126,47 @@ function variacion(actual: number, previo: number) {
     tono: cambio > 0 ? ('sube' as const) : cambio < 0 ? ('baja' as const) : ('igual' as const),
   };
 }
+
+/**
+ * Cómo se lee el stock de un producto.
+ *
+ * Sin valor no es cero: es un comercio que no lleva control, y mostrar
+ * "agotado" ahí escondería todo su catálogo.
+ */
+const estadoStock = (stock: number | null | undefined) => {
+  if (stock === null || stock === undefined) {
+    return 'sin-control';
+  }
+
+  if (stock <= 0) {
+    return 'agotado';
+  }
+
+  return stock <= 5 ? 'poco' : 'disponible';
+};
+
+const textoStock = (stock: number | null | undefined) => {
+  if (stock === null || stock === undefined) {
+    return 'Sin control';
+  }
+
+  if (stock <= 0) {
+    return 'Agotado';
+  }
+
+  return stock <= 5 ? `Quedan ${stock}` : 'Disponible';
+};
+
+/* Domingo primero, como los numera JavaScript. */
+const DIAS_SEMANA = [
+  'Domingo',
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
+];
 
 const TIPO_NOMBRE: Record<string, string> = {
   descuento: 'Descuento',
@@ -202,6 +253,12 @@ export function MiComercioScreen() {
   const [ofertas, setOfertas] = useState<OfertaApi[]>([]);
   const [ofertaAbierta, setOfertaAbierta] = useState(false);
   const [preparando, setPreparando] = useState<string | null>(null);
+
+  /* Los horarios se editan como un conjunto: se cargan al abrir y se guardan
+     todos juntos, porque editar de a uno deja estados intermedios raros. */
+  const [horarios, setHorarios] = useState<HorarioApi[]>([]);
+  const [guardando, setGuardando] = useState(false);
+  const [guardado, setGuardado] = useState<string | null>(null);
   const [ofertaPorBorrar, setOfertaPorBorrar] = useState<OfertaApi | null>(null);
 
   const [dialogoAbierto, setDialogoAbierto] = useState(false);
@@ -247,6 +304,108 @@ export function MiComercioScreen() {
       setError('No pudimos actualizar el pedido.');
     } finally {
       setPreparando(null);
+    }
+  };
+
+  /* Los datos que ve el cliente. */
+  const guardarDatos = async (evento: FormEvent<HTMLFormElement>) => {
+    evento.preventDefault();
+
+    const datos = new FormData(evento.currentTarget);
+
+    setGuardando(true);
+    setGuardado(null);
+
+    try {
+      await miComercioApi.editar({
+        nombre: String(datos.get('nombre') ?? ''),
+        direccion: String(datos.get('direccion') ?? ''),
+        telefono: String(datos.get('telefono') ?? ''),
+        email: String(datos.get('email') ?? ''),
+        descripcion: String(datos.get('descripcion') ?? ''),
+        minimo: Number(datos.get('minimo') ?? 0),
+      });
+
+      setGuardado('Guardamos tus datos.');
+      await cargar();
+    } catch {
+      setError('No pudimos guardar los datos.');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  /* Los horarios van todos juntos: son un conjunto, no piezas sueltas. */
+  const guardarHorarios = async () => {
+    setGuardando(true);
+    setGuardado(null);
+
+    try {
+      await miComercioApi.guardarHorarios(
+        horarios.map((tramo) => ({ dia: tramo.dia, abre: tramo.abre, cierra: tramo.cierra })),
+      );
+
+      setGuardado('Guardamos tus horarios.');
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : 'No pudimos guardar los horarios.');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const agregarTramo = (dia: number) => {
+    setHorarios((previos) => [
+      ...previos,
+      {
+        id: `nuevo-${dia}-${previos.length}`,
+        dia,
+        abre: '09:00',
+        cierra: '13:00',
+        abre_min: 540,
+        cierra_min: 780,
+      },
+    ]);
+  };
+
+  const cambiarTramo = (id: string, campo: 'abre' | 'cierra', valor: string) => {
+    setHorarios((previos) =>
+      previos.map((tramo) => (tramo.id === id ? { ...tramo, [campo]: valor } : tramo)),
+    );
+  };
+
+  const quitarTramo = (id: string) => {
+    setHorarios((previos) => previos.filter((tramo) => tramo.id !== id));
+  };
+
+  /**
+   * Ajusta el stock desde la fila del producto.
+   *
+   * El cambio se pinta antes de que conteste el servidor: el comercio está
+   * cargando varios seguidos y esperar por cada uno lo haría inusable.
+   */
+  const ajustarStock = async (producto: ProductoApi, valor: string) => {
+    const vacio = valor.trim() === '';
+    const numero = Number(valor);
+
+    if (!vacio && !Number.isFinite(numero)) {
+      return;
+    }
+
+    const stock = vacio ? null : Math.max(0, Math.trunc(numero));
+
+    setProductos((previos) =>
+      previos.map((fila) => (fila.id === producto.id ? { ...fila, stock } : fila)),
+    );
+
+    try {
+      await miComercioApi.ajustarStock(producto.id, stock);
+    } catch {
+      setProductos((previos) =>
+        previos.map((fila) =>
+          fila.id === producto.id ? { ...fila, stock: producto.stock } : fila,
+        ),
+      );
+      setError('No pudimos guardar el stock.');
     }
   };
 
@@ -296,6 +455,14 @@ export function MiComercioScreen() {
         setMetricas(await miComercioApi.metricas());
       } catch {
         setMetricas(null);
+      }
+
+      try {
+        const { horarios: tramos } = await miComercioApi.horarios();
+
+        setHorarios(tramos);
+      } catch {
+        setHorarios([]);
       }
     } catch {
       setError('No pudimos cargar tu comercio.');
@@ -429,6 +596,151 @@ export function MiComercioScreen() {
               </SeccionRow>
             ) : null}
 
+            {comercio && seccion === 'negocio' ? (
+              <>
+                <SectionHeading
+                  title="Mi negocio"
+                  subtitle="Los datos que ve el cliente y cuándo atendés."
+                />
+
+                {guardado ? <AuthAviso role="status">{guardado}</AuthAviso> : null}
+
+                <Card>
+                  <CardPad>
+                    <form onSubmit={guardarDatos}>
+                      <ProductoNombre>
+                        <StoreIcono size={15} aria-hidden="true" /> Datos del comercio
+                      </ProductoNombre>
+
+                      <CampoFila>
+                        <span>Nombre</span>
+                        <input name="nombre" defaultValue={comercio.nombre} maxLength={80} required />
+                      </CampoFila>
+
+                      <CampoFila>
+                        <span>Dirección</span>
+                        <input
+                          name="direccion"
+                          defaultValue={comercio.direccion}
+                          maxLength={160}
+                          required
+                        />
+                      </CampoFila>
+
+                      <CampoFila>
+                        <span>Teléfono</span>
+                        <input
+                          name="telefono"
+                          defaultValue={(comercio as { telefono?: string }).telefono ?? ''}
+                          maxLength={40}
+                        />
+                      </CampoFila>
+
+                      <CampoFila>
+                        <span>Email de contacto</span>
+                        <input
+                          name="email"
+                          type="email"
+                          defaultValue={(comercio as { email?: string }).email ?? ''}
+                          maxLength={120}
+                        />
+                      </CampoFila>
+
+                      <CampoFila>
+                        <span>Cómo se describe tu negocio</span>
+                        <textarea
+                          name="descripcion"
+                          defaultValue={comercio.descripcion ?? ''}
+                          maxLength={300}
+                        />
+                      </CampoFila>
+
+                      <CampoFila>
+                        <span>Pedido mínimo</span>
+                        <input
+                          name="minimo"
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          defaultValue={comercio.minimo}
+                        />
+                      </CampoFila>
+
+                      <PrepararBoton type="submit" disabled={guardando}>
+                        {guardando ? 'Guardando…' : 'Guardar mis datos'}
+                      </PrepararBoton>
+                    </form>
+                  </CardPad>
+                </Card>
+
+                <Card>
+                  <CardPad>
+                    <ProductoNombre>
+                      <Clock size={15} aria-hidden="true" /> Horarios de atención
+                    </ProductoNombre>
+                    <ProductoPrecio>
+                      Si cerrás al mediodía, cargá dos tramos ese día. Sin horarios cargados,
+                      tu comercio figura siempre abierto.
+                    </ProductoPrecio>
+
+                    {DIAS_SEMANA.map((nombre, dia) => {
+                      const tramos = horarios.filter((tramo) => tramo.dia === dia);
+
+                      return (
+                        <DiaFila key={nombre}>
+                          <strong>{nombre}</strong>
+
+                          {tramos.length === 0 ? <ProductoPrecio>Cerrado</ProductoPrecio> : null}
+
+                          {tramos.map((tramo) => (
+                            <TramoFila key={tramo.id}>
+                              <input
+                                type="time"
+                                value={tramo.abre}
+                                aria-label={`Abre el ${nombre}`}
+                                onChange={(evento) =>
+                                  cambiarTramo(tramo.id, 'abre', evento.target.value)
+                                }
+                              />
+                              <span>a</span>
+                              <input
+                                type="time"
+                                value={tramo.cierra}
+                                aria-label={`Cierra el ${nombre}`}
+                                onChange={(evento) =>
+                                  cambiarTramo(tramo.id, 'cierra', evento.target.value)
+                                }
+                              />
+                              <TramoBoton
+                                type="button"
+                                data-tono="danger"
+                                onClick={() => quitarTramo(tramo.id)}
+                                aria-label={`Quitar tramo del ${nombre}`}
+                              >
+                                Quitar
+                              </TramoBoton>
+                            </TramoFila>
+                          ))}
+
+                          <TramoBoton type="button" onClick={() => agregarTramo(dia)}>
+                            + Agregar tramo
+                          </TramoBoton>
+                        </DiaFila>
+                      );
+                    })}
+
+                    <PrepararBoton
+                      type="button"
+                      onClick={() => void guardarHorarios()}
+                      disabled={guardando}
+                    >
+                      {guardando ? 'Guardando…' : 'Guardar horarios'}
+                    </PrepararBoton>
+                  </CardPad>
+                </Card>
+              </>
+            ) : null}
+
             {comercio && seccion === 'productos' ? (
               <>
                 <SectionHeading
@@ -471,6 +783,25 @@ export function MiComercioScreen() {
                             {' · desde '}
                             {stepLabel(producto.unidad_venta as SaleUnitId, 0)}
                           </ProductoPrecio>
+
+                          {/* El stock se ajusta acá mismo: es lo que evita que
+                              alguien pida algo que no hay y el repartidor
+                              viaje al pedo. Vacío significa que este comercio
+                              no lleva control, que no es lo mismo que cero. */}
+                          <TramoFila>
+                            <span>Stock</span>
+                            <StockCampo
+                              type="number"
+                              min={0}
+                              placeholder="—"
+                              defaultValue={producto.stock ?? ''}
+                              aria-label={`Stock de ${producto.nombre}`}
+                              onBlur={(evento) => void ajustarStock(producto, evento.target.value)}
+                            />
+                            <StockChip data-estado={estadoStock(producto.stock)}>
+                              {textoStock(producto.stock)}
+                            </StockChip>
+                          </TramoFila>
                         </ProductoInfo>
 
                         <ProductoAcciones>

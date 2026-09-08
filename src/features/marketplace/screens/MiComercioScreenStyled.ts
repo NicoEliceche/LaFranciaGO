@@ -433,3 +433,145 @@ export const PrepararBoton = styled.button`
     cursor: progress;
   }
 `;
+
+// ── Datos y horarios ──
+
+export const CampoFila = styled.label`
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
+
+  > span {
+    color: ${({ theme }) => theme.color.textSoft};
+    font-size: ${({ theme }) => theme.typography.size.xs};
+    font-weight: ${({ theme }) => theme.typography.weight.bold};
+  }
+
+  > input,
+  > textarea {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0 ${({ theme }) => theme.spacing[3]};
+    border-radius: ${({ theme }) => theme.radius.lg};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    background: ${({ theme }) => theme.color.surface};
+    color: ${({ theme }) => theme.color.text};
+    font-family: inherit;
+    font-size: ${({ theme }) => theme.typography.size.sm};
+  }
+
+  > textarea {
+    min-height: 5rem;
+    padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+    resize: vertical;
+  }
+`;
+
+/**
+ * Un día de la semana con sus tramos.
+ *
+ * Un comercio que cierra al mediodía tiene dos tramos el mismo día, y eso no
+ * entra en un solo par de horarios.
+ */
+export const DiaFila = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[3]} 0;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+
+  &:last-child { border-bottom: 0; }
+
+  > strong {
+    font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+    font-size: ${({ theme }) => theme.typography.size.sm};
+  }
+`;
+
+export const TramoFila = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  flex-wrap: wrap;
+
+  > input[type='time'] {
+    min-height: 2.25rem;
+    padding: 0 ${({ theme }) => theme.spacing[2]};
+    border-radius: ${({ theme }) => theme.radius.md};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    background: ${({ theme }) => theme.color.surface};
+    color: ${({ theme }) => theme.color.text};
+    font-family: inherit;
+    font-size: ${({ theme }) => theme.typography.size.sm};
+  }
+
+  > span {
+    color: ${({ theme }) => theme.color.textSoft};
+    font-size: ${({ theme }) => theme.typography.size.xs};
+  }
+`;
+
+export const TramoBoton = styled.button`
+  min-height: 2.25rem;
+  padding: 0 ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px dashed ${({ theme }) => theme.color.border};
+  background: transparent;
+  color: ${({ theme }) => theme.color.textSoft};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  cursor: pointer;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.color.primary};
+    color: ${({ theme }) => theme.color.primary};
+  }
+
+  &[data-tono='danger']:hover {
+    border-color: ${({ theme }) => theme.color.danger};
+    color: ${({ theme }) => theme.color.danger};
+  }
+`;
+
+/** El stock de un producto, editable en la misma fila. */
+export const StockCampo = styled.input`
+  width: 4.5rem;
+  min-height: 2rem;
+  padding: 0 ${({ theme }) => theme.spacing[2]};
+  border-radius: ${({ theme }) => theme.radius.md};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.surface};
+  color: ${({ theme }) => theme.color.text};
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  text-align: center;
+`;
+
+/**
+ * Cómo está el stock, de un vistazo.
+ *
+ * "Pocas" avisa antes de quedarse sin: el cliente decide si compra ahora, y
+ * el comercio se entera de que tiene que reponer.
+ */
+export const StockChip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem ${({ theme }) => theme.spacing[2]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  font-size: 0.68rem;
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  white-space: nowrap;
+  background: ${({ theme }) => theme.color.surfaceMuted};
+  color: ${({ theme }) => theme.color.textSoft};
+
+  &[data-estado='poco'] {
+    background: rgba(217, 119, 6, 0.16);
+    color: ${({ theme }) => theme.color.warning};
+  }
+
+  &[data-estado='agotado'] {
+    background: rgba(220, 38, 38, 0.14);
+    color: ${({ theme }) => theme.color.danger};
+  }
+`;

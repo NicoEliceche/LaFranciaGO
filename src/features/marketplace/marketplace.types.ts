@@ -100,6 +100,17 @@ export interface CustomerOrder {
   eta: string;
   date: string;
   itemCount: number;
+  /* Estas tres las decide el servidor y sólo existen en un pedido de
+     verdad: el contenido de muestra no tiene a quién puntuar ni qué
+     cancelar, y ausente es justamente "todavía no se sabe". */
+  /** Si ya lo puntuó: no se ofrece calificar dos veces el mismo pedido. */
+  rated?: boolean;
+  /** Hasta que sale del comercio se puede dar de baja. */
+  cancellable?: boolean;
+  /** Quién lo lleva, si ya lo tomó alguien. */
+  courier?: string | null;
+  /** Un flete se cotiza antes de que salga; un pedido normal no. */
+  isFreight?: boolean;
   /** Productos que se compraron en este pedido. */
   items: OrderLine[];
 }

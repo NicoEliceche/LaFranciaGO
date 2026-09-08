@@ -25,6 +25,8 @@ import { useCurrentPosition } from '@shared/hooks/useCurrentPosition';
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { ChatPedidoDialog } from '../components/ChatPedidoDialog';
 import { EmptyState } from '../components/EmptyState';
+import { CotizarDialog } from '../components/CotizarDialog';
+import { GananciasPanel } from '../components/GananciasPanel';
 import { PedidoDetalleDialog } from '../components/PedidoDetalleDialog';
 import { SectionHeading } from '../components/SectionHeading';
 import { useSesion } from '../sessionStore';
@@ -49,6 +51,23 @@ import {
   VerDetalleBoton,
 } from './PanelRepartidorScreenStyled';
 
+/* Qué dice el encabezado en cada pestaña. Afuera del JSX porque son datos,
+   no lógica, y anidados en el render se leían como un acertijo. */
+const TITULOS: Record<string, (esFletero: boolean) => string> = {
+  disponibles: (esFletero) => (esFletero ? 'Fletes disponibles' : 'Pedidos disponibles'),
+  mios: () => 'Lo que estás llevando',
+  ganancias: () => 'Cuánto ganaste',
+};
+
+const SUBTITULOS: Record<string, (esFletero: boolean) => string> = {
+  disponibles: (esFletero) =>
+    esFletero
+      ? 'Fletes esperando que alguien los tome.'
+      : 'Ordenados por cercanía a donde estás.',
+  mios: () => 'Marcá cada paso a medida que avanzás.',
+  ganancias: () => 'Lo que te dejó cada viaje que entregaste.',
+};
+
 /**
  * Panel de quien reparte.
  *
@@ -62,7 +81,11 @@ import {
  */
 
 /* Cada cuánto se avisa dónde está, para el mapa que mira el comercio. */
-const LATIDO_MS = 45_000;
+/* Cada 30 segundos. El mapa usa OpenStreetMap, que no cobra por uso, y la
+   ubicación la da el navegador: el único costo es la escritura en la base,
+   que con diez repartidores en la calle no llega ni a la décima parte del
+   límite diario. */
+const LATIDO_MS = 30_000;
 const REFRESCO_MS = 20_000;
 
 /**
@@ -107,8 +130,14 @@ export function PanelRepartidorScreen() {
 
   const [vehiculo, setVehiculo] = useState<Vehiculo | null>(null);
   const [envios, setEnvios] = useState<EnvioAsignadoApi[]>([]);
-  const [pestana, setPestana] = useState<'disponibles' | 'mios'>('disponibles');
+  const [pestana, setPestana] = useState<'disponibles' | 'mios' | 'ganancias'>(
+    'disponibles',
+  );
   const [avanzando, setAvanzando] = useState<string | null>(null);
+
+  /* Qué flete se esta cotizando: un flete no se toma, se ofrece un
+     precio y decide el cliente. */
+  const [cotizando, setCotizando] = useState<PedidoDisponibleApi | null>(null);
 
   /* Un fletero hace el mismo trabajo, pero lo suyo son fletes: la pantalla
      es una sola y cambia sólo cómo nombra el viaje. */
@@ -250,25 +279,15 @@ export function PanelRepartidorScreen() {
         <SectionInner>
           <SectionStack>
             <SectionHeading
-              title={
-                pestana === 'disponibles'
-                  ? esFletero
-                    ? 'Fletes disponibles'
-                    : 'Pedidos disponibles'
-                  : 'Lo que estás llevando'
-              }
+              title={TITULOS[pestana](esFletero)}
+              /* En ganancias no hay nada que contar: el número que importa
+                 es la plata, y va adentro. */
               chip={
-                cargando
+                cargando || pestana === 'ganancias'
                   ? undefined
                   : `${pestana === 'disponibles' ? pedidos.length : envios.length}`
               }
-              subtitle={
-                pestana === 'disponibles'
-                  ? esFletero
-                    ? 'Fletes esperando que alguien los tome.'
-                    : 'Ordenados por cercanía a donde estás.'
-                  : 'Marcá cada paso a medida que avanzás.'
-              }
+              subtitle={SUBTITULOS[pestana](esFletero)}
             />
 
             {/* Con qué trabaja hoy: decide qué pedidos puede tomar, así que
@@ -309,6 +328,13 @@ export function PanelRepartidorScreen() {
                 {/* El número importa: es lo que todavía tiene que entregar. */}
                 Mis envíos{envios.length > 0 ? ` (${envios.length})` : ''}
               </PanelPestana>
+              <PanelPestana
+                type="button"
+                onClick={() => setPestana('ganancias')}
+                data-activa={pestana === 'ganancias'}
+              >
+                Ganancias
+              </PanelPestana>
             </PanelPestanas>
 
             {error ? (
@@ -316,6 +342,8 @@ export function PanelRepartidorScreen() {
                 {error}
               </AuthAviso>
             ) : null}
+
+            {pestana === 'ganancias' ? <GananciasPanel esFletero={esFletero} /> : null}
 
             {pestana === 'disponibles' && !posicion && status !== 'locating' ? (
               <UbicacionAviso>
@@ -448,6 +476,15 @@ export function PanelRepartidorScreen() {
                       Ver detalle {esFletero ? 'del flete' : 'del pedido'}
                     </VerDetalleBoton>
 
+                    {/* El flete se cotiza, no se toma: el precio depende de
+                        cuánto hay que llevar y hasta dónde, y lo decide
+                        quien lo va a hacer. Después elige el cliente. */}
+                    {esFletero ? (
+                      <AvanzarBoton type="button" onClick={() => setCotizando(pedido)}>
+                        Cotizar este flete
+                      </AvanzarBoton>
+                    ) : null}
+
                     {/* Partirlo sólo se ofrece cuando hay algo que partir: con
                         un solo producto no hay nada que repartir entre viajes. */}
                     {(pedido.items ?? 0) > 1 ? (
@@ -475,6 +512,14 @@ export function PanelRepartidorScreen() {
         onClose={() => setDetalle(null)}
         onTomar={tomar}
         esFletero={esFletero}
+      />
+
+      <CotizarDialog
+        open={cotizando !== null}
+        pedidoId={cotizando?.id ?? ''}
+        distanciaKm={cotizando?.distanciaKm ?? null}
+        onCerrar={() => setCotizando(null)}
+        onCotizado={() => void cargar()}
       />
 
       <ChatPedidoDialog

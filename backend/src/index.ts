@@ -42,6 +42,7 @@ import {
   sumarExtras,
 } from './extras';
 import {
+  CAPACIDAD,
   LITROS_POR_TAMANO,
   NOMBRE_VEHICULO,
   VEHICULOS_POR_ROL,
@@ -52,6 +53,15 @@ import {
   vehiculosQueEntran,
   viajesNecesarios,
 } from './logistica';
+import {
+  DIAS,
+  aHora,
+  aMinutos,
+  descontarStock,
+  estaAbierto,
+  estadoDeStock,
+  proximaApertura,
+} from './comercio';
 
 /**
  * API de LaFranciaGO.
@@ -922,7 +932,7 @@ async function enrutar(
     const busqueda = url.searchParams.get('q');
 
     let sql =
-      "SELECT id, nombre, rubro_id, rubro_nombre, direccion, lat, lon, telefono, horario, zona, descripcion, logo_url, premium, minimo_centavos FROM comercios WHERE estado = 'aprobado'";
+      "SELECT id, nombre, rubro_id, rubro_nombre, direccion, lat, lon, telefono, horario, zona, descripcion, logo_url, premium, minimo_centavos, cerrado_temporal, puntaje, resenas_count FROM comercios WHERE estado = 'aprobado'";
     const params: unknown[] = [];
 
     if (rubro) {
@@ -947,12 +957,26 @@ async function enrutar(
       results.map((fila) => String(fila.id)),
     );
 
+    /* Los horarios de todos, para poder decir cuáles están abiertos ahora.
+       Una sola consulta: con una por comercio, listar veinte serían veintiún
+       viajes a la base. */
+    const horarios = await horariosDe(
+      env,
+      results.map((fila) => String(fila.id)),
+    );
+
     return json(
       {
-        comercios: results.map((fila) => ({
-          ...comercioSalida(fila),
-          destacados: destacados.get(String(fila.id)) ?? [],
-        })),
+        comercios: results.map((fila) => {
+          const suyos = horarios.get(String(fila.id)) ?? [];
+
+          return {
+            ...comercioSalida(fila),
+            destacados: destacados.get(String(fila.id)) ?? [],
+            abierto: estaAbierto(suyos, Boolean(fila.cerrado_temporal)),
+            proximaApertura: proximaApertura(suyos),
+          };
+        }),
       },
       {},
       cors,
@@ -1308,12 +1332,17 @@ async function enrutar(
          LEFT JOIN envios e ON e.pedido_id = p.id
         WHERE p.estado = 'proceso'
           AND (e.id IS NULL OR e.estado = 'buscando')
+          /* Cada uno ve lo suyo: una mudanza no tiene por qué aparecer entre
+             los pedidos de almacén, ni al revés. */
+          AND p.tipo = ?
           /* Un pedido partido se reparte por sus partes, no entero: si
              apareciera el original, se entregaría dos veces lo mismo. */
           AND p.id NOT IN (SELECT DISTINCT pedido_padre_id FROM pedidos WHERE pedido_padre_id IS NOT NULL)
         ORDER BY p.creado_en DESC
         LIMIT 50`,
-    ).all();
+    )
+      .bind(suVehiculo?.rol === 'fletero' ? 'flete' : 'pedido')
+      .all();
 
     const conDistancia = results.map((fila) => {
       const comercioLat = fila.comercio_lat as number | null;
@@ -1856,6 +1885,268 @@ async function enrutar(
     return json({ fraccionamientos: results }, {}, cors);
   }
 
+  /**
+   * Cuánto ganó y qué entregó.
+   *
+   * Sin esto el repartidor no sabe cuánto hizo en la semana ni tiene con qué
+   * reclamar si algo no cierra.
+   *
+   * Lo que gana es el envío de cada pedido que entregó: la comisión de la
+   * plataforma lo incluye, y de ahí se le liquida.
+   */
+  if (ruta === '/delivery/ganancias' && metodo === 'GET') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    const totales = await env.DB.prepare(
+      `SELECT
+         COUNT(*) FILTER (WHERE date(e.entregado_en) = date('now')) AS entregas_hoy,
+         COALESCE(SUM(p.envio_centavos) FILTER (WHERE date(e.entregado_en) = date('now')), 0) AS gano_hoy,
+         COUNT(*) FILTER (WHERE e.entregado_en >= datetime('now', '-7 days')) AS entregas_semana,
+         COALESCE(SUM(p.envio_centavos) FILTER (WHERE e.entregado_en >= datetime('now', '-7 days')), 0) AS gano_semana,
+         COUNT(*) AS entregas_total,
+         COALESCE(SUM(p.envio_centavos), 0) AS gano_total
+       FROM envios e
+       JOIN pedidos p ON p.id = e.pedido_id
+      WHERE e.repartidor_id = ? AND e.estado = 'entregado'`,
+    )
+      .bind(repartidor.usuario.id)
+      .first<Record<string, number>>();
+
+    /* El historial: qué llevó, a dónde y cuánto le dejó cada viaje. */
+    const { results: historial } = await env.DB.prepare(
+      `SELECT p.codigo, p.direccion_texto, p.envio_centavos, p.tipo,
+              e.entregado_en, e.asignado_en,
+              c.nombre AS comercio
+         FROM envios e
+         JOIN pedidos p ON p.id = e.pedido_id
+         JOIN comercios c ON c.id = p.comercio_id
+        WHERE e.repartidor_id = ? AND e.estado = 'entregado'
+        ORDER BY e.entregado_en DESC
+        LIMIT 50`,
+    )
+      .bind(repartidor.usuario.id)
+      .all<Record<string, unknown>>();
+
+    return json(
+      {
+        hoy: {
+          entregas: Number(totales?.entregas_hoy ?? 0),
+          gano: aPesos(Number(totales?.gano_hoy ?? 0)),
+        },
+        semana: {
+          entregas: Number(totales?.entregas_semana ?? 0),
+          gano: aPesos(Number(totales?.gano_semana ?? 0)),
+        },
+        total: {
+          entregas: Number(totales?.entregas_total ?? 0),
+          gano: aPesos(Number(totales?.gano_total ?? 0)),
+        },
+        historial: historial.map((fila) => ({
+          ...fila,
+          gano: aPesos(Number(fila.envio_centavos)),
+        })),
+      },
+      {},
+      cors,
+    );
+  }
+
+  // ── Cotización de fletes ──
+
+  /**
+   * El fletero cotiza un flete.
+   *
+   * Un flete no tiene precio de lista: depende de cuánto hay que llevar y
+   * hasta dónde. El fletero ve la distancia calculada, pone su precio, y el
+   * cliente decide antes de que nadie salga.
+   */
+  const cotizarFlete = /^\/fletes\/([\w-]+)\/cotizar$/.exec(ruta);
+
+  if (cotizarFlete && metodo === 'POST') {
+    const fletero = await exigirRol(request, env, cors, ['fletero']);
+
+    if ('respuesta' in fletero) {
+      return fletero.respuesta;
+    }
+
+    const body = await leerJson<{ precio?: number; nota?: string }>(request);
+    const precio = aCentavos(Number(body.precio ?? 0));
+
+    if (precio <= 0) {
+      return error('Poné cuánto cobrás por el flete.', 400, cors);
+    }
+
+    const flete = await env.DB.prepare(
+      `SELECT p.id, p.codigo, p.usuario_id, p.estado, p.tipo,
+              c.lat AS origen_lat, c.lon AS origen_lon,
+              d.lat AS destino_lat, d.lon AS destino_lon
+         FROM pedidos p
+         JOIN comercios c ON c.id = p.comercio_id
+         LEFT JOIN direcciones d ON d.id = p.direccion_id
+        WHERE p.id = ? AND p.tipo = 'flete' AND p.estado = 'proceso'`,
+    )
+      .bind(cotizarFlete[1])
+      .first<{
+        id: string;
+        codigo: string;
+        usuario_id: string;
+        origen_lat: number | null;
+        origen_lon: number | null;
+        destino_lat: number | null;
+        destino_lon: number | null;
+      }>();
+
+    if (!flete) {
+      return error('No encontrado', 404, cors);
+    }
+
+    const distancia =
+      flete.origen_lat && flete.origen_lon && flete.destino_lat && flete.destino_lon
+        ? distanciaKm(flete.origen_lat, flete.origen_lon, flete.destino_lat, flete.destino_lon)
+        : null;
+
+    const id = nuevoId();
+
+    await env.DB.prepare(
+      `INSERT INTO cotizaciones (id, pedido_id, fletero_id, precio_centavos, distancia_km, nota)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        id,
+        flete.id,
+        fletero.usuario.id,
+        precio,
+        distancia,
+        String(body.nota ?? '').slice(0, 300) || null,
+      )
+      .run();
+
+    await avisar(env, flete.usuario_id, {
+      tipo: 'pedido',
+      titulo: `Te cotizaron el flete ${flete.codigo}`,
+      texto: `${fletero.usuario.nombre}: ${aPesos(precio).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}`,
+      enlace: '/pedidos',
+    });
+
+    return json({ id, precio: aPesos(precio), distanciaKm: distancia }, { status: 201 }, cors);
+  }
+
+  /** Las cotizaciones que recibió un flete, para que el cliente elija. */
+  const cotizacionesFlete = /^\/fletes\/([\w-]+)\/cotizaciones$/.exec(ruta);
+
+  if (cotizacionesFlete && metodo === 'GET') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT co.id, co.precio_centavos, co.distancia_km, co.nota, co.estado, co.creado_en,
+              u.nombre AS fletero
+         FROM cotizaciones co
+         JOIN usuarios u ON u.id = co.fletero_id
+         JOIN pedidos p ON p.id = co.pedido_id
+        WHERE co.pedido_id = ? AND p.usuario_id = ?
+        ORDER BY co.precio_centavos ASC`,
+    )
+      .bind(cotizacionesFlete[1], usuario.id)
+      .all<Record<string, unknown>>();
+
+    return json(
+      {
+        cotizaciones: results.map((fila) => ({
+          ...fila,
+          precio: aPesos(Number(fila.precio_centavos)),
+        })),
+      },
+      {},
+      cors,
+    );
+  }
+
+  /**
+   * El cliente acepta una cotización.
+   *
+   * Al aceptar, el flete queda para ese fletero: las demás cotizaciones se
+   * rechazan solas, porque el trabajo ya tiene quien lo haga.
+   */
+  const aceptarCotizacion = /^\/cotizaciones\/([\w-]+)\/aceptar$/.exec(ruta);
+
+  if (aceptarCotizacion && metodo === 'POST') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const cotizacion = await env.DB.prepare(
+      `SELECT co.id, co.pedido_id, co.fletero_id, co.precio_centavos, co.estado,
+              p.codigo, p.subtotal_centavos
+         FROM cotizaciones co
+         JOIN pedidos p ON p.id = co.pedido_id
+        WHERE co.id = ? AND p.usuario_id = ?`,
+    )
+      .bind(aceptarCotizacion[1], usuario.id)
+      .first<{
+        id: string;
+        pedido_id: string;
+        fletero_id: string;
+        precio_centavos: number;
+        estado: string;
+        codigo: string;
+        subtotal_centavos: number;
+      }>();
+
+    if (!cotizacion) {
+      return error('No encontrado', 404, cors);
+    }
+
+    if (cotizacion.estado !== 'pendiente') {
+      return error('Esa cotización ya no está vigente.', 409, cors);
+    }
+
+    /* El precio del flete pasa a ser el del pedido: era eso lo que faltaba
+       para poder cobrarlo. */
+    await env.DB.batch([
+      env.DB.prepare(
+        "UPDATE cotizaciones SET estado = 'aceptada', resuelto_en = datetime('now') WHERE id = ?",
+      ).bind(cotizacion.id),
+      env.DB.prepare(
+        "UPDATE cotizaciones SET estado = 'rechazada', resuelto_en = datetime('now') WHERE pedido_id = ? AND id != ? AND estado = 'pendiente'",
+      ).bind(cotizacion.pedido_id, cotizacion.id),
+      env.DB.prepare(
+        'UPDATE pedidos SET envio_centavos = ?, total_centavos = subtotal_centavos + ? WHERE id = ?',
+      ).bind(cotizacion.precio_centavos, cotizacion.precio_centavos, cotizacion.pedido_id),
+      /* Queda asignado a quien cotizó: nadie más lo va a tomar. */
+      env.DB.prepare('DELETE FROM envios WHERE pedido_id = ?').bind(cotizacion.pedido_id),
+      env.DB.prepare(
+        `INSERT INTO envios (id, pedido_id, repartidor_id, estado, asignado_en)
+         VALUES (?, ?, ?, 'asignado', datetime('now'))`,
+      ).bind(nuevoId(), cotizacion.pedido_id, cotizacion.fletero_id),
+    ]);
+
+    await avisar(env, cotizacion.fletero_id, {
+      tipo: 'pedido',
+      titulo: `Aceptaron tu cotización del ${cotizacion.codigo}`,
+      texto: 'El flete es tuyo.',
+      enlace: '/panel/repartidor',
+    });
+
+    await mensajeDeSistema(
+      env,
+      cotizacion.pedido_id,
+      usuario.id,
+      `Se aceptó la cotización por ${aPesos(cotizacion.precio_centavos).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}.`,
+    );
+
+    return json({ ok: true }, {}, cors);
+  }
+
   /** Posición del repartidor, para el mapa que mira el comercio. */
   if (ruta === '/delivery/ubicacion' && metodo === 'POST') {
     const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
@@ -2152,6 +2443,264 @@ async function enrutar(
     return json({ pedido: fila, partes }, {}, cors);
   }
 
+  // ── Reclamos ──
+  //
+  // Cuando algo sale mal, las tres partes tienen que poder hablar entre
+  // ellas: el comercio sabe qué mandó, el repartidor qué llevó, y
+  // administración decide quién se hace cargo.
+  //
+  // El chat del reclamo es aparte del chat del pedido a propósito: acá se
+  // discute qué pasó, y eso no se resuelve delante del cliente. Después
+  // alguien le contesta por el chat del pedido.
+
+  /** Abre un reclamo sobre un pedido. */
+  const reclamarPedido = /^\/pedidos\/([\w-]+)\/reclamo$/.exec(ruta);
+
+  if (reclamarPedido && metodo === 'POST') {
+    const usuario = await puedeVerPedido(env, reclamarPedido[1], request);
+
+    if (!usuario) {
+      return error('No encontrado', 404, cors);
+    }
+
+    const body = await leerJson<{ motivo?: string; detalle?: string }>(request);
+    const motivo = String(body.motivo ?? '').trim();
+
+    if (motivo.length < 3) {
+      return error('Contá qué pasó.', 400, cors);
+    }
+
+    /* Un reclamo abierto por pedido: si no, el mismo problema genera cinco
+       conversaciones en paralelo y nadie sabe cuál mirar. */
+    const abierto = await env.DB.prepare(
+      "SELECT id FROM reclamos WHERE pedido_id = ? AND estado IN ('abierto', 'en_revision')",
+    )
+      .bind(reclamarPedido[1])
+      .first<{ id: string }>();
+
+    if (abierto) {
+      return json({ id: abierto.id, yaExistia: true }, {}, cors);
+    }
+
+    const id = nuevoId();
+
+    await env.DB.prepare(
+      'INSERT INTO reclamos (id, pedido_id, abierto_por, motivo, detalle) VALUES (?, ?, ?, ?, ?)',
+    )
+      .bind(id, reclamarPedido[1], usuario.id, motivo.slice(0, 200), String(body.detalle ?? '').slice(0, 1000) || null)
+      .run();
+
+    /* Administración se entera: es quien lo va a mirar. */
+    const { results: admins } = await env.DB.prepare(
+      "SELECT usuario_id FROM usuario_roles WHERE rol = 'admin' AND estado = 'aprobado'",
+    ).all<{ usuario_id: string }>();
+
+    const pedido = await env.DB.prepare('SELECT codigo FROM pedidos WHERE id = ?')
+      .bind(reclamarPedido[1])
+      .first<{ codigo: string }>();
+
+    for (const admin of admins) {
+      await avisar(env, admin.usuario_id, {
+        tipo: 'pedido',
+        titulo: `Reclamo en el pedido ${pedido?.codigo ?? ''}`,
+        texto: motivo.slice(0, 120),
+        enlace: '/panel/admin/reclamos',
+      });
+    }
+
+    return json({ id }, { status: 201 }, cors);
+  }
+
+  /** Los reclamos que le tocan a quien mira. */
+  if (ruta === '/reclamos' && metodo === 'GET') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const esAdmin = await env.DB.prepare(
+      "SELECT 1 AS ok FROM usuario_roles WHERE usuario_id = ? AND rol = 'admin' AND estado = 'aprobado'",
+    )
+      .bind(usuario.id)
+      .first();
+
+    /* Administración ve todos; el resto, sólo los de sus pedidos. */
+    const { results } = esAdmin
+      ? await env.DB.prepare(
+          `SELECT r.id, r.motivo, r.detalle, r.estado, r.creado_en, r.resolucion,
+                  p.codigo, p.direccion_texto,
+                  c.nombre AS comercio,
+                  u.nombre AS abrio,
+                  ur.nombre AS repartidor
+             FROM reclamos r
+             JOIN pedidos p ON p.id = r.pedido_id
+             JOIN comercios c ON c.id = p.comercio_id
+             JOIN usuarios u ON u.id = r.abierto_por
+             LEFT JOIN envios e ON e.pedido_id = p.id
+             LEFT JOIN usuarios ur ON ur.id = e.repartidor_id
+            ORDER BY
+              CASE r.estado WHEN 'abierto' THEN 0 WHEN 'en_revision' THEN 1 ELSE 2 END,
+              r.creado_en DESC
+            LIMIT 50`,
+        ).all()
+      : await env.DB.prepare(
+          `SELECT r.id, r.motivo, r.detalle, r.estado, r.creado_en, r.resolucion,
+                  p.codigo, p.direccion_texto,
+                  c.nombre AS comercio,
+                  u.nombre AS abrio,
+                  ur.nombre AS repartidor
+             FROM reclamos r
+             JOIN pedidos p ON p.id = r.pedido_id
+             JOIN comercios c ON c.id = p.comercio_id
+             JOIN usuarios u ON u.id = r.abierto_por
+             LEFT JOIN envios e ON e.pedido_id = p.id
+             LEFT JOIN usuarios ur ON ur.id = e.repartidor_id
+            WHERE p.usuario_id = ? OR c.usuario_id = ? OR e.repartidor_id = ?
+            ORDER BY r.creado_en DESC
+            LIMIT 50`,
+        )
+          .bind(usuario.id, usuario.id, usuario.id)
+          .all();
+
+    return json({ reclamos: results, esAdmin: Boolean(esAdmin) }, {}, cors);
+  }
+
+  /**
+   * El chat del reclamo.
+   *
+   * Hablan el comercio, quien repartió y administración. El cliente no entra
+   * acá: primero se define qué pasó, y después alguien le contesta.
+   */
+  const chatReclamo = /^\/reclamos\/([\w-]+)\/mensajes$/.exec(ruta);
+
+  if (chatReclamo && (metodo === 'GET' || metodo === 'POST')) {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const permitido = await env.DB.prepare(
+      `SELECT 1 AS ok FROM reclamos r
+         JOIN pedidos p ON p.id = r.pedido_id
+         JOIN comercios c ON c.id = p.comercio_id
+         LEFT JOIN envios e ON e.pedido_id = p.id
+        WHERE r.id = ?
+          AND (c.usuario_id = ? OR e.repartidor_id = ?
+               OR EXISTS (SELECT 1 FROM usuario_roles ur
+                           WHERE ur.usuario_id = ? AND ur.rol = 'admin' AND ur.estado = 'aprobado'))`,
+    )
+      .bind(chatReclamo[1], usuario.id, usuario.id, usuario.id)
+      .first();
+
+    if (!permitido) {
+      return error('No encontrado', 404, cors);
+    }
+
+    if (metodo === 'POST') {
+      const body = await leerJson<{ texto?: string }>(request);
+      const texto = String(body.texto ?? '').trim();
+
+      if (!texto) {
+        return error('El mensaje está vacío.', 400, cors);
+      }
+
+      await env.DB.batch([
+        env.DB.prepare(
+          'INSERT INTO reclamo_mensajes (id, reclamo_id, autor_id, texto) VALUES (?, ?, ?, ?)',
+        ).bind(nuevoId(), chatReclamo[1], usuario.id, texto.slice(0, 1000)),
+        /* Con el primer mensaje pasa a "en revisión": alguien lo está
+           mirando, y eso es distinto de estar sin abrir. */
+        env.DB.prepare(
+          "UPDATE reclamos SET estado = 'en_revision' WHERE id = ? AND estado = 'abierto'",
+        ).bind(chatReclamo[1]),
+      ]);
+
+      return json({ ok: true }, { status: 201 }, cors);
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT m.id, m.texto, m.creado_en, m.autor_id, u.nombre AS autor,
+              CASE
+                WHEN EXISTS (SELECT 1 FROM usuario_roles ur WHERE ur.usuario_id = m.autor_id AND ur.rol = 'admin' AND ur.estado = 'aprobado') THEN 'admin'
+                WHEN EXISTS (SELECT 1 FROM comercios c2 WHERE c2.usuario_id = m.autor_id) THEN 'comercio'
+                ELSE 'repartidor'
+              END AS rol
+         FROM reclamo_mensajes m
+         JOIN usuarios u ON u.id = m.autor_id
+        WHERE m.reclamo_id = ?
+        ORDER BY m.creado_en`,
+    )
+      .bind(chatReclamo[1])
+      .all();
+
+    return json({ mensajes: results, yo: usuario.id }, {}, cors);
+  }
+
+  /**
+   * Administración cierra el reclamo con una resolución.
+   *
+   * La resolución le llega al cliente por el chat de su pedido: es donde ya
+   * estuvo mirando, y no en una pantalla nueva que no conoce.
+   */
+  const resolverReclamo = /^\/reclamos\/([\w-]+)\/resolver$/.exec(ruta);
+
+  if (resolverReclamo && metodo === 'POST') {
+    const admin = await exigirAdmin(request, env, cors);
+
+    if ('respuesta' in admin) {
+      return admin.respuesta;
+    }
+
+    const body = await leerJson<{ resolucion?: string; avisarCliente?: boolean }>(request);
+    const resolucion = String(body.resolucion ?? '').trim();
+
+    if (resolucion.length < 3) {
+      return error('Escribí qué se resolvió.', 400, cors);
+    }
+
+    const reclamo = await env.DB.prepare(
+      `SELECT r.id, r.pedido_id, p.usuario_id AS cliente_id, p.codigo
+         FROM reclamos r JOIN pedidos p ON p.id = r.pedido_id
+        WHERE r.id = ?`,
+    )
+      .bind(resolverReclamo[1])
+      .first<{ id: string; pedido_id: string; cliente_id: string; codigo: string }>();
+
+    if (!reclamo) {
+      return error('No encontrado', 404, cors);
+    }
+
+    await env.DB.prepare(
+      `UPDATE reclamos
+          SET estado = 'resuelto', resolucion = ?, resuelto_por = ?,
+              resuelto_en = datetime('now')
+        WHERE id = ?`,
+    )
+      .bind(resolucion.slice(0, 1000), admin.usuario.id, reclamo.id)
+      .run();
+
+    /* Al cliente se le contesta por donde ya estaba mirando. */
+    if (body.avisarCliente !== false) {
+      await mensajeDeSistema(
+        env,
+        reclamo.pedido_id,
+        admin.usuario.id,
+        `Sobre tu reclamo: ${resolucion.slice(0, 400)}`,
+      );
+
+      await avisar(env, reclamo.cliente_id, {
+        tipo: 'pedido',
+        titulo: `Resolvimos tu reclamo del ${reclamo.codigo}`,
+        texto: resolucion.slice(0, 120),
+        enlace: `/pedidos/${reclamo.pedido_id}/seguimiento`,
+      });
+    }
+
+    return json({ ok: true }, {}, cors);
+  }
+
   // ── Notificaciones ──
 
   if (ruta === '/notificaciones' && metodo === 'GET') {
@@ -2205,6 +2754,248 @@ async function enrutar(
     }
 
     return json({ ok: true }, {}, cors);
+  }
+
+  // ── Reseñas ──
+
+  /**
+   * El cliente puntúa un pedido entregado.
+   *
+   * Sólo sobre lo que compró y una sola vez: puntuar sin haber comprado
+   * convierte la calificación en algo que se infla o se ensucia sin costo.
+   *
+   * Se puntúa al comercio y, si hubo, a quien lo trajo: son dos trabajos
+   * distintos y se puede estar conforme con uno y no con el otro.
+   */
+  const resenaPedido = /^\/pedidos\/([\w-]+)\/resena$/.exec(ruta);
+
+  if (resenaPedido && metodo === 'POST') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const pedido = await env.DB.prepare(
+      `SELECT p.id, p.comercio_id, p.estado, e.repartidor_id
+         FROM pedidos p
+         LEFT JOIN envios e ON e.pedido_id = p.id
+        WHERE p.id = ? AND p.usuario_id = ?`,
+    )
+      .bind(resenaPedido[1], usuario.id)
+      .first<{ id: string; comercio_id: string; estado: string; repartidor_id: string | null }>();
+
+    if (!pedido) {
+      return error('No encontrado', 404, cors);
+    }
+
+    if (pedido.estado !== 'terminado') {
+      return error('Podés puntuar cuando el pedido esté entregado.', 409, cors);
+    }
+
+    const body = await leerJson<{
+      comercio?: number;
+      repartidor?: number;
+      comentario?: string;
+    }>(request);
+
+    const puntajeComercio = Math.trunc(Number(body.comercio ?? 0));
+
+    if (puntajeComercio < 1 || puntajeComercio > 5) {
+      return error('Poné entre 1 y 5 estrellas.', 400, cors);
+    }
+
+    const puntajeRepartidor =
+      pedido.repartidor_id && body.repartidor
+        ? Math.min(5, Math.max(1, Math.trunc(Number(body.repartidor))))
+        : null;
+
+    try {
+      await env.DB.prepare(
+        `INSERT INTO resenas
+          (id, pedido_id, usuario_id, comercio_id, repartidor_id,
+           puntaje_comercio, puntaje_repartidor, comentario)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+        .bind(
+          nuevoId(),
+          pedido.id,
+          usuario.id,
+          pedido.comercio_id,
+          pedido.repartidor_id,
+          puntajeComercio,
+          puntajeRepartidor,
+          String(body.comentario ?? '').slice(0, 500) || null,
+        )
+        .run();
+    } catch {
+      /* La única restricción que puede fallar es la de un pedido por reseña. */
+      return error('Ya puntuaste este pedido.', 409, cors);
+    }
+
+    await recalcularPuntaje(env, pedido.comercio_id);
+
+    return json({ ok: true }, { status: 201 }, cors);
+  }
+
+  /** Las reseñas de un comercio, para mostrarlas en su perfil. */
+  const resenasComercio = /^\/comercios\/([\w-]+)\/resenas$/.exec(ruta);
+
+  if (resenasComercio && metodo === 'GET') {
+    const { results } = await env.DB.prepare(
+      `SELECT r.puntaje_comercio, r.comentario, r.creado_en, u.nombre AS cliente
+         FROM resenas r
+         JOIN usuarios u ON u.id = r.usuario_id
+        WHERE r.comercio_id = ?
+        ORDER BY r.creado_en DESC
+        LIMIT 30`,
+    )
+      .bind(resenasComercio[1])
+      .all();
+
+    const resumen = await env.DB.prepare(
+      'SELECT puntaje, resenas_count FROM comercios WHERE id = ?',
+    )
+      .bind(resenasComercio[1])
+      .first<{ puntaje: number | null; resenas_count: number }>();
+
+    return json(
+      {
+        resenas: results,
+        puntaje: resumen?.puntaje ?? null,
+        total: resumen?.resenas_count ?? 0,
+      },
+      {},
+      cors,
+    );
+  }
+
+  // ── Cancelar un pedido ──
+
+  /**
+   * El cliente o el comercio dan de baja un pedido.
+   *
+   * Se puede mientras nadie lo haya retirado: después ya hay alguien en la
+   * calle con la mercadería, y eso se arregla hablando, no con un botón.
+   *
+   * Lo vendido vuelve al stock: si no, el comercio pierde unidades que
+   * nunca salieron del negocio.
+   */
+  const cancelarPedido = /^\/pedidos\/([\w-]+)\/cancelar$/.exec(ruta);
+
+  if (cancelarPedido && metodo === 'POST') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const pedido = await env.DB.prepare(
+      `SELECT p.id, p.codigo, p.usuario_id, p.estado, p.pago_estado,
+              c.usuario_id AS comercio_usuario_id,
+              e.estado AS envio_estado, e.repartidor_id
+         FROM pedidos p
+         JOIN comercios c ON c.id = p.comercio_id
+         LEFT JOIN envios e ON e.pedido_id = p.id
+        WHERE p.id = ?`,
+    )
+      .bind(cancelarPedido[1])
+      .first<{
+        id: string;
+        codigo: string;
+        usuario_id: string;
+        estado: string;
+        pago_estado: string;
+        comercio_usuario_id: string | null;
+        envio_estado: string | null;
+        repartidor_id: string | null;
+      }>();
+
+    if (!pedido) {
+      return error('No encontrado', 404, cors);
+    }
+
+    const esCliente = usuario.id === pedido.usuario_id;
+    const esComercio = usuario.id === pedido.comercio_usuario_id;
+
+    if (!esCliente && !esComercio) {
+      return error('No encontrado', 404, cors);
+    }
+
+    if (pedido.estado !== 'proceso') {
+      return error('Este pedido ya está cerrado.', 409, cors);
+    }
+
+    if (!sePuedeCancelar(pedido.estado, pedido.envio_estado)) {
+      return error('El pedido ya salió del comercio. Arreglalo por el chat.', 409, cors);
+    }
+
+    const body = await leerJson<{ motivo?: string }>(request);
+    const motivo = String(body.motivo ?? '').slice(0, 300);
+
+    /* Lo que se había descontado vuelve: nunca salió del negocio. */
+    const { results: lineas } = await env.DB.prepare(
+      `SELECT pi.producto_id, pi.unidad_venta, pi.escalon
+         FROM pedido_items pi WHERE pi.pedido_id = ?`,
+    )
+      .bind(pedido.id)
+      .all<{ producto_id: string | null; unidad_venta: string; escalon: number }>();
+
+    const devoluciones = lineas
+      .filter((linea) => linea.producto_id)
+      .map((linea) => ({
+        productoId: linea.producto_id as string,
+        unidades:
+          linea.unidad_venta === 'unidad' || linea.unidad_venta === 'docena'
+            ? -(linea.escalon + 1)
+            : -1,
+      }));
+
+    await env.DB.batch([
+      env.DB.prepare("UPDATE pedidos SET estado = 'cancelado' WHERE id = ?").bind(pedido.id),
+      env.DB.prepare(
+        "UPDATE envios SET estado = 'cancelado' WHERE pedido_id = ? AND estado NOT IN ('entregado', 'cancelado')",
+      ).bind(pedido.id),
+    ]);
+
+    await descontarStock(env, devoluciones);
+
+    /* Al otro lado le importa: el comercio deja de preparar, o el cliente se
+       entera de que no se lo van a mandar. */
+    const otro = esCliente ? pedido.comercio_usuario_id : pedido.usuario_id;
+
+    if (otro) {
+      await avisar(env, otro, {
+        tipo: 'pedido',
+        titulo: `Se canceló el pedido ${pedido.codigo}`,
+        texto: motivo || (esCliente ? 'Lo canceló el cliente.' : 'Lo canceló el comercio.'),
+        enlace: esCliente ? '/panel/comercio' : '/pedidos',
+      });
+    }
+
+    if (pedido.repartidor_id) {
+      await avisar(env, pedido.repartidor_id, {
+        tipo: 'pedido',
+        titulo: `Se canceló el pedido ${pedido.codigo}`,
+        texto: 'Ya no hace falta que lo lleves.',
+        enlace: '/panel/repartidor',
+      });
+    }
+
+    /* Si estaba pagado hay plata de por medio: se avisa, porque la
+       devolución se gestiona por fuera de la app. */
+    return json(
+      {
+        ok: true,
+        pagado: pedido.pago_estado === 'aprobado',
+        aviso:
+          pedido.pago_estado === 'aprobado'
+            ? 'El pedido estaba pagado. Te vamos a contactar para devolverte el dinero.'
+            : null,
+      },
+      {},
+      cors,
+    );
   }
 
   // ── Extras del pedido ──
@@ -3376,6 +4167,180 @@ async function enrutar(
     );
   }
 
+  // ── Datos y horarios del comercio ──
+
+  /** El comercio corrige sus datos: dirección, teléfono, logo. */
+  if (ruta === '/mi-comercio' && metodo === 'PATCH') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    const body = await leerJson<Record<string, unknown>>(request);
+
+    /* Sólo estos campos: el rubro y el CUIT definen quién es y se revisaron
+       al aprobarlo, así que cambiarlos tiene que pasar por administración. */
+    const CAMPOS: Record<string, string> = {
+      nombre: 'nombre',
+      direccion: 'direccion',
+      telefono: 'telefono',
+      email: 'email',
+      descripcion: 'descripcion',
+      zona: 'zona',
+      logoUrl: 'logo_url',
+      lat: 'lat',
+      lon: 'lon',
+      minimo: 'minimo_centavos',
+    };
+
+    const cambios: string[] = [];
+    const valores: unknown[] = [];
+
+    for (const [entrada, columna] of Object.entries(CAMPOS)) {
+      if (body[entrada] === undefined) {
+        continue;
+      }
+
+      cambios.push(`${columna} = ?`);
+      valores.push(
+        columna === 'minimo_centavos' ? aCentavos(Number(body[entrada] ?? 0)) : body[entrada],
+      );
+    }
+
+    if (typeof body.cerradoTemporal === 'boolean') {
+      cambios.push('cerrado_temporal = ?');
+      valores.push(body.cerradoTemporal ? 1 : 0);
+    }
+
+    if (cambios.length === 0) {
+      return error('No hay nada que cambiar.', 400, cors);
+    }
+
+    await env.DB.prepare(`UPDATE comercios SET ${cambios.join(', ')} WHERE id = ?`)
+      .bind(...valores, propio.comercioId)
+      .run();
+
+    return json({ ok: true }, {}, cors);
+  }
+
+  /** Los horarios del comercio. */
+  if (ruta === '/mi-comercio/horarios' && metodo === 'GET') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    const { results } = await env.DB.prepare(
+      'SELECT id, dia, abre_min, cierra_min FROM horarios WHERE comercio_id = ? ORDER BY dia, abre_min',
+    )
+      .bind(propio.comercioId)
+      .all<{ id: string; dia: number; abre_min: number; cierra_min: number }>();
+
+    return json(
+      {
+        horarios: results.map((fila) => ({
+          ...fila,
+          abre: aHora(fila.abre_min),
+          cierra: aHora(fila.cierra_min),
+        })),
+        dias: DIAS,
+      },
+      {},
+      cors,
+    );
+  }
+
+  /**
+   * Reemplaza los horarios completos.
+   *
+   * Se reemplaza todo y no se editan tramos sueltos: un horario es un
+   * conjunto, y editar de a uno deja estados intermedios raros —un comercio
+   * sin ningún día cargado mientras se está corrigiendo el martes.
+   */
+  if (ruta === '/mi-comercio/horarios' && metodo === 'PUT') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    const body = await leerJson<{
+      horarios?: Array<{ dia: number; abre: string; cierra: string }>;
+    }>(request);
+
+    const tramos = Array.isArray(body.horarios) ? body.horarios : [];
+    const escrituras = [
+      env.DB.prepare('DELETE FROM horarios WHERE comercio_id = ?').bind(propio.comercioId),
+    ];
+
+    for (const tramo of tramos) {
+      const dia = Math.trunc(Number(tramo.dia));
+      const abre = aMinutos(String(tramo.abre ?? ''));
+      const cierra = aMinutos(String(tramo.cierra ?? ''));
+
+      if (dia < 0 || dia > 6 || abre === null || cierra === null) {
+        return error('Revisá los horarios: hay uno mal cargado.', 400, cors);
+      }
+
+      if (cierra <= abre) {
+        return error('La hora de cierre tiene que ser posterior a la de apertura.', 400, cors);
+      }
+
+      escrituras.push(
+        env.DB.prepare(
+          'INSERT INTO horarios (id, comercio_id, dia, abre_min, cierra_min) VALUES (?, ?, ?, ?, ?)',
+        ).bind(nuevoId(), propio.comercioId, dia, abre, cierra),
+      );
+    }
+
+    await env.DB.batch(escrituras);
+
+    return json({ ok: true, tramos: tramos.length }, {}, cors);
+  }
+
+  /**
+   * El comercio ajusta el stock de un producto.
+   *
+   * Es lo que evita que el cliente pida algo que no hay y el repartidor viaje
+   * para nada.
+   */
+  const stockProducto = /^\/mi-comercio\/productos\/([\w-]+)\/stock$/.exec(ruta);
+
+  if (stockProducto && metodo === 'POST') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    const body = await leerJson<{ stock?: number | null }>(request);
+
+    /* null significa "no llevo control": es distinto de cero, que es
+       "no me queda ninguno". */
+    const stock =
+      body.stock === null || body.stock === undefined
+        ? null
+        : Math.max(0, Math.trunc(Number(body.stock)));
+
+    const propioProducto = await env.DB.prepare(
+      'SELECT id FROM productos WHERE id = ? AND comercio_id = ?',
+    )
+      .bind(stockProducto[1], propio.comercioId)
+      .first();
+
+    if (!propioProducto) {
+      return error('Ese producto no es tuyo', 403, cors);
+    }
+
+    await env.DB.prepare('UPDATE productos SET stock = ? WHERE id = ?')
+      .bind(stock, stockProducto[1])
+      .run();
+
+    return json({ ok: true, stock, estado: estadoDeStock(stock) }, {}, cors);
+  }
+
   // ── Productos ──
 
   if (ruta === '/productos' && metodo === 'POST') {
@@ -3491,10 +4456,18 @@ async function enrutar(
       return error('Necesitás iniciar sesión', 401, cors);
     }
 
+    /* Si ya lo puntuó y si todavía se puede dar de baja viajan con el
+       pedido: sin esto la pantalla ofrece acciones que el servidor rechaza,
+       y el cliente aprende a desconfiar de los botones. */
     const { results } = await env.DB.prepare(
-      `SELECT p.*, c.nombre AS comercio_nombre, c.rubro_id
+      `SELECT p.*, c.nombre AS comercio_nombre, c.rubro_id,
+              EXISTS (SELECT 1 FROM resenas r WHERE r.pedido_id = p.id) AS resenado,
+              e.estado AS envio_estado,
+              u.nombre AS repartidor_nombre
          FROM pedidos p
          JOIN comercios c ON c.id = p.comercio_id
+         LEFT JOIN envios e ON e.pedido_id = p.id
+         LEFT JOIN usuarios u ON u.id = e.repartidor_id
         WHERE p.usuario_id = ?
         ORDER BY p.creado_en DESC
         LIMIT 50`,
@@ -3514,6 +4487,12 @@ async function enrutar(
       {
         pedidos: results.map((fila) => ({
           ...pedidoSalida(fila),
+          resenado: Number(fila.resenado) === 1,
+          cancelable: sePuedeCancelar(
+            String(fila.estado),
+            fila.envio_estado === null ? null : String(fila.envio_estado),
+          ),
+          repartidor: fila.repartidor_nombre === null ? null : String(fila.repartidor_nombre),
           items: lineas.get(String(fila.id)) ?? [],
         })),
       },
@@ -3552,7 +4531,8 @@ async function enrutar(
     const ids = items.map((item) => item.productoId);
     const marcadores = ids.map(() => '?').join(',');
     const { results: productos } = await env.DB.prepare(
-      `SELECT id, nombre, precio_centavos, unidad_venta, COALESCE(tamano, 'mediano') AS tamano
+      `SELECT id, nombre, precio_centavos, unidad_venta, stock,
+              COALESCE(tamano, 'mediano') AS tamano
          FROM productos
         WHERE id IN (${marcadores}) AND comercio_id = ? AND activo = 1`,
     )
@@ -3562,6 +4542,7 @@ async function enrutar(
         nombre: string;
         precio_centavos: number;
         unidad_venta: string;
+        stock: number | null;
         tamano: string;
       }>();
 
@@ -3570,6 +4551,25 @@ async function enrutar(
     }
 
     const porId = new Map(productos.map((producto) => [producto.id, producto]));
+
+    /* Lo agotado no se puede pedir: es lo que evita que el repartidor vaya
+       hasta el comercio a buscar algo que no está. El comercio lo declara
+       desde su panel, y quien no lleva control deja el stock sin cargar. */
+    const agotados = items
+      .map((item) => porId.get(item.productoId))
+      .filter(
+        (producto): producto is NonNullable<typeof producto> =>
+          !!producto && producto.stock !== null && producto.stock <= 0,
+      );
+
+    if (agotados.length > 0) {
+      return error(
+        `Sin stock: ${agotados.map((producto) => producto.nombre).join(', ')}.`,
+        409,
+        cors,
+      );
+    }
+
     let subtotal = 0;
 
     const lineas = items.map((item) => {
@@ -3616,6 +4616,12 @@ async function enrutar(
        cliente ve el total antes de confirmar. */
     const envioUnitario = subtotal >= 1_500_000 ? 0 : 120_000;
     const envio = envioUnitario * partes;
+
+    /* Si no entra en un auto, esto es un flete: va a la cola de quienes
+       tienen camioneta o camión, y se cotiza en vez de tener precio fijo.
+       Lo decide el volumen y no el cliente, porque el que sabe si entra es
+       el que lo va a cargar. */
+    const tipo = litros > CAPACIDAD.auto ? 'flete' : 'pedido';
     const pedidoId = nuevoId();
     const codigo = `#${Date.now().toString().slice(-6)}`;
 
@@ -3626,8 +4632,8 @@ async function enrutar(
         `INSERT INTO pedidos
           (id, codigo, usuario_id, comercio_id, direccion_id, direccion_texto,
            subtotal_centavos, envio_centavos, total_centavos, metodo_pago,
-           preferencia_envio, volumen_litros, partes_total)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           preferencia_envio, volumen_litros, partes_total, tipo)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         pedidoId,
         codigo,
@@ -3642,6 +4648,7 @@ async function enrutar(
         preferencia,
         Math.round(litros * 10) / 10,
         partes > 1 ? partes : null,
+        tipo,
       ),
       ...lineas.map((linea) =>
         env.DB.prepare(
@@ -3660,6 +4667,19 @@ async function enrutar(
         ),
       ),
     ]);
+
+    /* Lo vendido se descuenta: si no, el stock diría que hay diez cuando ya
+       se vendieron nueve, y el problema vuelve a aparecer más tarde. */
+    await descontarStock(
+      env,
+      lineas.map((linea) => ({
+        productoId: linea.producto.id,
+        unidades:
+          linea.producto.unidad_venta === 'unidad' || linea.producto.unidad_venta === 'docena'
+            ? linea.escalon + 1
+            : 1,
+      })),
+    );
 
     /* Al comercio le entra un pedido: es el aviso que hace que lo prepare.
        Sin esto tendría que estar mirando el panel todo el día. */
@@ -4346,6 +5366,57 @@ function mensajeDeSistema(env: Env, pedidoId: string, autorId: string, texto: st
     });
 }
 
+/**
+ * Recalcula el promedio de un comercio.
+ *
+ * Se guarda calculado porque se lee en cada listado: sacarlo al vuelo sería
+ * recorrer todas sus reseñas cada vez que alguien busca un comercio.
+ */
+async function recalcularPuntaje(env: Env, comercioId: string) {
+  const resumen = await env.DB.prepare(
+    'SELECT AVG(puntaje_comercio) AS promedio, COUNT(*) AS total FROM resenas WHERE comercio_id = ?',
+  )
+    .bind(comercioId)
+    .first<{ promedio: number | null; total: number }>();
+
+  await env.DB.prepare('UPDATE comercios SET puntaje = ?, resenas_count = ? WHERE id = ?')
+    .bind(
+      resumen?.promedio ? Math.round(Number(resumen.promedio) * 10) / 10 : null,
+      Number(resumen?.total ?? 0),
+      comercioId,
+    )
+    .run();
+}
+
+/** Los horarios de varios comercios, agrupados, en una sola consulta. */
+async function horariosDe(env: Env, comercioIds: string[]) {
+  const porComercio = new Map<
+    string,
+    Array<{ dia: number; abre_min: number; cierra_min: number }>
+  >();
+
+  if (comercioIds.length === 0) {
+    return porComercio;
+  }
+
+  const marcadores = comercioIds.map(() => '?').join(',');
+  const { results } = await env.DB.prepare(
+    `SELECT comercio_id, dia, abre_min, cierra_min FROM horarios
+      WHERE comercio_id IN (${marcadores})`,
+  )
+    .bind(...comercioIds)
+    .all<{ comercio_id: string; dia: number; abre_min: number; cierra_min: number }>();
+
+  for (const fila of results) {
+    const lista = porComercio.get(fila.comercio_id) ?? [];
+
+    lista.push({ dia: fila.dia, abre_min: fila.abre_min, cierra_min: fila.cierra_min });
+    porComercio.set(fila.comercio_id, lista);
+  }
+
+  return porComercio;
+}
+
 /** Fila cruda de la tabla de ofertas, tal como sale de la base. */
 type FilaOferta = {
   id: string;
@@ -4518,6 +5589,19 @@ const productoSalida = (fila: Record<string, unknown>) => ({
   precio: aPesos(Number(fila.precio_centavos)),
   fotos: JSON.parse(String(fila.fotos ?? '[]')),
 });
+
+/**
+ * Si el pedido todavía se puede dar de baja con un botón.
+ *
+ * Una vez retirado está en la calle: cancelarlo dejaría al repartidor con la
+ * mercadería y sin instrucciones, así que a partir de ahí se arregla
+ * hablando. Vive acá y no en cada pantalla para que el botón que se ve y la
+ * regla que decide sean lo mismo.
+ */
+export const ENVIO_YA_SALIO = ['retirado', 'en_camino', 'entregado'];
+
+export const sePuedeCancelar = (estado: string, envioEstado: string | null) =>
+  estado === 'proceso' && !(envioEstado !== null && ENVIO_YA_SALIO.includes(envioEstado));
 
 const pedidoSalida = (fila: Record<string, unknown>) => ({
   ...fila,

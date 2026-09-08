@@ -21,13 +21,17 @@ export const MOTIVOS_RECHAZO = [
   'No me entra en el vehículo',
   'Me queda muy lejos del recorrido',
   'Ya estoy en camino a tu dirección',
-  'Prefiero no manejar efectivo extra',
 ] as const;
 
-/** Por qué se cae un extra que ya se había aceptado. */
+/**
+ * Por qué se cae un extra que ya se había aceptado.
+ *
+ * Los paréntesis aclaran cuándo usar cada uno: en la calle y con apuro, dos
+ * opciones parecidas se eligen al azar y la otra persona no entiende qué pasó.
+ */
 export const MOTIVOS_CANCELACION = [
   'El negocio no tenía lo que pediste',
-  'Estaba más caro de lo que esperabas',
+  'Estaba más caro y no lo quisiste (avisaste el precio y dijo que no)',
   'El negocio está cerrado',
   'No me alcanza el efectivo para comprarlo',
 ] as const;

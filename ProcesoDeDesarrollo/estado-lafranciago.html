@@ -359,10 +359,10 @@
 
   <section class="cifras" aria-label="Resumen">
     <div class="cifra"><b>4</b><span>tipos de cuenta funcionando</span></div>
-    <div class="cifra"><b>63</b><span>funcionalidades entregadas</span></div>
-    <div class="cifra"><b>24</b><span>pantallas</span></div>
-    <div class="cifra"><b>63</b><span>servicios en el servidor</span></div>
-    <div class="cifra"><b>28</b><span>tablas de base de datos</span></div>
+    <div class="cifra"><b>56</b><span>funcionalidades entregadas</span></div>
+    <div class="cifra"><b>25</b><span>pantallas</span></div>
+    <div class="cifra"><b>80</b><span>servicios en el servidor</span></div>
+    <div class="cifra"><b>33</b><span>tablas de base de datos</span></div>
   </section>
 
   <!-- ══════════ PARTE 1: QUÉ HACE CADA UNO ══════════ -->
@@ -386,6 +386,10 @@
     <li><b>Habla con el comercio y con quien lleva el pedido</b> por un chat adentro de la aplicación.</li>
     <li><b>Pide algo más sobre la marcha</b>: "ya que vas al kiosco, traeme un chocolate". Quien lo lleva dice si puede, lo compra y le muestra cuánto salió con la foto del ticket.</li>
     <li><b>Pide mandados</b>: encargos que no son de un comercio, como buscar una garrafa.</li>
+    <li><b>No puede pedir lo que no hay</b>: si al comercio se le acabó algo, deja de aparecer disponible y nadie hace viajes al pedo.</li>
+    <li><b>Cancela el pedido</b> mientras no haya salido del comercio, eligiendo el motivo de una lista. Lo que había reservado vuelve al stock.</li>
+    <li><b>Puntúa el pedido</b> cuando llega: una nota para el negocio y otra para quien se lo trajo, más un comentario si quiere. El promedio queda a la vista del próximo vecino.</li>
+    <li><b>Elige entre varios precios</b> cuando pide un flete: los fleteros ofrecen cuánto cobran y él decide con cuál se queda.</li>
   </ul>
 
   <h3>El comercio</h3>
@@ -399,6 +403,11 @@
     <li><b>Habla con sus clientes</b> por chat.</li>
     <li><b>Ve en un mapa</b> por dónde va cada repartidor que lleva sus pedidos.</li>
     <li><b>Decide si un pedido se puede partir</b> cuando un repartidor lo pide y la aplicación calculó que sí le entraba.</li>
+    <li><b>Corrige sus datos</b> cuando cambian: dirección, teléfono, cómo se describe el negocio y el pedido mínimo.</li>
+    <li><b>Carga sus horarios de atención</b>, con dos tramos por día si cierra al mediodía. Fuera de hora figura cerrado y no le entran pedidos.</li>
+    <li><b>Lleva el stock</b> de cada producto desde la misma lista. Cuando se agota deja de venderse solo, y si un pedido se cancela vuelve.</li>
+    <li><b>Ve lo que opinan de él</b>: su puntaje y los comentarios de quienes le compraron.</li>
+    <li><b>Entra al reclamo</b> cuando algo sale mal, y cuenta su versión en el chat con las otras partes.</li>
   </ul>
 
   <h3>El delivery</h3>
@@ -412,6 +421,9 @@
     <li><b>Habla con el cliente</b> por chat desde que toma el pedido, y queda anunciado en la conversación.</li>
     <li><b>Acepta o rechaza los extras</b> que le piden en el camino, eligiendo el motivo de una lista. Si lo compra, carga el precio con la foto del ticket.</li>
     <li><b>Comparte su ubicación</b> mientras trabaja, que es lo que alimenta el mapa del cliente y del comercio.</li>
+    <li><b>Ve cuánto ganó</b>: hoy, esta semana y desde que empezó, con el promedio por viaje.</li>
+    <li><b>Tiene el historial de lo que entregó</b>: cada viaje con su fecha, a dónde fue y cuánto le dejó.</li>
+    <li><b>Entra al reclamo</b> si alguien se queja de una entrega suya, y puede contar qué pasó de su lado.</li>
   </ul>
 
   <h3>El fletero</h3>
@@ -419,6 +431,8 @@
     <li><b>Usa el mismo panel que el delivery</b>, porque el trabajo es el mismo. Cambia el vocabulario: dice "flete" donde el otro dice "pedido".</li>
     <li><b>Declara si tiene camioneta o camión</b>, y ve qué le entra según eso.</li>
     <li><b>Toma, sigue y entrega</b> con los mismos pasos.</li>
+    <li><b>Ve una cola aparte</b>: sólo los fletes, sin mezclarse con los pedidos de almacén. Un pedido pasa a ser flete solo, cuando no entra en un auto.</li>
+    <li><b>Pone su precio</b> en vez de aceptar uno fijo: ve la distancia calculada, una referencia por kilómetro, y cobra lo que decide. El cliente elige entre las ofertas que recibió.</li>
   </ul>
 
   <h3>Administración (Diego)</h3>
@@ -428,6 +442,9 @@
     <li><b>Ve qué necesita atención</b>: postulaciones sin revisar, pedidos que llevan más de dos horas sin repartidor, pedidos de fraccionamiento sin resolver.</li>
     <li><b>Ve el ranking de comercios</b>: cuánto vendió cada uno en el último mes.</li>
     <li><b>Destaca o suspende un comercio</b> desde el mismo panel.</li>
+    <li><b>Responde los reclamos</b>: ve todos, los sin atender primero, con el pedido y las partes involucradas.</li>
+    <li><b>Abre un chat entre las tres partes</b> —comercio, quien repartió y él— para definir qué pasó antes de contestarle a nadie.</li>
+    <li><b>Cierra el reclamo con una respuesta</b>, que le llega al cliente al chat de su pedido.</li>
   </ul>
 
   <!-- ══════════ PARTE 2: PARA COTIZAR ══════════ -->
@@ -579,15 +596,15 @@
         </tr>
         <tr>
           <td>Reseñas y puntaje</td>
-          <td><span class="estado falta">Falta</span></td>
-          <td class="detalle">Las tarjetas tienen lugar para la estrella, pero nadie puede puntuar todavía.</td>
-          <td class="num">—</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Una nota para el comercio y otra para quien entregó, más comentario. Sólo sobre pedidos ya entregados, una vez por pedido. El promedio se recalcula solo y se muestra en el comercio.</td>
+          <td class="num">2</td>
         </tr>
         <tr>
           <td>Cancelar un pedido</td>
-          <td><span class="estado falta">Falta</span></td>
-          <td class="detalle">Una vez confirmado, el cliente no tiene cómo darlo de baja.</td>
-          <td class="num">—</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Con motivo elegido de una lista, hasta que el pedido sale del comercio. Devuelve el stock reservado y avisa a las dos partes. Después de que salió se arregla por el chat.</td>
+          <td class="num">1</td>
         </tr>
       </tbody>
     </table>
@@ -662,21 +679,21 @@
         </tr>
         <tr>
           <td>Editar sus datos</td>
-          <td><span class="estado falta">Falta</span></td>
-          <td class="detalle">Para cambiar dirección, teléfono o logo hay que tocar la base de datos.</td>
-          <td class="num">—</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Nombre, dirección, teléfono, correo, descripción y pedido mínimo, desde la pestaña "Mi negocio".</td>
+          <td class="num">1</td>
         </tr>
         <tr>
           <td>Horarios de atención</td>
-          <td><span class="estado falta">Falta</span></td>
-          <td class="detalle">El horario es un texto libre: la aplicación no sabe si está abierto ahora.</td>
-          <td class="num">—</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Por día, con varios tramos: quien cierra al mediodía carga mañana y tarde. La aplicación sabe si está abierto ahora y no le entran pedidos fuera de hora.</td>
+          <td class="num">2</td>
         </tr>
         <tr>
           <td>Control de stock</td>
-          <td><span class="estado parcial">A medias</span></td>
-          <td class="detalle">El stock se carga pero no baja solo al venderse.</td>
-          <td class="num">1</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Se ajusta desde la fila del producto. Baja solo al venderse y vuelve si el pedido se cancela. Lo agotado no se puede pedir. Dejarlo vacío significa que ese comercio no lleva control.</td>
+          <td class="num">2</td>
         </tr>
       </tbody>
     </table>
@@ -739,21 +756,21 @@
         </tr>
         <tr>
           <td>Cuánto ganó</td>
-          <td><span class="estado falta">Falta</span></td>
-          <td class="detalle">No hay pantalla de ganancias ni historial de lo entregado.</td>
-          <td class="num">—</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Hoy, la semana y el total, con promedio por viaje, más el historial de los últimos cincuenta repartos con fecha, trayecto e importe.</td>
+          <td class="num">1</td>
         </tr>
         <tr>
           <td>Cola separada de fletes</td>
-          <td><span class="estado parcial">A medias</span></td>
-          <td class="detalle">El fletero ve la misma lista que el delivery: una mudanza aparece entre pedidos de almacén.</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">El fletero ve sólo fletes y el delivery sólo pedidos. Un pedido pasa a ser flete solo, cuando el volumen no entra en un auto.</td>
           <td class="num">1</td>
         </tr>
         <tr>
           <td>Presupuestar un flete</td>
-          <td><span class="estado falta">Falta</span></td>
-          <td class="detalle">Un flete se cotiza según volumen y distancia, no tiene precio fijo.</td>
-          <td class="num">—</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">El fletero ve la distancia calculada y una referencia por kilómetro, y pone su precio con una nota. El cliente compara las ofertas y elige; al aceptar una, el resto se cae sola.</td>
+          <td class="num">3</td>
         </tr>
       </tbody>
     </table>
@@ -797,10 +814,10 @@
           <td class="num">2</td>
         </tr>
         <tr>
-          <td>Ver todos los pedidos</td>
-          <td><span class="estado falta">Falta</span></td>
-          <td class="detalle">Para poder responder cuando alguien reclama.</td>
-          <td class="num">—</td>
+          <td>Reclamos y chat entre las partes</td>
+          <td><span class="estado listo">Listo</span></td>
+          <td class="detalle">Administración ve todos los reclamos, los sin atender primero; el comercio y quien repartió, sólo los suyos. Los tres hablan en un chat aparte, con el nombre y el rol de cada uno en cada mensaje. Al cerrarlo, la respuesta le llega al cliente al chat de su pedido.</td>
+          <td class="num">4</td>
         </tr>
       </tbody>
     </table>
@@ -832,12 +849,6 @@
           <td class="num">3</td>
         </tr>
         <tr>
-          <td>Servidor y base de datos</td>
-          <td><span class="estado listo">Listo</span></td>
-          <td class="detalle">Sobre Cloudflare: sin demoras de arranque y sin pausas por inactividad. Todo en capa gratuita.</td>
-          <td class="num">63</td>
-        </tr>
-        <tr>
           <td>Almacenamiento de fotos y videos</td>
           <td><span class="estado listo">Listo</span></td>
           <td class="detalle">Con compresión automática antes de subir, para no gastar datos del comercio.</td>
@@ -860,22 +871,18 @@
     </div>
 
     <div class="pendientes">
-      <h4>Lo que más se va a notar</h4>
+      <h4>Para que lleguen los correos</h4>
       <ul>
-        <li><strong>Editar los datos del comercio.</strong> Es lo primero que va a pedir cualquiera que se dé de alta.</li>
-        <li><strong>Horarios reales.</strong> Hoy todos los comercios figuran abiertos siempre, incluso a las 3 de la mañana.</li>
-        <li><strong>Reseñas.</strong> Es lo que hace que un comercio se destaque por mérito y no sólo por plan pagado.</li>
-        <li><strong>Ganancias del repartidor.</strong> Sin esto no sabe cuánto hizo en la semana ni puede reclamar si algo no cierra.</li>
+        <li><strong>Cargar la clave del servicio de correo.</strong> Sin eso, el mail para recuperar la contraseña no sale. El circuito está hecho: genera el enlace, lo vence a la hora y cierra las demás sesiones al cambiarla.</li>
       </ul>
     </div>
 
     <div class="pendientes">
-      <h4>Ajustes más chicos</h4>
+      <h4>Decisiones que dependen de vos</h4>
       <ul>
-        <li><strong>Separar la cola de fletes.</strong> Hoy una mudanza aparece entre los pedidos de almacén.</li>
-        <li><strong>Cancelar un pedido</strong> desde la aplicación, tanto el cliente como el comercio.</li>
-        <li><strong>Descontar el stock</strong> automáticamente al venderse.</li>
-        <li><strong>Ver todos los pedidos</strong> desde administración, para responder reclamos.</li>
+        <li><strong>Cuánto cobra la plataforma</strong> por cada pedido. El pedido ya guarda por separado cuánto es envío y cuánto es mercadería, así que es cambiar un número.</li>
+        <li><strong>Cuánto se le paga al repartidor.</strong> Hoy la pantalla de ganancias le muestra el envío completo de cada pedido que entregó.</li>
+        <li><strong>La referencia por kilómetro del flete</strong>, que es lo que se le sugiere al fletero antes de que ponga su precio.</li>
       </ul>
     </div>
 

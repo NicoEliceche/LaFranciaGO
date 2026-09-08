@@ -56,6 +56,10 @@ export const api = {
     }),
   patch: <T>(ruta: string, cuerpo?: unknown) =>
     pedir<T>(ruta, { method: 'PATCH', body: JSON.stringify(cuerpo ?? {}) }),
+  /* PUT reemplaza el recurso entero: los horarios son un conjunto, y
+     editarlos de a uno deja estados intermedios sin sentido. */
+  put: <T>(ruta: string, cuerpo?: unknown) =>
+    pedir<T>(ruta, { method: 'PUT', body: JSON.stringify(cuerpo ?? {}) }),
   delete: <T>(ruta: string) => pedir<T>(ruta, { method: 'DELETE' }),
 };
 
@@ -74,6 +78,11 @@ export interface UsuarioApi {
 export interface ComercioApi {
   id: string;
   nombre: string;
+  /* Si está atendiendo ahora, según sus horarios cargados. */
+  abierto?: boolean;
+  proximaApertura?: { dia: string; hora: string; esHoy: boolean; esManana: boolean } | null;
+  puntaje?: number | null;
+  resenas_count?: number;
   rubro_id: string;
   rubro_nombre: string;
   direccion: string;
@@ -267,6 +276,18 @@ export const miComercioApi = {
   borrarProducto: (id: string) => api.delete<{ ok: true }>(`/productos/${id}`),
   ofertas: () => api.get<{ ofertas: OfertaApi[] }>('/mi-comercio/ofertas'),
   metricas: () => api.get<MetricasComercioApi>('/mi-comercio/metricas'),
+  /** Corregir los datos del comercio: dirección, teléfono, logo. */
+  editar: (datos: Record<string, unknown>) => api.patch<{ ok: true }>('/mi-comercio', datos),
+  horarios: () =>
+    api.get<{ horarios: HorarioApi[]; dias: string[] }>('/mi-comercio/horarios'),
+  guardarHorarios: (horarios: Array<{ dia: number; abre: string; cierra: string }>) =>
+    api.put<{ ok: true; tramos: number }>('/mi-comercio/horarios', { horarios }),
+  /** null significa "no llevo control", que es distinto de cero. */
+  ajustarStock: (productoId: string, stock: number | null) =>
+    api.post<{ ok: true; stock: number | null; estado: string }>(
+      `/mi-comercio/productos/${productoId}/stock`,
+      { stock },
+    ),
   /** Avanza la preparación: recibido → preparando → listo. */
   prepararPedido: (pedidoId: string, estado: Preparacion) =>
     api.post<{ ok: true; preparacion: Preparacion }>(
@@ -438,6 +459,8 @@ export const deliveryApi = {
   /** Avanza al paso siguiente: retirado, en camino, entregado. */
   avanzar: (envioId: string, estado: EstadoEnvio) =>
     api.post<{ ok: true; estado: EstadoEnvio }>(`/delivery/envios/${envioId}/estado`, { estado }),
+  /** Cuánto ganó y qué entregó. */
+  ganancias: () => api.get<GananciasApi>('/delivery/ganancias'),
   /** Con qué vehículo trabaja: decide qué pedidos puede tomar. */
   verVehiculo: () =>
     api.get<{ roles: Array<{ rol: string; vehiculo: Vehiculo | null }> }>('/delivery/vehiculo'),
@@ -487,6 +510,12 @@ export interface MensajeChatApi {
 
 export const pedidosApi = {
   listar: () => api.get<{ pedidos: PedidoApi[] }>('/pedidos'),
+  /** Dar de baja un pedido. Se puede hasta que sale del comercio. */
+  cancelar: (pedidoId: string, motivo?: string) =>
+    api.post<{ ok: true; pagado: boolean; aviso: string | null }>(
+      `/pedidos/${pedidoId}/cancelar`,
+      { motivo },
+    ),
   crear: (datos: {
     comercioId: string;
     direccionTexto?: string;
@@ -668,6 +697,110 @@ export const extrasApi = {
   ),
   pagar: (pedidoId: string) =>
     api.post<{ url: string; total: number }>(`/pedidos/${pedidoId}/extras/pagar`),
+};
+
+/** Un tramo de atención: un comercio puede cerrar al mediodía. */
+export interface HorarioApi {
+  id: string;
+  dia: number;
+  abre: string;
+  cierra: string;
+  abre_min: number;
+  cierra_min: number;
+}
+
+export interface ResenaApi {
+  puntaje_comercio: number;
+  comentario: string | null;
+  creado_en: string;
+  cliente: string;
+}
+
+export interface CotizacionApi {
+  id: string;
+  precio: number;
+  distancia_km: number | null;
+  nota: string | null;
+  estado: 'pendiente' | 'aceptada' | 'rechazada' | 'vencida';
+  creado_en: string;
+  fletero: string;
+}
+
+export interface ReclamoApi {
+  id: string;
+  motivo: string;
+  detalle: string | null;
+  estado: 'abierto' | 'en_revision' | 'resuelto' | 'cerrado';
+  resolucion: string | null;
+  creado_en: string;
+  codigo: string;
+  direccion_texto: string;
+  comercio: string;
+  abrio: string;
+  repartidor: string | null;
+}
+
+export interface MensajeReclamoApi {
+  id: string;
+  texto: string;
+  creado_en: string;
+  autor_id: string;
+  autor: string;
+  rol: 'admin' | 'comercio' | 'repartidor';
+}
+
+/** Cuánto ganó quien reparte, y qué entregó. */
+export interface GananciasApi {
+  hoy: { entregas: number; gano: number };
+  semana: { entregas: number; gano: number };
+  total: { entregas: number; gano: number };
+  historial: Array<{
+    codigo: string;
+    direccion_texto: string;
+    comercio: string;
+    tipo: string;
+    gano: number;
+    entregado_en: string;
+    asignado_en: string;
+  }>;
+}
+
+export const resenasApi = {
+  puntuar: (
+    pedidoId: string,
+    datos: { comercio: number; repartidor?: number; comentario?: string },
+  ) => api.post<{ ok: true }>(`/pedidos/${pedidoId}/resena`, datos),
+  deComercio: (comercioId: string) =>
+    api.get<{ resenas: ResenaApi[]; puntaje: number | null; total: number }>(
+      `/comercios/${comercioId}/resenas`,
+    ),
+};
+
+export const reclamosApi = {
+  abrir: (pedidoId: string, motivo: string, detalle?: string) =>
+    api.post<{ id: string; yaExistia?: boolean }>(`/pedidos/${pedidoId}/reclamo`, {
+      motivo,
+      detalle,
+    }),
+  listar: () => api.get<{ reclamos: ReclamoApi[]; esAdmin: boolean }>('/reclamos'),
+  mensajes: (reclamoId: string) =>
+    api.get<{ mensajes: MensajeReclamoApi[]; yo: string }>(`/reclamos/${reclamoId}/mensajes`),
+  escribir: (reclamoId: string, texto: string) =>
+    api.post<{ ok: true }>(`/reclamos/${reclamoId}/mensajes`, { texto }),
+  resolver: (reclamoId: string, resolucion: string) =>
+    api.post<{ ok: true }>(`/reclamos/${reclamoId}/resolver`, { resolucion }),
+};
+
+export const fletesApi = {
+  cotizar: (pedidoId: string, precio: number, nota?: string) =>
+    api.post<{ id: string; precio: number; distanciaKm: number | null }>(
+      `/fletes/${pedidoId}/cotizar`,
+      { precio, nota },
+    ),
+  cotizaciones: (pedidoId: string) =>
+    api.get<{ cotizaciones: CotizacionApi[] }>(`/fletes/${pedidoId}/cotizaciones`),
+  aceptar: (cotizacionId: string) =>
+    api.post<{ ok: true }>(`/cotizaciones/${cotizacionId}/aceptar`),
 };
 
 export const pagosApi = {

@@ -89,6 +89,9 @@ const AdminPostulacionesScreen = lazy(() =>
 const AdminPanelScreen = lazy(() =>
   import('@features/marketplace/screens/AdminPanelScreen').then((m) => ({ default: m.AdminPanelScreen })),
 );
+const ReclamosScreen = lazy(() =>
+  import('@features/marketplace/screens/ReclamosScreen').then((m) => ({ default: m.ReclamosScreen })),
+);
 
 function App() {
   return (
@@ -252,6 +255,17 @@ function App() {
               element={
                 <RutaPrivada>
                   <AdminPostulacionesScreen />
+                </RutaPrivada>
+              }
+            />
+            {/* Los reclamos no son sólo de administración: el comercio y
+                quien reparte entran a los suyos, y el servidor decide cuáles
+                ve cada uno. */}
+            <Route
+              path="/reclamos"
+              element={
+                <RutaPrivada>
+                  <ReclamosScreen />
                 </RutaPrivada>
               }
             />

@@ -81,6 +81,13 @@ export function usePedidos() {
             eta: pedido.estado === 'proceso' ? 'Llega en 15-25 min' : '',
             date: cuando(pedido.creado_en),
             itemCount: lineas.length,
+            rated: Boolean((pedido as { resenado?: boolean }).resenado),
+            /* Quién puede cancelar y hasta cuándo lo decide el servidor: es
+               la misma regla que después valida el pedido, así que el botón
+               no ofrece nada que vaya a ser rechazado. */
+            cancellable: Boolean((pedido as { cancelable?: boolean }).cancelable),
+            courier: (pedido as { repartidor?: string | null }).repartidor ?? null,
+            isFreight: (pedido as { tipo?: string }).tipo === 'flete',
             items: lineas.map((linea) => ({
               productId: linea.productoId ?? '',
               /* El escalón empieza en 0 ("1 unid."), la pantalla cuenta desde 1. */
