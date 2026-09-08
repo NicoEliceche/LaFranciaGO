@@ -898,6 +898,7 @@ export function MiComercioScreen() {
       />
 
       <ChatPedidoDialog
+        rol="comercio"
         open={chat !== null}
         pedidoId={chat?.id ?? null}
         codigo={chat?.codigo ?? ''}

@@ -1,23 +1,40 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Bike, Car, Check, MapPin, PackageSearch, Store, Truck } from 'lucide-react';
+import {
+  Bike,
+  Car,
+  Check,
+  CreditCard,
+  MapPin,
+  MessageSquare,
+  PackageSearch,
+  Store,
+  Truck,
+} from 'lucide-react';
 
 import {
+  type ExtraApi,
   type SeguimientoApi,
   type Vehiculo,
   NOMBRE_VEHICULO,
+  extrasApi,
   hayBackend,
   seguimientoApi,
 } from '@core/data/services/apiClient';
+import { formatMoney } from '@shared/utils/format';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { EmptyState } from '../components/EmptyState';
 import { SectionHeading } from '../components/SectionHeading';
+import { ChatPedidoDialog } from '../components/ChatPedidoDialog';
 import { SeguimientoMapa } from '../components/SeguimientoMapa';
 import { Card, CardPad, SectionInner } from '../ui';
 import { CompactSection, SectionStack } from './screenLayout';
 import { AuthAviso } from './AuthScreenStyled';
 import {
+  ChatBoton,
+  ExtraLinea,
+  ExtrasResumen,
   FrescuraChip,
   Linea,
   MapaCaja,
@@ -126,6 +143,9 @@ export function SeguimientoScreen() {
   const [datos, setDatos] = useState<SeguimientoApi | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [chatAbierto, setChatAbierto] = useState(false);
+  const [extras, setExtras] = useState<ExtraApi[]>([]);
+  const [pagandoExtras, setPagandoExtras] = useState(false);
 
   const cargar = useCallback(async () => {
     if (!pedidoId || !hayBackend()) {
@@ -135,7 +155,17 @@ export function SeguimientoScreen() {
     }
 
     try {
-      setDatos(await seguimientoApi.ver(pedidoId));
+      const [seguimiento, datosExtras] = await Promise.all([
+        seguimientoApi.ver(pedidoId),
+        extrasApi.listar(pedidoId).catch(() => null),
+      ]);
+
+      setDatos(seguimiento);
+
+      if (datosExtras) {
+        setExtras(datosExtras.extras);
+      }
+
       setError(null);
     } catch {
       setError('No pudimos cargar el seguimiento.');
@@ -151,6 +181,25 @@ export function SeguimientoScreen() {
 
     return () => window.clearInterval(temporizador);
   }, [cargar]);
+
+  /* Los extras se cobran juntos y aparte del pedido: el pedido se pagó al
+     confirmarlo, y estos aparecieron después. */
+  const pagarExtras = async () => {
+    if (!pedidoId || pagandoExtras) {
+      return;
+    }
+
+    setPagandoExtras(true);
+
+    try {
+      const { url } = await extrasApi.pagar(pedidoId);
+
+      window.location.href = url;
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : 'No pudimos abrir el pago.');
+      setPagandoExtras(false);
+    }
+  };
 
   if (!datos) {
     return (
@@ -198,6 +247,10 @@ export function SeguimientoScreen() {
      leía como un error de la app en lugar de como lo que es. */
   const indiceActual = Math.max(0, ...alcanzados);
   const hechos = PASOS.map((_, indice) => indice <= indiceActual);
+
+  /* Lo comprado y sin pagar: es lo que se puede cobrar ahora. */
+  const porCobrar = extras.filter((extra) => extra.estado === 'comprado');
+  const totalExtras = porCobrar.reduce((suma, extra) => suma + (extra.precio ?? 0), 0);
 
   const minutos = minutosDesde(pedido.ubicacion_en);
   const fresca = minutos !== null && minutos <= FRESCURA_MINUTOS;
@@ -264,6 +317,47 @@ export function SeguimientoScreen() {
                   </FrescuraChip>
                 ) : null}
               </RepartidorFila>
+            ) : null}
+
+            {/* Desde acá el cliente habla con quien lo lleva y pide extras.
+                Sólo mientras el pedido esté vivo: después no hay con quién. */}
+            {estadoEnvio !== 'entregado' ? (
+              <ChatBoton type="button" onClick={() => setChatAbierto(true)}>
+                <MessageSquare size={16} aria-hidden="true" />
+                {pedido.repartidor ? 'Hablar con quien lo trae' : 'Abrir el chat del pedido'}
+              </ChatBoton>
+            ) : null}
+
+            {/* Lo que se compró aparte y todavía no se pagó. */}
+            {porCobrar.length > 0 ? (
+              <ExtrasResumen>
+                <ExtraLinea>
+                  <span>
+                    <strong>Extras comprados</strong>
+                  </span>
+                </ExtraLinea>
+
+                {porCobrar.map((extra) => (
+                  <ExtraLinea key={extra.id}>
+                    <span>{extra.descripcion}</span>
+                    <strong>{formatMoney(extra.precio ?? 0)}</strong>
+                  </ExtraLinea>
+                ))}
+
+                <ExtraLinea>
+                  <span>Total a pagar</span>
+                  <strong>{formatMoney(totalExtras)}</strong>
+                </ExtraLinea>
+
+                <ChatBoton
+                  type="button"
+                  onClick={() => void pagarExtras()}
+                  disabled={pagandoExtras}
+                >
+                  <CreditCard size={16} aria-hidden="true" />
+                  {pagandoExtras ? 'Abriendo el pago…' : 'Pagar los extras'}
+                </ChatBoton>
+              </ExtrasResumen>
             ) : null}
 
             <Card>
@@ -351,6 +445,18 @@ export function SeguimientoScreen() {
           </SectionStack>
         </SectionInner>
       </CompactSection>
+
+      <ChatPedidoDialog
+        rol="cliente"
+        open={chatAbierto}
+        pedidoId={pedidoId}
+        codigo={pedido.codigo}
+        cliente={pedido.comercio}
+        onClose={() => {
+          setChatAbierto(false);
+          void cargar();
+        }}
+      />
     </MarketplaceFrame>
   );
 }

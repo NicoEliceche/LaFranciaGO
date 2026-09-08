@@ -472,6 +472,19 @@ export interface EnvioAsignadoApi {
   items: number;
 }
 
+/** Un mensaje del chat del pedido. */
+export interface MensajeChatApi {
+  id: string;
+  texto: string | null;
+  /* 'sistema' lo escribe la app; 'extra' es un pedido de algo más. */
+  tipo: 'texto' | 'foto' | 'audio' | 'sistema' | 'extra';
+  media_url: string | null;
+  extra_id: string | null;
+  autor_id: string;
+  autor: string;
+  creado_en: string;
+}
+
 export const pedidosApi = {
   listar: () => api.get<{ pedidos: PedidoApi[] }>('/pedidos'),
   crear: (datos: {
@@ -602,6 +615,59 @@ export const notificacionesApi = {
   /** Sin ids se marcan todas: es lo que hace abrir el panel. */
   marcarLeidas: (ids?: string[]) =>
     api.post<{ ok: true }>('/notificaciones/leidas', { ids: ids ?? [] }),
+};
+
+/** Un extra: algo que el cliente pide y no estaba en el pedido. */
+export type EstadoExtra =
+  | 'pedido'
+  | 'aceptado'
+  | 'comprado'
+  | 'cobrado'
+  | 'rechazado'
+  | 'cancelado';
+
+export interface ExtraApi {
+  id: string;
+  descripcion: string;
+  estado: EstadoExtra;
+  precio: number | null;
+  ticket_url: string | null;
+  motivo: string | null;
+  cancelado_por: string | null;
+  /* Una cancelación del cliente sobre algo ya comprado espera que el
+     repartidor la acepte: puso la plata de su bolsillo. */
+  espera_confirmacion: number;
+  repartidor: string | null;
+  creado_en: string;
+}
+
+export const extrasApi = {
+  listar: (pedidoId: string) =>
+    api.get<{
+      extras: ExtraApi[];
+      motivosRechazo: string[];
+      motivosCancelacion: string[];
+    }>(`/pedidos/${pedidoId}/extras`),
+  pedir: (pedidoId: string, descripcion: string) =>
+    api.post<{ id: string; estado: EstadoExtra }>(`/pedidos/${pedidoId}/extras`, {
+      descripcion,
+    }),
+  /* El motivo viaja como índice de la lista: así una corrección de texto no
+     invalida lo que manda una pantalla vieja. */
+  accion: (
+    extraId: string,
+    datos: {
+      accion: 'aceptar' | 'rechazar' | 'comprar' | 'cancelar' | 'confirmar-cancelacion' | 'rechazar-cancelacion';
+      motivo?: number;
+      precio?: number;
+      ticketUrl?: string;
+    },
+  ) => api.post<{ ok: true; estado: EstadoExtra; esperaConfirmacion?: boolean }>(
+    `/extras/${extraId}`,
+    datos,
+  ),
+  pagar: (pedidoId: string) =>
+    api.post<{ url: string; total: number }>(`/pedidos/${pedidoId}/extras/pagar`),
 };
 
 export const pagosApi = {

@@ -207,3 +207,61 @@ export const ParteFila = styled.div`
     font-size: ${({ theme }) => theme.typography.size.xs};
   }
 `;
+
+/**
+ * Abrir el chat del pedido.
+ *
+ * Es desde acá que el cliente pide extras y habla con quien lo lleva. Va
+ * junto a los datos del repartidor, que es donde mira cuando quiere
+ * comunicarse.
+ */
+export const ChatBoton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  width: 100%;
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.brand};
+  color: ${({ theme }) => theme.color.onPrimary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  cursor: pointer;
+  transition: background-color 180ms ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.color.brandHover};
+  }
+`;
+
+/** Los extras cobrables: lo que se compró y todavía no se pagó. */
+export const ExtrasResumen = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  border: 1px solid ${({ theme }) => theme.color.primary};
+  background: ${({ theme }) => theme.color.primarySoft};
+`;
+
+export const ExtraLinea = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing[2]};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+
+  > span:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  > strong {
+    font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+    font-variant-numeric: tabular-nums;
+  }
+`;

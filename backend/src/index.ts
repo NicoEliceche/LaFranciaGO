@@ -35,6 +35,13 @@ import {
 } from './recuperacion';
 import { crearPreferencia, guardarCuentaComercio, procesarAviso } from './pagos';
 import {
+  MOTIVOS_CANCELACION,
+  MOTIVOS_RECHAZO,
+  puedeIr,
+  resolverMotivo,
+  sumarExtras,
+} from './extras';
+import {
   LITROS_POR_TAMANO,
   NOMBRE_VEHICULO,
   VEHICULOS_POR_ROL,
@@ -1451,6 +1458,15 @@ async function enrutar(
       .bind(tomar[1])
       .first<{ usuario_id: string; codigo: string }>();
 
+    /* El chat pasa de dos a tres: se anuncia quién se sumó, para que el
+       cliente y el comercio sepan con quién están hablando. */
+    await mensajeDeSistema(
+      env,
+      tomar[1],
+      repartidor.usuario.id,
+      `${repartidor.usuario.nombre} se sumó al chat al tomar el pedido.`,
+    );
+
     if (duenoPedido) {
       await avisar(env, duenoPedido.usuario_id, {
         tipo: 'envio',
@@ -2189,6 +2205,475 @@ async function enrutar(
     }
 
     return json({ ok: true }, {}, cors);
+  }
+
+  // ── Extras del pedido ──
+  /**
+   * Cobra los extras de un pedido.
+   *
+   * Se cobran juntos y aparte del pedido: el pedido ya se pagó cuando se
+   * confirmó, y los extras aparecieron después. Un solo cobro por todos los
+   * que estén comprados, para no generar una comisión por cada chocolate.
+   */
+  const pagarExtras = /^\/pedidos\/([\w-]+)\/extras\/pagar$/.exec(ruta);
+
+  if (pagarExtras && metodo === 'POST') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const pedido = await env.DB.prepare(
+      `SELECT p.id, p.codigo, p.comercio_id, p.envio_centavos
+         FROM pedidos p WHERE p.id = ? AND p.usuario_id = ?`,
+    )
+      .bind(pagarExtras[1], usuario.id)
+      .first<{
+        id: string;
+        codigo: string;
+        comercio_id: string;
+        envio_centavos: number;
+      }>();
+
+    if (!pedido) {
+      return error('No encontrado', 404, cors);
+    }
+
+    const { results: extras } = await env.DB.prepare(
+      "SELECT estado, precio_centavos FROM extras WHERE pedido_id = ? AND estado = 'comprado'",
+    )
+      .bind(pedido.id)
+      .all<{ estado: string; precio_centavos: number | null }>();
+
+    const total = sumarExtras(extras);
+
+    if (total <= 0) {
+      return error('No hay extras para pagar.', 409, cors);
+    }
+
+    /* Se cobra con la misma preferencia que el pedido, pero por el monto de
+       los extras: la plata va al mismo lugar y el cliente ve un solo lugar
+       donde pagar. El envío va en cero porque ya se cobró con el pedido. */
+    const resultado = await crearPreferencia(
+      env,
+      {
+        id: pedido.id,
+        codigo: `${pedido.codigo} · extras`,
+        subtotal_centavos: total,
+        envio_centavos: 0,
+        total_centavos: total,
+        comercio_id: pedido.comercio_id,
+      },
+      { email: usuario.email, nombre: usuario.nombre },
+    );
+
+    if (!resultado.ok) {
+      return error(resultado.motivo, 502, cors);
+    }
+
+    return json({ url: resultado.url, total: aPesos(total) }, {}, cors);
+  }
+
+  //
+  // "Ya que vas al kiosco, traeme un chocolate." No estaba en el pedido y no
+  // tiene precio hasta que alguien lo compra.
+
+  /** Los extras de un pedido, para cliente y repartidor. */
+  const extrasPedido = /^\/pedidos\/([\w-]+)\/extras$/.exec(ruta);
+
+  if (extrasPedido && metodo === 'GET') {
+    const permiso = await puedeVerPedido(env, extrasPedido[1], request);
+
+    if (!permiso) {
+      return error('No encontrado', 404, cors);
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT e.id, e.descripcion, e.estado, e.precio_centavos, e.ticket_url,
+              e.motivo, e.cancelado_por, e.espera_confirmacion, e.creado_en,
+              u.nombre AS repartidor
+         FROM extras e
+         LEFT JOIN usuarios u ON u.id = e.repartidor_id
+        WHERE e.pedido_id = ?
+        ORDER BY e.creado_en`,
+    )
+      .bind(extrasPedido[1])
+      .all<Record<string, unknown>>();
+
+    return json(
+      {
+        extras: results.map((fila) => ({
+          ...fila,
+          precio: fila.precio_centavos ? aPesos(Number(fila.precio_centavos)) : null,
+        })),
+        motivosRechazo: MOTIVOS_RECHAZO,
+        motivosCancelacion: MOTIVOS_CANCELACION,
+      },
+      {},
+      cors,
+    );
+  }
+
+  /**
+   * El cliente pide algo que no estaba en el pedido.
+   *
+   * Sólo tiene sentido mientras haya quien lo pueda traer: pedirlo cuando ya
+   * se entregó no lleva a ninguna parte.
+   */
+  if (extrasPedido && metodo === 'POST') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const pedido = await env.DB.prepare(
+      `SELECT p.id, p.codigo, p.estado, e.repartidor_id, e.estado AS envio_estado
+         FROM pedidos p
+         LEFT JOIN envios e ON e.pedido_id = p.id
+        WHERE p.id = ? AND p.usuario_id = ?`,
+    )
+      .bind(extrasPedido[1], usuario.id)
+      .first<{
+        id: string;
+        codigo: string;
+        estado: string;
+        repartidor_id: string | null;
+        envio_estado: string | null;
+      }>();
+
+    if (!pedido) {
+      return error('No encontrado', 404, cors);
+    }
+
+    if (pedido.estado !== 'proceso' || pedido.envio_estado === 'entregado') {
+      return error('Este pedido ya está cerrado.', 409, cors);
+    }
+
+    const body = await leerJson<{ descripcion?: string }>(request);
+    const descripcion = String(body.descripcion ?? '').trim();
+
+    if (descripcion.length < 3) {
+      return error('Contá qué necesitás que te traigan.', 400, cors);
+    }
+
+    const id = nuevoId();
+
+    await env.DB.prepare(
+      `INSERT INTO extras (id, pedido_id, solicitante_id, repartidor_id, descripcion)
+       VALUES (?, ?, ?, ?, ?)`,
+    )
+      .bind(id, pedido.id, usuario.id, pedido.repartidor_id, descripcion.slice(0, 300))
+      .run();
+
+    /* Va al chat como mensaje del cliente, para que quede en la conversación
+       y no en una pantalla aparte que nadie mira. */
+    await env.DB.prepare(
+      `INSERT INTO pedido_mensajes (id, pedido_id, autor_id, texto, tipo, extra_id)
+       VALUES (?, ?, ?, ?, 'extra', ?)`,
+    )
+      .bind(nuevoId(), pedido.id, usuario.id, descripcion.slice(0, 300), id)
+      .run();
+
+    if (pedido.repartidor_id) {
+      await avisar(env, pedido.repartidor_id, {
+        tipo: 'pedido',
+        titulo: `Te piden algo más en el ${pedido.codigo}`,
+        texto: descripcion.slice(0, 120),
+        enlace: '/panel/repartidor',
+      });
+    }
+
+    return json({ id, estado: 'pedido' }, { status: 201 }, cors);
+  }
+
+  /**
+   * Mover un extra: aceptar, rechazar, comprar, cancelar.
+   *
+   * Quién puede hacer qué depende del paso: el repartidor acepta, rechaza y
+   * compra; el cliente cancela y confirma el precio. Cancelar algo ya
+   * comprado necesita que el otro lo acepte.
+   */
+  const extraDetalle = /^\/extras\/([\w-]+)$/.exec(ruta);
+
+  if (extraDetalle && metodo === 'POST') {
+    const usuario = await usuarioActual(request, env);
+
+    if (!usuario) {
+      return error('Necesitás iniciar sesión', 401, cors);
+    }
+
+    const extra = await env.DB.prepare(
+      `SELECT x.*, p.codigo, p.usuario_id AS cliente_id, e.repartidor_id AS repartidor_actual
+         FROM extras x
+         JOIN pedidos p ON p.id = x.pedido_id
+         LEFT JOIN envios e ON e.pedido_id = p.id
+        WHERE x.id = ?`,
+    )
+      .bind(extraDetalle[1])
+      .first<{
+        id: string;
+        pedido_id: string;
+        codigo: string;
+        estado: string;
+        descripcion: string;
+        precio_centavos: number | null;
+        espera_confirmacion: number;
+        cliente_id: string;
+        repartidor_actual: string | null;
+      }>();
+
+    if (!extra) {
+      return error('No encontrado', 404, cors);
+    }
+
+    const esCliente = usuario.id === extra.cliente_id;
+    const esRepartidor = usuario.id === extra.repartidor_actual;
+
+    if (!esCliente && !esRepartidor) {
+      return error('No encontrado', 404, cors);
+    }
+
+    const body = await leerJson<{
+      accion?: string;
+      /* El desplegable manda el índice; se acepta el texto por compatibilidad. */
+      motivo?: string | number;
+      precio?: number;
+      ticketUrl?: string;
+    }>(request);
+
+    const accion = String(body.accion ?? '');
+
+    /* Aceptar el extra: sólo el repartidor, y sólo si nadie lo movió antes. */
+    if (accion === 'aceptar') {
+      if (!esRepartidor || !puedeIr(extra.estado, 'aceptado')) {
+        return error('No se puede aceptar en este momento.', 409, cors);
+      }
+
+      await env.DB.batch([
+        env.DB.prepare(
+          "UPDATE extras SET estado = 'aceptado', repartidor_id = ?, actualizado_en = datetime('now') WHERE id = ?",
+        ).bind(usuario.id, extra.id),
+      ]);
+
+      await mensajeDeSistema(
+        env,
+        extra.pedido_id,
+        usuario.id,
+        `${usuario.nombre} aceptó traer: ${extra.descripcion}`,
+      );
+
+      await avisar(env, extra.cliente_id, {
+        tipo: 'pedido',
+        titulo: 'Aceptaron traerte el extra',
+        texto: extra.descripcion.slice(0, 120),
+        enlace: `/pedidos/${extra.pedido_id}/seguimiento`,
+      });
+
+      return json({ ok: true, estado: 'aceptado' }, {}, cors);
+    }
+
+    /* Rechazar: el repartidor dice por qué, de una lista. Un motivo escrito
+       a mano en el apuro termina siendo "no" a secas. */
+    if (accion === 'rechazar') {
+      if (!esRepartidor || !puedeIr(extra.estado, 'rechazado')) {
+        return error('No se puede rechazar en este momento.', 409, cors);
+      }
+
+      const motivo = resolverMotivo(body.motivo, MOTIVOS_RECHAZO);
+
+      if (!motivo) {
+        return error('Elegí un motivo de la lista.', 400, cors);
+      }
+
+      await env.DB.prepare(
+        "UPDATE extras SET estado = 'rechazado', motivo = ?, cancelado_por = ?, actualizado_en = datetime('now') WHERE id = ?",
+      )
+        .bind(motivo, usuario.id, extra.id)
+        .run();
+
+      await mensajeDeSistema(
+        env,
+        extra.pedido_id,
+        usuario.id,
+        `No va a poder traer "${extra.descripcion}": ${motivo.toLowerCase()}.`,
+      );
+
+      await avisar(env, extra.cliente_id, {
+        tipo: 'pedido',
+        titulo: 'No pueden traerte el extra',
+        texto: motivo,
+        enlace: `/pedidos/${extra.pedido_id}/seguimiento`,
+      });
+
+      return json({ ok: true, estado: 'rechazado' }, {}, cors);
+    }
+
+    /* Comprado: acá aparece el precio, con su comprobante. */
+    if (accion === 'comprar') {
+      if (!esRepartidor || !puedeIr(extra.estado, 'comprado')) {
+        return error('No se puede cargar el precio en este momento.', 409, cors);
+      }
+
+      const precio = aCentavos(Number(body.precio ?? 0));
+
+      if (precio <= 0) {
+        return error('Poné cuánto salió.', 400, cors);
+      }
+
+      await env.DB.prepare(
+        "UPDATE extras SET estado = 'comprado', precio_centavos = ?, ticket_url = ?, actualizado_en = datetime('now') WHERE id = ?",
+      )
+        .bind(precio, body.ticketUrl ?? null, extra.id)
+        .run();
+
+      await mensajeDeSistema(
+        env,
+        extra.pedido_id,
+        usuario.id,
+        `Compró "${extra.descripcion}" por ${aPesos(precio).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}.`,
+      );
+
+      await avisar(env, extra.cliente_id, {
+        tipo: 'pago',
+        titulo: 'Tu extra ya está comprado',
+        texto: `${extra.descripcion} · ${aPesos(precio).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}`,
+        enlace: `/pedidos/${extra.pedido_id}/seguimiento`,
+      });
+
+      return json({ ok: true, estado: 'comprado', precio: aPesos(precio) }, {}, cors);
+    }
+
+    /* Cancelar. Lo puede hacer cualquiera de los dos, pero con reglas
+       distintas según el momento. */
+    if (accion === 'cancelar') {
+      if (!puedeIr(extra.estado, 'cancelado')) {
+        return error('Este extra ya está cerrado.', 409, cors);
+      }
+
+      /* El repartidor da un motivo de la lista; el cliente puede no dar
+         ninguno, porque cancelar lo suyo no le debe explicaciones a nadie. */
+      const motivo = resolverMotivo(body.motivo, MOTIVOS_CANCELACION) ?? '';
+
+      if (esRepartidor && !motivo) {
+        return error('Elegí un motivo de la lista.', 400, cors);
+      }
+
+      /* Si ya está comprado y cancela el cliente, no se cierra solo: el
+         repartidor puso la plata y tiene que aceptar la baja. */
+      if (esCliente && extra.estado === 'comprado') {
+        await env.DB.prepare(
+          "UPDATE extras SET espera_confirmacion = 1, motivo = ?, cancelado_por = ?, actualizado_en = datetime('now') WHERE id = ?",
+        )
+          .bind(motivo || 'El cliente pidió cancelarlo', usuario.id, extra.id)
+          .run();
+
+        await mensajeDeSistema(
+          env,
+          extra.pedido_id,
+          usuario.id,
+          `Pidió cancelar "${extra.descripcion}", que ya estaba comprado. Falta que lo confirme quien lo trae.`,
+        );
+
+        if (extra.repartidor_actual) {
+          await avisar(env, extra.repartidor_actual, {
+            tipo: 'pedido',
+            titulo: 'Piden cancelar un extra ya comprado',
+            texto: extra.descripcion.slice(0, 120),
+            enlace: '/panel/repartidor',
+          });
+        }
+
+        return json({ ok: true, estado: 'comprado', esperaConfirmacion: true }, {}, cors);
+      }
+
+      await env.DB.prepare(
+        "UPDATE extras SET estado = 'cancelado', motivo = ?, cancelado_por = ?, espera_confirmacion = 0, actualizado_en = datetime('now') WHERE id = ?",
+      )
+        .bind(motivo || 'Se dio de baja', usuario.id, extra.id)
+        .run();
+
+      await mensajeDeSistema(
+        env,
+        extra.pedido_id,
+        usuario.id,
+        `Se canceló "${extra.descripcion}"${motivo ? `: ${motivo.toLowerCase()}` : '.'}`,
+      );
+
+      const otro = esCliente ? extra.repartidor_actual : extra.cliente_id;
+
+      if (otro) {
+        await avisar(env, otro, {
+          tipo: 'pedido',
+          titulo: 'Se canceló un extra',
+          texto: extra.descripcion.slice(0, 120),
+          enlace: `/pedidos/${extra.pedido_id}/seguimiento`,
+        });
+      }
+
+      return json({ ok: true, estado: 'cancelado' }, {}, cors);
+    }
+
+    /* El repartidor acepta la cancelación de algo que ya había comprado. */
+    if (accion === 'confirmar-cancelacion') {
+      if (!esRepartidor || extra.espera_confirmacion !== 1) {
+        return error('No hay una cancelación para confirmar.', 409, cors);
+      }
+
+      await env.DB.prepare(
+        "UPDATE extras SET estado = 'cancelado', espera_confirmacion = 0, actualizado_en = datetime('now') WHERE id = ?",
+      )
+        .bind(extra.id)
+        .run();
+
+      await mensajeDeSistema(
+        env,
+        extra.pedido_id,
+        usuario.id,
+        `Se canceló "${extra.descripcion}" de común acuerdo.`,
+      );
+
+      await avisar(env, extra.cliente_id, {
+        tipo: 'pedido',
+        titulo: 'Se canceló el extra',
+        texto: extra.descripcion.slice(0, 120),
+        enlace: `/pedidos/${extra.pedido_id}/seguimiento`,
+      });
+
+      return json({ ok: true, estado: 'cancelado' }, {}, cors);
+    }
+
+    /* El repartidor no acepta la baja: la mercadería ya está comprada. */
+    if (accion === 'rechazar-cancelacion') {
+      if (!esRepartidor || extra.espera_confirmacion !== 1) {
+        return error('No hay una cancelación para rechazar.', 409, cors);
+      }
+
+      await env.DB.prepare(
+        "UPDATE extras SET espera_confirmacion = 0, motivo = NULL, actualizado_en = datetime('now') WHERE id = ?",
+      )
+        .bind(extra.id)
+        .run();
+
+      await mensajeDeSistema(
+        env,
+        extra.pedido_id,
+        usuario.id,
+        `No aceptó cancelar "${extra.descripcion}": ya lo había comprado.`,
+      );
+
+      await avisar(env, extra.cliente_id, {
+        tipo: 'pedido',
+        titulo: 'No aceptaron cancelar el extra',
+        texto: 'Ya estaba comprado. Podés arreglarlo por el chat.',
+        enlace: `/pedidos/${extra.pedido_id}/seguimiento`,
+      });
+
+      return json({ ok: true, estado: 'comprado' }, {}, cors);
+    }
+
+    return error('Acción desconocida.', 400, cors);
   }
 
   // ── Pagos ──
@@ -3812,6 +4297,53 @@ async function partirPedido(env: Env, pedidoId: string, partes: number) {
     texto: 'No entraba todo en un viaje. Te avisamos cuando salga cada una.',
     enlace: '/pedidos',
   });
+}
+
+/**
+ * Si quien llama puede ver este pedido.
+ *
+ * Las tres partes que hablan de un pedido: quien lo hizo, quien lo prepara y
+ * quien lo lleva. Es la misma condición que usa el chat, y por eso vive acá
+ * en lugar de repetirse en cada ruta.
+ */
+async function puedeVerPedido(env: Env, pedidoId: string, request: Request) {
+  const usuario = await usuarioActual(request, env);
+
+  if (!usuario) {
+    return null;
+  }
+
+  const permitido = await env.DB.prepare(
+    `SELECT 1 AS ok FROM pedidos p
+       LEFT JOIN comercios c ON c.id = p.comercio_id
+       LEFT JOIN envios e ON e.pedido_id = p.id
+      WHERE p.id = ?
+        AND (p.usuario_id = ? OR c.usuario_id = ? OR e.repartidor_id = ?)`,
+  )
+    .bind(pedidoId, usuario.id, usuario.id, usuario.id)
+    .first();
+
+  return permitido ? usuario : null;
+}
+
+/**
+ * Deja un aviso en el chat que no escribió nadie.
+ *
+ * "Fulano se sumó al chat", "el extra fue aceptado". La pantalla los muestra
+ * centrados y en gris, para que no se confundan con lo que dice una persona.
+ *
+ * Nunca corta lo que la app estaba haciendo: que falle un aviso no puede
+ * hacer fracasar el hecho que lo originó.
+ */
+function mensajeDeSistema(env: Env, pedidoId: string, autorId: string, texto: string) {
+  return env.DB.prepare(
+    "INSERT INTO pedido_mensajes (id, pedido_id, autor_id, texto, tipo) VALUES (?, ?, ?, ?, 'sistema')",
+  )
+    .bind(nuevoId(), pedidoId, autorId, texto)
+    .run()
+    .catch((fallo) => {
+      console.warn('No se pudo dejar el aviso en el chat', fallo);
+    });
 }
 
 /** Fila cruda de la tabla de ofertas, tal como sale de la base. */

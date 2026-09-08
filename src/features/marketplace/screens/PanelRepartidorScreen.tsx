@@ -478,6 +478,7 @@ export function PanelRepartidorScreen() {
       />
 
       <ChatPedidoDialog
+        rol="repartidor"
         open={chat !== null}
         pedidoId={chat?.id ?? null}
         codigo={chat?.codigo ?? ''}
