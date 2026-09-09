@@ -343,6 +343,73 @@
     td:first-child { min-width: 10rem; }
     .hoja { padding-top: 1.75rem; }
   }
+
+  /* ── Impresión ──
+
+     Sale como se está viendo: en oscuro si la pantalla está en oscuro. Los
+     colores ya salen solos porque todo pasa por los tokens de arriba; acá
+     va sólo lo propio del papel.
+
+     El navegador, por defecto, descarta los fondos al imprimir: sin
+     print-color-adjust el documento oscuro saldría en papel blanco con
+     letras casi blancas. Igual es una sugerencia, no una orden —hay que
+     tener activado "gráficos de fondo" en el diálogo de impresión, que en
+     Chrome está en "Más configuraciones". */
+  @media print {
+    :root {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
+    @page {
+      margin: 14mm;
+    }
+
+    body {
+      /* En pantalla el fondo es el de la ventana; en papel, el de la hoja. */
+      background: var(--fondo);
+      font-size: 11pt;
+    }
+
+    .hoja {
+      max-width: none;
+      padding: 0;
+    }
+
+    /* Las sombras son profundidad de pantalla: en papel ensucian el borde. */
+    .cifra,
+    .tabla-caja {
+      box-shadow: none;
+    }
+
+    /* Que un encabezado no quede solo al pie de una hoja, ni una tabla se
+       parta dejando el título de un lado y las filas del otro. */
+    h2,
+    h3 {
+      break-after: avoid;
+    }
+
+    .tabla-caja,
+    .pendientes,
+    .nota,
+    .cifras {
+      break-inside: avoid;
+    }
+
+    tr {
+      break-inside: avoid;
+    }
+
+    /* El encabezado de cada tabla se repite si la tabla cruza de hoja: sin
+       esto, la segunda página son filas sin saber qué columna es cuál. */
+    thead {
+      display: table-header-group;
+    }
+
+    .cierre {
+      break-before: page;
+    }
+  }
 </style>
 
 <div class="hoja">
