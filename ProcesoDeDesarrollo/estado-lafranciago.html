@@ -361,13 +361,47 @@
       -webkit-print-color-adjust: exact;
     }
 
+    /* La paleta oscura, de nuevo y entera.
+
+       No alcanza con la de arriba: al imprimir, el navegador evalúa
+       prefers-color-scheme como "light" pase lo que pase —asume papel
+       blanco—, así que aquel bloque no aplica y el documento salía claro.
+       Un guion antes de imprimir marca el <html> con data-imprimir="dark"
+       cuando la pantalla está en oscuro, y eso sí llega hasta acá. */
+    :root[data-imprimir="dark"] {
+      --marca: #5B8CFF;
+      --marca-suave: #16213F;
+      --fondo: #050816;
+      --fondo-alt: #0B1020;
+      --superficie: #0F1730;
+      --borde: #1E2A47;
+      --borde-fuerte: #2C3A5C;
+      --texto: #F3F6FC;
+      --texto-medio: #A8B4CC;
+      --texto-suave: #8492AD;
+      --listo: #34D399;
+      --listo-fondo: #10281F;
+      --parcial: #FBBF24;
+      --parcial-fondo: #2A2010;
+      --falta: #F87171;
+      --falta-fondo: #2A1315;
+      --sombra: none;
+    }
+
     @page {
       margin: 14mm;
     }
 
+    /* El fondo de la hoja lo pinta la raíz, no el body: el body sólo llega
+       hasta donde llega el contenido, y el resto de la página saldría
+       blanco. Van los dos. */
+    html,
     body {
-      /* En pantalla el fondo es el de la ventana; en papel, el de la hoja. */
       background: var(--fondo);
+    }
+
+    body {
+      color: var(--texto);
       font-size: 11pt;
     }
 
@@ -964,3 +998,55 @@
   </section>
 
 </div>
+
+<script>
+  /* Que el PDF salga como se está viendo.
+
+     Al imprimir, el navegador evalúa prefers-color-scheme como "light"
+     siempre —da por hecho que el papel es blanco—, así que el documento
+     salía claro aunque se estuviera leyendo en oscuro. Acá se mira el modo
+     real justo antes de imprimir y se marca el <html>, que es lo único que
+     el CSS de impresión alcanza a ver.
+
+     Si el navegador no soporta esto, no pasa nada: sin la marca sale claro,
+     que es como salía antes. */
+  (function () {
+    var oscuro = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+
+    function marcar() {
+      var elegido = document.documentElement.getAttribute('data-theme');
+
+      /* Una elección explícita gana sobre lo que diga el sistema: es la
+         misma precedencia que usan los estilos de pantalla. */
+      var esOscuro = elegido ? elegido === 'dark' : !!(oscuro && oscuro.matches);
+
+      if (esOscuro) {
+        document.documentElement.setAttribute('data-imprimir', 'dark');
+      } else {
+        document.documentElement.removeAttribute('data-imprimir');
+      }
+    }
+
+    /* beforeprint cubre Ctrl+P y el menú; la media query de print cubre a
+       Safari, que no siempre dispara el evento. */
+    window.addEventListener('beforeprint', marcar);
+
+    if (window.matchMedia) {
+      var alImprimir = window.matchMedia('print');
+      var alCambiar = function (evento) {
+        if (evento.matches) {
+          marcar();
+        }
+      };
+
+      if (alImprimir.addEventListener) {
+        alImprimir.addEventListener('change', alCambiar);
+      } else if (alImprimir.addListener) {
+        alImprimir.addListener(alCambiar);
+      }
+    }
+
+    /* Y de entrada, por si alguien imprime antes de que corra el evento. */
+    marcar();
+  })();
+</script>
