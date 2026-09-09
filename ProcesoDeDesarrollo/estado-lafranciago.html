@@ -496,9 +496,20 @@
       --sombra: none;
     }
 
+    /* Sin margen de hoja: el aire lo pone el documento, más abajo.
+
+       Si el margen lo pusiera el navegador, esa franja queda fuera del
+       documento y sale blanca —el fondo oscuro terminaría en un recuadro
+       con borde blanco alrededor. Poniéndolo acá adentro, el fondo llega
+       hasta el filo del papel y el texto igual respira.
+
+       Para que se vea así hay que elegir "Márgenes: ninguno" en el diálogo
+       de impresión; con los márgenes por defecto se suman a este espacio y
+       queda más aire del necesario, que tampoco rompe nada. */
     @page {
-      margin: 14mm;
+      margin: 0;
     }
+
 
     /* El fondo de la hoja lo pinta la raíz, no el body: el body sólo llega
        hasta donde llega el contenido, y el resto de la página saldría
@@ -508,9 +519,17 @@
       background: var(--fondo);
     }
 
+    /* El aire lo pone el documento y no el diálogo de impresión, así se
+       puede elegir "Márgenes: ninguno" y el fondo oscuro llega hasta el
+       filo del papel sin dejar un recuadro blanco alrededor.
+
+       Va en el body y no en .hoja porque el body se repite hoja a hoja: un
+       padding en .hoja sólo daría aire al principio y al final, y las
+       páginas del medio arrancarían pegadas al borde. */
     body {
       color: var(--texto);
       font-size: 11pt;
+      padding: 10px;
     }
 
     .hoja {
