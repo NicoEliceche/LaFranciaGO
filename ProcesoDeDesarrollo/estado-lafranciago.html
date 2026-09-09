@@ -1,4 +1,5 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Estado de LaFranciaGO</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -339,9 +340,110 @@
 
   a { color: var(--marca); }
 
-  @media (max-width: 40rem) {
-    td:first-child { min-width: 10rem; }
-    .hoja { padding-top: 1.75rem; }
+  /* ── En el celular ──
+
+     Es donde más se va a leer esto: se manda por WhatsApp y se abre ahí
+     mismo. La tabla de cuatro columnas es lo que peor entra en 375px, así
+     que en pantalla angosta cada fila deja de ser una fila y pasa a ser una
+     tarjeta: el nombre arriba, el estado al lado, y el detalle debajo a lo
+     ancho. Los encabezados se esconden porque cada dato ya se explica solo.
+
+     Se elige por ancho y no por dispositivo: una ventana angosta en la
+     computadora tiene el mismo problema. */
+  @media (max-width: 46rem) {
+    body {
+      font-size: 15px;
+    }
+
+    .hoja {
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    .cifras {
+      /* Dos por fila entran cómodas; cinco en una sola las deja ilegibles. */
+      grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+    }
+
+    h2 {
+      margin-top: 2.5rem;
+    }
+
+    /* La tabla, hecha tarjetas. */
+    .tabla-caja {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      overflow-x: visible;
+    }
+
+    table,
+    tbody,
+    tr,
+    td {
+      display: block;
+      width: 100%;
+    }
+
+    thead {
+      /* Sin borrarlo del todo: un lector de pantalla lo sigue anunciando. */
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+
+    /* El nombre y el estado comparten renglón —"qué es" y "cómo está" se
+       leen juntos—; el resto va debajo, a lo ancho. */
+    tr {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 0.15rem 0.75rem;
+      margin-bottom: 0.75rem;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--borde);
+      border-radius: 0.75rem;
+      background: var(--superficie);
+      box-shadow: var(--sombra);
+    }
+
+    td {
+      padding: 0;
+      border-bottom: 0;
+      grid-column: 1 / -1;
+    }
+
+    td:first-child {
+      grid-column: 1;
+      min-width: 0;
+      font-family: "Rubik", system-ui, sans-serif;
+      font-size: 1rem;
+    }
+
+    /* El estado, a la derecha del nombre. */
+    td:nth-child(2) {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    td.detalle {
+      margin-top: 0.4rem;
+    }
+
+    /* Las piezas dejan de ser una columna suelta a la derecha y pasan a
+       decir qué son, que sin encabezado no se entendería. */
+    td.num {
+      margin-top: 0.5rem;
+      text-align: left;
+      color: var(--texto-suave);
+      font-size: 0.78rem;
+    }
+
+    td.num:not(:empty)::before {
+      content: 'Piezas: ';
+    }
   }
 
   /* ── Impresión ──
@@ -356,19 +458,25 @@
      tener activado "gráficos de fondo" en el diálogo de impresión, que en
      Chrome está en "Más configuraciones". */
   @media print {
+    /* El PDF sale oscuro, con la paleta declarada de nuevo y entera.
+
+       Hace falta repetirla porque al imprimir el navegador evalúa
+       prefers-color-scheme como "light" pase lo que pase —da por hecho que
+       el papel es blanco—, así que el bloque oscuro de arriba nunca aplica.
+
+       Y va fija en vez de seguir a la pantalla: para eso haría falta que un
+       guion marcara el <html> antes de imprimir, y el visor donde se lee
+       este documento no siempre lo ejecuta. El PDF es para mandarlo, no
+       para gastar papel, así que vale más que salga siempre igual que que
+       acierte sólo a veces.
+
+       print-color-adjust le pide al navegador que no descarte los fondos.
+       Es una sugerencia: hay que tener activado "gráficos de fondo" en el
+       diálogo de impresión. */
     :root {
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
-    }
 
-    /* La paleta oscura, de nuevo y entera.
-
-       No alcanza con la de arriba: al imprimir, el navegador evalúa
-       prefers-color-scheme como "light" pase lo que pase —asume papel
-       blanco—, así que aquel bloque no aplica y el documento salía claro.
-       Un guion antes de imprimir marca el <html> con data-imprimir="dark"
-       cuando la pantalla está en oscuro, y eso sí llega hasta acá. */
-    :root[data-imprimir="dark"] {
       --marca: #5B8CFF;
       --marca-suave: #16213F;
       --fondo: #050816;
@@ -998,55 +1106,3 @@
   </section>
 
 </div>
-
-<script>
-  /* Que el PDF salga como se está viendo.
-
-     Al imprimir, el navegador evalúa prefers-color-scheme como "light"
-     siempre —da por hecho que el papel es blanco—, así que el documento
-     salía claro aunque se estuviera leyendo en oscuro. Acá se mira el modo
-     real justo antes de imprimir y se marca el <html>, que es lo único que
-     el CSS de impresión alcanza a ver.
-
-     Si el navegador no soporta esto, no pasa nada: sin la marca sale claro,
-     que es como salía antes. */
-  (function () {
-    var oscuro = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
-
-    function marcar() {
-      var elegido = document.documentElement.getAttribute('data-theme');
-
-      /* Una elección explícita gana sobre lo que diga el sistema: es la
-         misma precedencia que usan los estilos de pantalla. */
-      var esOscuro = elegido ? elegido === 'dark' : !!(oscuro && oscuro.matches);
-
-      if (esOscuro) {
-        document.documentElement.setAttribute('data-imprimir', 'dark');
-      } else {
-        document.documentElement.removeAttribute('data-imprimir');
-      }
-    }
-
-    /* beforeprint cubre Ctrl+P y el menú; la media query de print cubre a
-       Safari, que no siempre dispara el evento. */
-    window.addEventListener('beforeprint', marcar);
-
-    if (window.matchMedia) {
-      var alImprimir = window.matchMedia('print');
-      var alCambiar = function (evento) {
-        if (evento.matches) {
-          marcar();
-        }
-      };
-
-      if (alImprimir.addEventListener) {
-        alImprimir.addEventListener('change', alCambiar);
-      } else if (alImprimir.addListener) {
-        alImprimir.addListener(alCambiar);
-      }
-    }
-
-    /* Y de entrada, por si alguien imprime antes de que corra el evento. */
-    marcar();
-  })();
-</script>
