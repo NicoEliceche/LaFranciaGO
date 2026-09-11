@@ -1076,8 +1076,11 @@ export const AddressButton = styled.button`
   }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
     margin-left: 0;
+    /* Un tope: una dirección larga no debe empujar el carrito y el perfil
+       fuera de la pantalla. Lo que no entra se recorta con puntos. */
+    max-width: 18rem;
   }
   padding: 0 ${({ theme }) => theme.spacing[1]} 0 0;
   border: 0;
@@ -1295,13 +1298,15 @@ export const BrandHeaderRow = styled.div`
     gap: 0.25rem;
   }
 
-  /* En escritorio: buscador a la izquierda, dirección al medio y acciones
-     a la derecha. El bloque de marca queda oculto (vive en el sidebar). */
+  /* En escritorio: el buscador ocupa el centro pero alineado a la derecha,
+     así queda pegado a la dirección, y las acciones cierran a la derecha.
+
+     Antes la columna del medio tenía ancho propio y el buscador iba
+     centrado: con una dirección larga los dos se pisaban. Ahora el buscador
+     cede ancho y la dirección toma lo que necesita. */
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     display: grid;
-    /* Las columnas laterales comparten ancho para que el buscador quede
-       centrado en el área de contenido. */
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
     gap: ${({ theme }) => theme.spacing[3]};
   }
 `;
@@ -1409,7 +1414,10 @@ export const HeaderSearchSlot = styled.div`
     grid-column: 2;
     grid-row: 1;
     min-width: 0;
-    width: min(34rem, 42vw);
-    justify-self: center;
+    /* Hasta 34rem, pero cede ancho si la dirección es larga: entre un
+       buscador más corto y dos cosas superpuestas, gana el buscador corto. */
+    width: 100%;
+    max-width: 34rem;
+    justify-self: end;
   }
 `;

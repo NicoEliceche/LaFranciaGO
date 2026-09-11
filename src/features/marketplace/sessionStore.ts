@@ -169,11 +169,31 @@ export function ingresarConGoogle(): Promise<void> {
     const izquierda = window.screenX + (window.outerWidth - ancho) / 2;
     const arriba = window.screenY + (window.outerHeight - alto) / 2;
 
+    /* "popup=yes" es lo que decide que sea una ventana y no una pestaña: sin
+       esa palabra, Chrome puede abrirlo como pestaña aunque se le pasen alto
+       y ancho, y la persona siente que se fue de la aplicación. El resto
+       apaga las barras que no hacen falta para un ingreso. */
     const ventana = window.open(
       `${apiUrl}/auth/google`,
       'lafranciago-google',
-      `width=${ancho},height=${alto},left=${izquierda},top=${arriba}`,
+      [
+        'popup=yes',
+        `width=${ancho}`,
+        `height=${alto}`,
+        `left=${Math.max(0, Math.round(izquierda))}`,
+        `top=${Math.max(0, Math.round(arriba))}`,
+        'menubar=no',
+        'toolbar=no',
+        'location=no',
+        'status=no',
+        'resizable=yes',
+        'scrollbars=yes',
+      ].join(','),
     );
+
+    /* Que la ventana quede al frente: en algunos escritorios se abre detrás
+       de la principal y parece que no pasó nada. */
+    ventana?.focus?.();
 
     if (!ventana) {
       reject(new Error('Permití las ventanas emergentes para entrar con Google.'));
