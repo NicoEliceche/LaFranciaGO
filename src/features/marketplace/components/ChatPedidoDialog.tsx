@@ -1,5 +1,5 @@
-import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { PackagePlus, Send, X } from 'lucide-react';
+import { Fragment, type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { Info, LogIn, LogOut, PackagePlus, Send, X } from 'lucide-react';
 
 import {
   type ExtraApi,
@@ -10,21 +10,25 @@ import {
 
 import { formatMoney } from '@shared/utils/format';
 
-import { CardText, CardTitle } from '../ui';
 import { AuthAviso } from '../screens/AuthScreenStyled';
 import {
-  PanelDialogCard,
-  PanelDialogCerrar,
-  PanelDialogHeader,
-  PanelDialogOverlay,
-} from './PanelLoginDialogStyled';
+  ChatAvatar,
+  ChatCabecera,
+  ChatCampo,
+  ChatCerrar,
+  ChatCuerpo,
+  ChatDia,
+  ChatOverlay,
+  ChatPie,
+  ChatQuien,
+  ChatVentana,
+} from './ChatShellStyled';
 import {
+  ChatAutor,
   ChatBurbuja,
   ChatEnviar,
-  ChatEntrada,
   ChatFila,
   ChatHora,
-  ChatLista,
   ChatSistema,
   ChatVacio,
   ExtraAcciones,
@@ -69,6 +73,58 @@ const ESTADO_EXTRA: Record<string, { texto: string; tono: string }> = {
   rechazado: { texto: 'No lo pudieron traer', tono: 'baja' },
   cancelado: { texto: 'Cancelado', tono: 'baja' },
 };
+
+/**
+ * De qué habla un aviso del sistema, para pintarlo distinto.
+ *
+ * No es decoración: en una conversación larga, "Bruno se sumó al chat" y "el
+ * pedido se canceló" tienen peso muy distinto, y en gris los dos se pierden
+ * igual entre los mensajes.
+ */
+function tonoDelAviso(texto: string | null) {
+  const limpio = (texto ?? '').toLowerCase();
+
+  if (/se sum|se unió|se unio|tomó el pedido|tomo el pedido/.test(limpio)) {
+    return { tono: 'entra', Icono: LogIn };
+  }
+
+  if (/se bajó|se bajo|dejó|dejo|cancel|rechaz|se fue/.test(limpio)) {
+    return { tono: 'sale', Icono: LogOut };
+  }
+
+  return { tono: 'estado', Icono: Info };
+}
+
+/** "Hoy", "Ayer" o la fecha, para separar los días. */
+function diaDe(iso: string) {
+  const fecha = new Date(iso.replace(' ', 'T') + 'Z');
+
+  if (Number.isNaN(fecha.getTime())) {
+    return '';
+  }
+
+  const hoy = new Date();
+  const ayer = new Date(hoy);
+  ayer.setDate(hoy.getDate() - 1);
+
+  const mismoDia = (a: Date, b: Date) =>
+    a.getDate() === b.getDate() &&
+    a.getMonth() === b.getMonth() &&
+    a.getFullYear() === b.getFullYear();
+
+  if (mismoDia(fecha, hoy)) {
+    return 'Hoy';
+  }
+
+  if (mismoDia(fecha, ayer)) {
+    return 'Ayer';
+  }
+
+  return fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+/** La inicial para el avatar. */
+const inicialDe = (nombre: string) => (nombre.trim()[0] ?? '?').toUpperCase();
 
 export function ChatPedidoDialog({
   open,
@@ -261,22 +317,23 @@ export function ChatPedidoDialog({
   const extraPorId = new Map(extras.map((extra) => [extra.id, extra]));
 
   return (
-    <PanelDialogOverlay onClick={onClose} role="presentation">
-      <PanelDialogCard
+    <ChatOverlay onClick={onClose} role="presentation">
+      <ChatVentana
         role="dialog"
         aria-modal="true"
         aria-label={`Chat del pedido ${codigo}`}
         onClick={(evento) => evento.stopPropagation()}
       >
-        <PanelDialogHeader>
-          <div>
-            <CardTitle>{cliente}</CardTitle>
-            <CardText>Pedido {codigo}</CardText>
-          </div>
-          <PanelDialogCerrar type="button" onClick={onClose} aria-label="Cerrar">
-            <X size={18} aria-hidden="true" />
-          </PanelDialogCerrar>
-        </PanelDialogHeader>
+        <ChatCabecera>
+          <ChatAvatar aria-hidden="true">{inicialDe(cliente)}</ChatAvatar>
+          <ChatQuien>
+            <strong>{cliente}</strong>
+            <span>Pedido {codigo}</span>
+          </ChatQuien>
+          <ChatCerrar type="button" onClick={onClose} aria-label="Cerrar">
+            <X size={20} aria-hidden="true" />
+          </ChatCerrar>
+        </ChatCabecera>
 
         {error ? (
           <AuthAviso role="alert" data-tono="error">
@@ -284,18 +341,36 @@ export function ChatPedidoDialog({
           </AuthAviso>
         ) : null}
 
-        <ChatLista ref={listaRef}>
+        <ChatCuerpo ref={listaRef}>
           {mensajes.length === 0 ? (
             <ChatVacio>Todavía no hay mensajes. Escribile al cliente.</ChatVacio>
           ) : null}
 
-          {mensajes.map((mensaje) => {
+          {mensajes.map((mensaje, indice) => {
             const tipo = (mensaje as { tipo?: string }).tipo ?? 'texto';
+            const anterior = mensajes[indice - 1];
+            const siguiente = mensajes[indice + 1];
+
+            /* El separador de día, cuando cambia respecto del anterior. */
+            const dia = diaDe(mensaje.creado_en);
+            const diaAnterior = anterior ? diaDe(anterior.creado_en) : null;
+            const separador =
+              dia && dia !== diaAnterior ? <ChatDia key={`dia-${mensaje.id}`}>{dia}</ChatDia> : null;
 
             /* Lo que dice la app va centrado y sin burbuja: si se viera como
                un mensaje más, parecería que alguien lo escribió. */
             if (tipo === 'sistema') {
-              return <ChatSistema key={mensaje.id}>{mensaje.texto}</ChatSistema>;
+              const { tono, Icono } = tonoDelAviso(mensaje.texto);
+
+              return (
+                <Fragment key={mensaje.id}>
+                  {separador}
+                  <ChatSistema data-tono={tono}>
+                    <Icono size={12} aria-hidden="true" />
+                    {mensaje.texto}
+                  </ChatSistema>
+                </Fragment>
+              );
             }
 
             /* Un extra es una transacción, no una charla: muestra en qué
@@ -433,16 +508,37 @@ export function ChatPedidoDialog({
               );
             }
 
+            const propio = mensaje.autor_id === yo;
+
+            /* Mensajes seguidos del mismo autor se agrupan: sólo el último de
+               la tanda lleva cola y separación, y sólo el primero, el nombre. */
+            const mismoQueSigue =
+              siguiente !== undefined &&
+              siguiente.autor_id === mensaje.autor_id &&
+              ((siguiente as { tipo?: string }).tipo ?? 'texto') === 'texto';
+            const mismoQueAntes =
+              anterior !== undefined &&
+              anterior.autor_id === mensaje.autor_id &&
+              ((anterior as { tipo?: string }).tipo ?? 'texto') === 'texto' &&
+              dia === diaAnterior;
+
             return (
-              <ChatFila key={mensaje.id} data-propio={mensaje.autor_id === yo}>
-                <ChatBurbuja data-propio={mensaje.autor_id === yo}>
-                  {mensaje.texto}
-                  <ChatHora>{hora(mensaje.creado_en)}</ChatHora>
-                </ChatBurbuja>
-              </ChatFila>
+              <Fragment key={mensaje.id}>
+                {separador}
+                <ChatFila data-propio={propio} data-ultimo={!mismoQueSigue}>
+                  <ChatBurbuja data-propio={propio} data-ultimo={!mismoQueSigue}>
+                    {/* Quién habla sólo si es de otro y arranca la tanda. */}
+                    {!propio && !mismoQueAntes && mensaje.autor ? (
+                      <ChatAutor>{mensaje.autor}</ChatAutor>
+                    ) : null}
+                    <span className="texto">{mensaje.texto}</span>
+                    <ChatHora>{hora(mensaje.creado_en)}</ChatHora>
+                  </ChatBurbuja>
+                </ChatFila>
+              </Fragment>
             );
           })}
-        </ChatLista>
+        </ChatCuerpo>
 
         {/* Sólo el cliente pide extras, y sólo mientras el pedido esté vivo. */}
         {rol === 'cliente' ? (
@@ -452,15 +548,32 @@ export function ChatPedidoDialog({
           </ExtraFlotante>
         ) : null}
 
-        <form onSubmit={enviar}>
-          <ChatEntrada>
-            <input name="texto" placeholder="Escribí un mensaje" autoComplete="off" />
-            <ChatEnviar type="submit" disabled={enviando} aria-label="Enviar">
-              <Send size={16} aria-hidden="true" />
-            </ChatEnviar>
-          </ChatEntrada>
-        </form>
-      </PanelDialogCard>
+        <ChatPie onSubmit={enviar}>
+          <ChatCampo
+            name="texto"
+            rows={1}
+            placeholder="Escribí un mensaje"
+            autoComplete="off"
+            /* Enter manda, Shift+Enter hace un renglón: como en todos lados. */
+            onKeyDown={(evento) => {
+              if (evento.key === 'Enter' && !evento.shiftKey) {
+                evento.preventDefault();
+                evento.currentTarget.form?.requestSubmit();
+              }
+            }}
+            /* Crece con el texto hasta el tope que pone el estilo. */
+            onInput={(evento) => {
+              const campo = evento.currentTarget;
+
+              campo.style.height = 'auto';
+              campo.style.height = `${campo.scrollHeight}px`;
+            }}
+          />
+          <ChatEnviar type="submit" disabled={enviando} aria-label="Enviar">
+            <Send size={18} aria-hidden="true" />
+          </ChatEnviar>
+        </ChatPie>
+      </ChatVentana>
 
       <ExtraDialog
         open={pidiendoExtra}
@@ -475,6 +588,6 @@ export function ChatPedidoDialog({
         onCancelar={() => setPidiendoMotivo(null)}
         onElegir={(indice) => pidiendoMotivo?.alElegir(indice) ?? Promise.resolve()}
       />
-    </PanelDialogOverlay>
+    </ChatOverlay>
   );
 }

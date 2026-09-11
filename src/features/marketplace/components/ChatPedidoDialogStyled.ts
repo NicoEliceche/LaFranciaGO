@@ -2,10 +2,11 @@ import styled from 'styled-components';
 
 // ── Chat del pedido ──
 
+/* La lista con alto propio quedó para los chats embebidos —el del reclamo,
+   por ejemplo—, que viven dentro de una tarjeta y no en una ventana. */
 export const ChatLista = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing[1]};
-  /* Alto fijo para que la caja de escritura no se mueva al llegar mensajes. */
   height: 18rem;
   overflow-y: auto;
   padding: ${({ theme }) => theme.spacing[2]};
@@ -21,24 +22,47 @@ export const ChatVacio = styled.p`
   text-align: center;
 `;
 
+/**
+ * La fila de un mensaje.
+ *
+ * Los mensajes seguidos del mismo autor se juntan: sólo el último de la tanda
+ * lleva cola y separación. Es lo que hace que una conversación se lea como
+ * bloques y no como una lista de globos sueltos.
+ */
 export const ChatFila = styled.div`
   display: flex;
+  margin-bottom: 0.1rem;
 
   &[data-propio='true'] {
     justify-content: flex-end;
   }
+
+  /* Último de la tanda: aire antes del que habla después. */
+  &[data-ultimo='true'] {
+    margin-bottom: 0.55rem;
+  }
 `;
 
+/**
+ * La burbuja.
+ *
+ * La hora va en la misma línea que el final del texto, no debajo: así un
+ * "ok" ocupa un renglón y no tres. El espacio se reserva con un relleno al
+ * final del texto, que es el truco que usan las aplicaciones de mensajería.
+ *
+ * La esquina del lado de quien habla se achica sólo en el último mensaje de
+ * la tanda, que es lo que dibuja la "cola".
+ */
 export const ChatBurbuja = styled.span`
   position: relative;
-  max-width: 78%;
-  padding: ${({ theme }) => theme.spacing[2]};
-  padding-bottom: 1.1rem;
-  border-radius: ${({ theme }) => theme.radius.lg};
+  max-width: min(78%, 32rem);
+  padding: 0.45rem ${({ theme }) => theme.spacing[3]} 0.45rem;
+  border-radius: 1.1rem;
   background: ${({ theme }) => theme.color.surface};
   color: ${({ theme }) => theme.color.text};
   font-size: ${({ theme }) => theme.typography.size.sm};
-  line-height: 1.35;
+  line-height: 1.4;
+  box-shadow: ${({ theme }) => theme.shadow.sm};
   /* Un mensaje largo sin espacios no debe estirar la burbuja. */
   overflow-wrap: anywhere;
 
@@ -46,14 +70,47 @@ export const ChatBurbuja = styled.span`
     background: ${({ theme }) => theme.color.brand};
     color: ${({ theme }) => theme.color.onPrimary};
   }
+
+  /* La cola, sólo en el último de la tanda. */
+  &[data-ultimo='true'] {
+    border-bottom-left-radius: 0.3rem;
+  }
+
+  &[data-ultimo='true'][data-propio='true'] {
+    border-bottom-left-radius: 1.1rem;
+    border-bottom-right-radius: 0.3rem;
+  }
+
+  /* Sitio para la hora, al final del texto. */
+  > .texto::after {
+    content: '';
+    display: inline-block;
+    width: 3.2rem;
+  }
 `;
 
 export const ChatHora = styled.span`
   position: absolute;
-  right: ${({ theme }) => theme.spacing[2]};
-  bottom: 0.3rem;
-  font-size: 0.625rem;
-  opacity: 0.7;
+  right: ${({ theme }) => theme.spacing[3]};
+  bottom: 0.4rem;
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.65;
+`;
+
+/**
+ * Quién habla, cuando hay más de dos.
+ *
+ * En el chat de un pedido sobra —se sabe quién es el otro—, pero en el del
+ * reclamo hablan tres y "ya lo entregué" cambia de sentido según quién lo
+ * diga. Sólo aparece en el primero de cada tanda.
+ */
+export const ChatAutor = styled.span`
+  display: block;
+  margin-bottom: 0.1rem;
+  color: ${({ theme }) => theme.color.primary};
+  font-size: 0.7rem;
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
 `;
 
 export const ChatEntrada = styled.div`
@@ -108,15 +165,46 @@ export const ChatEnviar = styled.button`
  * que alguien escribió "Fulano se sumó al chat".
  */
 export const ChatSistema = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   align-self: center;
   max-width: 85%;
+  margin: 0.35rem 0;
   padding: 0.3rem ${({ theme }) => theme.spacing[3]};
   border-radius: ${({ theme }) => theme.radius.full};
   background: ${({ theme }) => theme.color.surfaceMuted};
   color: ${({ theme }) => theme.color.textSoft};
-  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-size: 0.72rem;
   text-align: center;
   line-height: 1.35;
+
+  > svg {
+    flex: 0 0 auto;
+    opacity: 0.75;
+  }
+
+  /* Alguien entró al chat. Verde: es algo que suma.
+
+     El fondo va con transparencia sobre el color del aviso en vez de un
+     token propio: así sirve igual en claro y en oscuro sin declarar dos. */
+  &[data-tono='entra'] {
+    background: rgba(22, 163, 74, 0.14);
+    color: ${({ theme }) => theme.color.success};
+  }
+
+  /* Alguien se fue, o algo se dio de baja. */
+  &[data-tono='sale'] {
+    background: rgba(220, 38, 38, 0.14);
+    color: ${({ theme }) => theme.color.danger};
+  }
+
+  /* El pedido cambió de estado: lo dice la aplicación, no una persona. */
+  &[data-tono='estado'] {
+    background: ${({ theme }) => theme.color.primarySoft};
+    color: ${({ theme }) => theme.color.primary};
+  }
 `;
 
 // ── Extras ──
