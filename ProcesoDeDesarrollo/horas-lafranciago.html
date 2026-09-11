@@ -1,0 +1,581 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Horas de LaFranciaGO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+
+<style>
+  /* Misma paleta que el informe de estado: son dos partes de lo mismo. */
+  :root {
+    --marca: #0047E7;
+    --fondo: #F5F7FB;
+    --fondo-alt: #EEF3FA;
+    --superficie: #FFFFFF;
+    --borde: #D7E0ED;
+    --borde-fuerte: #B8C3D8;
+    --texto: #0B1020;
+    --texto-medio: #465067;
+    --texto-suave: #6B7280;
+    --ok: #0F9D58;
+    --ok-fondo: #E6F4EC;
+    --alerta: #B45309;
+    --alerta-fondo: #FDF0DC;
+    --sombra: 0 1px 2px rgba(5, 8, 22, 0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --marca: #5B8CFF;
+      --fondo: #050816;
+      --fondo-alt: #0B1020;
+      --superficie: #0F1730;
+      --borde: #1E2A47;
+      --borde-fuerte: #2C3A5C;
+      --texto: #F3F6FC;
+      --texto-medio: #A8B4CC;
+      --texto-suave: #8492AD;
+      --ok: #34D399;
+      --ok-fondo: #10281F;
+      --alerta: #FBBF24;
+      --alerta-fondo: #2A2010;
+      --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --marca: #5B8CFF;
+    --fondo: #050816;
+    --fondo-alt: #0B1020;
+    --superficie: #0F1730;
+    --borde: #1E2A47;
+    --borde-fuerte: #2C3A5C;
+    --texto: #F3F6FC;
+    --texto-medio: #A8B4CC;
+    --texto-suave: #8492AD;
+    --ok: #34D399;
+    --ok-fondo: #10281F;
+    --alerta: #FBBF24;
+    --alerta-fondo: #2A2010;
+    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .hoja {
+    max-width: 58rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 5rem;
+  }
+
+  .portada {
+    display: grid;
+    gap: 0.5rem;
+    padding-bottom: 1.75rem;
+    border-bottom: 2px solid var(--texto);
+  }
+
+  .marca {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--marca);
+  }
+
+  h1 {
+    margin: 0;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: clamp(1.9rem, 5vw, 2.6rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .bajada {
+    margin: 0;
+    max-width: 44rem;
+    color: var(--texto-medio);
+    font-size: 1.05rem;
+  }
+
+  .fecha {
+    color: var(--texto-suave);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── El número grande ── */
+
+  .total {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-radius: 0.9rem;
+    border: 2px solid var(--marca);
+    background: var(--superficie);
+    text-align: center;
+  }
+
+  .total b {
+    display: block;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: clamp(2.4rem, 8vw, 3.4rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--marca);
+  }
+
+  .total span {
+    color: var(--texto-medio);
+    font-size: 0.95rem;
+  }
+
+  .total small {
+    color: var(--texto-suave);
+    font-size: 0.8rem;
+  }
+
+  /* ── Evidencia medida ── */
+
+  .medido {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .dato {
+    padding: 0.9rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--borde);
+    background: var(--superficie);
+    box-shadow: var(--sombra);
+  }
+
+  .dato b {
+    display: block;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 1.5rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dato span {
+    display: block;
+    margin-top: 0.3rem;
+    color: var(--texto-suave);
+    font-size: 0.78rem;
+  }
+
+  h2 {
+    margin: 3rem 0 0.25rem;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .nota-seccion {
+    margin: 0 0 1.25rem;
+    color: var(--texto-medio);
+    max-width: 44rem;
+  }
+
+  /* ── Tabla de fases ── */
+
+  .tabla-caja {
+    overflow-x: auto;
+    border: 1px solid var(--borde);
+    border-radius: 0.75rem;
+    background: var(--superficie);
+    box-shadow: var(--sombra);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+
+  th {
+    padding: 0.7rem 1rem;
+    text-align: left;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+    border-bottom: 1px solid var(--borde);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--borde);
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: 0; }
+
+  td:first-child { font-weight: 600; }
+
+  td.detalle {
+    color: var(--texto-medio);
+    font-size: 0.85rem;
+  }
+
+  td.num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  tfoot td {
+    border-top: 2px solid var(--texto);
+    border-bottom: 0;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-weight: 700;
+  }
+
+  /* ── Avisos ── */
+
+  .aviso {
+    margin-top: 1.25rem;
+    padding: 1rem 1.25rem;
+    border-left: 3px solid var(--alerta);
+    background: var(--alerta-fondo);
+    border-radius: 0 0.5rem 0.5rem 0;
+    color: var(--texto-medio);
+    font-size: 0.92rem;
+  }
+
+  .aviso strong { color: var(--texto); }
+
+  .aviso p { margin: 0 0 0.6rem; }
+  .aviso p:last-child { margin-bottom: 0; }
+
+  .comparacion {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .opcion {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.25rem 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--borde);
+    background: var(--superficie);
+  }
+
+  .opcion[data-destacada] {
+    border-color: var(--ok);
+    background: var(--ok-fondo);
+  }
+
+  .opcion h3 {
+    grid-column: 1;
+    margin: 0;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.98rem;
+    font-weight: 600;
+  }
+
+  .opcion .plata {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 1.3rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .opcion p {
+    grid-column: 1;
+    margin: 0;
+    color: var(--texto-medio);
+    font-size: 0.85rem;
+  }
+
+  .cierre {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--texto);
+  }
+
+  /* ── En el celular ── */
+
+  @media (max-width: 46rem) {
+    body { font-size: 15px; }
+    .hoja { padding: 1.5rem 1rem 3rem; }
+    h2 { margin-top: 2.25rem; }
+
+    .tabla-caja {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      overflow-x: visible;
+    }
+
+    table, tbody, tfoot, tr, td { display: block; width: 100%; }
+
+    thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+
+    tbody tr, tfoot tr {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.15rem 0.75rem;
+      margin-bottom: 0.7rem;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--borde);
+      border-radius: 0.75rem;
+      background: var(--superficie);
+      box-shadow: var(--sombra);
+    }
+
+    td { padding: 0; border-bottom: 0; grid-column: 1 / -1; }
+    td:first-child { grid-column: 1; font-size: 1rem; }
+
+    td.num { grid-column: 2; grid-row: 1; text-align: right; }
+    td.detalle { margin-top: 0.35rem; }
+
+    .opcion { grid-template-columns: 1fr; }
+    .opcion .plata { grid-column: 1; grid-row: auto; }
+  }
+
+  /* ── Impresión ── */
+
+  @media print {
+    :root {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+      --marca: #5B8CFF;
+      --fondo: #050816;
+      --fondo-alt: #0B1020;
+      --superficie: #0F1730;
+      --borde: #1E2A47;
+      --borde-fuerte: #2C3A5C;
+      --texto: #F3F6FC;
+      --texto-medio: #A8B4CC;
+      --texto-suave: #8492AD;
+      --ok: #34D399;
+      --ok-fondo: #10281F;
+      --alerta: #FBBF24;
+      --alerta-fondo: #2A2010;
+      --sombra: none;
+    }
+
+    @page { margin: 0; }
+
+    html, body { background: var(--fondo); }
+
+    body {
+      color: var(--texto);
+      font-size: 11pt;
+      padding: 10px;
+    }
+
+    .hoja { max-width: none; padding: 0; }
+
+    .dato, .tabla-caja, .opcion { box-shadow: none; }
+
+    h2 { break-after: avoid; }
+    .tabla-caja, .aviso, .opcion, .total { break-inside: avoid; }
+    tr { break-inside: avoid; }
+    thead { display: table-header-group; }
+  }
+</style>
+
+<div class="hoja">
+
+  <header class="portada">
+    <div class="marca">LaFranciaGO · Horas de desarrollo</div>
+    <h1>Cuánto trabajo tiene adentro</h1>
+    <p class="bajada">
+      Las horas que llevó construir la aplicación, sacadas del historial real
+      del repositorio, y qué sale cotizarlas a 15 dólares la hora.
+    </p>
+    <div class="fecha">Calculado el 10 de septiembre de 2026</div>
+  </header>
+
+  <div class="total">
+    <b>88 h</b>
+    <span>de trabajo asistido con Claude Code</span>
+    <small>A USD 15/h &rarr; <strong>USD 1.320</strong> &middot; rango 74–101 h (USD 1.110 – 1.515)</small>
+  </div>
+
+  <div class="medido">
+    <div class="dato"><b>52</b><span>commits</span></div>
+    <div class="dato"><b>194</b><span>archivos</span></div>
+    <div class="dato"><b>63.835</b><span>líneas escritas</span></div>
+    <div class="dato"><b>18</b><span>tandas de trabajo</span></div>
+    <div class="dato"><b>24</b><span>días de calendario</span></div>
+  </div>
+
+  <h2>De dónde sale el número</h2>
+  <p class="nota-seccion">
+    No es a ojo. El repositorio guarda la hora exacta de cada commit, así que
+    se puede reconstruir cuándo se trabajó. Midiendo los huecos entre commits
+    —tomando como una misma tanda los que están a menos de 90 minutos— dan
+    <strong>19,6 horas</strong>. Ese es el piso, y se queda corto por dos
+    motivos: no cuenta lo que se hizo después del último commit de cada tanda,
+    ni las pruebas y la depuración que pasan entre medio sin dejar rastro.
+    Las 88 horas salen de sumar las fases con ese piso como referencia.
+  </p>
+
+  <div class="tabla-caja">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Fase</th>
+          <th scope="col">Qué incluyó</th>
+          <th scope="col">Horas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Prototipo inicial</td>
+          <td class="detalle">La primera versión completa de la interfaz, 22.510 líneas de una.</td>
+          <td class="num">14</td>
+        </tr>
+        <tr>
+          <td>Servidor y base de datos</td>
+          <td class="detalle">Cuentas, sesiones, permisos y 12 migraciones hasta las 33 tablas de hoy.</td>
+          <td class="num">12</td>
+        </tr>
+        <tr>
+          <td>Pasar de datos de prueba a reales</td>
+          <td class="detalle">Ocho conexiones nuevas y todas las pantallas apuntando a la base.</td>
+          <td class="num">8</td>
+        </tr>
+        <tr>
+          <td>Logística de reparto</td>
+          <td class="detalle">Cuánto ocupa cada pedido, qué vehículo lo lleva y cómo se parte si no entra.</td>
+          <td class="num">6</td>
+        </tr>
+        <tr>
+          <td>Pagos, avisos y chat</td>
+          <td class="detalle">Mercado Pago, notificaciones, chat entre las partes y los extras con foto del ticket.</td>
+          <td class="num">9</td>
+        </tr>
+        <tr>
+          <td>Seguimiento en vivo</td>
+          <td class="detalle">El mapa del repartidor moviéndose, para el cliente y para el comercio.</td>
+          <td class="num">6</td>
+        </tr>
+        <tr>
+          <td>Panel de administración</td>
+          <td class="detalle">Postulaciones, números de la plataforma, ranking y alertas.</td>
+          <td class="num">5</td>
+        </tr>
+        <tr>
+          <td>Los once pedidos finales</td>
+          <td class="detalle">Reseñas, stock, horarios, cancelar, ganancias, fletes con cotización y reclamos.</td>
+          <td class="num">10</td>
+        </tr>
+        <tr>
+          <td>Rediseño celular y computadora</td>
+          <td class="detalle">152 archivos tocados para que ande bien en las dos.</td>
+          <td class="num">8</td>
+        </tr>
+        <tr>
+          <td>Pruebas contra el servidor real</td>
+          <td class="detalle">Cada rol probado de punta a punta, con limpieza de los datos de prueba.</td>
+          <td class="num">6</td>
+        </tr>
+        <tr>
+          <td>Informe para el cliente</td>
+          <td class="detalle">Este documento y el de estado: redacción, tablas, impresión y celular.</td>
+          <td class="num">4</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>Total</td>
+          <td class="detalle"></td>
+          <td class="num">88 h</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <h2>Antes de usar este número</h2>
+
+  <div class="aviso">
+    <p>
+      <strong>Estas 88 horas son de trabajo asistido con inteligencia artificial.</strong>
+      Salen a unas 725 líneas por hora, un ritmo que no se sostiene escribiendo
+      a mano: es el ritmo de revisar, corregir y decidir sobre código que se
+      genera rápido.
+    </p>
+    <p>
+      Eso importa para cotizar. Si el precio sale de multiplicar estas horas
+      por una tarifa por hora, lo que se está cobrando es la herramienta y no
+      el trabajo. El mismo producto hecho a mano llevaría entre 260 y 440
+      horas.
+    </p>
+  </div>
+
+  <h2>Tres formas de ponerle precio</h2>
+  <p class="nota-seccion">
+    Los tres números salen del mismo trabajo entregado. Cambia qué se está
+    cobrando.
+  </p>
+
+  <div class="comparacion">
+    <div class="opcion">
+      <h3>Por horas asistidas, a USD 15</h3>
+      <p>88 h. Es lo que pediste calcular. Transparente, pero le pone precio a la velocidad de la herramienta.</p>
+      <div class="plata">USD 1.320</div>
+    </div>
+
+    <div class="opcion" data-destacada>
+      <h3>Por el trabajo entregado</h3>
+      <p>Lo que costaría construir esto de la forma tradicional, a una tarifa razonable. Es lo que vale el producto, no lo que tardó.</p>
+      <div class="plata">USD 4.000 – 8.000</div>
+    </div>
+
+    <div class="opcion">
+      <h3>Por horas reales, a USD 45</h3>
+      <p>Las mismas 88 horas, a una tarifa que refleje que el resultado es de alguien que sabe qué pedir y qué corregir.</p>
+      <div class="plata">USD 3.960</div>
+    </div>
+  </div>
+
+  <section class="cierre">
+    <div class="aviso">
+      <p>
+        <strong>Lo que no está contado acá.</strong> Las horas de conversación
+        con el cliente, las decisiones de producto, y el tiempo de definir qué
+        tenía que hacer cada pantalla. Tampoco el soporte después de entregar:
+        conviene acordarlo aparte.
+      </p>
+    </div>
+  </section>
+
+</div>
