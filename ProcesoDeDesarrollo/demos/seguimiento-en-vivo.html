@@ -154,7 +154,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.7rem 0.9rem;
+    padding: 0.55rem 0.9rem;
     background: var(--marca);
     color: #fff;
   }
@@ -181,7 +181,7 @@
 
   .mapa {
     position: relative;
-    height: 200px;
+    height: 178px;
     background: var(--mapa);
     border-bottom: 1px solid var(--borde);
   }
@@ -200,7 +200,7 @@
   .globo {
     position: absolute;
     left: 50%;
-    bottom: 0.6rem;
+    bottom: 0.5rem;
     transform: translateX(-50%);
     display: flex;
     align-items: center;
@@ -234,20 +234,47 @@
 
   /* ── Los pasos ── */
 
+  /* La lista de pasos, con la barra de scroll pintada con la marca.
+
+     Firefox acepta scrollbar-color; los navegadores basados en Chrome usan
+     ::-webkit-scrollbar, que es lo que ve la mayoria. Se declaran los dos. */
   .cuerpo {
-    padding: 0.9rem;
-    max-height: 310px;
+    padding: 0.75rem 0.9rem 0.9rem;
+    /* Alto del caso mas grande: el pedido entregado, con las seis horas a
+       la vista. Asi la lista nunca scrollea ni el telefono cambia de alto
+       a medida que avanza. */
+    min-height: 344px;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--marca) transparent;
+  }
+
+  .cuerpo::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .cuerpo::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .cuerpo::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--marca);
+  }
+
+  .cuerpo::-webkit-scrollbar-thumb:hover {
+    background: var(--marca);
+    opacity: 0.85;
   }
 
   .titulo-actual {
-    margin: 0 0 0.15rem;
+    margin: 0 0 0.1rem;
     font-family: "Rubik", system-ui, sans-serif;
     font-size: 1.05rem;
   }
 
   .texto-actual {
-    margin: 0 0 0.9rem;
+    margin: 0 0 0.7rem;
     color: var(--texto-medio);
     font-size: 0.84rem;
   }
@@ -259,8 +286,11 @@
     display: grid;
     grid-template-columns: 1.4rem minmax(0, 1fr);
     gap: 0.6rem;
-    padding-bottom: 0.85rem;
+    padding-bottom: 0.62rem;
   }
+
+  /* El ultimo no necesita aire abajo: lo pone el contenedor. */
+  .paso:last-child { padding-bottom: 0; }
 
   /* La línea que une los puntos, cortada en el último. */
   .paso:not(:last-child)::before {
@@ -552,18 +582,13 @@
         </p>
       </div>
 
-      <div class="datos">
-        <div class="dato"><b>6</b><span>estados del pedido</span></div>
-        <div class="dato"><b>45 s</b><span>cada actualización</span></div>
-        <div class="dato"><b>$0</b><span>costo de los mapas</span></div>
-      </div>
-
       <div class="detras">
-        <h3>Sobre los mapas</h3>
+        <h3>Lo mismo, para todos</h3>
         <p>
-          Usa <b>OpenStreetMap</b>, que es libre y gratuito. Google Maps cobra
-          por cada vez que alguien abre un mapa: con muchos pedidos por día, eso
-          se convierte en una factura mensual. Acá no.
+          El comercio ve el mismo mapa que el vecino, y sabe si sus pedidos
+          están saliendo a tiempo. <b>Nadie llama a preguntar dónde está el
+          pedido</b>, que es la llamada que más interrumpe a un negocio en
+          hora pico.
         </p>
       </div>
     </div>
@@ -611,7 +636,7 @@
       globo: 'Bruno ya lo tiene',
       hora: '14:18',
       punto: 3,
-      detras: 'Desde acá, el repartidor <b>comparte su ubicación cada 45 segundos</b>. Es lo que hace que el punto del mapa se mueva solo.'
+      detras: 'Desde acá, <b>el teléfono del repartidor va mandando dónde está</b> mientras trabaja. Es lo que hace que el punto del mapa se mueva solo, sin que nadie toque nada.'
     },
     {
       titulo: 'En camino',
