@@ -76,6 +76,7 @@ import {
   ProductoNombre,
   ProductoPrecio,
   RankingFila,
+  SeccionTitulo,
   StockCampo,
   StockChip,
   TramoBoton,
@@ -608,9 +609,10 @@ export function MiComercioScreen() {
                 <Card>
                   <CardPad>
                     <form onSubmit={guardarDatos}>
-                      <ProductoNombre>
-                        <StoreIcono size={15} aria-hidden="true" /> Datos del comercio
-                      </ProductoNombre>
+                      <SeccionTitulo>
+                        Datos del comercio
+                        <StoreIcono size={15} aria-hidden="true" />
+                      </SeccionTitulo>
 
                       <CampoFila>
                         <span>Nombre</span>
@@ -675,9 +677,10 @@ export function MiComercioScreen() {
 
                 <Card>
                   <CardPad>
-                    <ProductoNombre>
-                      <Clock size={15} aria-hidden="true" /> Horarios de atención
-                    </ProductoNombre>
+                    <SeccionTitulo>
+                      Horarios de atención
+                      <Clock size={15} aria-hidden="true" />
+                    </SeccionTitulo>
                     <ProductoPrecio>
                       Si cerrás al mediodía, cargá dos tramos ese día. Sin horarios cargados,
                       tu comercio figura siempre abierto.

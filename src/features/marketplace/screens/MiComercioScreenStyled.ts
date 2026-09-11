@@ -92,6 +92,28 @@ export const ProductoNombre = styled.strong`
   font-size: ${({ theme }) => theme.typography.size.sm};
 `;
 
+/**
+ * El título de una sección del panel, con su ícono a la derecha.
+ *
+ * El ícono va después del texto y no antes: lo primero que se lee es de qué
+ * se trata la sección, y el dibujo acompaña. Empujado al margen derecho
+ * queda alineado con los de las otras secciones, que es lo que lo hace ver
+ * ordenado cuando hay varias tarjetas seguidas.
+ */
+export const SeccionTitulo = styled.strong`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+
+  > svg {
+    margin-left: auto;
+    flex: 0 0 auto;
+    color: ${({ theme }) => theme.color.textSoft};
+  }
+`;
+
 export const ProductoPrecio = styled.span`
   display: block;
   color: ${({ theme }) => theme.color.textSoft};

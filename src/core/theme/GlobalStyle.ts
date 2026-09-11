@@ -96,6 +96,62 @@ export const GlobalStyle = createGlobalStyle`
     background: transparent;
   }
 
+  /* ── La barra de scroll, con los colores de la marca ──
+
+     Reemplaza la gris del navegador en toda la aplicación: la de la ventana
+     y la de cualquier caja que scrollee por dentro, vertical u horizontal.
+
+     Van las dos formas porque los navegadores no coinciden: Firefox entiende
+     scrollbar-width/scrollbar-color, y los basados en Chrome —incluido el
+     navegador de Android— usan ::-webkit-scrollbar. Safari de iPhone ignora
+     las dos y muestra la suya flotante, que aparece sólo al desplazar y no
+     molesta.
+
+     El color sale del tema, así que en claro y en oscuro se resuelve solo.
+     En oscuro se usa el azul claro, que es el que contrasta contra el fondo
+     casi negro; en claro, el azul de la marca. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: ${({ theme }) => (theme.mode === 'dark' ? theme.color.primary : theme.color.brand)}
+      transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  /* Sin fondo propio: se ve el de la caja que scrollea, y así la barra no
+     dibuja un canal gris sobre tarjetas de distintos colores. */
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    /* El borde transparente adelgaza el pulgar sin achicar el área que se
+       puede agarrar con el mouse. */
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    background-color: ${({ theme }) =>
+      theme.mode === 'dark' ? theme.color.primary : theme.color.brand};
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: ${({ theme }) =>
+      theme.mode === 'dark' ? theme.color.primaryHover : theme.color.brandHover};
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background-color: ${({ theme }) =>
+      theme.mode === 'dark' ? theme.color.primaryActive : theme.color.brandActive};
+  }
+
+  /* Donde se cruzan la barra vertical y la horizontal. */
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
   ::selection {
     background: ${({ theme }) => theme.color.brand};
     color: ${({ theme }) => theme.color.onPrimary};
