@@ -1,0 +1,636 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propuesta LaFranciaGO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+
+<style>
+  /* Misma paleta que los otros dos documentos: son partes de lo mismo. */
+  :root {
+    --marca: #0047E7;
+    --fondo: #F5F7FB;
+    --fondo-alt: #EEF3FA;
+    --superficie: #FFFFFF;
+    --borde: #D7E0ED;
+    --borde-fuerte: #B8C3D8;
+    --texto: #0B1020;
+    --texto-medio: #465067;
+    --texto-suave: #6B7280;
+    --ok: #0F9D58;
+    --ok-fondo: #E6F4EC;
+    --alerta: #B45309;
+    --alerta-fondo: #FDF0DC;
+    --sombra: 0 1px 2px rgba(5, 8, 22, 0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --marca: #5B8CFF;
+      --fondo: #050816;
+      --fondo-alt: #0B1020;
+      --superficie: #0F1730;
+      --borde: #1E2A47;
+      --borde-fuerte: #2C3A5C;
+      --texto: #F3F6FC;
+      --texto-medio: #A8B4CC;
+      --texto-suave: #8492AD;
+      --ok: #34D399;
+      --ok-fondo: #10281F;
+      --alerta: #FBBF24;
+      --alerta-fondo: #2A2010;
+      --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --marca: #5B8CFF;
+    --fondo: #050816;
+    --fondo-alt: #0B1020;
+    --superficie: #0F1730;
+    --borde: #1E2A47;
+    --borde-fuerte: #2C3A5C;
+    --texto: #F3F6FC;
+    --texto-medio: #A8B4CC;
+    --texto-suave: #8492AD;
+    --ok: #34D399;
+    --ok-fondo: #10281F;
+    --alerta: #FBBF24;
+    --alerta-fondo: #2A2010;
+    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .hoja {
+    max-width: 58rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 5rem;
+  }
+
+  .portada {
+    display: grid;
+    gap: 0.5rem;
+    padding-bottom: 1.75rem;
+    border-bottom: 2px solid var(--texto);
+  }
+
+  .marca {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--marca);
+  }
+
+  h1 {
+    margin: 0;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: clamp(1.9rem, 5vw, 2.6rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .bajada {
+    margin: 0;
+    max-width: 44rem;
+    color: var(--texto-medio);
+    font-size: 1.05rem;
+  }
+
+  .fecha {
+    color: var(--texto-suave);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  h2 {
+    margin: 3rem 0 0.25rem;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    margin: 1.75rem 0 0.6rem;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .nota-seccion {
+    margin: 0 0 1.25rem;
+    color: var(--texto-medio);
+    max-width: 44rem;
+  }
+
+  /* ── Las dos etapas ── */
+
+  .etapas {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  @media (min-width: 46rem) {
+    .etapas { grid-template-columns: 1fr 1fr; }
+  }
+
+  .etapa {
+    display: grid;
+    align-content: start;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--borde);
+    background: var(--superficie);
+    box-shadow: var(--sombra);
+  }
+
+  .etapa[data-orden="1"] { border-color: var(--ok); }
+  .etapa[data-orden="2"] { border-color: var(--marca); }
+
+  .etapa .paso {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+  }
+
+  .etapa h3 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
+  .etapa .plata {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 2rem;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .etapa[data-orden="1"] .plata { color: var(--ok); }
+  .etapa[data-orden="2"] .plata { color: var(--marca); }
+
+  .etapa .porcentaje {
+    color: var(--texto-suave);
+    font-size: 0.82rem;
+  }
+
+  .etapa ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.35rem;
+    color: var(--texto-medio);
+    font-size: 0.9rem;
+  }
+
+  .etapa strong { color: var(--texto); }
+
+  /* ── Total ── */
+
+  .total {
+    display: grid;
+    gap: 0.3rem;
+    margin-top: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: 0.9rem;
+    border: 2px solid var(--texto);
+    background: var(--fondo-alt);
+    text-align: center;
+  }
+
+  .total b {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: clamp(1.8rem, 6vw, 2.4rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .total span { color: var(--texto-medio); font-size: 0.9rem; }
+
+  /* ── Tablas ── */
+
+  .tabla-caja {
+    overflow-x: auto;
+    border: 1px solid var(--borde);
+    border-radius: 0.75rem;
+    background: var(--superficie);
+    box-shadow: var(--sombra);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+
+  th {
+    padding: 0.7rem 1rem;
+    text-align: left;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+    border-bottom: 1px solid var(--borde);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--borde);
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: 0; }
+  td:first-child { font-weight: 600; }
+
+  td.detalle { color: var(--texto-medio); font-size: 0.85rem; }
+
+  td.num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  tfoot td {
+    border-top: 2px solid var(--texto);
+    border-bottom: 0;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-weight: 700;
+  }
+
+  /* ── Avisos ── */
+
+  .aviso {
+    margin-top: 1.25rem;
+    padding: 1rem 1.25rem;
+    border-left: 3px solid var(--alerta);
+    background: var(--alerta-fondo);
+    border-radius: 0 0.5rem 0.5rem 0;
+    color: var(--texto-medio);
+    font-size: 0.92rem;
+  }
+
+  .aviso[data-tono="bueno"] {
+    border-left-color: var(--ok);
+    background: var(--ok-fondo);
+  }
+
+  .aviso strong { color: var(--texto); }
+  .aviso p { margin: 0 0 0.6rem; }
+  .aviso p:last-child { margin-bottom: 0; }
+
+  /* ── Condiciones ── */
+
+  .condiciones {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .condiciones li {
+    position: relative;
+    padding-left: 1.35rem;
+    color: var(--texto-medio);
+  }
+
+  .condiciones li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.6rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--marca);
+  }
+
+  .condiciones b { color: var(--texto); }
+
+  .cierre {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--texto);
+  }
+
+  /* ── En el celular ── */
+
+  @media (max-width: 46rem) {
+    body { font-size: 15px; }
+    .hoja { padding: 1.5rem 1rem 3rem; }
+    h2 { margin-top: 2.25rem; }
+
+    .tabla-caja {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      overflow-x: visible;
+    }
+
+    table, tbody, tfoot, tr, td { display: block; width: 100%; }
+
+    thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+
+    tbody tr, tfoot tr {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.15rem 0.75rem;
+      margin-bottom: 0.7rem;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--borde);
+      border-radius: 0.75rem;
+      background: var(--superficie);
+      box-shadow: var(--sombra);
+    }
+
+    td { padding: 0; border-bottom: 0; grid-column: 1 / -1; }
+    td:first-child { grid-column: 1; font-size: 1rem; }
+    td.num { grid-column: 2; grid-row: 1; text-align: right; }
+    td.detalle { margin-top: 0.35rem; }
+  }
+
+  /* ── Impresión ── */
+
+  @media print {
+    :root {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+      --marca: #5B8CFF;
+      --fondo: #050816;
+      --fondo-alt: #0B1020;
+      --superficie: #0F1730;
+      --borde: #1E2A47;
+      --borde-fuerte: #2C3A5C;
+      --texto: #F3F6FC;
+      --texto-medio: #A8B4CC;
+      --texto-suave: #8492AD;
+      --ok: #34D399;
+      --ok-fondo: #10281F;
+      --alerta: #FBBF24;
+      --alerta-fondo: #2A2010;
+      --sombra: none;
+    }
+
+    @page { margin: 0; }
+
+    html, body { background: var(--fondo); }
+
+    body {
+      color: var(--texto);
+      font-size: 11pt;
+      padding: 10px;
+    }
+
+    .hoja { max-width: none; padding: 0; }
+    .etapa, .tabla-caja, .total { box-shadow: none; }
+
+    h2 { break-after: avoid; }
+    .tabla-caja, .aviso, .etapa, .total { break-inside: avoid; }
+    tr { break-inside: avoid; }
+    thead { display: table-header-group; }
+  }
+</style>
+
+<div class="hoja">
+
+  <header class="portada">
+    <div class="marca">LaFranciaGO · Propuesta</div>
+    <h1>La aplicación, en dos etapas</h1>
+    <p class="bajada">
+      Primero la aplicación web funcionando y en uso. Después, cuando esté
+      probada con gente de verdad, las aplicaciones nativas de Android y iPhone
+      para publicar en las tiendas.
+    </p>
+    <div class="fecha">11 de septiembre de 2026</div>
+  </header>
+
+  <div class="etapas">
+    <div class="etapa" data-orden="1">
+      <span class="paso">Etapa 1 · Entregada</span>
+      <h3>Aplicación web</h3>
+      <div class="plata">USD 4.000</div>
+      <div class="porcentaje">45% del proyecto</div>
+      <ul>
+        <li><strong>Las 5 cuentas funcionando</strong>: vecino, comercio, delivery, fletero y administración.</li>
+        <li><strong>Todo el servidor y la base de datos</strong>, que es lo que después usan también las aplicaciones del celular.</li>
+        <li><strong>Anda en celular y computadora</strong>, y se instala en el teléfono sin pasar por las tiendas.</li>
+        <li><strong>56 funcionalidades</strong> ya construidas y probadas.</li>
+      </ul>
+    </div>
+
+    <div class="etapa" data-orden="2">
+      <span class="paso">Etapa 2 · A convenir</span>
+      <h3>Android y iPhone</h3>
+      <div class="plata">USD 5.000</div>
+      <div class="porcentaje">55% del proyecto</div>
+      <ul>
+        <li><strong>Aplicación de Android</strong> publicada en Google Play.</li>
+        <li><strong>Aplicación de iPhone</strong> publicada en la App Store.</li>
+        <li><strong>Avisos que llegan al celular</strong> aunque la aplicación esté cerrada.</li>
+        <li><strong>Ubicación del repartidor en segundo plano</strong>, con el teléfono en el bolsillo.</li>
+        <li><strong>Cámara y micrófono nativos</strong> para la foto del ticket y las notas de voz.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="total">
+    <b>USD 9.000</b>
+    <span>el proyecto completo, en dos pagos separados por el tiempo que haga falta</span>
+  </div>
+
+  <h2>Por qué conviene en este orden</h2>
+  <p class="nota-seccion">
+    La aplicación web sirve para salir a la calle sin esperar a nadie: no hay
+    que pedirle permiso a Apple ni a Google para empezar a recibir pedidos. Los
+    comercios la usan, los vecinos compran, y en esas semanas se ve qué falta y
+    qué sobra de verdad.
+  </p>
+  <p class="nota-seccion">
+    Recién entonces conviene hacer las aplicaciones nativas, porque se
+    construyen sobre lo que ya se aprendió. Al revés —salir directo a las
+    tiendas— cada corrección obliga a esperar una nueva revisión de Apple, que
+    puede tardar días.
+  </p>
+
+  <div class="aviso" data-tono="bueno">
+    <p>
+      <strong>La segunda etapa no empieza de cero.</strong> Las aplicaciones del
+      celular usan el mismo servidor, la misma base de datos y las mismas
+      pantallas que ya están hechas. El trabajo de la etapa 2 es empaquetarlas,
+      conectarlas con lo que sólo el teléfono sabe hacer —avisos, ubicación en
+      segundo plano, cámara— y pasar las revisiones de las tiendas.
+    </p>
+  </div>
+
+  <h2>Qué incluye la etapa 2</h2>
+  <p class="nota-seccion">
+    El desglose del trabajo, para que se vea de dónde sale el número.
+  </p>
+
+  <div class="tabla-caja">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Tarea</th>
+          <th scope="col">Qué significa</th>
+          <th scope="col">Horas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Armado de los dos proyectos</td>
+          <td class="detalle">Convertir lo que ya existe en una aplicación de Android y otra de iPhone.</td>
+          <td class="num">8–12</td>
+        </tr>
+        <tr>
+          <td>Ubicación en segundo plano</td>
+          <td class="detalle">Que el repartidor pueda guardar el teléfono y el mapa lo siga mostrando.</td>
+          <td class="num">10–14</td>
+        </tr>
+        <tr>
+          <td>Avisos al celular</td>
+          <td class="detalle">Que suene cuando entra un pedido aunque la aplicación esté cerrada.</td>
+          <td class="num">12–16</td>
+        </tr>
+        <tr>
+          <td>Cámara y micrófono</td>
+          <td class="detalle">La foto del ticket y las notas de voz, usando lo del teléfono.</td>
+          <td class="num">6–8</td>
+        </tr>
+        <tr>
+          <td>Presentación y permisos</td>
+          <td class="detalle">Ícono, pantalla de arranque, los permisos que pide cada sistema.</td>
+          <td class="num">6–8</td>
+        </tr>
+        <tr>
+          <td>Pruebas en teléfonos reales</td>
+          <td class="detalle">En Android y en iPhone, que no se comportan igual.</td>
+          <td class="num">12–16</td>
+        </tr>
+        <tr>
+          <td>Publicación en Google Play</td>
+          <td class="detalle">Fichas, capturas, política de privacidad y la revisión de Google.</td>
+          <td class="num">6–8</td>
+        </tr>
+        <tr>
+          <td>Publicación en la App Store</td>
+          <td class="detalle">Lo mismo para Apple, que revisa con más detalle y suele pedir cambios.</td>
+          <td class="num">10–14</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>Total</td>
+          <td class="detalle"></td>
+          <td class="num">70–96 h</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <h2>Condiciones</h2>
+
+  <ul class="condiciones">
+    <li>
+      <b>Las cuentas de las tiendas las abre y paga el cliente.</b> Apple cobra
+      USD 99 por año y Google USD 25 una sola vez. Van a nombre del dueño de la
+      aplicación, no del programador: así la aplicación siempre es suya.
+    </li>
+    <li>
+      <b>Publicar no es lo mismo que estar aprobado.</b> Apple revisa a mano y
+      es común que pida cambios en la primera vuelta. La propuesta incluye
+      <b>hasta dos rondas de correcciones</b> por tienda; si piden algo que
+      cambia cómo funciona la aplicación, se conversa aparte.
+    </li>
+    <li>
+      <b>La etapa 2 arranca cuando el cliente dé por cerrada la etapa 1.</b> No
+      hay fecha atada: puede ser en un mes o en seis.
+    </li>
+    <li>
+      <b>El servidor no tiene costo mensual</b> con el volumen de un pueblo.
+      Si algún día crece mucho, se avisa antes de que sea un problema.
+    </li>
+    <li>
+      <b>El soporte posterior se acuerda aparte.</b> Arreglar algo que estaba
+      mal entregado entra en el precio; agregar cosas nuevas, no.
+    </li>
+  </ul>
+
+  <section class="cierre">
+    <h2 style="margin-top:0">Formas de pago sugeridas</h2>
+
+    <div class="tabla-caja">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Momento</th>
+            <th scope="col">Qué se paga</th>
+            <th scope="col">Monto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Al aceptar la etapa 1</td>
+            <td class="detalle">La aplicación web ya está entregada y funcionando.</td>
+            <td class="num">USD 4.000</td>
+          </tr>
+          <tr>
+            <td>Al arrancar la etapa 2</td>
+            <td class="detalle">Anticipo para empezar con las aplicaciones del celular.</td>
+            <td class="num">USD 2.500</td>
+          </tr>
+          <tr>
+            <td>Con las dos publicadas</td>
+            <td class="detalle">Cuando estén aprobadas y descargables en las tiendas.</td>
+            <td class="num">USD 2.500</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td class="detalle"></td>
+            <td class="num">USD 9.000</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="aviso">
+      <p>
+        <strong>Esta propuesta vale 30 días.</strong> Los precios de las cuentas
+        de desarrollador y las reglas de las tiendas los fijan Apple y Google, y
+        pueden cambiar sin aviso.
+      </p>
+    </div>
+  </section>
+
+</div>
