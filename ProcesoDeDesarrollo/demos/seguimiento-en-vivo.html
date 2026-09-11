@@ -1,0 +1,698 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seguimiento en vivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+
+<style>
+  /* Misma paleta que la aplicación: la demo tiene que parecerse a lo que
+     el cliente va a ver de verdad, no a una maqueta aparte. */
+  :root {
+    --marca: #0047E7;
+    --marca-suave: #EAF1FF;
+    --fondo: #F5F7FB;
+    --fondo-alt: #EEF3FA;
+    --superficie: #FFFFFF;
+    --borde: #D7E0ED;
+    --texto: #0B1020;
+    --texto-medio: #465067;
+    --texto-suave: #6B7280;
+    --ok: #0F9D58;
+    --ok-fondo: #E6F4EC;
+    --sombra: 0 1px 2px rgba(5, 8, 22, 0.06);
+    --sombra-fuerte: 0 8px 24px rgba(5, 8, 22, 0.12);
+    --calle: #E3E9F2;
+    --mapa: #F0F4F9;
+    --manzana: #E8EEF6;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --marca: #5B8CFF;
+      --marca-suave: #16213F;
+      --fondo: #050816;
+      --fondo-alt: #0B1020;
+      --superficie: #0F1730;
+      --borde: #1E2A47;
+      --texto: #F3F6FC;
+      --texto-medio: #A8B4CC;
+      --texto-suave: #8492AD;
+      --ok: #34D399;
+      --ok-fondo: #10281F;
+      --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
+      --sombra-fuerte: 0 8px 24px rgba(0, 0, 0, 0.5);
+      --calle: #16203A;
+      --mapa: #0B1020;
+      --manzana: #121C33;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --marca: #5B8CFF;
+    --marca-suave: #16213F;
+    --fondo: #050816;
+    --fondo-alt: #0B1020;
+    --superficie: #0F1730;
+    --borde: #1E2A47;
+    --texto: #F3F6FC;
+    --texto-medio: #A8B4CC;
+    --texto-suave: #8492AD;
+    --ok: #34D399;
+    --ok-fondo: #10281F;
+    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --sombra-fuerte: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --calle: #16203A;
+    --mapa: #0B1020;
+    --manzana: #121C33;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .hoja {
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  /* ── Encabezado ── */
+
+  .portada {
+    display: grid;
+    gap: 0.4rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--texto);
+  }
+
+  .marca {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--marca);
+  }
+
+  h1 {
+    margin: 0;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: clamp(1.7rem, 5vw, 2.3rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .bajada {
+    margin: 0;
+    max-width: 42rem;
+    color: var(--texto-medio);
+    font-size: 1rem;
+  }
+
+  /* ── El teléfono y el panel ── */
+
+  .escena {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    align-items: start;
+  }
+
+  @media (min-width: 52rem) {
+    .escena { grid-template-columns: auto minmax(0, 1fr); }
+  }
+
+  .telefono {
+    justify-self: center;
+    width: 340px;
+    max-width: 100%;
+    padding: 0.7rem;
+    border-radius: 2.2rem;
+    border: 1px solid var(--borde);
+    background: var(--superficie);
+    box-shadow: var(--sombra-fuerte);
+  }
+
+  .pantalla {
+    overflow: hidden;
+    border-radius: 1.7rem;
+    background: var(--fondo);
+  }
+
+  /* La barra de la aplicación. */
+  .barra {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 0.9rem;
+    background: var(--marca);
+    color: #fff;
+  }
+
+  .barra .volver {
+    font-size: 1.1rem;
+    line-height: 1;
+    opacity: 0.9;
+  }
+
+  .barra b {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.9rem;
+  }
+
+  .barra .codigo {
+    margin-left: auto;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.85;
+  }
+
+  /* ── El mapa ── */
+
+  .mapa {
+    position: relative;
+    height: 200px;
+    background: var(--mapa);
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .mapa svg { display: block; width: 100%; height: 100%; }
+
+  /* El repartidor: se mueve con una transición, no a los saltos. */
+  #moto {
+    transition: transform 900ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #moto { transition: none; }
+  }
+
+  .globo {
+    position: absolute;
+    left: 50%;
+    bottom: 0.6rem;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--borde);
+    background: var(--superficie);
+    box-shadow: var(--sombra);
+    font-size: 0.76rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .pulso {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--ok);
+    animation: latir 1.6s ease-in-out infinite;
+  }
+
+  @keyframes latir {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.82); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pulso { animation: none; }
+  }
+
+  /* ── Los pasos ── */
+
+  .cuerpo {
+    padding: 0.9rem;
+    max-height: 310px;
+    overflow-y: auto;
+  }
+
+  .titulo-actual {
+    margin: 0 0 0.15rem;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 1.05rem;
+  }
+
+  .texto-actual {
+    margin: 0 0 0.9rem;
+    color: var(--texto-medio);
+    font-size: 0.84rem;
+  }
+
+  .pasos { display: grid; gap: 0; }
+
+  .paso {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.4rem minmax(0, 1fr);
+    gap: 0.6rem;
+    padding-bottom: 0.85rem;
+  }
+
+  /* La línea que une los puntos, cortada en el último. */
+  .paso:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 0.6rem;
+    top: 1.05rem;
+    bottom: 0;
+    width: 2px;
+    background: var(--borde);
+  }
+
+  .paso[data-hecho="true"]:not(:last-child)::before { background: var(--ok); }
+
+  .punto {
+    position: relative;
+    z-index: 1;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: 0.18rem;
+    border-radius: 50%;
+    border: 2px solid var(--borde);
+    background: var(--superficie);
+    display: grid;
+    place-items: center;
+    font-size: 0.62rem;
+    color: #fff;
+    transition: background-color 300ms ease, border-color 300ms ease;
+  }
+
+  .paso[data-hecho="true"] .punto {
+    border-color: var(--ok);
+    background: var(--ok);
+  }
+
+  .paso[data-actual="true"] .punto {
+    border-color: var(--marca);
+    background: var(--marca);
+    box-shadow: 0 0 0 4px var(--marca-suave);
+  }
+
+  .paso .que {
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .paso[data-hecho="false"] .que { color: var(--texto-suave); font-weight: 400; }
+
+  .paso .cuando {
+    display: block;
+    color: var(--texto-suave);
+    font-size: 0.72rem;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Panel de explicación ── */
+
+  .panel { display: grid; gap: 1rem; }
+
+  .control {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--borde);
+    background: var(--superficie);
+    box-shadow: var(--sombra);
+  }
+
+  .control h2 {
+    margin: 0;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 1.05rem;
+  }
+
+  .control p {
+    margin: 0;
+    color: var(--texto-medio);
+    font-size: 0.9rem;
+  }
+
+  .botones { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+  button {
+    flex: 1 1 auto;
+    min-height: 2.6rem;
+    padding: 0 1rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--marca);
+    color: #fff;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 160ms ease;
+  }
+
+  button[data-tono="suave"] {
+    border: 1px solid var(--borde);
+    background: transparent;
+    color: var(--texto-medio);
+  }
+
+  button:disabled { opacity: 0.45; cursor: default; }
+
+  button:focus-visible {
+    outline: 2px solid var(--marca);
+    outline-offset: 2px;
+  }
+
+  /* Qué pasa por detrás en cada paso. */
+  .detras {
+    display: grid;
+    gap: 0.5rem;
+    padding: 1.25rem;
+    border-radius: 0.9rem;
+    border-left: 3px solid var(--marca);
+    background: var(--fondo-alt);
+  }
+
+  .detras h3 {
+    margin: 0;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+  }
+
+  .detras p {
+    margin: 0;
+    color: var(--texto-medio);
+    font-size: 0.92rem;
+  }
+
+  .detras b { color: var(--texto); }
+
+  .datos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    gap: 0.6rem;
+  }
+
+  .dato {
+    padding: 0.7rem 0.85rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--borde);
+    background: var(--superficie);
+  }
+
+  .dato b {
+    display: block;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 1.1rem;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dato span {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--texto-suave);
+    font-size: 0.72rem;
+  }
+
+  .pie {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--borde);
+    color: var(--texto-suave);
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 46rem) {
+    body { font-size: 15px; }
+    .hoja { padding: 1.5rem 1rem 3rem; }
+  }
+</style>
+
+<div class="hoja">
+
+  <header class="portada">
+    <div class="marca">LaFranciaGO · Demo 1 de 56</div>
+    <h1>Seguimiento en vivo</h1>
+    <p class="bajada">
+      El vecino ve en un mapa dónde está su pedido, sin llamar a nadie a
+      preguntar. Tocá los botones de abajo para adelantar el pedido y ver qué
+      pasa en cada momento.
+    </p>
+  </header>
+
+  <div class="escena">
+
+    <!-- El teléfono -->
+    <div class="telefono">
+      <div class="pantalla">
+        <div class="barra">
+          <span class="volver" aria-hidden="true">&lsaquo;</span>
+          <b>Seguir mi pedido</b>
+          <span class="codigo">#335287</span>
+        </div>
+
+        <div class="mapa">
+          <svg viewBox="0 0 340 200" role="img" aria-label="Mapa del recorrido entre el comercio y la casa">
+            <rect width="340" height="200" fill="var(--mapa)"/>
+
+            <!-- Manzanas del pueblo -->
+            <g fill="var(--manzana)">
+              <rect x="16" y="18" width="88" height="52" rx="4"/>
+              <rect x="128" y="18" width="104" height="52" rx="4"/>
+              <rect x="256" y="18" width="68" height="52" rx="4"/>
+              <rect x="16" y="96" width="88" height="44" rx="4"/>
+              <rect x="128" y="96" width="104" height="44" rx="4"/>
+              <rect x="256" y="96" width="68" height="44" rx="4"/>
+              <rect x="16" y="166" width="88" height="26" rx="4"/>
+              <rect x="128" y="166" width="104" height="26" rx="4"/>
+              <rect x="256" y="166" width="68" height="26" rx="4"/>
+            </g>
+
+            <!-- Calles -->
+            <g stroke="var(--calle)" stroke-width="10" stroke-linecap="round">
+              <line x1="0" y1="83" x2="340" y2="83"/>
+              <line x1="0" y1="153" x2="340" y2="153"/>
+              <line x1="116" y1="0" x2="116" y2="200"/>
+              <line x1="244" y1="0" x2="244" y2="200"/>
+            </g>
+
+            <!-- El recorrido -->
+            <path id="ruta" d="M 60 44 L 116 44 L 116 83 L 244 83 L 244 153 L 290 153"
+                  fill="none" stroke="var(--marca)" stroke-width="3"
+                  stroke-dasharray="6 5" opacity="0.55"/>
+
+            <!-- El comercio -->
+            <g>
+              <circle cx="60" cy="44" r="9" fill="var(--superficie)" stroke="var(--texto-suave)" stroke-width="2"/>
+              <text x="60" y="48" text-anchor="middle" font-size="9" fill="var(--texto-medio)">🏪</text>
+            </g>
+
+            <!-- La casa -->
+            <g>
+              <circle cx="290" cy="153" r="9" fill="var(--superficie)" stroke="var(--ok)" stroke-width="2"/>
+              <text x="290" y="157" text-anchor="middle" font-size="9">🏠</text>
+            </g>
+
+            <!-- El repartidor -->
+            <g id="moto" style="transform: translate(60px, 44px)">
+              <circle r="11" fill="var(--marca)" opacity="0.22"/>
+              <circle r="7" fill="var(--marca)" stroke="#fff" stroke-width="2"/>
+            </g>
+          </svg>
+
+          <div class="globo">
+            <span class="pulso" aria-hidden="true"></span>
+            <span id="globo-texto">Esperando al comercio</span>
+          </div>
+        </div>
+
+        <div class="cuerpo">
+          <p class="titulo-actual" id="titulo-actual">Preparando tu pedido</p>
+          <p class="texto-actual" id="texto-actual">El comercio lo está armando.</p>
+          <div class="pasos" id="pasos"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- El panel de al lado -->
+    <div class="panel">
+      <div class="control">
+        <h2>Probá vos</h2>
+        <p>
+          Cada botón adelanta el pedido un paso, igual que cuando el comercio o
+          el repartidor lo marcan desde su teléfono.
+        </p>
+        <div class="botones">
+          <button type="button" id="avanzar">Adelantar un paso</button>
+          <button type="button" id="reiniciar" data-tono="suave">Empezar de nuevo</button>
+        </div>
+      </div>
+
+      <div class="detras">
+        <h3>Qué pasa por detrás</h3>
+        <p id="detras-texto">
+          El comercio marcó <b>"empecé a prepararlo"</b> desde su panel. El
+          vecino recibe el aviso al instante, sin tener que actualizar nada.
+        </p>
+      </div>
+
+      <div class="datos">
+        <div class="dato"><b>6</b><span>estados del pedido</span></div>
+        <div class="dato"><b>45 s</b><span>cada actualización</span></div>
+        <div class="dato"><b>$0</b><span>costo de los mapas</span></div>
+      </div>
+
+      <div class="detras">
+        <h3>Sobre los mapas</h3>
+        <p>
+          Usa <b>OpenStreetMap</b>, que es libre y gratuito. Google Maps cobra
+          por cada vez que alguien abre un mapa: con muchos pedidos por día, eso
+          se convierte en una factura mensual. Acá no.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="pie">
+    Esta es una demostración: el recorrido está simulado para que se entienda
+    en pocos segundos. En la aplicación real, el punto se mueve con la
+    ubicación que manda el teléfono del repartidor.
+  </p>
+
+</div>
+
+<script>
+  /* Los seis estados, con los mismos textos que la aplicación. */
+  var PASOS = [
+    {
+      titulo: 'Preparando tu pedido',
+      texto: 'El comercio lo está armando.',
+      globo: 'Esperando al comercio',
+      hora: '14:02',
+      punto: 0,
+      detras: 'El comercio marcó <b>"empecé a prepararlo"</b> desde su panel. El vecino recibe el aviso al instante, sin tener que actualizar nada.'
+    },
+    {
+      titulo: 'Listo para retirar',
+      texto: 'Ya lo puede pasar a buscar el repartidor.',
+      globo: 'Esperando repartidor',
+      hora: '14:09',
+      punto: 0,
+      detras: 'Apenas el comercio lo marca como listo, <b>el pedido aparece en la lista de los repartidores</b> que están cerca, ordenado por cercanía.'
+    },
+    {
+      titulo: 'Lo toma un repartidor',
+      texto: 'Va camino al comercio.',
+      globo: 'Bruno va al comercio',
+      hora: '14:11',
+      punto: 1,
+      detras: 'Antes de aceptarlo, el repartidor vio <b>qué lleva, a dónde va y cuánto ocupa</b>: la aplicación calcula si le entra en la moto o si necesita un auto.'
+    },
+    {
+      titulo: 'Lo retiró del comercio',
+      texto: 'Ya tiene tu pedido.',
+      globo: 'Bruno ya lo tiene',
+      hora: '14:18',
+      punto: 3,
+      detras: 'Desde acá, el repartidor <b>comparte su ubicación cada 45 segundos</b>. Es lo que hace que el punto del mapa se mueva solo.'
+    },
+    {
+      titulo: 'En camino',
+      texto: 'Va para tu dirección.',
+      globo: 'A 4 cuadras tuyo',
+      hora: '14:21',
+      punto: 4,
+      detras: 'El mismo mapa lo ve el comercio, para saber si sus pedidos están saliendo a tiempo. <b>Todos miran lo mismo</b> y nadie llama a preguntar.'
+    },
+    {
+      titulo: 'Entregado',
+      texto: '¡Que lo disfrutes!',
+      globo: 'Llegó a tu casa',
+      hora: '14:26',
+      punto: 5,
+      detras: 'Al entregarlo se cierra el pedido y <b>el vecino puede puntuar</b> al comercio y a quien se lo trajo. Ese promedio es el que ve el próximo que compre.'
+    }
+  ];
+
+  /* Los puntos del recorrido, en coordenadas del mapa. */
+  var RUTA = [
+    { x: 60, y: 44 },
+    { x: 116, y: 44 },
+    { x: 116, y: 83 },
+    { x: 244, y: 83 },
+    { x: 244, y: 153 },
+    { x: 290, y: 153 }
+  ];
+
+  var actual = 0;
+
+  var $pasos = document.getElementById('pasos');
+  var $titulo = document.getElementById('titulo-actual');
+  var $texto = document.getElementById('texto-actual');
+  var $globo = document.getElementById('globo-texto');
+  var $detras = document.getElementById('detras-texto');
+  var $moto = document.getElementById('moto');
+  var $avanzar = document.getElementById('avanzar');
+  var $reiniciar = document.getElementById('reiniciar');
+
+  function pintar() {
+    var paso = PASOS[actual];
+
+    $titulo.textContent = paso.titulo;
+    $texto.textContent = paso.texto;
+    $globo.textContent = paso.globo;
+    $detras.innerHTML = paso.detras;
+
+    var destino = RUTA[paso.punto];
+    $moto.style.transform = 'translate(' + destino.x + 'px, ' + destino.y + 'px)';
+
+    /* La lista de pasos: lo hecho en verde, lo actual en azul, lo que falta
+       en gris. Se vuelve a dibujar entera porque son seis. */
+    var html = '';
+    for (var i = 0; i < PASOS.length; i++) {
+      var hecho = i <= actual;
+      var esActual = i === actual;
+      html += '<div class="paso" data-hecho="' + hecho + '" data-actual="' + esActual + '">' +
+                '<span class="punto" aria-hidden="true">' + (hecho && !esActual ? '&#10003;' : '') + '</span>' +
+                '<span class="que">' + PASOS[i].titulo +
+                  (hecho ? '<span class="cuando">' + PASOS[i].hora + '</span>' : '') +
+                '</span>' +
+              '</div>';
+    }
+    $pasos.innerHTML = html;
+
+    $avanzar.disabled = actual >= PASOS.length - 1;
+    $avanzar.textContent = actual >= PASOS.length - 1 ? 'Pedido entregado' : 'Adelantar un paso';
+  }
+
+  $avanzar.addEventListener('click', function () {
+    if (actual < PASOS.length - 1) {
+      actual++;
+      pintar();
+    }
+  });
+
+  $reiniciar.addEventListener('click', function () {
+    actual = 0;
+    pintar();
+  });
+
+  pintar();
+</script>
