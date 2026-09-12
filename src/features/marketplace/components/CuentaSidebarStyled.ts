@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
 // ── Cambiar de cuenta y cerrar sesión ──
@@ -50,6 +51,41 @@ export const CuentaSelect = styled.select`
  * Va sin relleno de color: es una salida, no la acción principal de la
  * pantalla, y pintarla como un botón primario invitaría a tocarla de más.
  */
+/**
+ * Entrar, cuando todavía no hay sesión.
+ *
+ * Antes el bloque entero desaparecía sin sesión, y el menú quedaba sin
+ * ninguna forma de iniciarla: había que saber que el acceso está en el
+ * ícono de arriba a la derecha. Este botón lo pone donde ya se lo busca.
+ */
+export const CuentaEntrar = styled(Link)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  width: 100%;
+  min-height: 2.5rem;
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid ${({ theme }) => theme.color.brand};
+  background: ${({ theme }) => theme.color.brand};
+  color: ${({ theme }) => theme.color.onPrimary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.color.brandHover};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.primary};
+    outline-offset: 2px;
+  }
+`;
+
 export const CuentaSalir = styled.button`
   display: flex;
   align-items: center;

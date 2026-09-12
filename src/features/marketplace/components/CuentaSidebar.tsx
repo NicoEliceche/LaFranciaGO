@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Repeat2 } from 'lucide-react';
+import { LogIn, LogOut, Repeat2 } from 'lucide-react';
 
 import { useSesion } from '../sessionStore';
 import {
   CuentaBloque,
+  CuentaEntrar,
   CuentaEtiqueta,
   CuentaSalir,
   CuentaSelect,
@@ -50,8 +51,18 @@ export function CuentaSidebar({ onNavegar }: Props) {
   const navigate = useNavigate();
   const [cambiando, setCambiando] = useState(false);
 
+  /* Sin sesión el bloque no desaparece: ofrece entrar. Antes se escondía
+     entero y el menú quedaba sin ninguna forma de iniciar sesión, salvo
+     saber que el acceso está en el ícono de arriba a la derecha. */
   if (!conectado || !usuario) {
-    return null;
+    return (
+      <CuentaBloque>
+        <CuentaEntrar to="/ingresar" onClick={() => onNavegar?.()}>
+          <LogIn size={16} aria-hidden="true" />
+          Iniciar sesión
+        </CuentaEntrar>
+      </CuentaBloque>
+    );
   }
 
   const roles = usuario.roles ?? ['cliente'];
