@@ -1,0 +1,1490 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recorrido LaFranciaGO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+
+<style>
+  /* Misma paleta que la aplicación: el recorrido tiene que parecerse a lo
+     que el cliente va a ver de verdad, no a una maqueta aparte. */
+  :root {
+    --marca: #0047E7;
+    --marca-suave: #EAF1FF;
+    --fondo: #F5F7FB;
+    --fondo-alt: #EEF3FA;
+    --superficie: #FFFFFF;
+    --borde: #D7E0ED;
+    --texto: #0B1020;
+    --texto-medio: #465067;
+    --texto-suave: #6B7280;
+    --ok: #0F9D58;
+    --ok-fondo: #E6F4EC;
+    --alerta: #B45309;
+    --alerta-fondo: #FDF0DC;
+    --baja: #B91C1C;
+    --baja-fondo: #FCEAEA;
+    --sombra: 0 1px 2px rgba(5, 8, 22, 0.06);
+    --sombra-fuerte: 0 8px 24px rgba(5, 8, 22, 0.12);
+    --calle: #E3E9F2;
+    --mapa: #F0F4F9;
+    --manzana: #E8EEF6;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --marca: #5B8CFF;
+      --marca-suave: #16213F;
+      --fondo: #050816;
+      --fondo-alt: #0B1020;
+      --superficie: #0F1730;
+      --borde: #1E2A47;
+      --texto: #F3F6FC;
+      --texto-medio: #A8B4CC;
+      --texto-suave: #8492AD;
+      --ok: #34D399;
+      --ok-fondo: #10281F;
+      --alerta: #FBBF24;
+      --alerta-fondo: #2A2010;
+      --baja: #F87171;
+      --baja-fondo: #2A1315;
+      --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
+      --sombra-fuerte: 0 8px 24px rgba(0, 0, 0, 0.5);
+      --calle: #16203A;
+      --mapa: #0B1020;
+      --manzana: #121C33;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --marca: #5B8CFF;
+    --marca-suave: #16213F;
+    --fondo: #050816;
+    --fondo-alt: #0B1020;
+    --superficie: #0F1730;
+    --borde: #1E2A47;
+    --texto: #F3F6FC;
+    --texto-medio: #A8B4CC;
+    --texto-suave: #8492AD;
+    --ok: #34D399;
+    --ok-fondo: #10281F;
+    --alerta: #FBBF24;
+    --alerta-fondo: #2A2010;
+    --baja: #F87171;
+    --baja-fondo: #2A1315;
+    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --sombra-fuerte: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --calle: #16203A;
+    --mapa: #0B1020;
+    --manzana: #121C33;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .hoja {
+    max-width: 66rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.25rem 3rem;
+  }
+
+  /* ── Encabezado ── */
+
+  .portada {
+    display: grid;
+    gap: 0.35rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 2px solid var(--texto);
+  }
+
+  .marca {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--marca);
+  }
+
+  h1 {
+    margin: 0;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: clamp(1.6rem, 4.5vw, 2.1rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .bajada {
+    margin: 0;
+    max-width: 44rem;
+    color: var(--texto-medio);
+    font-size: 0.98rem;
+  }
+
+  /* ── Barra de secciones ──
+
+     Las cuatro etapas del recorrido. Sirve de mapa: Diego ve dónde está
+     parado y cuánto falta, en vez de avanzar a ciegas. */
+  .etapas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1.25rem;
+  }
+
+  .etapa {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--borde);
+    background: var(--superficie);
+    color: var(--texto-suave);
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+  }
+
+  .etapa:hover { border-color: var(--marca); }
+
+  .etapa[data-activa="true"] {
+    border-color: var(--marca);
+    background: var(--marca);
+    color: #fff;
+  }
+
+  .etapa .cuenta {
+    font-variant-numeric: tabular-nums;
+    opacity: 0.75;
+    font-weight: 400;
+  }
+
+  /* ── La escena: teléfono + explicación ── */
+
+  .escena {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+    align-items: start;
+  }
+
+  @media (min-width: 54rem) {
+    .escena { grid-template-columns: auto minmax(0, 1fr); }
+  }
+
+  .telefono {
+    justify-self: center;
+    width: 330px;
+    max-width: 100%;
+    padding: 0.65rem;
+    border-radius: 2.1rem;
+    border: 1px solid var(--borde);
+    background: var(--superficie);
+    box-shadow: var(--sombra-fuerte);
+  }
+
+  .pantalla {
+    overflow: hidden;
+    border-radius: 1.6rem;
+    background: var(--fondo);
+    /* Alto fijo: así el teléfono no cambia de tamaño al pasar de una
+       funcionalidad a otra, que marea más que cualquier otra cosa. */
+    height: 545px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* La barra de la aplicación. */
+  .barra {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+    padding: 0.55rem 0.85rem;
+    background: var(--marca);
+    color: #fff;
+  }
+
+  .barra .volver { font-size: 1.05rem; line-height: 1; opacity: 0.9; }
+
+  .barra b {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .barra .extremo {
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.85;
+    white-space: nowrap;
+  }
+
+  /* El lienzo de cada funcionalidad. */
+  .lienzo {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0.8rem;
+    display: grid;
+    gap: 0.55rem;
+    align-content: start;
+    scrollbar-width: thin;
+    scrollbar-color: var(--marca) transparent;
+  }
+
+  .lienzo::-webkit-scrollbar { width: 6px; }
+  .lienzo::-webkit-scrollbar-track { background: transparent; }
+  .lienzo::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--marca);
+  }
+
+  /* ── Piezas de las pantallas ── */
+
+  .tarjeta {
+    padding: 0.7rem 0.8rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--borde);
+    background: var(--superficie);
+    box-shadow: var(--sombra);
+  }
+
+  .tarjeta[data-plano="true"] { box-shadow: none; }
+
+  .fila {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .fila .crece { flex: 1 1 auto; min-width: 0; }
+
+  .titulin {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .menor {
+    color: var(--texto-suave);
+    font-size: 0.73rem;
+    line-height: 1.35;
+  }
+
+  .precio {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .miniatura {
+    flex: 0 0 auto;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 0.6rem;
+    background: var(--fondo-alt);
+    display: grid;
+    place-items: center;
+    font-size: 1.15rem;
+  }
+
+  .seccion-titulo {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0.2rem 0 0;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+    background: var(--fondo-alt);
+    color: var(--texto-suave);
+  }
+
+  .chip[data-tono="ok"] { background: var(--ok-fondo); color: var(--ok); }
+  .chip[data-tono="alerta"] { background: var(--alerta-fondo); color: var(--alerta); }
+  .chip[data-tono="baja"] { background: var(--baja-fondo); color: var(--baja); }
+  .chip[data-tono="marca"] { background: var(--marca-suave); color: var(--marca); }
+
+  .boton-falso {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 2.4rem;
+    padding: 0 0.9rem;
+    border-radius: 999px;
+    background: var(--marca);
+    color: #fff;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .boton-falso[data-tono="suave"] {
+    border: 1px solid var(--borde);
+    background: transparent;
+    color: var(--texto-medio);
+  }
+
+  .campo-falso {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .campo-falso > span {
+    color: var(--texto-suave);
+    font-size: 0.68rem;
+    font-weight: 700;
+  }
+
+  .campo-falso > div {
+    min-height: 2.3rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--borde);
+    background: var(--fondo-alt);
+    font-size: 0.8rem;
+  }
+
+  .grilla-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .metrica {
+    padding: 0.6rem 0.7rem;
+    border-radius: 0.7rem;
+    border: 1px solid var(--borde);
+    background: var(--superficie);
+  }
+
+  .metrica b {
+    display: block;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 1.2rem;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .metrica span {
+    display: block;
+    margin-top: 0.1rem;
+    color: var(--texto-suave);
+    font-size: 0.68rem;
+  }
+
+  /* Burbujas del chat. */
+  .burbuja {
+    max-width: 85%;
+    padding: 0.4rem 0.7rem;
+    border-radius: 1rem;
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+
+  .burbuja[data-propio="true"] {
+    margin-left: auto;
+    background: var(--marca);
+    border-color: var(--marca);
+    color: #fff;
+  }
+
+  .aviso-chat {
+    justify-self: center;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    background: var(--fondo-alt);
+    color: var(--texto-suave);
+    font-size: 0.68rem;
+    text-align: center;
+  }
+
+  .aviso-chat[data-tono="entra"] { background: var(--ok-fondo); color: var(--ok); }
+  .aviso-chat[data-tono="baja"] { background: var(--baja-fondo); color: var(--baja); }
+
+  /* Mapa simple, reutilizado por seguimiento y envíos. */
+  .mapa {
+    position: relative;
+    height: 150px;
+    border-radius: 0.8rem;
+    overflow: hidden;
+    border: 1px solid var(--borde);
+  }
+
+  .mapa svg { display: block; width: 100%; height: 100%; }
+
+  /* Pasos del pedido. */
+  .paso {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.1rem minmax(0, 1fr);
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .paso:last-child { padding-bottom: 0; }
+
+  .paso:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 0.47rem;
+    top: 0.95rem;
+    bottom: 0;
+    width: 2px;
+    background: var(--borde);
+  }
+
+  .paso[data-hecho="true"]:not(:last-child)::before { background: var(--ok); }
+
+  .punto {
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.18rem;
+    border-radius: 50%;
+    border: 2px solid var(--borde);
+    background: var(--superficie);
+  }
+
+  .paso[data-hecho="true"] .punto {
+    border-color: var(--ok);
+    background: var(--ok);
+  }
+
+  .paso[data-actual="true"] .punto {
+    border-color: var(--marca);
+    background: var(--marca);
+    box-shadow: 0 0 0 3px var(--marca-suave);
+  }
+
+  .paso .que { font-size: 0.78rem; font-weight: 700; line-height: 1.35; }
+  .paso[data-hecho="false"] .que { color: var(--texto-suave); font-weight: 400; }
+
+  /* ── Panel de la derecha ── */
+
+  .panel { display: grid; gap: 0.9rem; align-content: start; }
+
+  .ficha {
+    display: grid;
+    gap: 0.45rem;
+    padding: 1.1rem 1.25rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--borde);
+    background: var(--superficie);
+    box-shadow: var(--sombra);
+  }
+
+  .ficha .quien {
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--marca);
+  }
+
+  .ficha h2 {
+    margin: 0;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 1.3rem;
+    line-height: 1.15;
+  }
+
+  .ficha p {
+    margin: 0;
+    color: var(--texto-medio);
+    font-size: 0.95rem;
+  }
+
+  .detras {
+    display: grid;
+    gap: 0.4rem;
+    padding: 1rem 1.25rem;
+    border-radius: 0.9rem;
+    border-left: 3px solid var(--marca);
+    background: var(--fondo-alt);
+  }
+
+  .detras h3 {
+    margin: 0;
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+  }
+
+  .detras p {
+    margin: 0;
+    color: var(--texto-medio);
+    font-size: 0.9rem;
+  }
+
+  .detras b { color: var(--texto); }
+
+  /* ── Paginado ── */
+
+  .paginado {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--borde);
+  }
+
+  .paginado button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 2.6rem;
+    padding: 0 1.1rem;
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+    background: var(--superficie);
+    color: var(--texto);
+    font-family: "Rubik", system-ui, sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 160ms ease, border-color 160ms ease;
+  }
+
+  .paginado button[data-principal="true"] {
+    border-color: var(--marca);
+    background: var(--marca);
+    color: #fff;
+  }
+
+  .paginado button:hover:not(:disabled) { border-color: var(--marca); }
+
+  .paginado button:disabled { opacity: 0.4; cursor: default; }
+
+  .paginado button:focus-visible {
+    outline: 2px solid var(--marca);
+    outline-offset: 2px;
+  }
+
+  .contador {
+    flex: 1 1 auto;
+    text-align: center;
+    color: var(--texto-suave);
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .contador b { color: var(--texto); }
+
+  /* La barra de avance, fina, debajo del paginado. */
+  .avance {
+    height: 3px;
+    margin-top: 0.9rem;
+    border-radius: 999px;
+    background: var(--borde);
+    overflow: hidden;
+  }
+
+  .avance > i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--marca);
+    transition: width 240ms ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .avance > i { transition: none; }
+  }
+
+  .pie {
+    margin-top: 1.5rem;
+    color: var(--texto-suave);
+    font-size: 0.82rem;
+  }
+
+  @media (max-width: 46rem) {
+    body { font-size: 15px; }
+    .hoja { padding: 1.25rem 1rem 2.5rem; }
+    .paginado { flex-wrap: wrap; }
+    .contador { order: -1; flex-basis: 100%; margin-bottom: 0.3rem; }
+    .paginado button { flex: 1 1 auto; justify-content: center; }
+  }
+</style>
+
+<div class="hoja">
+
+  <header class="portada">
+    <div class="marca">LaFranciaGO · Recorrido</div>
+    <h1>Todo lo que hace la aplicación</h1>
+    <p class="bajada">
+      Una funcionalidad por pantalla, en el orden en que se usan: primero el
+      vecino que compra, después el comercio, el delivery y el flete. Pasá con
+      los botones de abajo.
+    </p>
+  </header>
+
+  <nav class="etapas" id="etapas" aria-label="Etapas del recorrido"></nav>
+
+  <div class="escena">
+    <div class="telefono">
+      <div class="pantalla">
+        <div class="barra">
+          <span class="volver" aria-hidden="true">&lsaquo;</span>
+          <b id="barra-titulo">—</b>
+          <span class="extremo" id="barra-extremo"></span>
+        </div>
+        <div class="lienzo" id="lienzo"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ficha">
+        <span class="quien" id="ficha-quien">—</span>
+        <h2 id="ficha-titulo">—</h2>
+        <p id="ficha-texto">—</p>
+      </div>
+
+      <div class="detras">
+        <h3>Qué pasa por detrás</h3>
+        <p id="ficha-detras">—</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="paginado">
+    <button type="button" id="anterior">&larr; Anterior</button>
+    <span class="contador">
+      <b id="pos">1</b> de <span id="total">0</span> · <span id="nombre-etapa"></span>
+    </span>
+    <button type="button" id="siguiente" data-principal="true">Siguiente &rarr;</button>
+  </div>
+
+  <div class="avance"><i id="barra-avance" style="width:0%"></i></div>
+
+  <p class="pie">
+    Las pantallas son una reproducción de la aplicación real, con datos de
+    ejemplo de comercios de La Francia.
+  </p>
+
+</div>
+
+<script>
+
+/* Las pantallas del recorrido.
+
+   Cada una tiene: a qué etapa pertenece, qué dice la barra del teléfono, el
+   dibujo de la pantalla, y la explicación de la derecha. Van en el orden en
+   que se usan de verdad, que es el que menos marea a quien mira. */
+
+var P = [];
+
+function agregar(etapa, barra, extremo, titulo, texto, detras, pantalla) {
+  P.push({ etapa: etapa, barra: barra, extremo: extremo, titulo: titulo,
+           texto: texto, detras: detras, pantalla: pantalla });
+}
+
+/* Atajos, para no repetir marcado en cada pantalla. */
+function tarjeta(interior, plano) {
+  return '<div class="tarjeta"' + (plano ? ' data-plano="true"' : '') + '>' + interior + '</div>';
+}
+
+function fila(izq, der) {
+  return '<div class="fila">' + izq + (der ? '<span class="precio">' + der + '</span>' : '') + '</div>';
+}
+
+function producto(emoji, nombre, detalle, precio) {
+  return tarjeta(
+    '<div class="fila">' +
+      '<span class="miniatura">' + emoji + '</span>' +
+      '<span class="crece"><span class="titulin">' + nombre + '</span>' +
+      '<div class="menor">' + detalle + '</div></span>' +
+      '<span class="precio">' + precio + '</span>' +
+    '</div>'
+  );
+}
+
+function seccion(t) { return '<p class="seccion-titulo">' + t + '</p>'; }
+function menor(t) { return '<div class="menor">' + t + '</div>'; }
+
+function boton(t, tono) {
+  return '<div class="boton-falso"' + (tono ? ' data-tono="' + tono + '"' : '') + '>' + t + '</div>';
+}
+
+function chip(t, tono) {
+  return '<span class="chip"' + (tono ? ' data-tono="' + tono + '"' : '') + '>' + t + '</span>';
+}
+
+function campo(etiqueta, valor) {
+  return '<label class="campo-falso">' + (etiqueta ? '<span>' + etiqueta + '</span>' : '') +
+         '<div>' + valor + '</div></label>';
+}
+
+function metrica(valor, etiqueta) {
+  return '<div class="metrica"><b>' + valor + '</b><span>' + etiqueta + '</span></div>';
+}
+
+/* El mapa, con el recorrido y los dos extremos. */
+function mapa(xMoto, yMoto) {
+  return '<div class="mapa"><svg viewBox="0 0 300 150" role="img" aria-label="Mapa del recorrido">' +
+    '<rect width="300" height="150" fill="var(--mapa)"/>' +
+    '<g fill="var(--manzana)">' +
+      '<rect x="12" y="12" width="80" height="40" rx="3"/>' +
+      '<rect x="112" y="12" width="90" height="40" rx="3"/>' +
+      '<rect x="222" y="12" width="66" height="40" rx="3"/>' +
+      '<rect x="12" y="72" width="80" height="36" rx="3"/>' +
+      '<rect x="112" y="72" width="90" height="36" rx="3"/>' +
+      '<rect x="222" y="72" width="66" height="36" rx="3"/>' +
+    '</g>' +
+    '<g stroke="var(--calle)" stroke-width="8" stroke-linecap="round">' +
+      '<line x1="0" y1="62" x2="300" y2="62"/>' +
+      '<line x1="0" y1="120" x2="300" y2="120"/>' +
+      '<line x1="102" y1="0" x2="102" y2="150"/>' +
+      '<line x1="212" y1="0" x2="212" y2="150"/>' +
+    '</g>' +
+    '<path d="M 50 32 L 102 32 L 102 62 L 212 62 L 212 120 L 258 120" fill="none" ' +
+      'stroke="var(--marca)" stroke-width="2.5" stroke-dasharray="5 4" opacity="0.55"/>' +
+    '<circle cx="50" cy="32" r="7" fill="var(--superficie)" stroke="var(--texto-suave)" stroke-width="2"/>' +
+    '<text x="50" y="35" text-anchor="middle" font-size="7">🏪</text>' +
+    '<circle cx="258" cy="120" r="7" fill="var(--superficie)" stroke="var(--ok)" stroke-width="2"/>' +
+    '<text x="258" y="123" text-anchor="middle" font-size="7">🏠</text>' +
+    '<g transform="translate(' + xMoto + ',' + yMoto + ')">' +
+      '<circle r="9" fill="var(--marca)" opacity="0.22"/>' +
+      '<circle r="6" fill="var(--marca)" stroke="#fff" stroke-width="2"/>' +
+    '</g>' +
+  '</svg></div>';
+}
+
+function paso(titulo, hecho, actual) {
+  return '<div class="paso" data-hecho="' + hecho + '" data-actual="' + (actual || false) + '">' +
+    '<span class="punto"></span><span class="que">' + titulo + '</span></div>';
+}
+
+/* ══════════ 1. EL VECINO QUE COMPRA ══════════ */
+
+agregar('cliente', 'Entrar a LaFranciaGO', '', 'Entrar a la aplicación',
+  'Con correo y contraseña, o directo con Google. Si se olvida la contraseña, la recupera por mail.',
+  'Una misma persona puede ser <b>vecino y comercio a la vez</b> y cambiar de uno a otro sin volver a entrar. Las contraseñas se guardan cifradas y hay límite de intentos.',
+  boton('Continuar con Google') +
+  '<div class="menor" style="text-align:center">o con tu email</div>' +
+  campo('Email', 'vecina@lafrancia.com') +
+  campo('Contraseña', '••••••••') +
+  boton('Entrar') +
+  '<div class="menor" style="text-align:center">¿Olvidaste tu contraseña?</div>'
+);
+
+agregar('cliente', 'LaFranciaGO', 'Av. San Martín 123', 'La portada',
+  'Lo primero que ve: los rubros del pueblo y las ofertas que hay hoy en todos los comercios.',
+  'Las ofertas salen de <b>todos los negocios a la vez</b>, no de uno solo. El que carga una promoción aparece acá sin que nadie la tenga que aprobar.',
+  seccion('Categorías') +
+  '<div class="grilla-2">' +
+    tarjeta('<div style="text-align:center"><div style="font-size:1.4rem">🥩</div><span class="menor">Carnicería</span></div>', true) +
+    tarjeta('<div style="text-align:center"><div style="font-size:1.4rem">🥬</div><span class="menor">Verdulería</span></div>', true) +
+    tarjeta('<div style="text-align:center"><div style="font-size:1.4rem">🥖</div><span class="menor">Panadería</span></div>', true) +
+    tarjeta('<div style="text-align:center"><div style="font-size:1.4rem">🧃</div><span class="menor">Almacén</span></div>', true) +
+  '</div>' +
+  seccion('Destacados') +
+  producto('🥩', 'Asado de tira', 'Carnicería Central', '$10.350') +
+  producto('🧴', 'Combo shampoo', 'Farmacia Centro', '$6.900')
+);
+
+agregar('cliente', 'Carnicería Central', 'Abierto', 'El catálogo del comercio',
+  'Los productos de cada negocio, agrupados por sección, con las ofertas marcadas.',
+  'Arriba dice <b>si está abierto ahora</b>, según los horarios que cargó el comercio. Fuera de hora figura cerrado y no le entran pedidos.',
+  tarjeta('<div class="fila"><span class="miniatura">🏪</span><span class="crece">' +
+    '<span class="titulin">Carnicería Central</span>' +
+    menor('Lun a sáb 08:00 – 13:00 / 17:00 – 21:00') +
+    '</span>' + chip('Abierto', 'ok') + '</div>') +
+  seccion('Carne vacuna') +
+  producto('🥩', 'Asado de tira', 'por kilo', '$11.500') +
+  producto('🥩', 'Milanesas de ternera', 'por kilo', '$13.800') +
+  producto('🍗', 'Pollo entero', 'por unidad', '$8.200')
+);
+
+agregar('cliente', 'Buscar', '', 'El buscador',
+  'Busca por comercio, por rubro o por producto, y ordena por cercanía a donde está la persona.',
+  'Encuentra <b>aunque se escriba sin acentos</b>: buscar "panaderia" trae "Panadería". Es lo que evita que alguien no encuentre un negocio que sí existe.',
+  campo('Buscar', '🔍 pan') +
+  seccion('Comercios') +
+  tarjeta('<div class="fila"><span class="miniatura">🥖</span><span class="crece">' +
+    '<span class="titulin">Panadería La Esquina</span>' + menor('A 400 m · Abierto') + '</span></div>') +
+  seccion('Productos') +
+  producto('🥖', 'Pan francés', 'Panadería La Esquina · por kilo', '$3.200') +
+  producto('🥐', 'Facturas', 'Panadería La Esquina · docena', '$7.400')
+);
+
+agregar('cliente', 'Asado de tira', '', 'El detalle del producto',
+  'Las fotos, el precio y de qué comercio es. Abajo, el mismo producto en otros negocios del pueblo.',
+  'La <b>comparación de precios</b> hace que el vecino elija con información. Un comercio que cobra de más lo ve, y eso empuja los precios solo.',
+  tarjeta('<div style="text-align:center;font-size:2.4rem">🥩</div>', true) +
+  '<span class="titulin">Asado de tira</span>' +
+  '<div class="fila"><span class="precio" style="font-size:1.2rem">$10.350</span>' +
+  chip('-10%', 'baja') + '</div>' +
+  menor('Carnicería Central · por kilo') +
+  boton('Agregar al carrito') +
+  seccion('En otros comercios') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Carnicería del Pueblo</span>' +
+    menor('A 900 m') + '</span><span class="precio">$12.100</span></div>')
+);
+
+agregar('cliente', 'Favoritos', '3 guardados', 'Favoritos',
+  'Un corazón en cada comercio, y una pantalla con todo lo guardado para volver rápido.',
+  'Los favoritos <b>viajan con la cuenta</b>: se guardan en el servidor, no en el teléfono. Quien entra desde otro aparato los encuentra igual.',
+  seccion('Tus comercios') +
+  tarjeta('<div class="fila"><span class="miniatura">🥩</span><span class="crece">' +
+    '<span class="titulin">Carnicería Central</span>' + menor('Abierto · a 600 m') + '</span>❤️</div>') +
+  tarjeta('<div class="fila"><span class="miniatura">🥖</span><span class="crece">' +
+    '<span class="titulin">Panadería La Esquina</span>' + menor('Abierto · a 400 m') + '</span>❤️</div>') +
+  tarjeta('<div class="fila"><span class="miniatura">🧃</span><span class="crece">' +
+    '<span class="titulin">Almacén Juan</span>' + menor('Cerrado · abre 17:00') + '</span>❤️</div>')
+);
+
+agregar('cliente', 'Mi carrito', '3 productos', 'El carrito',
+  'Se pide como se pide de verdad: medio kilo de pan, una docena de facturas, dos gaseosas.',
+  'Cada rubro tiene <b>su propia forma de vender</b>. La carnicería va por kilo y medio kilo, la panadería por docena, el almacén por unidad. No es un número suelto para todo.',
+  producto('🥩', 'Asado de tira', '1 kg', '$10.350') +
+  producto('🥖', 'Pan francés', '½ kg', '$1.600') +
+  producto('🥐', 'Facturas', '1 docena', '$7.400') +
+  tarjeta(
+    fila('<span class="crece menor">Subtotal</span>', '$19.350') +
+    fila('<span class="crece menor">Envío</span>', '$1.200') +
+    fila('<span class="crece titulin">Total</span>', '$20.550')
+  )
+);
+
+agregar('cliente', 'Cómo llega', '', 'Elegir cómo llega el pedido',
+  'Como venga, todo junto en auto, o partido en varias entregas para recibir antes. Cada opción con su precio.',
+  'La aplicación <b>calcula cuánto ocupa el pedido</b> y sabe si entra en una moto o necesita un auto. Si no entra, se parte solo: el vecino ve cuántos envíos son antes de pagar.',
+  seccion('¿Cómo preferís recibirlo?') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Como venga</span>' +
+    menor('El primero que pueda llevarlo') + '</span><span class="precio">$1.200</span></div>') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Todo junto en auto</span>' +
+    menor('Una sola entrega') + '</span><span class="precio">$1.800</span></div>') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Partido en dos</span>' +
+    menor('Recibís antes lo que ya está listo') + '</span><span class="precio">$2.400</span></div>')
+);
+
+agregar('cliente', '¿Dónde entregamos?', '', 'Las direcciones guardadas',
+  'Se marca el punto exacto en un mapa, o se usa la ubicación del teléfono. Quedan guardadas con nombre.',
+  'El punto en el mapa importa más que la calle: en el pueblo <b>hay casas sin número</b>, y el repartidor necesita saber a cuál tocar.',
+  seccion('Tus direcciones') +
+  tarjeta('<div class="fila"><span class="miniatura">🏠</span><span class="crece">' +
+    '<span class="titulin">Casa</span>' + menor('Av. San Martín 123') + '</span>' + chip('Elegida', 'marca') + '</div>') +
+  tarjeta('<div class="fila"><span class="miniatura">🏢</span><span class="crece">' +
+    '<span class="titulin">Trabajo</span>' + menor('Ruta 19 km 115') + '</span></div>') +
+  mapa(102, 62) +
+  boton('+ Agregar una dirección', 'suave')
+);
+
+agregar('cliente', 'Pagar', 'Total $20.550', 'Pagar el pedido',
+  'Con tarjeta, dinero en cuenta, o en efectivo cuando llega. El pago va por Mercado Pago.',
+  'Los precios <b>se calculan en el servidor</b>, no en el teléfono: mandar un precio falso desde el navegador no cambia lo que se cobra. Está probado.',
+  seccion('¿Cómo pagás?') +
+  tarjeta('<div class="fila"><span class="miniatura">💳</span><span class="crece">' +
+    '<span class="titulin">Tarjeta o dinero en cuenta</span>' + menor('Con Mercado Pago') + '</span>' +
+    chip('Elegido', 'marca') + '</div>') +
+  tarjeta('<div class="fila"><span class="miniatura">💵</span><span class="crece">' +
+    '<span class="titulin">Efectivo al recibir</span>' + menor('Le pagás al repartidor') + '</span></div>') +
+  tarjeta(fila('<span class="crece titulin">Total</span>', '$20.550')) +
+  boton('Confirmar pedido')
+);
+
+agregar('cliente', 'Seguir mi pedido', '#251562', 'El seguimiento en vivo',
+  'El mapa con el repartidor moviéndose, y en qué punto va el pedido de punta a punta.',
+  'El punto se mueve con <b>la ubicación que manda el teléfono de quien reparte</b>. El mismo mapa lo ve el comercio: nadie llama a preguntar dónde está el pedido.',
+  mapa(212, 62) +
+  '<span class="titulin">En camino</span>' +
+  menor('Va para tu dirección.') +
+  '<div>' +
+    paso('Preparando tu pedido', true) +
+    paso('Listo para retirar', true) +
+    paso('Lo toma un repartidor', true) +
+    paso('Lo retiró del comercio', true) +
+    paso('En camino', true, true) +
+    paso('Entregado', false) +
+  '</div>'
+);
+
+agregar('cliente', 'Chat del pedido', 'Almacén Juan', 'El chat',
+  'Habla con el comercio, y cuando alguien toma el pedido se suma a la misma conversación.',
+  'El chat <b>arranca entre vecino y comercio</b>. Quien reparte entra al tomarlo y queda avisado en la conversación; si se baja, deja de verlo. La venta no se va a WhatsApp.',
+  '<div class="aviso-chat">Ayer</div>' +
+  '<div class="burbuja">Hola! Ya tenemos tu pedido, lo armamos en un rato.</div>' +
+  '<div class="burbuja" data-propio="true">Puede ser sin sal?</div>' +
+  '<div class="burbuja" data-propio="true">Gracias!</div>' +
+  '<div class="aviso-chat" data-tono="entra">Bruno se sumó al chat al tomar el pedido</div>' +
+  '<div class="burbuja">Buenas! Ya lo retiré, salgo para allá.</div>' +
+  '<div class="aviso-chat">El pedido salió del comercio</div>' +
+  campo('', 'Escribí un mensaje')
+);
+
+agregar('cliente', '¿Algo más?', '', 'Pedir algo más en el camino',
+  '"Ya que vas al kiosco, traeme un chocolate". Quien lo lleva dice si puede, lo compra y muestra cuánto salió.',
+  'El extra se paga aparte y <b>con la foto del ticket a la vista</b>: el vecino ve el precio real de lo que compró quien reparte, no un número dicho de palabra.',
+  tarjeta(
+    '<div class="menor">📦 ¿Necesitás agregar algo al pedido?</div>' +
+    '<div class="titulin" style="margin-top:0.3rem">Una gaseosa de dos litros</div>' +
+    '<div style="margin-top:0.4rem">' + chip('Comprado · $2.400', 'ok') + '</div>' +
+    '<div style="margin-top:0.5rem;text-align:center;font-size:1.6rem">🧾</div>' +
+    menor('Foto del ticket')
+  ) +
+  tarjeta(
+    '<div class="titulin">Un paquete de yerba</div>' +
+    '<div style="margin-top:0.4rem">' + chip('No lo pudieron traer', 'baja') + '</div>' +
+    menor('Ya estoy en camino a tu dirección')
+  )
+);
+
+agregar('cliente', 'Mis pedidos', '1 en curso', 'El historial y cancelar',
+  'Todos los pedidos con su estado. Mientras no haya salido del comercio, se puede dar de baja.',
+  'Cancelar se puede <b>hasta que el pedido sale del comercio</b>: después queda en la calle y se arregla por el chat. Lo que se había reservado vuelve al stock.',
+  tarjeta('<div class="fila"><span class="miniatura">🥩</span><span class="crece">' +
+    '<span class="titulin">Carnicería Central</span>' + menor('Hoy 14:02 · 3 productos') + '</span>' +
+    '<span class="precio">$20.550</span></div>' +
+    '<div style="margin-top:0.4rem">' + chip('En proceso', 'marca') + '</div>') +
+  boton('Ver dónde va', 'suave') +
+  boton('Cancelar pedido', 'suave') +
+  tarjeta('<div class="fila"><span class="miniatura">🥖</span><span class="crece">' +
+    '<span class="titulin">Panadería La Esquina</span>' + menor('Ayer · 2 productos') + '</span>' +
+    '<span class="precio">$9.000</span></div>' +
+    '<div style="margin-top:0.4rem">' + chip('Entregado', 'ok') + '</div>')
+);
+
+agregar('cliente', '¿Cómo te fue?', '', 'Puntuar el pedido',
+  'Cuando llega, el vecino le pone una nota al negocio y otra a quien se lo trajo, y deja un comentario si quiere.',
+  'Son <b>dos notas separadas</b> porque son dos trabajos: el negocio puede estar impecable y la entrega llegar tarde. El promedio queda a la vista del próximo que compre.',
+  '<span class="titulin">Carnicería Central</span>' +
+  '<div style="font-size:1.4rem;letter-spacing:0.2rem">⭐⭐⭐⭐⭐</div>' +
+  menor('Excelente') +
+  '<span class="titulin" style="margin-top:0.4rem">Bruno, que te lo trajo</span>' +
+  '<div style="font-size:1.4rem;letter-spacing:0.2rem">⭐⭐⭐⭐☆</div>' +
+  menor('Muy bueno') +
+  campo('¿Querés contar algo más?', 'Todo perfecto, muy amables.') +
+  boton('Enviar puntaje')
+);
+
+agregar('cliente', 'Mandados', '', 'Los mandados',
+  'Encargos que no son de ningún comercio: buscar una garrafa, llevar un paquete, hacer un trámite.',
+  'Es el caso que <b>no entra en el catálogo de nadie</b>. Se describe qué hace falta, se coordina por chat, y quien lo toma cobra el viaje.',
+  tarjeta(
+    '<span class="titulin">¿Qué necesitás?</span>' +
+    menor('Contanos qué hay que hacer y dónde')
+  ) +
+  campo('El mandado', 'Buscar una garrafa en la estación de servicio') +
+  campo('¿Dónde?', 'Ruta 19 km 115') +
+  campo('¿A dónde lo llevamos?', 'Av. San Martín 123') +
+  boton('Pedir el mandado')
+);
+
+agregar('cliente', 'Notificaciones', '3 sin leer', 'Los avisos',
+  'Le llega un aviso cuando lo están preparando, cuando está listo, cuando sale y cuando llega.',
+  'Los avisos son <b>los mismos que mueven el mapa</b>: cuando el comercio marca "está listo", el vecino se entera al instante sin tener que entrar a mirar.',
+  tarjeta('<div class="fila"><span class="miniatura">📦</span><span class="crece">' +
+    '<span class="titulin">Tu pedido está en camino</span>' + menor('Bruno salió hacia tu dirección · hace 2 min') + '</span></div>') +
+  tarjeta('<div class="fila"><span class="miniatura">🏪</span><span class="crece">' +
+    '<span class="titulin">¡Tu pedido está listo!</span>' + menor('Carnicería Central · hace 12 min') + '</span></div>') +
+  tarjeta('<div class="fila"><span class="miniatura">🏷️</span><span class="crece">' +
+    '<span class="titulin">Nueva oferta cerca tuyo</span>' + menor('Almacén Juan · hace 1 h') + '</span></div>')
+);
+
+/* ══════════ 2. EL COMERCIO ══════════ */
+
+agregar('comercio', 'Sumá tu negocio', '', 'Darse de alta',
+  'El comercio se registra con sus datos y espera que administración lo apruebe.',
+  'El CUIT se acomoda solo mientras se escribe y el rubro se elige de <b>una lista de 64 rubros argentinos</b>. La dirección se marca en el mapa, no se escribe a mano.',
+  campo('Nombre del negocio', 'Almacén Juan') +
+  campo('CUIT', '30-71234567-9') +
+  campo('Rubro', 'Almacén y bebidas') +
+  campo('Dirección', 'Centro · La Francia') +
+  boton('Enviar mi solicitud') +
+  menor('Te avisamos por mail cuando esté aprobado.')
+);
+
+agregar('comercio', 'Mi negocio', 'Almacén Juan', 'Cómo viene el negocio',
+  'Las ventas de hoy y de la semana, el ticket promedio y lo que más se vendió.',
+  'Cada número <b>se compara contra el período anterior</b>: vender $180.000 no dice nada solo, pero saber que la semana pasada fueron $150.000 sí.',
+  '<div class="grilla-2">' +
+    metrica('$48.200', 'Vendiste hoy') +
+    metrica('$312.500', 'Esta semana') +
+    metrica('$12.400', 'Ticket promedio') +
+    metrica('26', 'Pedidos') +
+  '</div>' +
+  seccion('Lo que más se vendió') +
+  tarjeta('<div class="fila"><span class="crece">Coca Cola 2,25 L</span><span class="precio">18</span></div>' +
+          '<div class="fila"><span class="crece">Pan francés</span><span class="precio">14</span></div>' +
+          '<div class="fila"><span class="crece">Yerba 1 kg</span><span class="precio">11</span></div>')
+);
+
+agregar('comercio', 'Mis productos', '41 cargados', 'Cargar los productos',
+  'Alta, edición y baja, con hasta cinco fotos y un video por producto, y cómo se vende cada uno.',
+  'Las fotos <b>se achican solas antes de subirse</b>: el comercio saca la foto con el teléfono y no gasta sus datos ni espera dos minutos por cada producto.',
+  tarjeta('<div class="fila"><span class="miniatura">🧃</span><span class="crece">' +
+    '<span class="titulin">Coca Cola 2,25 L</span>' + menor('Por unidad · 5 fotos') + '</span>' +
+    '<span class="precio">$2.975</span></div>') +
+  tarjeta('<div class="fila"><span class="miniatura">🧉</span><span class="crece">' +
+    '<span class="titulin">Yerba La Merced 1 kg</span>' + menor('Por unidad · 2 fotos') + '</span>' +
+    '<span class="precio">$6.800</span></div>') +
+  boton('+ Cargar un producto')
+);
+
+agregar('comercio', 'Mis promociones', '3 activas', 'Armar promociones',
+  'Tres tipos: descuento, combo y promo por cantidad. Se ven como las va a ver el cliente antes de publicar.',
+  'Las promociones <b>se cobran solas</b>: el descuento se aplica al calcular el total, no hay que acordarse de restarlo. Se apagan y prenden con un toque.',
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">20% en gaseosas</span>' +
+    menor('Descuento · hasta el domingo') + '</span>' + chip('Activa', 'ok') + '</div>') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Combo asado</span>' +
+    menor('Asado + carbón + pan') + '</span>' + chip('Activa', 'ok') + '</div>') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">3x2 en yerba</span>' +
+    menor('Por cantidad') + '</span>' + chip('Apagada') + '</div>') +
+  boton('+ Armar una promoción')
+);
+
+agregar('comercio', 'Pedidos entrantes', '4 sin preparar', 'Los pedidos que entran',
+  'Aparecen con un aviso apenas los confirman, y el comercio marca en qué punto está cada uno.',
+  'Los dos estados —<b>"empecé a prepararlo"</b> y <b>"está listo"</b>— son los que mueven todo: avisan al vecino y ponen el pedido a la vista de los repartidores.',
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">#251562 · Vecina Prueba</span>' +
+    menor('3 productos · $20.550 · efectivo') + '</span>' + chip('Nuevo', 'alerta') + '</div>' +
+    '<div style="margin-top:0.5rem">' + boton('Empecé a prepararlo') + '</div>') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">#251498 · Carlos M.</span>' +
+    menor('1 producto · $8.200 · pagado') + '</span>' + chip('Preparando', 'marca') + '</div>' +
+    '<div style="margin-top:0.5rem">' + boton('Está listo') + '</div>')
+);
+
+agregar('comercio', 'Mi negocio', 'Datos', 'Editar los datos y los horarios',
+  'El comercio corrige su dirección, teléfono y descripción, y carga cuándo atiende.',
+  'Los horarios van <b>por día y con varios tramos</b>: quien cierra al mediodía carga mañana y tarde. Fuera de hora el negocio figura cerrado y no le entran pedidos.',
+  campo('Nombre', 'Almacén Juan') +
+  campo('Teléfono', '+54 3573 400-201') +
+  campo('Pedido mínimo', '$5.000') +
+  seccion('Horarios') +
+  tarjeta('<div class="fila"><span class="crece titulin">Lunes</span></div>' +
+    '<div class="fila"><span class="menor">08:00 – 13:00</span></div>' +
+    '<div class="fila"><span class="menor">17:00 – 21:30</span></div>') +
+  tarjeta('<div class="fila"><span class="crece titulin">Domingo</span>' +
+    '<span class="menor">Cerrado</span></div>')
+);
+
+agregar('comercio', 'Stock', '', 'Llevar el stock',
+  'Cada producto tiene su cantidad, y se ajusta desde la misma lista sin entrar a ninguna pantalla.',
+  'Cuando algo se agota <b>deja de venderse solo</b> y nadie viaja al pedo. Si un pedido se cancela, lo reservado vuelve. Dejarlo vacío significa que ese comercio no lleva control.',
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Coca Cola 2,25 L</span>' +
+    menor('Stock: 24') + '</span>' + chip('Disponible', 'ok') + '</div>') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Yerba La Merced</span>' +
+    menor('Stock: 3') + '</span>' + chip('Quedan 3', 'alerta') + '</div>') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Galletitas surtidas</span>' +
+    menor('Stock: 0') + '</span>' + chip('Agotado', 'baja') + '</div>')
+);
+
+agregar('comercio', 'Conversaciones', '2 sin leer', 'Los chats con los clientes',
+  'Todas las conversaciones en una lista, con el contador de mensajes sin leer.',
+  'Es el mismo chat que ve el vecino: <b>una sola conversación por pedido</b>, con quien reparte sumándose cuando lo toma.',
+  tarjeta('<div class="fila"><span class="miniatura">👤</span><span class="crece">' +
+    '<span class="titulin">Vecina Prueba</span>' + menor('Puede ser sin sal? · hace 5 min') + '</span>' +
+    chip('2', 'marca') + '</div>') +
+  tarjeta('<div class="fila"><span class="miniatura">👤</span><span class="crece">' +
+    '<span class="titulin">Carlos M.</span>' + menor('Perfecto, gracias! · hace 1 h') + '</span></div>')
+);
+
+agregar('comercio', 'Mis envíos', 'En curso', 'El mapa de los envíos',
+  'Por dónde va cada repartidor que lleva pedidos suyos, actualizado solo.',
+  'El comercio ve <b>lo mismo que el vecino</b>. Sirve para saber si los pedidos están saliendo a tiempo sin llamar a nadie a preguntar.',
+  mapa(212, 100) +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Bruno · #251562</span>' +
+    menor('Av. San Martín 123') + '</span>' + chip('En camino', 'marca') + '</div>') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Marta · #251498</span>' +
+    menor('Ruta 19 km 115') + '</span>' + chip('Retirado', 'marca') + '</div>')
+);
+
+agregar('comercio', 'Fraccionar', '1 pendiente', 'Resolver un fraccionamiento',
+  'Cuando un repartidor pide partir un pedido que sí le entraba, lo decide el comercio.',
+  'Es <b>el freno contra el abuso</b>: si la aplicación calculó que entra en la moto, partirlo cobraría dos envíos por un viaje. Por eso lo aprueba el comercio y no el repartidor.',
+  tarjeta(
+    '<span class="titulin">Bruno pide partir el #251562</span>' +
+    menor('La aplicación calculó que sí le entra en la moto: 18 de 60 litros.') +
+    '<div style="margin-top:0.5rem">' + chip('Esperando tu respuesta', 'alerta') + '</div>' +
+    '<div style="margin-top:0.5rem">' + boton('Aprobar') + '</div>' +
+    '<div style="margin-top:0.4rem">' + boton('No hace falta', 'suave') + '</div>'
+  )
+);
+
+agregar('comercio', 'Cobrar', '', 'Cobrar en su cuenta',
+  'El comercio conecta su Mercado Pago y cobra directo, con la comisión de la plataforma ya descontada.',
+  'La plata <b>va a la cuenta del comercio</b>, no pasa por la plataforma. Cada pedido guarda por separado cuánto es mercadería y cuánto es envío.',
+  tarjeta('<div class="fila"><span class="miniatura">💳</span><span class="crece">' +
+    '<span class="titulin">Mercado Pago</span>' + menor('Conectá tu cuenta para cobrar') + '</span></div>') +
+  boton('Conectar mi cuenta') +
+  seccion('Cómo se reparte') +
+  tarjeta(
+    fila('<span class="crece menor">Mercadería</span>', '$19.350') +
+    fila('<span class="crece menor">Envío</span>', '$1.200') +
+    fila('<span class="crece titulin">Va a tu cuenta</span>', '$19.350')
+  )
+);
+
+/* ══════════ 3. EL DELIVERY ══════════ */
+
+agregar('delivery', 'Trabajá repartiendo', '', 'Registrarse como delivery',
+  'Se registra, cuenta con qué vehículo trabaja y espera la aprobación de administración.',
+  'El mismo circuito sirve para <b>delivery y fletero</b>: cambia el vehículo que declara y, con eso, qué pedidos le van a aparecer.',
+  campo('Nombre', 'Bruno Pérez') +
+  campo('Teléfono', '+54 3573 411-908') +
+  campo('¿Con qué trabajás?', 'Moto') +
+  boton('Enviar mi solicitud') +
+  menor('Te avisamos cuando esté aprobado.')
+);
+
+agregar('delivery', 'Pedidos disponibles', '3', 'Los pedidos, por cercanía',
+  'Ordenados según dónde está parado quien reparte, con la distancia a la vista.',
+  'La distancia <b>se calcula en el servidor</b>, no en el teléfono. Así el orden es el mismo para todos y nadie ve una lista distinta.',
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Almacén Juan</span>' +
+    menor('Retirás en Centro · Entregás en San Martín 123') + '</span>' +
+    chip('1,2 km', 'marca') + '</div>' +
+    '<div style="margin-top:0.4rem">' + chip('Entra', 'ok') + '</div>') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Carnicería Central</span>' +
+    menor('Retirás en Belgrano 45 · Entregás en Ruta 19') + '</span>' +
+    chip('2,8 km', 'marca') + '</div>' +
+    '<div style="margin-top:0.4rem">' + chip('2 viajes', 'alerta') + '</div>')
+);
+
+agregar('delivery', 'Detalle del pedido', '#251562', 'Mirar antes de aceptar',
+  'Qué lleva, a dónde va, cuánto ocupa y cómo paga el cliente. Recién ahí se decide tomarlo.',
+  'El botón de tomar el pedido está <b>adentro del detalle y no en la lista</b>: si el pedido es enorme y la moto es chica, quien reparte tiene que poder verlo antes de comprometerse.',
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Almacén Juan</span>' +
+    menor('#251562') + '</span>' + chip('Entra en tu moto', 'ok') + '</div>') +
+  tarjeta(
+    menor('Retirás en') + '<span class="titulin">Centro · La Francia</span>' +
+    menor('Entregás en') + '<span class="titulin">Av. San Martín 123</span>'
+  ) +
+  tarjeta(
+    fila('<span class="crece menor">3 productos</span>', '18 litros') +
+    fila('<span class="crece menor">Paga</span>', 'Efectivo') +
+    fila('<span class="crece titulin">Total</span>', '$20.550')
+  ) +
+  boton('Tomar este pedido')
+);
+
+agregar('delivery', 'Mis envíos', '1 en curso', 'Tomar y entregar',
+  'Tres pasos: retiré, salí, entregué. Cada uno avisa al vecino y al comercio.',
+  'Al marcar <b>entregado se cierra el pedido</b>, se le avisa al vecino y recién ahí puede puntuar. Si algo falla, el pedido no se cierra solo.',
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Almacén Juan · #251562</span>' +
+    menor('Av. San Martín 123 · $20.550 · efectivo') + '</span></div>' +
+    '<div style="margin-top:0.5rem">' +
+      chip('Retiré', 'ok') + ' ' + chip('Salí', 'marca') + ' ' + chip('Entregué') +
+    '</div>' +
+    '<div style="margin-top:0.5rem">' + boton('Marcar como entregado') + '</div>') +
+  boton('Ver detalle del pedido', 'suave')
+);
+
+agregar('delivery', 'Fraccionar', '', 'Partir un pedido que no entra',
+  'Si el pedido no entra en el vehículo, se parte en varios viajes automáticamente.',
+  'Si <b>no entra, se parte solo</b>. Si la aplicación calculó que sí entraba y el repartidor igual quiere partirlo, lo tiene que aprobar el comercio: eso evita cobrar dos envíos por un viaje.',
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Carnicería Central</span>' +
+    menor('92 litros · tu moto lleva 60') + '</span>' + chip('2 viajes', 'alerta') + '</div>') +
+  tarjeta(
+    '<span class="titulin">Se parte en dos entregas</span>' +
+    menor('Viaje 1: 58 litros · Viaje 2: 34 litros') +
+    '<div style="margin-top:0.4rem">' + chip('Se cobran dos envíos', 'marca') + '</div>'
+  ) +
+  boton('Pedir fraccionar', 'suave')
+);
+
+agregar('delivery', 'Cuánto ganaste', '', 'Las ganancias',
+  'Lo que ganó hoy, esta semana y desde que empezó, con el promedio por viaje.',
+  'Sin esto <b>no sabe cuánto hizo en la semana</b> ni tiene con qué reclamar si algo no cierra. Lo que gana es el envío de cada pedido que entregó.',
+  '<div class="grilla-2">' +
+    metrica('$9.600', 'Ganaste hoy') +
+    metrica('$48.300', 'Esta semana') +
+    metrica('$214.500', 'Desde que empezaste') +
+    metrica('$1.340', 'Promedio por viaje') +
+  '</div>' +
+  seccion('Lo que entregaste') +
+  tarjeta('<div class="fila"><span class="crece menor">Almacén Juan → San Martín 123</span>' +
+    '<span class="precio" style="color:var(--ok)">$1.200</span></div>' +
+    menor('12/09 · 14:26')) +
+  tarjeta('<div class="fila"><span class="crece menor">Carnicería → Ruta 19</span>' +
+    '<span class="precio" style="color:var(--ok)">$1.800</span></div>' +
+    menor('12/09 · 12:10'))
+);
+
+agregar('delivery', 'Compartir ubicación', 'Activa', 'Compartir la ubicación',
+  'Mientras trabaja, el teléfono va mandando dónde está. Eso es lo que mueve el mapa.',
+  'Sólo mientras está repartiendo: <b>al terminar el viaje deja de mandarse</b>. No es un seguimiento permanente de la persona, es del pedido.',
+  tarjeta('<div class="fila"><span class="miniatura">📍</span><span class="crece">' +
+    '<span class="titulin">Compartiendo ubicación</span>' +
+    menor('Mientras tengas un pedido en curso') + '</span>' + chip('Activa', 'ok') + '</div>') +
+  mapa(160, 62) +
+  menor('El vecino y el comercio ven este mismo punto moverse.')
+);
+
+/* ══════════ 4. EL FLETE ══════════ */
+
+agregar('flete', 'Trabajá haciendo fletes', '', 'Registrarse como fletero',
+  'Mismo circuito que el delivery, pero declara camioneta o camión.',
+  'El vehículo <b>decide qué trabajos le aparecen</b>: una camioneta lleva hasta 2.500 litros y un camión 12.000. Con eso la aplicación filtra lo que puede tomar.',
+  campo('Nombre', 'Fletes del Norte') +
+  campo('Teléfono', '+54 3573 422-115') +
+  campo('¿Con qué trabajás?', 'Camioneta') +
+  boton('Enviar mi solicitud') +
+  menor('Te avisamos cuando esté aprobado.')
+);
+
+agregar('flete', 'Fletes disponibles', '2', 'La cola separada de fletes',
+  'El fletero ve sólo fletes. Los pedidos de almacén no se le mezclan.',
+  'Un pedido <b>pasa a ser flete solo</b>, cuando el volumen no entra en un auto. Así una mudanza no aparece entre pedidos de galletitas ni al revés.',
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Mudanza · 2 ambientes</span>' +
+    menor('Centro → Barrio Los Aromos') + '</span>' + chip('480 litros', 'marca') + '</div>') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Materiales de obra</span>' +
+    menor('Corralón → Ruta 19 km 115') + '</span>' + chip('1.200 litros', 'marca') + '</div>') +
+  menor('Sólo trabajos que entran en tu camioneta.')
+);
+
+agregar('flete', '¿Cuánto cobrás?', '', 'Cotizar el flete',
+  'Un flete no tiene precio de lista: el fletero ve la distancia y pone su precio, con una nota si hace falta.',
+  'Se le muestra <b>una referencia por kilómetro</b> como punto de partida, pero el precio lo pone quien lo va a hacer: es su camioneta, su nafta y su tiempo.',
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Mudanza · 2 ambientes</span>' +
+    menor('Centro → Barrio Los Aromos') + '</span>' + chip('4,2 km', 'marca') + '</div>') +
+  campo('Tu precio', '$42.000') +
+  menor('Son 4,2 km. La referencia de la zona daría unos $6.280, pero ponés lo que quieras.') +
+  campo('¿Querés aclarar algo?', 'Lo llevo mañana temprano. Necesito una mano para cargar.') +
+  boton('Enviar mi precio')
+);
+
+agregar('flete', 'Los precios que te dieron', '3', 'El cliente elige el precio',
+  'El vecino recibe las ofertas de varios fleteros, con la nota de cada uno, y elige con cuál se queda.',
+  'Vienen <b>del más barato al más caro</b>, pero el precio no es lo único: la nota dice si lo hace hoy o si necesita una mano, y a veces eso vale más que la diferencia.',
+  tarjeta('<div class="fila"><span class="miniatura">🚚</span><span class="crece">' +
+    '<span class="titulin">Fletes del Norte</span>' + menor('4,2 km') + '</span></div>' +
+    '<div class="precio" style="font-size:1.1rem;margin-top:0.3rem">$42.000</div>' +
+    menor('Lo llevo mañana temprano. Necesito una mano para cargar.') +
+    '<div style="margin-top:0.5rem">' + boton('Elegir este precio') + '</div>') +
+  tarjeta('<div class="fila"><span class="miniatura">🚚</span><span class="crece">' +
+    '<span class="titulin">Transporte Gómez</span>' + menor('4,2 km') + '</span></div>' +
+    '<div class="precio" style="font-size:1.1rem;margin-top:0.3rem">$48.500</div>' +
+    menor('Voy hoy a la tarde con ayudante.'))
+);
+
+/* ══════════ 5. ADMINISTRACIÓN ══════════ */
+
+agregar('admin', 'Postulaciones', '4 sin revisar', 'Aprobar a quien se postula',
+  'Comercios, delivery y fleteros esperan aprobación. Se acepta, se rechaza o se piden cambios.',
+  'Quien se postula <b>recibe el aviso automático</b> con la decisión. Si se piden cambios, puede corregir y volver a mandar sin empezar de cero.',
+  tarjeta('<div class="fila"><span class="miniatura">🏪</span><span class="crece">' +
+    '<span class="titulin">Panadería La Esquina</span>' + menor('Comercio · hace 2 h') + '</span>' +
+    chip('Sin revisar', 'alerta') + '</div>' +
+    '<div style="margin-top:0.5rem">' + boton('Aprobar') + '</div>' +
+    '<div style="margin-top:0.4rem">' + boton('Pedir cambios', 'suave') + '</div>') +
+  tarjeta('<div class="fila"><span class="miniatura">🛵</span><span class="crece">' +
+    '<span class="titulin">Bruno Pérez</span>' + menor('Delivery · hace 5 h') + '</span>' +
+    chip('Sin revisar', 'alerta') + '</div>')
+);
+
+agregar('admin', 'La plataforma', '', 'Los números del negocio',
+  'Pedidos, ventas, comisión ganada y ticket promedio, comparados con el período anterior.',
+  'Es <b>la foto del negocio de Diego</b>, no la de un comercio: cuánto se movió en todo el pueblo y cuánto quedó de comisión.',
+  '<div class="grilla-2">' +
+    metrica('142', 'Pedidos del mes') +
+    metrica('$1.84 M', 'Vendido') +
+    metrica('$92.400', 'Tu comisión') +
+    metrica('$12.950', 'Ticket promedio') +
+  '</div>' +
+  seccion('Ranking de comercios') +
+  tarjeta('<div class="fila"><span class="crece">Almacén Juan</span><span class="precio">$412.800</span></div>' +
+          '<div class="fila"><span class="crece">Carnicería Central</span><span class="precio">$389.200</span></div>' +
+          '<div class="fila"><span class="crece">Panadería La Esquina</span><span class="precio">$201.500</span></div>')
+);
+
+agregar('admin', 'Necesita atención', '3', 'Lo que está trabado',
+  'Postulaciones sin revisar, pedidos que llevan más de dos horas sin repartidor, fraccionamientos sin resolver.',
+  'Es <b>la lista de lo que se está por romper</b>. Un pedido sin repartidor hace dos horas es un vecino que va a llamar enojado: mejor verlo antes.',
+  tarjeta('<div class="fila"><span class="miniatura">⏰</span><span class="crece">' +
+    '<span class="titulin">2 pedidos sin repartidor</span>' + menor('Hace más de 2 horas') + '</span>' +
+    chip('Urgente', 'baja') + '</div>') +
+  tarjeta('<div class="fila"><span class="miniatura">📋</span><span class="crece">' +
+    '<span class="titulin">4 postulaciones sin revisar</span>' + menor('La más vieja, hace 2 días') + '</span>' +
+    chip('Atender', 'alerta') + '</div>') +
+  tarjeta('<div class="fila"><span class="miniatura">✂️</span><span class="crece">' +
+    '<span class="titulin">1 fraccionamiento pendiente</span>' + menor('Esperando al comercio') + '</span></div>')
+);
+
+agregar('admin', 'Comercios', '4 activos', 'Destacar y suspender',
+  'Un comercio destacado sube en las búsquedas; uno suspendido deja de aparecer pero conserva su historial.',
+  'Suspender <b>no borra nada</b>: el comercio desaparece de las búsquedas pero sus pedidos viejos siguen ahí. Si vuelve, vuelve con todo su historial.',
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Almacén Juan</span>' +
+    menor('Vendió $412.800 este mes') + '</span>' + chip('Destacado', 'marca') + '</div>') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Carnicería Central</span>' +
+    menor('Vendió $389.200 este mes') + '</span>' + chip('Activo', 'ok') + '</div>') +
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">Kiosco 24hs</span>' +
+    menor('Sin actividad hace 40 días') + '</span>' + chip('Suspendido', 'baja') + '</div>')
+);
+
+agregar('admin', 'Reclamos', '1 sin atender', 'Los reclamos y el chat de las tres partes',
+  'Cuando algo sale mal, el comercio, quien repartió y administración hablan en el mismo lugar.',
+  'Cada mensaje <b>dice quién habla y con qué rol</b>: en un chat de dos alcanza con "yo" y "el otro", pero acá "ya lo entregué" cambia de sentido según quién lo diga. El vecino no entra: primero se define qué pasó, después se le contesta.',
+  tarjeta('<div class="fila"><span class="crece"><span class="titulin">#559677 · Almacén Juan</span>' +
+    menor('Llegó incompleto · faltaba una gaseosa') + '</span>' + chip('Sin atender', 'baja') + '</div>') +
+  '<div class="burbuja" data-propio="true">Lo mandamos completo, tengo la foto del armado</div>' +
+  '<div class="burbuja"><b style="font-size:0.66rem;color:var(--marca);display:block">Bruno · Quien repartió</b>Lo retiré cerrado, no lo abrí</div>' +
+  campo('', 'Escribí lo que pasó…') +
+  boton('Resolver y avisarle al cliente')
+);
+
+agregar('admin', 'Seguridad', '', 'Lo que protege a todos',
+  'Nadie ve ni toca los pedidos, productos o chats de otro. Los precios se calculan en el servidor.',
+  'Está <b>probado caso por caso</b>: se intentó entrar a los pedidos de otra cuenta, mandar un precio falso desde el navegador y resolver un reclamo ajeno. Las tres cosas fueron rechazadas.',
+  tarjeta('<div class="fila"><span class="miniatura">🔒</span><span class="crece">' +
+    '<span class="titulin">Cada uno ve lo suyo</span>' + menor('Verificado caso por caso') + '</span>' +
+    chip('OK', 'ok') + '</div>') +
+  tarjeta('<div class="fila"><span class="miniatura">💰</span><span class="crece">' +
+    '<span class="titulin">Los precios se calculan en el servidor</span>' +
+    menor('Un precio falso no cambia el total') + '</span>' + chip('OK', 'ok') + '</div>') +
+  tarjeta('<div class="fila"><span class="miniatura">🔑</span><span class="crece">' +
+    '<span class="titulin">Contraseñas cifradas</span>' + menor('Con límite de intentos') + '</span>' +
+    chip('OK', 'ok') + '</div>') +
+  tarjeta('<div class="fila"><span class="miniatura">📱</span><span class="crece">' +
+    '<span class="titulin">Anda en celular y computadora</span>' +
+    menor('Y se instala sin pasar por las tiendas') + '</span>' + chip('OK', 'ok') + '</div>')
+);
+
+/* ══════════ El paginado ══════════ */
+
+var ETAPAS = [
+  { id: 'cliente', nombre: 'El vecino que compra' },
+  { id: 'comercio', nombre: 'El comercio' },
+  { id: 'delivery', nombre: 'El delivery' },
+  { id: 'flete', nombre: 'El flete' },
+  { id: 'admin', nombre: 'Administración' }
+];
+
+var actual = 0;
+
+var $lienzo = document.getElementById('lienzo');
+var $barraTitulo = document.getElementById('barra-titulo');
+var $barraExtremo = document.getElementById('barra-extremo');
+var $quien = document.getElementById('ficha-quien');
+var $titulo = document.getElementById('ficha-titulo');
+var $texto = document.getElementById('ficha-texto');
+var $detras = document.getElementById('ficha-detras');
+var $pos = document.getElementById('pos');
+var $total = document.getElementById('total');
+var $nombreEtapa = document.getElementById('nombre-etapa');
+var $anterior = document.getElementById('anterior');
+var $siguiente = document.getElementById('siguiente');
+var $etapas = document.getElementById('etapas');
+var $avance = document.getElementById('barra-avance');
+
+/* Dónde empieza cada etapa, para que los botones de arriba salten ahí. */
+function primeraDe(idEtapa) {
+  for (var i = 0; i < P.length; i++) {
+    if (P[i].etapa === idEtapa) return i;
+  }
+  return 0;
+}
+
+function nombreDe(idEtapa) {
+  for (var i = 0; i < ETAPAS.length; i++) {
+    if (ETAPAS[i].id === idEtapa) return ETAPAS[i].nombre;
+  }
+  return '';
+}
+
+/* Los botones de etapa, una sola vez. */
+(function pintarEtapas() {
+  var html = '';
+  for (var i = 0; i < ETAPAS.length; i++) {
+    var cuantas = 0;
+    for (var j = 0; j < P.length; j++) {
+      if (P[j].etapa === ETAPAS[i].id) cuantas++;
+    }
+    html += '<button type="button" class="etapa" data-etapa="' + ETAPAS[i].id + '">' +
+              ETAPAS[i].nombre + ' <span class="cuenta">' + cuantas + '</span>' +
+            '</button>';
+  }
+  $etapas.innerHTML = html;
+
+  var botones = $etapas.querySelectorAll('.etapa');
+  for (var k = 0; k < botones.length; k++) {
+    botones[k].addEventListener('click', function () {
+      actual = primeraDe(this.getAttribute('data-etapa'));
+      pintar();
+    });
+  }
+})();
+
+function pintar() {
+  var p = P[actual];
+
+  $barraTitulo.textContent = p.barra;
+  $barraExtremo.textContent = p.extremo || '';
+  $lienzo.innerHTML = p.pantalla;
+  /* Cada pantalla arranca desde arriba, no donde quedó la anterior. */
+  $lienzo.scrollTop = 0;
+
+  $quien.textContent = nombreDe(p.etapa);
+  $titulo.textContent = p.titulo;
+  $texto.textContent = p.texto;
+  $detras.innerHTML = p.detras;
+
+  $pos.textContent = actual + 1;
+  $total.textContent = P.length;
+  $nombreEtapa.textContent = nombreDe(p.etapa);
+
+  $anterior.disabled = actual === 0;
+  $siguiente.disabled = actual === P.length - 1;
+  $siguiente.textContent = actual === P.length - 1 ? 'Fin del recorrido' : 'Siguiente →';
+
+  $avance.style.width = ((actual + 1) / P.length * 100) + '%';
+
+  var botones = $etapas.querySelectorAll('.etapa');
+  for (var i = 0; i < botones.length; i++) {
+    botones[i].setAttribute('data-activa', botones[i].getAttribute('data-etapa') === p.etapa);
+  }
+}
+
+$anterior.addEventListener('click', function () {
+  if (actual > 0) { actual--; pintar(); }
+});
+
+$siguiente.addEventListener('click', function () {
+  if (actual < P.length - 1) { actual++; pintar(); }
+});
+
+/* Las flechas del teclado también pasan de pantalla: en una demo frente a
+   alguien, es más cómodo que buscar el botón con el mouse. */
+document.addEventListener('keydown', function (evento) {
+  if (evento.key === 'ArrowRight' && actual < P.length - 1) { actual++; pintar(); }
+  if (evento.key === 'ArrowLeft' && actual > 0) { actual--; pintar(); }
+});
+
+pintar();
+
+</script>
+
