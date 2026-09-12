@@ -15,6 +15,17 @@ import App from './App';
 import '@core/theme/types';
 
 /**
+ * Quiénes sí pueden embeber la aplicación.
+ *
+ * Sólo el recorrido que se le muestra al cliente, publicado como artifact.
+ * Cualquier otro sitio sigue bloqueado.
+ */
+const MARCOS_PERMITIDOS = [
+  'https://claude.ai',
+  'https://claude.site',
+];
+
+/**
  * Guardia contra clickjacking.
  *
  * GitHub Pages no permite enviar X-Frame-Options ni frame-ancestors por
@@ -24,14 +35,45 @@ import '@core/theme/types';
  *
  * Va acá y no en un script inline del HTML porque la CSP prohíbe scripts
  * inline: ahí quedaría bloqueado y daría una falsa sensación de protección.
+ *
+ * La excepción son los marcos permitidos de arriba. Quién nos embebe no se
+ * puede leer desde otro origen —por eso antes se escondía todo a ciegas—,
+ * pero `document.referrer` sí dice de dónde vino la carga, y en un iframe es
+ * la página que lo contiene. Alcanza para distinguir nuestro recorrido de un
+ * sitio hostil, porque un atacante que quisiera falsearlo tendría que
+ * controlar uno de esos dominios, y si los controla ya perdimos igual.
  */
-const guardAgainstFraming = () => {
+const marcoPermitido = () => {
+  if (!document.referrer) {
+    return false;
+  }
+
   try {
-    if (window.top !== window.self) {
-      window.top!.location = window.self.location;
-    }
+    const origen = new URL(document.referrer).origin;
+
+    return MARCOS_PERMITIDOS.includes(origen);
   } catch {
-    /* Origen distinto: no se puede ni leer el padre. Se oculta el contenido. */
+    return false;
+  }
+};
+
+const guardAgainstFraming = () => {
+  /* No estamos en un marco: no hay nada que hacer. */
+  if (window.top === window.self) {
+    return;
+  }
+
+  /* El recorrido puede embebernos. Se chequea antes de tocar nada, porque
+     sacar al padre de su página también rompería la demo. */
+  if (marcoPermitido()) {
+    return;
+  }
+
+  try {
+    window.top!.location = window.self.location;
+  } catch {
+    /* Origen distinto: no se puede ni escribir en el padre. Se esconde el
+       contenido, que es lo único que queda. */
     document.documentElement.style.display = 'none';
   }
 };
