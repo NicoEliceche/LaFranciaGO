@@ -15,17 +15,6 @@ import App from './App';
 import '@core/theme/types';
 
 /**
- * Quiénes sí pueden embeber la aplicación.
- *
- * Sólo el recorrido que se le muestra al cliente, publicado como artifact.
- * Cualquier otro sitio sigue bloqueado.
- */
-const MARCOS_PERMITIDOS = [
-  'https://claude.ai',
-  'https://claude.site',
-];
-
-/**
  * Guardia contra clickjacking.
  *
  * GitHub Pages no permite enviar X-Frame-Options ni frame-ancestors por
@@ -36,22 +25,21 @@ const MARCOS_PERMITIDOS = [
  * Va acá y no en un script inline del HTML porque la CSP prohíbe scripts
  * inline: ahí quedaría bloqueado y daría una falsa sensación de protección.
  *
- * La excepción son los marcos permitidos de arriba. Quién nos embebe no se
- * puede leer desde otro origen —por eso antes se escondía todo a ciegas—,
- * pero `document.referrer` sí dice de dónde vino la carga, y en un iframe es
- * la página que lo contiene. Alcanza para distinguir nuestro recorrido de un
- * sitio hostil, porque un atacante que quisiera falsearlo tendría que
- * controlar uno de esos dominios, y si los controla ya perdimos igual.
+ * La única excepción es el recorrido que se le muestra al cliente, que pide
+ * la aplicación con ?demo=1 en la dirección. No se mira quién embebe porque
+ * desde otro origen no se puede leer, y el referrer llega vacío en cuanto el
+ * marco tiene sandbox —que es justo el caso de la página del recorrido.
+ *
+ * Qué protege y qué no: el clickjacking sirve para que alguien toque algo
+ * sin verlo, y para eso el marco tiene que ser invisible y la víctima tiene
+ * que llegar sin enterarse. Con esta excepción, quien quiera embeber la
+ * aplicación tiene que armar a propósito un enlace con ?demo=1; y esa misma
+ * persona ya puede mandar a cualquiera a la aplicación directo, así que no
+ * gana nada que no tuviera antes.
  */
-const marcoPermitido = () => {
-  if (!document.referrer) {
-    return false;
-  }
-
+const esRecorrido = () => {
   try {
-    const origen = new URL(document.referrer).origin;
-
-    return MARCOS_PERMITIDOS.includes(origen);
+    return new URLSearchParams(window.location.search).get('demo') === '1';
   } catch {
     return false;
   }
@@ -65,7 +53,7 @@ const guardAgainstFraming = () => {
 
   /* El recorrido puede embebernos. Se chequea antes de tocar nada, porque
      sacar al padre de su página también rompería la demo. */
-  if (marcoPermitido()) {
+  if (esRecorrido()) {
     return;
   }
 
