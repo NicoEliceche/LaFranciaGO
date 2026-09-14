@@ -1,0 +1,2647 @@
+{
+ "vecino": {
+  "/auth/yo": {
+   "id": "4c31b0d3-177e-4245-8ee1-8eb15df73982",
+   "email": "demo-vecino@lafranciago.demo",
+   "nombre": "Vecina de La Francia",
+   "rol": "cliente",
+   "foto_url": null,
+   "roles": [
+    "cliente"
+   ]
+  },
+  "/comercios": {
+   "comercios": [
+    {
+     "id": "carniceria-central",
+     "nombre": "Carnicería Central",
+     "rubro_id": "carniceria",
+     "rubro_nombre": "Cortes y frescos",
+     "direccion": "Barrio norte",
+     "lat": -31.0256,
+     "lon": -62.0878,
+     "telefono": "+54 3573 405-115",
+     "horario": "Mar a dom 08:00 - 13:30 / 17:30 - 21:00",
+     "zona": null,
+     "descripcion": "Cortes frescos, milanesas y pedidos por kilo con atención del día.",
+     "logo_url": null,
+     "premium": true,
+     "minimo_centavos": 800000,
+     "cerrado_temporal": 0,
+     "puntaje": null,
+     "resenas_count": 0,
+     "minimo": 8000,
+     "destacados": [
+      {
+       "id": "carniceria-central-milanesas-de-ternera",
+       "nombre": "Milanesas de ternera",
+       "precio": 9100,
+       "foto": null
+      },
+      {
+       "id": "carniceria-central-asado-de-tira",
+       "nombre": "Asado de tira",
+       "precio": 11500,
+       "foto": null
+      },
+      {
+       "id": "carniceria-central-carne-picada-especial",
+       "nombre": "Carne picada especial",
+       "precio": 7800,
+       "foto": null
+      }
+     ],
+     "abierto": true,
+     "proximaApertura": null
+    },
+    {
+     "id": "farmacia-centro",
+     "nombre": "Farmacia Centro",
+     "rubro_id": "farmacia",
+     "rubro_nombre": "Salud y perfumería",
+     "direccion": "Sector comercial",
+     "lat": -31.0288,
+     "lon": -62.0821,
+     "telefono": "+54 3573 402-300",
+     "horario": "Lun a dom 08:30 - 22:00",
+     "zona": null,
+     "descripcion": "Productos de farmacia y perfumería con atención prioritaria.",
+     "logo_url": null,
+     "premium": true,
+     "minimo_centavos": 400000,
+     "cerrado_temporal": 0,
+     "puntaje": null,
+     "resenas_count": 0,
+     "minimo": 4000,
+     "destacados": [
+      {
+       "id": "farmacia-centro-omeprazol-20-mg",
+       "nombre": "Omeprazol 20 mg",
+       "precio": 7150,
+       "foto": null
+      },
+      {
+       "id": "farmacia-centro-ibuprofeno-400-mg",
+       "nombre": "Ibuprofeno 400 mg",
+       "precio": 3800,
+       "foto": null
+      },
+      {
+       "id": "farmacia-centro-paracetamol-500-mg",
+       "nombre": "Paracetamol 500 mg",
+       "precio": 2900,
+       "foto": null
+      }
+     ],
+     "abierto": true,
+     "proximaApertura": null
+    },
+    {
+     "id": "almacen-juan",
+     "nombre": "Almacén Juan",
+     "rubro_id": "almacen",
+     "rubro_nombre": "Almacén y bebidas",
+     "direccion": "Centro · La Francia",
+     "lat": -31.0294,
+     "lon": -62.0842,
+     "telefono": "+54 3573 400-201",
+     "horario": "Lun a sáb 08:00 - 21:30",
+     "zona": null,
+     "descripcion": "Surtido fuerte en bebidas, limpieza, snacks y básicos para el día a día.",
+     "logo_url": null,
+     "premium": false,
+     "minimo_centavos": 500000,
+     "cerrado_temporal": 0,
+     "puntaje": 5,
+     "resenas_count": 1,
+     "minimo": 5000,
+     "destacados": [
+      {
+       "id": "almacen-juan-coca-cola-2-25-l",
+       "nombre": "Coca Cola 2,25 L",
+       "precio": 3500,
+       "foto": null
+      },
+      {
+       "id": "almacen-juan-agua-mineral-2-l",
+       "nombre": "Agua mineral 2 L",
+       "precio": 1800,
+       "foto": null
+      },
+      {
+       "id": "almacen-juan-cerveza-quilmes-1-l",
+       "nombre": "Cerveza Quilmes 1 L",
+       "precio": 2900,
+       "foto": null
+      }
+     ],
+     "abierto": true,
+     "proximaApertura": {
+      "dia": "Martes",
+      "hora": "08:00",
+      "esHoy": false,
+      "esManana": true
+     }
+    },
+    {
+     "id": "panaderia-la-esquina",
+     "nombre": "Panadería La Esquina",
+     "rubro_id": "panaderia",
+     "rubro_nombre": "Panadería artesanal",
+     "direccion": "Av. Principal",
+     "lat": -31.0311,
+     "lon": -62.0795,
+     "telefono": "+54 3573 401-122",
+     "horario": "Todos los días 07:00 - 13:30 / 17:00 - 21:00",
+     "zona": null,
+     "descripcion": "Pan fresco, facturas y productos de horno para retiro rápido.",
+     "logo_url": null,
+     "premium": false,
+     "minimo_centavos": 300000,
+     "cerrado_temporal": 0,
+     "puntaje": null,
+     "resenas_count": 0,
+     "minimo": 3000,
+     "destacados": [
+      {
+       "id": "panaderia-la-esquina-pan-frances",
+       "nombre": "Pan francés",
+       "precio": 2400,
+       "foto": null
+      },
+      {
+       "id": "panaderia-la-esquina-pan-casero",
+       "nombre": "Pan casero",
+       "precio": 2800,
+       "foto": null
+      },
+      {
+       "id": "panaderia-la-esquina-pan-de-salvado",
+       "nombre": "Pan de salvado",
+       "precio": 3100,
+       "foto": null
+      }
+     ],
+     "abierto": true,
+     "proximaApertura": null
+    }
+   ]
+  },
+  "/ofertas": {
+   "ofertas": [
+    {
+     "id": "carniceria-central-oferta-1",
+     "tipo": "descuento",
+     "titulo": "Asado al 10%",
+     "descripcion": null,
+     "porcentaje": 10,
+     "cantidad": null,
+     "precioFinal": 10350,
+     "precioLista": 11500,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "carniceria-central-asado-de-tira",
+       "nombre": "Asado de tira",
+       "unidades": 1,
+       "precio": 11500,
+       "unidadVenta": "pesoMedio",
+       "foto": null
+      }
+     ],
+     "comercioId": "carniceria-central",
+     "comercio": "Carnicería Central",
+     "rubroId": "carniceria"
+    },
+    {
+     "id": "carniceria-central-oferta-2",
+     "tipo": "combo",
+     "titulo": "Combo parrilla",
+     "descripcion": null,
+     "porcentaje": null,
+     "cantidad": null,
+     "precioFinal": 21000,
+     "precioLista": 23200,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "carniceria-central-asado-de-tira",
+       "nombre": "Asado de tira",
+       "unidades": 1,
+       "precio": 11500,
+       "unidadVenta": "pesoMedio",
+       "foto": null
+      },
+      {
+       "id": "carniceria-central-chorizo-criollo",
+       "nombre": "Chorizo criollo",
+       "unidades": 1,
+       "precio": 6500,
+       "unidadVenta": "pesoMedio",
+       "foto": null
+      },
+      {
+       "id": "carniceria-central-morcilla",
+       "nombre": "Morcilla",
+       "unidades": 1,
+       "precio": 5200,
+       "unidadVenta": "pesoMedio",
+       "foto": null
+      }
+     ],
+     "comercioId": "carniceria-central",
+     "comercio": "Carnicería Central",
+     "rubroId": "carniceria"
+    },
+    {
+     "id": "farmacia-centro-oferta-1",
+     "tipo": "combo",
+     "titulo": "Combo shampoo + acondicionador",
+     "descripcion": null,
+     "porcentaje": null,
+     "cantidad": null,
+     "precioFinal": 6900,
+     "precioLista": 7900,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "farmacia-centro-acondicionador-400-ml",
+       "nombre": "Acondicionador 400 ml",
+       "unidades": 1,
+       "precio": 3950,
+       "unidadVenta": "unidad",
+       "foto": null
+      },
+      {
+       "id": "farmacia-centro-shampoo-400-ml",
+       "nombre": "Shampoo 400 ml",
+       "unidades": 1,
+       "precio": 3950,
+       "unidadVenta": "unidad",
+       "foto": null
+      }
+     ],
+     "comercioId": "farmacia-centro",
+     "comercio": "Farmacia Centro",
+     "rubroId": "farmacia"
+    },
+    {
+     "id": "almacen-juan-oferta-1",
+     "tipo": "descuento",
+     "titulo": "Coca Cola al 15%",
+     "descripcion": null,
+     "porcentaje": 15,
+     "cantidad": null,
+     "precioFinal": 2975,
+     "precioLista": 3500,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "almacen-juan-coca-cola-2-25-l",
+       "nombre": "Coca Cola 2,25 L",
+       "unidades": 1,
+       "precio": 3500,
+       "unidadVenta": "unidad",
+       "foto": null
+      }
+     ],
+     "comercioId": "almacen-juan",
+     "comercio": "Almacén Juan",
+     "rubroId": "almacen"
+    },
+    {
+     "id": "almacen-juan-oferta-2",
+     "tipo": "cantidad",
+     "titulo": "3 aguas",
+     "descripcion": null,
+     "porcentaje": null,
+     "cantidad": 3,
+     "precioFinal": 4600,
+     "precioLista": 5400,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "almacen-juan-agua-mineral-2-l",
+       "nombre": "Agua mineral 2 L",
+       "unidades": 1,
+       "precio": 1800,
+       "unidadVenta": "unidad",
+       "foto": null
+      }
+     ],
+     "comercioId": "almacen-juan",
+     "comercio": "Almacén Juan",
+     "rubroId": "almacen"
+    },
+    {
+     "id": "almacen-juan-oferta-3",
+     "tipo": "combo",
+     "titulo": "Combo mate",
+     "descripcion": null,
+     "porcentaje": null,
+     "cantidad": null,
+     "precioFinal": 5300,
+     "precioLista": 5900,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "almacen-juan-galletitas-surtidas",
+       "nombre": "Galletitas surtidas",
+       "unidades": 1,
+       "precio": 1250,
+       "unidadVenta": "unidad",
+       "foto": null
+      },
+      {
+       "id": "almacen-juan-yerba-mate-1-kg",
+       "nombre": "Yerba mate 1 kg",
+       "unidades": 1,
+       "precio": 4650,
+       "unidadVenta": "unidad",
+       "foto": null
+      }
+     ],
+     "comercioId": "almacen-juan",
+     "comercio": "Almacén Juan",
+     "rubroId": "almacen"
+    },
+    {
+     "id": "panaderia-la-esquina-oferta-1",
+     "tipo": "descuento",
+     "titulo": "Facturas al 20%",
+     "descripcion": null,
+     "porcentaje": 20,
+     "cantidad": null,
+     "precioFinal": 1520,
+     "precioLista": 1900,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "panaderia-la-esquina-facturas-surtidas",
+       "nombre": "Facturas surtidas",
+       "unidades": 1,
+       "precio": 1900,
+       "unidadVenta": "docena",
+       "foto": null
+      }
+     ],
+     "comercioId": "panaderia-la-esquina",
+     "comercio": "Panadería La Esquina",
+     "rubroId": "panaderia"
+    }
+   ]
+  },
+  "/pedidos": {
+   "pedidos": [
+    {
+     "id": "8c6e806f-9003-4ac5-95af-280449ec0bd1",
+     "codigo": "#966237",
+     "usuario_id": "4c31b0d3-177e-4245-8ee1-8eb15df73982",
+     "comercio_id": "almacen-juan",
+     "direccion_id": null,
+     "direccion_texto": "Barrio Los Aromos, La Francia",
+     "subtotal_centavos": 504000000,
+     "envio_centavos": 0,
+     "total_centavos": 504000000,
+     "estado": "proceso",
+     "estado_detalle": null,
+     "metodo_pago": "efectivo",
+     "creado_en": "2026-09-12 09:06:06",
+     "pago_estado": "sin_pago",
+     "preferencia_envio": "cualquiera",
+     "volumen_litros": 480,
+     "pedido_padre_id": null,
+     "parte_numero": null,
+     "partes_total": null,
+     "preparacion": "recibido",
+     "preparando_en": null,
+     "listo_en": null,
+     "tipo": "flete",
+     "comercio_nombre": "Almacén Juan",
+     "rubro_id": "almacen",
+     "resenado": false,
+     "envio_estado": null,
+     "repartidor_nombre": null,
+     "subtotal": 5040000,
+     "envio": 0,
+     "total": 5040000,
+     "cancelable": true,
+     "repartidor": null,
+     "items": [
+      {
+       "productoId": "demo-flete-mueble",
+       "nombre": "Juego de comedor",
+       "precio": 420000,
+       "unidadVenta": "unidad",
+       "escalon": 11,
+       "subtotal": 5040000
+      }
+     ]
+    },
+    {
+     "id": "6d48475a-ac67-47ec-9ed7-86a226748121",
+     "codigo": "#771114",
+     "usuario_id": "4c31b0d3-177e-4245-8ee1-8eb15df73982",
+     "comercio_id": "almacen-juan",
+     "direccion_id": null,
+     "direccion_texto": "Ruta 19 km 115",
+     "subtotal_centavos": 595000,
+     "envio_centavos": 120000,
+     "total_centavos": 715000,
+     "estado": "terminado",
+     "estado_detalle": null,
+     "metodo_pago": "efectivo",
+     "creado_en": "2026-09-12 09:02:51",
+     "pago_estado": "sin_pago",
+     "preferencia_envio": "cualquiera",
+     "volumen_litros": 12,
+     "pedido_padre_id": null,
+     "parte_numero": null,
+     "partes_total": null,
+     "preparacion": "listo",
+     "preparando_en": "2026-09-12 09:02:52",
+     "listo_en": "2026-09-12 09:02:53",
+     "tipo": "pedido",
+     "comercio_nombre": "Almacén Juan",
+     "rubro_id": "almacen",
+     "resenado": false,
+     "envio_estado": "entregado",
+     "repartidor_nombre": "Bruno Delivery",
+     "subtotal": 5950,
+     "envio": 1200,
+     "total": 7150,
+     "cancelable": false,
+     "repartidor": "Bruno Delivery",
+     "items": [
+      {
+       "productoId": "almacen-juan-coca-cola-2-25-l",
+       "nombre": "Coca Cola 2,25 L",
+       "precio": 3500,
+       "unidadVenta": "unidad",
+       "escalon": 1,
+       "subtotal": 7000
+      }
+     ]
+    },
+    {
+     "id": "d3703042-6507-4ba5-b18a-b1a17f01098c",
+     "codigo": "#766794",
+     "usuario_id": "4c31b0d3-177e-4245-8ee1-8eb15df73982",
+     "comercio_id": "almacen-juan",
+     "direccion_id": null,
+     "direccion_texto": "Av. San Mart�n 123",
+     "subtotal_centavos": 297500,
+     "envio_centavos": 120000,
+     "total_centavos": 417500,
+     "estado": "terminado",
+     "estado_detalle": null,
+     "metodo_pago": "efectivo",
+     "creado_en": "2026-09-12 09:02:46",
+     "pago_estado": "sin_pago",
+     "preferencia_envio": "cualquiera",
+     "volumen_litros": 6,
+     "pedido_padre_id": null,
+     "parte_numero": null,
+     "partes_total": null,
+     "preparacion": "listo",
+     "preparando_en": "2026-09-12 09:02:48",
+     "listo_en": "2026-09-12 09:02:49",
+     "tipo": "pedido",
+     "comercio_nombre": "Almacén Juan",
+     "rubro_id": "almacen",
+     "resenado": false,
+     "envio_estado": "entregado",
+     "repartidor_nombre": "Bruno Delivery",
+     "subtotal": 2975,
+     "envio": 1200,
+     "total": 4175,
+     "cancelable": false,
+     "repartidor": "Bruno Delivery",
+     "items": [
+      {
+       "productoId": "almacen-juan-coca-cola-2-25-l",
+       "nombre": "Coca Cola 2,25 L",
+       "precio": 3500,
+       "unidadVenta": "unidad",
+       "escalon": 0,
+       "subtotal": 3500
+      }
+     ]
+    },
+    {
+     "id": "3219b279-f56b-4011-a981-185a6e901112",
+     "codigo": "#636622",
+     "usuario_id": "4c31b0d3-177e-4245-8ee1-8eb15df73982",
+     "comercio_id": "almacen-juan",
+     "direccion_id": null,
+     "direccion_texto": "Av. San Mart�n 123",
+     "subtotal_centavos": 595000,
+     "envio_centavos": 120000,
+     "total_centavos": 715000,
+     "estado": "proceso",
+     "estado_detalle": null,
+     "metodo_pago": "efectivo",
+     "creado_en": "2026-09-12 05:57:16",
+     "pago_estado": "sin_pago",
+     "preferencia_envio": "cualquiera",
+     "volumen_litros": 12,
+     "pedido_padre_id": null,
+     "parte_numero": null,
+     "partes_total": null,
+     "preparacion": "recibido",
+     "preparando_en": null,
+     "listo_en": null,
+     "tipo": "pedido",
+     "comercio_nombre": "Almacén Juan",
+     "rubro_id": "almacen",
+     "resenado": false,
+     "envio_estado": "asignado",
+     "repartidor_nombre": "Bruno Delivery",
+     "subtotal": 5950,
+     "envio": 1200,
+     "total": 7150,
+     "cancelable": true,
+     "repartidor": "Bruno Delivery",
+     "items": [
+      {
+       "productoId": "almacen-juan-coca-cola-2-25-l",
+       "nombre": "Coca Cola 2,25 L",
+       "precio": 3500,
+       "unidadVenta": "unidad",
+       "escalon": 1,
+       "subtotal": 7000
+      }
+     ]
+    },
+    {
+     "id": "3e8bbf52-525e-4939-b9a6-c6f03717ba57",
+     "codigo": "#635163",
+     "usuario_id": "4c31b0d3-177e-4245-8ee1-8eb15df73982",
+     "comercio_id": "almacen-juan",
+     "direccion_id": null,
+     "direccion_texto": "Av. San Mart�n 123",
+     "subtotal_centavos": 297500,
+     "envio_centavos": 120000,
+     "total_centavos": 417500,
+     "estado": "proceso",
+     "estado_detalle": null,
+     "metodo_pago": "efectivo",
+     "creado_en": "2026-09-12 05:57:15",
+     "pago_estado": "sin_pago",
+     "preferencia_envio": "cualquiera",
+     "volumen_litros": 6,
+     "pedido_padre_id": null,
+     "parte_numero": null,
+     "partes_total": null,
+     "preparacion": "preparando",
+     "preparando_en": "2026-09-12 05:57:19",
+     "listo_en": null,
+     "tipo": "pedido",
+     "comercio_nombre": "Almacén Juan",
+     "rubro_id": "almacen",
+     "resenado": false,
+     "envio_estado": null,
+     "repartidor_nombre": null,
+     "subtotal": 2975,
+     "envio": 1200,
+     "total": 4175,
+     "cancelable": true,
+     "repartidor": null,
+     "items": [
+      {
+       "productoId": "almacen-juan-coca-cola-2-25-l",
+       "nombre": "Coca Cola 2,25 L",
+       "precio": 3500,
+       "unidadVenta": "unidad",
+       "escalon": 0,
+       "subtotal": 3500
+      }
+     ]
+    }
+   ]
+  },
+  "/favoritos": {
+   "favoritos": [
+    {
+     "id": "carniceria-central",
+     "nombre": "Carnicería Central",
+     "rubro_id": "carniceria",
+     "rubro_nombre": "Cortes y frescos",
+     "logo_url": null
+    },
+    {
+     "id": "panaderia-la-esquina",
+     "nombre": "Panadería La Esquina",
+     "rubro_id": "panaderia",
+     "rubro_nombre": "Panadería artesanal",
+     "logo_url": null
+    }
+   ]
+  },
+  "/direcciones": {
+   "direcciones": [
+    {
+     "id": "a62a09b7-e066-4701-9262-810c07fc7254",
+     "etiqueta": "Casa",
+     "direccion": "",
+     "lat": -31.0234,
+     "lon": -62.1089,
+     "es_principal": 1
+    }
+   ]
+  },
+  "/notificaciones": {
+   "notificaciones": [
+    {
+     "id": "24ec83bf-a43e-4943-aab0-c28e93f5d5fd",
+     "tipo": "envio",
+     "titulo": "Pedido entregado (#766794)",
+     "texto": "¡Que lo disfrutes!",
+     "enlace": "/pedidos",
+     "leida_en": null,
+     "creado_en": "2026-09-14 02:01:03"
+    },
+    {
+     "id": "74408d7b-c39e-4e16-9922-9dce898d36ea",
+     "tipo": "envio",
+     "titulo": "Tu pedido va en camino (#766794)",
+     "texto": "Ya salió para tu dirección.",
+     "enlace": "/pedidos",
+     "leida_en": null,
+     "creado_en": "2026-09-14 02:01:02"
+    },
+    {
+     "id": "991c36bb-6e8e-4182-8319-ecde9c2f20dd",
+     "tipo": "envio",
+     "titulo": "Tu pedido #636622 ya tiene repartidor",
+     "texto": "Bruno Delivery lo va a llevar.",
+     "enlace": "/pedidos",
+     "leida_en": null,
+     "creado_en": "2026-09-14 02:00:59"
+    },
+    {
+     "id": "9c523577-cfd5-486c-9cbb-3ec43fe438f4",
+     "tipo": "envio",
+     "titulo": "Pedido entregado (#771114)",
+     "texto": "¡Que lo disfrutes!",
+     "enlace": "/pedidos",
+     "leida_en": "2026-09-14 01:57:12",
+     "creado_en": "2026-09-12 09:03:31"
+    },
+    {
+     "id": "b5088811-2d1c-44ff-b5ad-4686e36ff957",
+     "tipo": "envio",
+     "titulo": "Tu pedido va en camino (#771114)",
+     "texto": "Ya salió para tu dirección.",
+     "enlace": "/pedidos",
+     "leida_en": "2026-09-14 01:57:12",
+     "creado_en": "2026-09-12 09:03:30"
+    },
+    {
+     "id": "30711465-6537-4492-bfa9-e9d56f6a60e0",
+     "tipo": "envio",
+     "titulo": "Tu pedido #766794 ya tiene repartidor",
+     "texto": "Bruno Delivery lo va a llevar.",
+     "enlace": "/pedidos",
+     "leida_en": "2026-09-14 01:57:12",
+     "creado_en": "2026-09-12 09:03:28"
+    },
+    {
+     "id": "d3612c5e-ee93-48c5-9dcf-e598b8a31e64",
+     "tipo": "envio",
+     "titulo": "Tu pedido #771114 ya tiene repartidor",
+     "texto": "Bruno Delivery lo va a llevar.",
+     "enlace": "/pedidos",
+     "leida_en": "2026-09-14 01:57:12",
+     "creado_en": "2026-09-12 09:02:54"
+    },
+    {
+     "id": "444345d5-5a66-4f26-979b-d52472982193",
+     "tipo": "pedido",
+     "titulo": "¡Tu pedido #771114 está listo!",
+     "texto": "Ya lo puede retirar el repartidor.",
+     "enlace": "/pedidos/6d48475a-ac67-47ec-9ed7-86a226748121/seguimiento",
+     "leida_en": "2026-09-14 01:57:12",
+     "creado_en": "2026-09-12 09:02:53"
+    },
+    {
+     "id": "b587fb21-e439-4fe0-b3d5-c703a9bd9de3",
+     "tipo": "pedido",
+     "titulo": "Están preparando tu pedido #771114",
+     "texto": "El comercio ya lo está armando.",
+     "enlace": "/pedidos/6d48475a-ac67-47ec-9ed7-86a226748121/seguimiento",
+     "leida_en": "2026-09-14 01:57:12",
+     "creado_en": "2026-09-12 09:02:52"
+    },
+    {
+     "id": "50733ffa-3cd7-4e38-b6ee-c5e77d5312e2",
+     "tipo": "pedido",
+     "titulo": "¡Tu pedido #766794 está listo!",
+     "texto": "Ya lo puede retirar el repartidor.",
+     "enlace": "/pedidos/d3703042-6507-4ba5-b18a-b1a17f01098c/seguimiento",
+     "leida_en": "2026-09-14 01:57:12",
+     "creado_en": "2026-09-12 09:02:49"
+    },
+    {
+     "id": "4dbd20a4-397a-40e2-82a7-8b6d4ddeb9b5",
+     "tipo": "pedido",
+     "titulo": "Están preparando tu pedido #766794",
+     "texto": "El comercio ya lo está armando.",
+     "enlace": "/pedidos/d3703042-6507-4ba5-b18a-b1a17f01098c/seguimiento",
+     "leida_en": "2026-09-14 01:57:12",
+     "creado_en": "2026-09-12 09:02:48"
+    },
+    {
+     "id": "8a63ee6c-8235-4ac6-8c0a-bed927d57119",
+     "tipo": "pedido",
+     "titulo": "Están preparando tu pedido #635163",
+     "texto": "El comercio ya lo está armando.",
+     "enlace": "/pedidos/3e8bbf52-525e-4939-b9a6-c6f03717ba57/seguimiento",
+     "leida_en": "2026-09-12 08:56:48",
+     "creado_en": "2026-09-12 05:57:19"
+    }
+   ],
+   "sinLeer": 3
+  },
+  "/reclamos": {
+   "reclamos": [],
+   "esAdmin": false
+  },
+  "/comercios/carniceria-central": {
+   "comercio": {
+    "id": "carniceria-central",
+    "usuario_id": "demo-comercios-lafrancia",
+    "nombre": "Carnicería Central",
+    "razon_social": null,
+    "cuit": null,
+    "rubro_id": "carniceria",
+    "rubro_nombre": "Cortes y frescos",
+    "direccion": "Barrio norte",
+    "lat": -31.0256,
+    "lon": -62.0878,
+    "telefono": "+54 3573 405-115",
+    "email": null,
+    "horario": "Mar a dom 08:00 - 13:30 / 17:30 - 21:00",
+    "zona": null,
+    "descripcion": "Cortes frescos, milanesas y pedidos por kilo con atención del día.",
+    "redes": null,
+    "medios_pago": null,
+    "logo_url": null,
+    "premium": true,
+    "minimo_centavos": 800000,
+    "estado": "aprobado",
+    "creado_en": "2026-09-07 00:10:38",
+    "mp_usuario_id": null,
+    "mp_access_token": null,
+    "mp_refresh_token": null,
+    "mp_expira_en": null,
+    "puntaje": null,
+    "resenas_count": 0,
+    "cerrado_temporal": 0,
+    "minimo": 8000
+   },
+   "categorias": [
+    {
+     "id": "carniceria-vacuna",
+     "nombre": "Carne vacuna",
+     "descripcion": null,
+     "unidad_venta": "pesoMedio"
+    },
+    {
+     "id": "carniceria-pollo",
+     "nombre": "Pollo",
+     "descripcion": null,
+     "unidad_venta": "pesoMedio"
+    },
+    {
+     "id": "carniceria-achuras",
+     "nombre": "Achuras",
+     "descripcion": null,
+     "unidad_venta": "pesoMedio"
+    },
+    {
+     "id": "carniceria-elaborados",
+     "nombre": "Elaborados",
+     "descripcion": null,
+     "unidad_venta": "unidad"
+    }
+   ],
+   "productos": [
+    {
+     "id": "carniceria-central-milanesas-de-ternera",
+     "categoria_id": "carniceria-vacuna",
+     "nombre": "Milanesas de ternera",
+     "descripcion": null,
+     "precio_centavos": 910000,
+     "unidad_venta": "pesoMedio",
+     "fotos": [],
+     "video_url": null,
+     "stock": 28,
+     "tamano": "chico",
+     "precio": 9100
+    },
+    {
+     "id": "carniceria-central-asado-de-tira",
+     "categoria_id": "carniceria-vacuna",
+     "nombre": "Asado de tira",
+     "descripcion": null,
+     "precio_centavos": 1150000,
+     "unidad_venta": "pesoMedio",
+     "fotos": [],
+     "video_url": null,
+     "stock": 25,
+     "tamano": "chico",
+     "precio": 11500
+    },
+    {
+     "id": "carniceria-central-carne-picada-especial",
+     "categoria_id": "carniceria-vacuna",
+     "nombre": "Carne picada especial",
+     "descripcion": null,
+     "precio_centavos": 780000,
+     "unidad_venta": "pesoMedio",
+     "fotos": [],
+     "video_url": null,
+     "stock": 40,
+     "tamano": "chico",
+     "precio": 7800
+    },
+    {
+     "id": "carniceria-central-vacio",
+     "categoria_id": "carniceria-vacuna",
+     "nombre": "Vacío",
+     "descripcion": null,
+     "precio_centavos": 1290000,
+     "unidad_venta": "pesoMedio",
+     "fotos": [],
+     "video_url": null,
+     "stock": 15,
+     "tamano": "chico",
+     "precio": 12900
+    },
+    {
+     "id": "carniceria-central-pollo-entero",
+     "categoria_id": "carniceria-pollo",
+     "nombre": "Pollo entero",
+     "descripcion": null,
+     "precio_centavos": 545000,
+     "unidad_venta": "pesoMedio",
+     "fotos": [],
+     "video_url": null,
+     "stock": 20,
+     "tamano": "chico",
+     "precio": 5450
+    },
+    {
+     "id": "carniceria-central-pechuga-de-pollo",
+     "categoria_id": "carniceria-pollo",
+     "nombre": "Pechuga de pollo",
+     "descripcion": null,
+     "precio_centavos": 820000,
+     "unidad_venta": "pesoMedio",
+     "fotos": [],
+     "video_url": null,
+     "stock": 25,
+     "tamano": "chico",
+     "precio": 8200
+    },
+    {
+     "id": "carniceria-central-chorizo-criollo",
+     "categoria_id": "carniceria-achuras",
+     "nombre": "Chorizo criollo",
+     "descripcion": null,
+     "precio_centavos": 650000,
+     "unidad_venta": "pesoMedio",
+     "fotos": [],
+     "video_url": null,
+     "stock": 30,
+     "tamano": "chico",
+     "precio": 6500
+    },
+    {
+     "id": "carniceria-central-morcilla",
+     "categoria_id": "carniceria-achuras",
+     "nombre": "Morcilla",
+     "descripcion": null,
+     "precio_centavos": 520000,
+     "unidad_venta": "pesoMedio",
+     "fotos": [],
+     "video_url": null,
+     "stock": 20,
+     "tamano": "chico",
+     "precio": 5200
+    },
+    {
+     "id": "carniceria-central-chinchulines",
+     "categoria_id": "carniceria-achuras",
+     "nombre": "Chinchulines",
+     "descripcion": null,
+     "precio_centavos": 740000,
+     "unidad_venta": "pesoMedio",
+     "fotos": [],
+     "video_url": null,
+     "stock": 12,
+     "tamano": "chico",
+     "precio": 7400
+    },
+    {
+     "id": "carniceria-central-hamburguesas-caseras-x4",
+     "categoria_id": "carniceria-elaborados",
+     "nombre": "Hamburguesas caseras x4",
+     "descripcion": null,
+     "precio_centavos": 620000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 25,
+     "tamano": "mediano",
+     "precio": 6200
+    },
+    {
+     "id": "carniceria-central-medallones-de-pollo-x6",
+     "categoria_id": "carniceria-elaborados",
+     "nombre": "Medallones de pollo x6",
+     "descripcion": null,
+     "precio_centavos": 580000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 20,
+     "tamano": "mediano",
+     "precio": 5800
+    }
+   ],
+   "ofertas": [
+    {
+     "id": "carniceria-central-oferta-1",
+     "tipo": "descuento",
+     "titulo": "Asado al 10%",
+     "descripcion": null,
+     "porcentaje": 10,
+     "cantidad": null,
+     "precioFinal": 10350,
+     "precioLista": 11500,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "carniceria-central-asado-de-tira",
+       "nombre": "Asado de tira",
+       "unidades": 1,
+       "precio": 11500,
+       "unidadVenta": "pesoMedio",
+       "foto": null
+      }
+     ]
+    },
+    {
+     "id": "carniceria-central-oferta-2",
+     "tipo": "combo",
+     "titulo": "Combo parrilla",
+     "descripcion": null,
+     "porcentaje": null,
+     "cantidad": null,
+     "precioFinal": 21000,
+     "precioLista": 23200,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "carniceria-central-asado-de-tira",
+       "nombre": "Asado de tira",
+       "unidades": 1,
+       "precio": 11500,
+       "unidadVenta": "pesoMedio",
+       "foto": null
+      },
+      {
+       "id": "carniceria-central-chorizo-criollo",
+       "nombre": "Chorizo criollo",
+       "unidades": 1,
+       "precio": 6500,
+       "unidadVenta": "pesoMedio",
+       "foto": null
+      },
+      {
+       "id": "carniceria-central-morcilla",
+       "nombre": "Morcilla",
+       "unidades": 1,
+       "precio": 5200,
+       "unidadVenta": "pesoMedio",
+       "foto": null
+      }
+     ]
+    }
+   ]
+  },
+  "/comercios/farmacia-centro": {
+   "comercio": {
+    "id": "farmacia-centro",
+    "usuario_id": "demo-comercios-lafrancia",
+    "nombre": "Farmacia Centro",
+    "razon_social": null,
+    "cuit": null,
+    "rubro_id": "farmacia",
+    "rubro_nombre": "Salud y perfumería",
+    "direccion": "Sector comercial",
+    "lat": -31.0288,
+    "lon": -62.0821,
+    "telefono": "+54 3573 402-300",
+    "email": null,
+    "horario": "Lun a dom 08:30 - 22:00",
+    "zona": null,
+    "descripcion": "Productos de farmacia y perfumería con atención prioritaria.",
+    "redes": null,
+    "medios_pago": null,
+    "logo_url": null,
+    "premium": true,
+    "minimo_centavos": 400000,
+    "estado": "aprobado",
+    "creado_en": "2026-09-07 00:10:38",
+    "mp_usuario_id": null,
+    "mp_access_token": null,
+    "mp_refresh_token": null,
+    "mp_expira_en": null,
+    "puntaje": null,
+    "resenas_count": 0,
+    "cerrado_temporal": 0,
+    "minimo": 4000
+   },
+   "categorias": [
+    {
+     "id": "farmacia-medicamentos",
+     "nombre": "Medicamentos",
+     "descripcion": null,
+     "unidad_venta": "unidad"
+    },
+    {
+     "id": "farmacia-perfumeria",
+     "nombre": "Perfumería",
+     "descripcion": null,
+     "unidad_venta": "unidad"
+    },
+    {
+     "id": "farmacia-cuidado",
+     "nombre": "Cuidado personal",
+     "descripcion": null,
+     "unidad_venta": "unidad"
+    }
+   ],
+   "productos": [
+    {
+     "id": "farmacia-centro-omeprazol-20-mg",
+     "categoria_id": "farmacia-medicamentos",
+     "nombre": "Omeprazol 20 mg",
+     "descripcion": null,
+     "precio_centavos": 715000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 20,
+     "tamano": "mediano",
+     "precio": 7150
+    },
+    {
+     "id": "farmacia-centro-ibuprofeno-400-mg",
+     "categoria_id": "farmacia-medicamentos",
+     "nombre": "Ibuprofeno 400 mg",
+     "descripcion": null,
+     "precio_centavos": 380000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 30,
+     "tamano": "mediano",
+     "precio": 3800
+    },
+    {
+     "id": "farmacia-centro-paracetamol-500-mg",
+     "categoria_id": "farmacia-medicamentos",
+     "nombre": "Paracetamol 500 mg",
+     "descripcion": null,
+     "precio_centavos": 290000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 35,
+     "tamano": "mediano",
+     "precio": 2900
+    },
+    {
+     "id": "farmacia-centro-alcohol-en-gel",
+     "categoria_id": "farmacia-cuidado",
+     "nombre": "Alcohol en gel",
+     "descripcion": null,
+     "precio_centavos": 185000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 40,
+     "tamano": "mediano",
+     "precio": 1850
+    },
+    {
+     "id": "farmacia-centro-shampoo-400-ml",
+     "categoria_id": "farmacia-perfumeria",
+     "nombre": "Shampoo 400 ml",
+     "descripcion": null,
+     "precio_centavos": 395000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 25,
+     "tamano": "mediano",
+     "precio": 3950
+    },
+    {
+     "id": "farmacia-centro-acondicionador-400-ml",
+     "categoria_id": "farmacia-perfumeria",
+     "nombre": "Acondicionador 400 ml",
+     "descripcion": null,
+     "precio_centavos": 395000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 22,
+     "tamano": "mediano",
+     "precio": 3950
+    },
+    {
+     "id": "farmacia-centro-jabon-de-tocador-x3",
+     "categoria_id": "farmacia-cuidado",
+     "nombre": "Jabón de tocador x3",
+     "descripcion": null,
+     "precio_centavos": 210000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 30,
+     "tamano": "mediano",
+     "precio": 2100
+    },
+    {
+     "id": "farmacia-centro-protector-solar-fps-50",
+     "categoria_id": "farmacia-cuidado",
+     "nombre": "Protector solar FPS 50",
+     "descripcion": null,
+     "precio_centavos": 890000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 15,
+     "tamano": "mediano",
+     "precio": 8900
+    },
+    {
+     "id": "farmacia-centro-panales-talle-g-x40",
+     "categoria_id": "farmacia-cuidado",
+     "nombre": "Pañales talle G x40",
+     "descripcion": null,
+     "precio_centavos": 1450000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 12,
+     "tamano": "grande",
+     "precio": 14500
+    }
+   ],
+   "ofertas": [
+    {
+     "id": "farmacia-centro-oferta-1",
+     "tipo": "combo",
+     "titulo": "Combo shampoo + acondicionador",
+     "descripcion": null,
+     "porcentaje": null,
+     "cantidad": null,
+     "precioFinal": 6900,
+     "precioLista": 7900,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "farmacia-centro-acondicionador-400-ml",
+       "nombre": "Acondicionador 400 ml",
+       "unidades": 1,
+       "precio": 3950,
+       "unidadVenta": "unidad",
+       "foto": null
+      },
+      {
+       "id": "farmacia-centro-shampoo-400-ml",
+       "nombre": "Shampoo 400 ml",
+       "unidades": 1,
+       "precio": 3950,
+       "unidadVenta": "unidad",
+       "foto": null
+      }
+     ]
+    }
+   ]
+  },
+  "/comercios/almacen-juan": {
+   "comercio": {
+    "id": "almacen-juan",
+    "usuario_id": "7054fddb-df1c-46b5-9fe8-d128d2b75bc5",
+    "nombre": "Almacén Juan",
+    "razon_social": null,
+    "cuit": null,
+    "rubro_id": "almacen",
+    "rubro_nombre": "Almacén y bebidas",
+    "direccion": "Centro · La Francia",
+    "lat": -31.0294,
+    "lon": -62.0842,
+    "telefono": "+54 3573 400-201",
+    "email": null,
+    "horario": "Lun a sáb 08:00 - 21:30",
+    "zona": null,
+    "descripcion": "Surtido fuerte en bebidas, limpieza, snacks y básicos para el día a día.",
+    "redes": null,
+    "medios_pago": null,
+    "logo_url": null,
+    "premium": false,
+    "minimo_centavos": 500000,
+    "estado": "aprobado",
+    "creado_en": "2026-09-07 00:10:38",
+    "mp_usuario_id": null,
+    "mp_access_token": null,
+    "mp_refresh_token": null,
+    "mp_expira_en": null,
+    "puntaje": 5,
+    "resenas_count": 1,
+    "cerrado_temporal": 0,
+    "minimo": 5000
+   },
+   "categorias": [
+    {
+     "id": "almacen-juan-bebidas",
+     "nombre": "Bebidas",
+     "descripcion": null,
+     "unidad_venta": "unidad"
+    },
+    {
+     "id": "almacen-juan-almacen",
+     "nombre": "Almacén",
+     "descripcion": null,
+     "unidad_venta": "unidad"
+    },
+    {
+     "id": "almacen-juan-limpieza",
+     "nombre": "Limpieza",
+     "descripcion": null,
+     "unidad_venta": "unidad"
+    }
+   ],
+   "productos": [
+    {
+     "id": "almacen-juan-coca-cola-2-25-l",
+     "categoria_id": "almacen-juan-bebidas",
+     "nombre": "Coca Cola 2,25 L",
+     "descripcion": null,
+     "precio_centavos": 350000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 32,
+     "tamano": "mediano",
+     "precio": 3500
+    },
+    {
+     "id": "almacen-juan-agua-mineral-2-l",
+     "categoria_id": "almacen-juan-bebidas",
+     "nombre": "Agua mineral 2 L",
+     "descripcion": null,
+     "precio_centavos": 180000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 60,
+     "tamano": "mediano",
+     "precio": 1800
+    },
+    {
+     "id": "almacen-juan-cerveza-quilmes-1-l",
+     "categoria_id": "almacen-juan-bebidas",
+     "nombre": "Cerveza Quilmes 1 L",
+     "descripcion": null,
+     "precio_centavos": 290000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 36,
+     "tamano": "mediano",
+     "precio": 2900
+    },
+    {
+     "id": "almacen-juan-yerba-mate-1-kg",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Yerba mate 1 kg",
+     "descripcion": null,
+     "precio_centavos": 465000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 3,
+     "tamano": "mediano",
+     "precio": 4650
+    },
+    {
+     "id": "almacen-juan-galletitas-surtidas",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Galletitas surtidas",
+     "descripcion": null,
+     "precio_centavos": 125000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 0,
+     "tamano": "mediano",
+     "precio": 1250
+    },
+    {
+     "id": "almacen-juan-aceite-girasol-900-ml",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Aceite girasol 900 ml",
+     "descripcion": null,
+     "precio_centavos": 320000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 30,
+     "tamano": "mediano",
+     "precio": 3200
+    },
+    {
+     "id": "almacen-juan-fideos-500-g",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Fideos 500 g",
+     "descripcion": null,
+     "precio_centavos": 140000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 45,
+     "tamano": "mediano",
+     "precio": 1400
+    },
+    {
+     "id": "almacen-juan-arroz-1-kg",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Arroz 1 kg",
+     "descripcion": null,
+     "precio_centavos": 195000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 40,
+     "tamano": "mediano",
+     "precio": 1950
+    },
+    {
+     "id": "almacen-juan-azucar-1-kg",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Azúcar 1 kg",
+     "descripcion": null,
+     "precio_centavos": 170000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 35,
+     "tamano": "mediano",
+     "precio": 1700
+    },
+    {
+     "id": "almacen-juan-leche-entera-sachet",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Leche entera sachet",
+     "descripcion": null,
+     "precio_centavos": 135000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 48,
+     "tamano": "mediano",
+     "precio": 1350
+    },
+    {
+     "id": "almacen-juan-detergente-750-ml",
+     "categoria_id": "almacen-juan-limpieza",
+     "nombre": "Detergente 750 ml",
+     "descripcion": null,
+     "precio_centavos": 240000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 28,
+     "tamano": "mediano",
+     "precio": 2400
+    },
+    {
+     "id": "almacen-juan-lavandina-1-l",
+     "categoria_id": "almacen-juan-limpieza",
+     "nombre": "Lavandina 1 L",
+     "descripcion": null,
+     "precio_centavos": 160000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 30,
+     "tamano": "mediano",
+     "precio": 1600
+    },
+    {
+     "id": "almacen-juan-papel-higienico-x4",
+     "categoria_id": "almacen-juan-limpieza",
+     "nombre": "Papel higiénico x4",
+     "descripcion": null,
+     "precio_centavos": 280000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 32,
+     "tamano": "grande",
+     "precio": 2800
+    },
+    {
+     "id": "demo-flete-mueble",
+     "categoria_id": null,
+     "nombre": "Juego de comedor",
+     "descripcion": null,
+     "precio_centavos": 42000000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 8,
+     "tamano": "voluminoso",
+     "precio": 420000
+    }
+   ],
+   "ofertas": [
+    {
+     "id": "almacen-juan-oferta-1",
+     "tipo": "descuento",
+     "titulo": "Coca Cola al 15%",
+     "descripcion": null,
+     "porcentaje": 15,
+     "cantidad": null,
+     "precioFinal": 2975,
+     "precioLista": 3500,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "almacen-juan-coca-cola-2-25-l",
+       "nombre": "Coca Cola 2,25 L",
+       "unidades": 1,
+       "precio": 3500,
+       "unidadVenta": "unidad",
+       "foto": null
+      }
+     ]
+    },
+    {
+     "id": "almacen-juan-oferta-2",
+     "tipo": "cantidad",
+     "titulo": "3 aguas",
+     "descripcion": null,
+     "porcentaje": null,
+     "cantidad": 3,
+     "precioFinal": 4600,
+     "precioLista": 5400,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "almacen-juan-agua-mineral-2-l",
+       "nombre": "Agua mineral 2 L",
+       "unidades": 1,
+       "precio": 1800,
+       "unidadVenta": "unidad",
+       "foto": null
+      }
+     ]
+    },
+    {
+     "id": "almacen-juan-oferta-3",
+     "tipo": "combo",
+     "titulo": "Combo mate",
+     "descripcion": null,
+     "porcentaje": null,
+     "cantidad": null,
+     "precioFinal": 5300,
+     "precioLista": 5900,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "almacen-juan-galletitas-surtidas",
+       "nombre": "Galletitas surtidas",
+       "unidades": 1,
+       "precio": 1250,
+       "unidadVenta": "unidad",
+       "foto": null
+      },
+      {
+       "id": "almacen-juan-yerba-mate-1-kg",
+       "nombre": "Yerba mate 1 kg",
+       "unidades": 1,
+       "precio": 4650,
+       "unidadVenta": "unidad",
+       "foto": null
+      }
+     ]
+    }
+   ]
+  },
+  "/comercios/panaderia-la-esquina": {
+   "comercio": {
+    "id": "panaderia-la-esquina",
+    "usuario_id": "demo-comercios-lafrancia",
+    "nombre": "Panadería La Esquina",
+    "razon_social": null,
+    "cuit": null,
+    "rubro_id": "panaderia",
+    "rubro_nombre": "Panadería artesanal",
+    "direccion": "Av. Principal",
+    "lat": -31.0311,
+    "lon": -62.0795,
+    "telefono": "+54 3573 401-122",
+    "email": null,
+    "horario": "Todos los días 07:00 - 13:30 / 17:00 - 21:00",
+    "zona": null,
+    "descripcion": "Pan fresco, facturas y productos de horno para retiro rápido.",
+    "redes": null,
+    "medios_pago": null,
+    "logo_url": null,
+    "premium": false,
+    "minimo_centavos": 300000,
+    "estado": "aprobado",
+    "creado_en": "2026-09-07 00:10:38",
+    "mp_usuario_id": null,
+    "mp_access_token": null,
+    "mp_refresh_token": null,
+    "mp_expira_en": null,
+    "puntaje": null,
+    "resenas_count": 0,
+    "cerrado_temporal": 0,
+    "minimo": 3000
+   },
+   "categorias": [
+    {
+     "id": "panaderia-pan",
+     "nombre": "Panificados",
+     "descripcion": null,
+     "unidad_venta": "peso"
+    },
+    {
+     "id": "panaderia-factura",
+     "nombre": "Facturas",
+     "descripcion": null,
+     "unidad_venta": "docena"
+    },
+    {
+     "id": "panaderia-tortas",
+     "nombre": "Tortas",
+     "descripcion": null,
+     "unidad_venta": "unidad"
+    }
+   ],
+   "productos": [
+    {
+     "id": "panaderia-la-esquina-pan-frances",
+     "categoria_id": "panaderia-pan",
+     "nombre": "Pan francés",
+     "descripcion": null,
+     "precio_centavos": 240000,
+     "unidad_venta": "peso",
+     "fotos": [],
+     "video_url": null,
+     "stock": 50,
+     "tamano": "chico",
+     "precio": 2400
+    },
+    {
+     "id": "panaderia-la-esquina-pan-casero",
+     "categoria_id": "panaderia-pan",
+     "nombre": "Pan casero",
+     "descripcion": null,
+     "precio_centavos": 280000,
+     "unidad_venta": "peso",
+     "fotos": [],
+     "video_url": null,
+     "stock": 30,
+     "tamano": "chico",
+     "precio": 2800
+    },
+    {
+     "id": "panaderia-la-esquina-pan-de-salvado",
+     "categoria_id": "panaderia-pan",
+     "nombre": "Pan de salvado",
+     "descripcion": null,
+     "precio_centavos": 310000,
+     "unidad_venta": "peso",
+     "fotos": [],
+     "video_url": null,
+     "stock": 20,
+     "tamano": "chico",
+     "precio": 3100
+    },
+    {
+     "id": "panaderia-la-esquina-facturas-surtidas",
+     "categoria_id": "panaderia-factura",
+     "nombre": "Facturas surtidas",
+     "descripcion": null,
+     "precio_centavos": 190000,
+     "unidad_venta": "docena",
+     "fotos": [],
+     "video_url": null,
+     "stock": 24,
+     "tamano": "mediano",
+     "precio": 1900
+    },
+    {
+     "id": "panaderia-la-esquina-medialunas-de-manteca",
+     "categoria_id": "panaderia-factura",
+     "nombre": "Medialunas de manteca",
+     "descripcion": null,
+     "precio_centavos": 220000,
+     "unidad_venta": "docena",
+     "fotos": [],
+     "video_url": null,
+     "stock": 20,
+     "tamano": "mediano",
+     "precio": 2200
+    },
+    {
+     "id": "panaderia-la-esquina-torta-de-cumpleanos",
+     "categoria_id": "panaderia-tortas",
+     "nombre": "Torta de cumpleaños",
+     "descripcion": null,
+     "precio_centavos": 1200000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 5,
+     "tamano": "mediano",
+     "precio": 12000
+    },
+    {
+     "id": "panaderia-la-esquina-pastafrola",
+     "categoria_id": "panaderia-tortas",
+     "nombre": "Pastafrola",
+     "descripcion": null,
+     "precio_centavos": 450000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 8,
+     "tamano": "mediano",
+     "precio": 4500
+    },
+    {
+     "id": "panaderia-la-esquina-prepizzas-x3",
+     "categoria_id": "panaderia-pan",
+     "nombre": "Prepizzas x3",
+     "descripcion": null,
+     "precio_centavos": 260000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 18,
+     "tamano": "mediano",
+     "precio": 2600
+    }
+   ],
+   "ofertas": [
+    {
+     "id": "panaderia-la-esquina-oferta-1",
+     "tipo": "descuento",
+     "titulo": "Facturas al 20%",
+     "descripcion": null,
+     "porcentaje": 20,
+     "cantidad": null,
+     "precioFinal": 1520,
+     "precioLista": 1900,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "panaderia-la-esquina-facturas-surtidas",
+       "nombre": "Facturas surtidas",
+       "unidades": 1,
+       "precio": 1900,
+       "unidadVenta": "docena",
+       "foto": null
+      }
+     ]
+    }
+   ]
+  },
+  "/pedidos/8c6e806f-9003-4ac5-95af-280449ec0bd1/seguimiento": {
+   "pedido": {
+    "codigo": "#966237",
+    "estado": "proceso",
+    "preparacion": "recibido",
+    "direccion_texto": "Barrio Los Aromos, La Francia",
+    "parte_numero": null,
+    "partes_total": null,
+    "comercio": "Almacén Juan",
+    "comercio_direccion": "Centro · La Francia",
+    "comercio_lat": -31.0294,
+    "comercio_lon": -62.0842,
+    "destino_lat": null,
+    "destino_lon": null,
+    "envio_estado": null,
+    "lat": null,
+    "lon": null,
+    "ubicacion_en": null,
+    "asignado_en": null,
+    "repartidor": null,
+    "repartidor_telefono": null,
+    "vehiculo": null
+   },
+   "partes": []
+  },
+  "/pedidos/8c6e806f-9003-4ac5-95af-280449ec0bd1/mensajes": {
+   "mensajes": [],
+   "yo": "4c31b0d3-177e-4245-8ee1-8eb15df73982"
+  },
+  "/pedidos/6d48475a-ac67-47ec-9ed7-86a226748121/seguimiento": {
+   "pedido": {
+    "codigo": "#771114",
+    "estado": "terminado",
+    "preparacion": "listo",
+    "direccion_texto": "Ruta 19 km 115",
+    "parte_numero": null,
+    "partes_total": null,
+    "comercio": "Almacén Juan",
+    "comercio_direccion": "Centro · La Francia",
+    "comercio_lat": -31.0294,
+    "comercio_lon": -62.0842,
+    "destino_lat": null,
+    "destino_lon": null,
+    "envio_estado": "entregado",
+    "lat": null,
+    "lon": null,
+    "ubicacion_en": "2026-09-12 09:02:54",
+    "asignado_en": "2026-09-12 09:02:54",
+    "repartidor": "Bruno Delivery",
+    "repartidor_telefono": null,
+    "vehiculo": "moto"
+   },
+   "partes": []
+  },
+  "/pedidos/6d48475a-ac67-47ec-9ed7-86a226748121/mensajes": {
+   "mensajes": [
+    {
+     "id": "1d03de9e-2f22-4886-b2bb-d461b34f4622",
+     "texto": "Bruno Delivery se sumó al chat al tomar el pedido.",
+     "tipo": "sistema",
+     "media_url": null,
+     "autor_id": "bd326bcc-dbe8-4684-8a28-ccad958ffd79",
+     "creado_en": "2026-09-12 09:02:54",
+     "autor": "Bruno Delivery"
+    }
+   ],
+   "yo": "4c31b0d3-177e-4245-8ee1-8eb15df73982"
+  },
+  "/pedidos/d3703042-6507-4ba5-b18a-b1a17f01098c/seguimiento": {
+   "pedido": {
+    "codigo": "#766794",
+    "estado": "terminado",
+    "preparacion": "listo",
+    "direccion_texto": "Av. San Mart�n 123",
+    "parte_numero": null,
+    "partes_total": null,
+    "comercio": "Almacén Juan",
+    "comercio_direccion": "Centro · La Francia",
+    "comercio_lat": -31.0294,
+    "comercio_lon": -62.0842,
+    "destino_lat": null,
+    "destino_lon": null,
+    "envio_estado": "entregado",
+    "lat": null,
+    "lon": null,
+    "ubicacion_en": "2026-09-12 09:03:27",
+    "asignado_en": "2026-09-12 09:03:27",
+    "repartidor": "Bruno Delivery",
+    "repartidor_telefono": null,
+    "vehiculo": "moto"
+   },
+   "partes": []
+  },
+  "/pedidos/d3703042-6507-4ba5-b18a-b1a17f01098c/mensajes": {
+   "mensajes": [
+    {
+     "id": "c334e1f5-70b2-4272-b859-748e77c4b31c",
+     "texto": "Bruno Delivery se sumó al chat al tomar el pedido.",
+     "tipo": "sistema",
+     "media_url": null,
+     "autor_id": "bd326bcc-dbe8-4684-8a28-ccad958ffd79",
+     "creado_en": "2026-09-12 09:03:28",
+     "autor": "Bruno Delivery"
+    }
+   ],
+   "yo": "4c31b0d3-177e-4245-8ee1-8eb15df73982"
+  },
+  "/pedidos/3219b279-f56b-4011-a981-185a6e901112/seguimiento": {
+   "pedido": {
+    "codigo": "#636622",
+    "estado": "proceso",
+    "preparacion": "recibido",
+    "direccion_texto": "Av. San Mart�n 123",
+    "parte_numero": null,
+    "partes_total": null,
+    "comercio": "Almacén Juan",
+    "comercio_direccion": "Centro · La Francia",
+    "comercio_lat": -31.0294,
+    "comercio_lon": -62.0842,
+    "destino_lat": null,
+    "destino_lon": null,
+    "envio_estado": "asignado",
+    "lat": null,
+    "lon": null,
+    "ubicacion_en": "2026-09-14 02:00:59",
+    "asignado_en": "2026-09-14 02:00:59",
+    "repartidor": "Bruno Delivery",
+    "repartidor_telefono": null,
+    "vehiculo": "moto"
+   },
+   "partes": []
+  },
+  "/pedidos/3219b279-f56b-4011-a981-185a6e901112/mensajes": {
+   "mensajes": [
+    {
+     "id": "c35e9b6e-39bf-425e-b109-b48717152028",
+     "texto": "Bruno Delivery se sumó al chat al tomar el pedido.",
+     "tipo": "sistema",
+     "media_url": null,
+     "autor_id": "bd326bcc-dbe8-4684-8a28-ccad958ffd79",
+     "creado_en": "2026-09-14 02:00:59",
+     "autor": "Bruno Delivery"
+    }
+   ],
+   "yo": "4c31b0d3-177e-4245-8ee1-8eb15df73982"
+  },
+  "/pedidos/3e8bbf52-525e-4939-b9a6-c6f03717ba57/seguimiento": {
+   "pedido": {
+    "codigo": "#635163",
+    "estado": "proceso",
+    "preparacion": "preparando",
+    "direccion_texto": "Av. San Mart�n 123",
+    "parte_numero": null,
+    "partes_total": null,
+    "comercio": "Almacén Juan",
+    "comercio_direccion": "Centro · La Francia",
+    "comercio_lat": -31.0294,
+    "comercio_lon": -62.0842,
+    "destino_lat": null,
+    "destino_lon": null,
+    "envio_estado": null,
+    "lat": null,
+    "lon": null,
+    "ubicacion_en": null,
+    "asignado_en": null,
+    "repartidor": null,
+    "repartidor_telefono": null,
+    "vehiculo": null
+   },
+   "partes": []
+  },
+  "/pedidos/3e8bbf52-525e-4939-b9a6-c6f03717ba57/mensajes": {
+   "mensajes": [
+    {
+     "id": "ecdc4717-6162-488d-ae31-3a1459fb73ce",
+     "texto": "Hola! Ya tenemos tu pedido",
+     "tipo": "texto",
+     "media_url": null,
+     "autor_id": "7054fddb-df1c-46b5-9fe8-d128d2b75bc5",
+     "creado_en": "2026-09-12 05:57:17",
+     "autor": "Almacen Don Jose"
+    },
+    {
+     "id": "090fbfe5-9f53-4446-895d-ee2c74b6dfd2",
+     "texto": "Lo estamos armando",
+     "tipo": "texto",
+     "media_url": null,
+     "autor_id": "7054fddb-df1c-46b5-9fe8-d128d2b75bc5",
+     "creado_en": "2026-09-12 05:57:18",
+     "autor": "Almacen Don Jose"
+    },
+    {
+     "id": "49d0b6e3-c544-4b7e-9b98-f39718c6e538",
+     "texto": "Perfecto, gracias!",
+     "tipo": "texto",
+     "media_url": null,
+     "autor_id": "4c31b0d3-177e-4245-8ee1-8eb15df73982",
+     "creado_en": "2026-09-12 05:57:19",
+     "autor": "Vecina de La Francia"
+    }
+   ],
+   "yo": "4c31b0d3-177e-4245-8ee1-8eb15df73982"
+  }
+ },
+ "comercio": {
+  "/auth/yo": {
+   "id": "7054fddb-df1c-46b5-9fe8-d128d2b75bc5",
+   "email": "demo-comercio@lafranciago.demo",
+   "nombre": "Almacen Don Jose",
+   "rol": "comercio",
+   "foto_url": null,
+   "roles": [
+    "cliente",
+    "comercio"
+   ]
+  },
+  "/mi-comercio": {
+   "comercio": {
+    "id": "almacen-juan",
+    "usuario_id": "7054fddb-df1c-46b5-9fe8-d128d2b75bc5",
+    "nombre": "Almacén Juan",
+    "razon_social": null,
+    "cuit": null,
+    "rubro_id": "almacen",
+    "rubro_nombre": "Almacén y bebidas",
+    "direccion": "Centro · La Francia",
+    "lat": -31.0294,
+    "lon": -62.0842,
+    "telefono": "+54 3573 400-201",
+    "email": null,
+    "horario": "Lun a sáb 08:00 - 21:30",
+    "zona": null,
+    "descripcion": "Surtido fuerte en bebidas, limpieza, snacks y básicos para el día a día.",
+    "redes": null,
+    "medios_pago": null,
+    "logo_url": null,
+    "premium": false,
+    "minimo_centavos": 500000,
+    "estado": "aprobado",
+    "creado_en": "2026-09-07 00:10:38",
+    "mp_usuario_id": null,
+    "mp_access_token": null,
+    "mp_refresh_token": null,
+    "mp_expira_en": null,
+    "puntaje": 5,
+    "resenas_count": 1,
+    "cerrado_temporal": 0,
+    "minimo": 5000
+   },
+   "productos": [
+    {
+     "id": "demo-flete-mueble",
+     "categoria_id": null,
+     "nombre": "Juego de comedor",
+     "descripcion": null,
+     "precio_centavos": 42000000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 8,
+     "activo": 1,
+     "precio": 420000
+    },
+    {
+     "id": "almacen-juan-coca-cola-2-25-l",
+     "categoria_id": "almacen-juan-bebidas",
+     "nombre": "Coca Cola 2,25 L",
+     "descripcion": null,
+     "precio_centavos": 350000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 32,
+     "activo": 1,
+     "precio": 3500
+    },
+    {
+     "id": "almacen-juan-agua-mineral-2-l",
+     "categoria_id": "almacen-juan-bebidas",
+     "nombre": "Agua mineral 2 L",
+     "descripcion": null,
+     "precio_centavos": 180000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 60,
+     "activo": 1,
+     "precio": 1800
+    },
+    {
+     "id": "almacen-juan-cerveza-quilmes-1-l",
+     "categoria_id": "almacen-juan-bebidas",
+     "nombre": "Cerveza Quilmes 1 L",
+     "descripcion": null,
+     "precio_centavos": 290000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 36,
+     "activo": 1,
+     "precio": 2900
+    },
+    {
+     "id": "almacen-juan-yerba-mate-1-kg",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Yerba mate 1 kg",
+     "descripcion": null,
+     "precio_centavos": 465000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 3,
+     "activo": 1,
+     "precio": 4650
+    },
+    {
+     "id": "almacen-juan-galletitas-surtidas",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Galletitas surtidas",
+     "descripcion": null,
+     "precio_centavos": 125000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 0,
+     "activo": 1,
+     "precio": 1250
+    },
+    {
+     "id": "almacen-juan-aceite-girasol-900-ml",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Aceite girasol 900 ml",
+     "descripcion": null,
+     "precio_centavos": 320000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 30,
+     "activo": 1,
+     "precio": 3200
+    },
+    {
+     "id": "almacen-juan-fideos-500-g",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Fideos 500 g",
+     "descripcion": null,
+     "precio_centavos": 140000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 45,
+     "activo": 1,
+     "precio": 1400
+    },
+    {
+     "id": "almacen-juan-arroz-1-kg",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Arroz 1 kg",
+     "descripcion": null,
+     "precio_centavos": 195000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 40,
+     "activo": 1,
+     "precio": 1950
+    },
+    {
+     "id": "almacen-juan-azucar-1-kg",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Azúcar 1 kg",
+     "descripcion": null,
+     "precio_centavos": 170000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 35,
+     "activo": 1,
+     "precio": 1700
+    },
+    {
+     "id": "almacen-juan-leche-entera-sachet",
+     "categoria_id": "almacen-juan-almacen",
+     "nombre": "Leche entera sachet",
+     "descripcion": null,
+     "precio_centavos": 135000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 48,
+     "activo": 1,
+     "precio": 1350
+    },
+    {
+     "id": "almacen-juan-detergente-750-ml",
+     "categoria_id": "almacen-juan-limpieza",
+     "nombre": "Detergente 750 ml",
+     "descripcion": null,
+     "precio_centavos": 240000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 28,
+     "activo": 1,
+     "precio": 2400
+    },
+    {
+     "id": "almacen-juan-lavandina-1-l",
+     "categoria_id": "almacen-juan-limpieza",
+     "nombre": "Lavandina 1 L",
+     "descripcion": null,
+     "precio_centavos": 160000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 30,
+     "activo": 1,
+     "precio": 1600
+    },
+    {
+     "id": "almacen-juan-papel-higienico-x4",
+     "categoria_id": "almacen-juan-limpieza",
+     "nombre": "Papel higiénico x4",
+     "descripcion": null,
+     "precio_centavos": 280000,
+     "unidad_venta": "unidad",
+     "fotos": [],
+     "video_url": null,
+     "stock": 32,
+     "activo": 1,
+     "precio": 2800
+    }
+   ]
+  },
+  "/mi-comercio/horarios": {
+   "horarios": [
+    {
+     "id": "c4dbbc8c-6df2-4c13-91a6-fd2ffb03da60",
+     "dia": 1,
+     "abre_min": 480,
+     "cierra_min": 780,
+     "abre": "08:00",
+     "cierra": "13:00"
+    },
+    {
+     "id": "f43705bb-72af-46b4-a605-b5082a50416d",
+     "dia": 1,
+     "abre_min": 1020,
+     "cierra_min": 1290,
+     "abre": "17:00",
+     "cierra": "21:30"
+    },
+    {
+     "id": "5cd8a97c-e684-4687-b1a4-c4d6779428d9",
+     "dia": 2,
+     "abre_min": 480,
+     "cierra_min": 1290,
+     "abre": "08:00",
+     "cierra": "21:30"
+    }
+   ],
+   "dias": [
+    "Domingo",
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado"
+   ]
+  },
+  "/mi-comercio/ofertas": {
+   "ofertas": [
+    {
+     "id": "almacen-juan-oferta-1",
+     "tipo": "descuento",
+     "titulo": "Coca Cola al 15%",
+     "descripcion": null,
+     "porcentaje": 15,
+     "cantidad": null,
+     "precioFinal": 2975,
+     "precioLista": 3500,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "almacen-juan-coca-cola-2-25-l",
+       "nombre": "Coca Cola 2,25 L",
+       "unidades": 1,
+       "precio": 3500,
+       "unidadVenta": "unidad",
+       "foto": null
+      }
+     ]
+    },
+    {
+     "id": "almacen-juan-oferta-2",
+     "tipo": "cantidad",
+     "titulo": "3 aguas",
+     "descripcion": null,
+     "porcentaje": null,
+     "cantidad": 3,
+     "precioFinal": 4600,
+     "precioLista": 5400,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "almacen-juan-agua-mineral-2-l",
+       "nombre": "Agua mineral 2 L",
+       "unidades": 1,
+       "precio": 1800,
+       "unidadVenta": "unidad",
+       "foto": null
+      }
+     ]
+    },
+    {
+     "id": "almacen-juan-oferta-3",
+     "tipo": "combo",
+     "titulo": "Combo mate",
+     "descripcion": null,
+     "porcentaje": null,
+     "cantidad": null,
+     "precioFinal": 5300,
+     "precioLista": 5900,
+     "fotoUrl": null,
+     "desde": null,
+     "hasta": null,
+     "activa": true,
+     "productos": [
+      {
+       "id": "almacen-juan-galletitas-surtidas",
+       "nombre": "Galletitas surtidas",
+       "unidades": 1,
+       "precio": 1250,
+       "unidadVenta": "unidad",
+       "foto": null
+      },
+      {
+       "id": "almacen-juan-yerba-mate-1-kg",
+       "nombre": "Yerba mate 1 kg",
+       "unidades": 1,
+       "precio": 4650,
+       "unidadVenta": "unidad",
+       "foto": null
+      }
+     ]
+    }
+   ]
+  },
+  "/mi-comercio/metricas": {
+   "hoy": {
+    "pedidos": 0,
+    "ventas": 0
+   },
+   "ayer": {
+    "pedidos": 0,
+    "ventas": 0
+   },
+   "semana": {
+    "pedidos": 7,
+    "ventas": 5084800
+   },
+   "semanaPrevia": {
+    "pedidos": 0,
+    "ventas": 0
+   },
+   "enProceso": 4,
+   "productos": 14,
+   "ofertas": 3,
+   "ticketPromedio": 726400,
+   "masVendidos": [
+    {
+     "nombre": "Juego de comedor",
+     "unidades": 12,
+     "total": 5040000
+    },
+    {
+     "nombre": "Coca Cola 2,25 L",
+     "unidades": 8,
+     "total": 28000
+    }
+   ]
+  },
+  "/mi-comercio/envios": {
+   "envios": [
+    {
+     "id": "ec08d03e-b9c2-4f16-a224-566dbf5d31d5",
+     "estado": "asignado",
+     "lat": null,
+     "lon": null,
+     "ubicacion_en": "2026-09-14 02:00:59",
+     "asignado_en": "2026-09-14 02:00:59",
+     "entregado_en": null,
+     "codigo": "#636622",
+     "direccion_texto": "Av. San Mart�n 123",
+     "repartidor": "Bruno Delivery",
+     "telefono": null
+    },
+    {
+     "id": "b05f17a1-ff4e-471f-8bfc-a466b067076d",
+     "estado": "asignado",
+     "lat": null,
+     "lon": null,
+     "ubicacion_en": null,
+     "asignado_en": "2026-09-08 19:26:07",
+     "entregado_en": null,
+     "codigo": "#559677",
+     "direccion_texto": "Mudanza a Ruta 19",
+     "repartidor": "Fletero Nuevo",
+     "telefono": null
+    }
+   ]
+  },
+  "/notificaciones": {
+   "notificaciones": [
+    {
+     "id": "0793e356-c5a1-4ac1-b4d4-b555a35fbe8a",
+     "tipo": "pedido",
+     "titulo": "Pedido nuevo #966237",
+     "texto": "1 producto · 5040000",
+     "enlace": "/panel/comercio",
+     "leida_en": null,
+     "creado_en": "2026-09-12 09:06:06"
+    },
+    {
+     "id": "0c3bc815-6472-4707-a98b-a9e33eb2a213",
+     "tipo": "pedido",
+     "titulo": "Pedido nuevo #771114",
+     "texto": "1 producto · 7150",
+     "enlace": "/panel/comercio",
+     "leida_en": null,
+     "creado_en": "2026-09-12 09:02:51"
+    },
+    {
+     "id": "b1d60bd0-a937-4288-8107-2fdbd0a69c50",
+     "tipo": "pedido",
+     "titulo": "Pedido nuevo #766794",
+     "texto": "1 producto · 4175",
+     "enlace": "/panel/comercio",
+     "leida_en": null,
+     "creado_en": "2026-09-12 09:02:47"
+    },
+    {
+     "id": "a1eae731-773e-407d-a605-c435de0278e3",
+     "tipo": "pedido",
+     "titulo": "Pedido nuevo #636622",
+     "texto": "1 producto · 7150",
+     "enlace": "/panel/comercio",
+     "leida_en": null,
+     "creado_en": "2026-09-12 05:57:17"
+    },
+    {
+     "id": "8a0f301e-8f43-45e4-aea2-b353bbe4d9a7",
+     "tipo": "pedido",
+     "titulo": "Pedido nuevo #635163",
+     "texto": "1 producto · 4175",
+     "enlace": "/panel/comercio",
+     "leida_en": null,
+     "creado_en": "2026-09-12 05:57:15"
+    }
+   ],
+   "sinLeer": 5
+  }
+ },
+ "delivery": {
+  "/auth/yo": {
+   "id": "bd326bcc-dbe8-4684-8a28-ccad958ffd79",
+   "email": "demo-delivery@lafranciago.demo",
+   "nombre": "Bruno Delivery",
+   "rol": "delivery",
+   "foto_url": null,
+   "roles": [
+    "cliente",
+    "delivery"
+   ]
+  },
+  "/delivery/disponibles": {
+   "pedidos": [
+    {
+     "id": "3e8bbf52-525e-4939-b9a6-c6f03717ba57",
+     "codigo": "#635163",
+     "direccion_texto": "Av. San Mart�n 123",
+     "total_centavos": 417500,
+     "creado_en": "2026-09-12 05:57:15",
+     "volumen_litros": 6,
+     "preferencia_envio": "cualquiera",
+     "parte_numero": null,
+     "partes_total": null,
+     "preparacion": "preparando",
+     "comercio": "Almacén Juan",
+     "comercio_direccion": "Centro · La Francia",
+     "comercio_lat": -31.0294,
+     "comercio_lon": -62.0842,
+     "cliente": "Vecina de La Francia",
+     "items": 1,
+     "total": 4175,
+     "distanciaKm": 3.36,
+     "litros": 6,
+     "entraEnTuVehiculo": true,
+     "viajes": 1,
+     "vehiculos": [
+      "moto",
+      "auto"
+     ]
+    }
+   ],
+   "vehiculo": "moto"
+  },
+  "/delivery/mis-envios": {
+   "envios": [
+    {
+     "id": "ec08d03e-b9c2-4f16-a224-566dbf5d31d5",
+     "estado": "asignado",
+     "asignado_en": "2026-09-14 02:00:59",
+     "entregado_en": null,
+     "pedido_id": "3219b279-f56b-4011-a981-185a6e901112",
+     "codigo": "#636622",
+     "direccion_texto": "Av. San Mart�n 123",
+     "total_centavos": 715000,
+     "metodo_pago": "efectivo",
+     "comercio": "Almacén Juan",
+     "comercio_direccion": "Centro · La Francia",
+     "comercio_telefono": "+54 3573 400-201",
+     "cliente": "Vecina de La Francia",
+     "cliente_telefono": null,
+     "items": 1,
+     "total": 7150
+    }
+   ]
+  },
+  "/delivery/ganancias": {
+   "hoy": {
+    "entregas": 1,
+    "gano": 1200
+   },
+   "semana": {
+    "entregas": 2,
+    "gano": 2400
+   },
+   "total": {
+    "entregas": 2,
+    "gano": 2400
+   },
+   "historial": [
+    {
+     "codigo": "#766794",
+     "direccion_texto": "Av. San Mart�n 123",
+     "envio_centavos": 120000,
+     "tipo": "pedido",
+     "entregado_en": "2026-09-14 02:01:03",
+     "asignado_en": "2026-09-12 09:03:27",
+     "comercio": "Almacén Juan",
+     "gano": 1200
+    },
+    {
+     "codigo": "#771114",
+     "direccion_texto": "Ruta 19 km 115",
+     "envio_centavos": 120000,
+     "tipo": "pedido",
+     "entregado_en": "2026-09-12 09:03:31",
+     "asignado_en": "2026-09-12 09:02:54",
+     "comercio": "Almacén Juan",
+     "gano": 1200
+    }
+   ]
+  },
+  "/notificaciones": {
+   "notificaciones": [],
+   "sinLeer": 0
+  }
+ },
+ "flete": {
+  "/auth/yo": {
+   "id": "503c9e9a-f7dc-4edc-bad5-a9a383cf2e0f",
+   "email": "demo-flete@lafranciago.demo",
+   "nombre": "Fletes del Norte",
+   "rol": "fletero",
+   "foto_url": null,
+   "roles": [
+    "cliente",
+    "fletero"
+   ]
+  },
+  "/delivery/disponibles": {
+   "pedidos": [
+    {
+     "id": "8c6e806f-9003-4ac5-95af-280449ec0bd1",
+     "codigo": "#966237",
+     "direccion_texto": "Barrio Los Aromos, La Francia",
+     "total_centavos": 504000000,
+     "creado_en": "2026-09-12 09:06:06",
+     "volumen_litros": 480,
+     "preferencia_envio": "cualquiera",
+     "parte_numero": null,
+     "partes_total": null,
+     "preparacion": "recibido",
+     "comercio": "Almacén Juan",
+     "comercio_direccion": "Centro · La Francia",
+     "comercio_lat": -31.0294,
+     "comercio_lon": -62.0842,
+     "cliente": "Vecina de La Francia",
+     "items": 1,
+     "total": 5040000,
+     "distanciaKm": 3.36,
+     "litros": 480,
+     "entraEnTuVehiculo": true,
+     "viajes": 1,
+     "vehiculos": [
+      "camioneta",
+      "camion"
+     ]
+    }
+   ],
+   "vehiculo": "camioneta"
+  },
+  "/delivery/mis-envios": {
+   "envios": []
+  },
+  "/delivery/ganancias": {
+   "hoy": {
+    "entregas": 0,
+    "gano": 0
+   },
+   "semana": {
+    "entregas": 0,
+    "gano": 0
+   },
+   "total": {
+    "entregas": 0,
+    "gano": 0
+   },
+   "historial": []
+  },
+  "/delivery/pedidos/8c6e806f-9003-4ac5-95af-280449ec0bd1": {
+   "pedido": {
+    "id": "8c6e806f-9003-4ac5-95af-280449ec0bd1",
+    "codigo": "#966237",
+    "direccion_texto": "Barrio Los Aromos, La Francia",
+    "subtotal_centavos": 504000000,
+    "envio_centavos": 0,
+    "total_centavos": 504000000,
+    "metodo_pago": "efectivo",
+    "creado_en": "2026-09-12 09:06:06",
+    "usuario_id": "4c31b0d3-177e-4245-8ee1-8eb15df73982",
+    "comercio": "Almacén Juan",
+    "comercio_direccion": "Centro · La Francia",
+    "comercio_telefono": "+54 3573 400-201",
+    "cliente": "Vecina de La Francia",
+    "cliente_telefono": null,
+    "subtotal": 5040000,
+    "envio": 0,
+    "total": 5040000
+   },
+   "items": [
+    {
+     "nombre": "Juego de comedor",
+     "precio_centavos": 42000000,
+     "unidad_venta": "unidad",
+     "escalon": 11,
+     "subtotal_centavos": 504000000,
+     "precio": 420000,
+     "subtotal": 5040000
+    }
+   ]
+  }
+ }
+}

@@ -13,6 +13,7 @@ import '@fontsource/nunito-sans/latin-700.css';
 
 import App from './App';
 import '@core/theme/types';
+import { engancharModoDemo } from '@core/data/demo/modoDemo';
 
 /**
  * Guardia contra clickjacking.
@@ -42,6 +43,10 @@ guardAgainstFraming();
 if (import.meta.env.PROD) {
   registerSW({ immediate: true });
 }
+
+/* Va antes de montar React para que ninguna pantalla llegue a pedirle datos
+   al backend antes de que la demo esté enganchada. */
+engancharModoDemo();
 
 const rootElement = document.getElementById('root');
 
