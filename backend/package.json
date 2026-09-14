@@ -6,9 +6,11 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "setup": "node setup.mjs",
-    "db:local": "wrangler d1 execute lafranciago --local --file=./migrations/0001_esquema_inicial.sql",
-    "db:remoto": "wrangler d1 execute lafranciago --remote --file=./migrations/0001_esquema_inicial.sql",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:migrar": "wrangler d1 migrations apply lafranciago --remote",
+    "db:migrar:local": "wrangler d1 migrations apply lafranciago --local",
+    "db:migrar:prod": "wrangler d1 migrations apply lafranciago-prod --remote --env prod",
+    "deploy:prod": "wrangler deploy --env prod"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260906.1",

@@ -2,10 +2,20 @@ name = "lafranciago-api"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"
 
-# La base y el bucket se crean con:
-#   npx wrangler d1 create lafranciago
-#   npx wrangler r2 bucket create lafranciago-media
-# y después se pega acá el database_id que devuelve el primer comando.
+# Hay dos bases: la de todos los dias y la que va a usar la gente.
+#
+#   lafranciago        desarrollo y pruebas (la de siempre, con datos de prueba)
+#   lafranciago-prod   produccion, limpia
+#
+# Sin --env se trabaja contra la de desarrollo, que es lo que uno quiere el
+# 99% de las veces. Para produccion hay que pedirlo:
+#
+#   npx wrangler deploy --env prod
+#   npx wrangler d1 migrations apply lafranciago-prod --remote --env prod
+#
+# El bucket y las variables se comparten; lo unico que cambia es la base.
+# Los secretos son por entorno: los de produccion se cargan con
+#   npx wrangler secret put NOMBRE --env prod
 
 [[d1_databases]]
 binding = "DB"
@@ -45,3 +55,18 @@ API_PUBLIC_URL = "https://lafranciago-api.lafranciago-api.workers.dev"
 # Entorno local para desarrollo: usa una copia de la base en disco.
 [env.dev]
 vars = { ORIGENES_PERMITIDOS = "http://localhost:8081" }
+
+# ── Produccion ──
+# Hereda todo lo de arriba salvo lo que se repita aca.
+
+[env.prod]
+name = "lafranciago-api-prod"
+
+[[env.prod.d1_databases]]
+binding = "DB"
+database_name = "lafranciago-prod"
+database_id = "bdf40919-b910-4611-8f6e-a407f4f29afa"
+
+[[env.prod.r2_buckets]]
+binding = "MEDIA"
+bucket_name = "lafranciago-media"
