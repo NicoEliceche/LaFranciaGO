@@ -70,6 +70,12 @@ const MiComercioScreen = lazy(() =>
 const CommercePanelScreen = lazy(() =>
   import('@features/marketplace/screens/CommercePanelScreen').then((m) => ({ default: m.CommercePanelScreen })),
 );
+
+const GestionResumenScreen = lazy(() =>
+  import('@features/gestion/screens/GestionResumenScreen').then((m) => ({
+    default: m.GestionResumenScreen,
+  })),
+);
 const ProductFormScreen = lazy(() =>
   import('@features/marketplace/screens/ProductFormScreen').then((m) => ({ default: m.ProductFormScreen })),
 );
@@ -207,6 +213,14 @@ function App() {
               element={
                 <RutaPrivada>
                   <MiComercioScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/gestion"
+              element={
+                <RutaPrivada>
+                  <GestionResumenScreen />
                 </RutaPrivada>
               }
             />
