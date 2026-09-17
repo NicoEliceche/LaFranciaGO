@@ -1,0 +1,8 @@
+# Material del sistema que usa Diego: son pantallas de un producto ajeno y
+# este repositorio es público. Se estudian en local y no se publican.
+*.mp4
+*.mov
+*.webm
+*.png
+*.jpg
+fotogramas/
