@@ -1,140 +1,179 @@
 # El sistema que usa Diego
 
-Leído de las capturas y el video que grabó Nicolás con su propia sesión. No
-se accedió al sistema: lo que sigue sale del material que él pasó.
+Leído del recorrido de 27 minutos y las capturas que grabó Nicolás con su
+propia sesión. No se accedió al sistema.
 
 El objetivo no es copiarlo. Es entender qué problemas le resuelve a Diego,
-para decidir cuáles resolvemos dentro de LaFranciaGO y cuáles no valen la
-pena.
+para decidir cuáles resolvemos dentro de LaFranciaGO y cuáles no.
 
 ---
 
+## Lo primero: cuánto paga y qué le alcanza
+
+Plan Clásico, **$87.600 por mes**, con:
+
+- 1 sucursal
+- 2 usuarios
+- 1000 productos
+- vendedores y facturas ilimitadas
+
+Dos cosas que esto define:
+
+**Una sola sucursal le alcanza.** El sistema soporta varias y las muestra en
+cada filtro, pero Diego paga el plan de una. No hace falta construir
+sucursales múltiples.
+
+**Es el techo de lo que podemos cobrarle.** Si LaFranciaGO le reemplaza esto,
+el ahorro es de algo más de un millón de pesos al año.
+
 ## El menú, completo
 
-Ocho entradas en una barra horizontal, cada una con su desplegable:
-
 ```
-Ingresos          Egresos                Contactos     Productos
-  Ventas a clientes  Compras a proveedores  Clientes      Productos
-  Presupuestos       Otros egresos          Proveedores   Lista de precios de venta
+Ingresos              Egresos                 Contactos    Productos
+  Ventas a clientes     Compras a proveedores   Clientes     Productos
+  Presupuestos          Otros egresos           Proveedores  Lista de precios de venta
   Otros ingresos
 
-ARCA (sin desplegable)   Cuentas                 Informes   Usuarios
-                           Cuentas                            Usuarios
-                           Operaciones en cuentas             Vendedores
-                                                              Roles
+ARCA        Cuentas                  Informes    Usuarios
+              Cuentas                              Usuarios
+              Operaciones en cuentas               Vendedores
+                                                   Roles
 ```
 
-Además, un botón **Crear** siempre visible arriba a la izquierda: el atajo
-para cargar sin navegar hasta la sección.
+Más un botón **Crear** siempre visible, y un menú de accesos con: Resumen del
+día, Don Links, Catálogo QR, Scanner, Gestión rápida, Club de Beneficios,
+Academia, Etiquetas, Centro de Ayuda, Tema claro/oscuro y pantalla completa.
 
-## Lo que revela el tablero
+## Los cuatro pilares
 
-El inicio muestra, en una sola pantalla de escritorio:
+Mirando el recorrido entero, el sistema se sostiene sobre cuatro cosas. Las
+tres primeras no existen hoy en LaFranciaGO de ninguna forma.
 
-- **Cuatro totales arriba**: ventas del mes (1.433), total de ventas,
-  ventas cobradas, total de egresos. Cada uno con su comparación contra el
-  mes anterior.
-- **Cotización del dólar**, oficial y blue. En Argentina esto no es
-  decoración: es dato de trabajo.
-- **Gráfico de ventas de los últimos 30 días**.
-- **Resumen del día**: importe en ventas, importe en compras, facturas a
-  cobrar, compras sin pagar.
-- **Estado de cuentas**: cuenta general y pagos sin cuenta, con total.
-- **Cobros vencidos o a vencer en 7 días**.
-- **Alerta de stock**: 481 productos bajo el límite, paginados de a 5.
+### 1. Cuenta corriente
 
-Lo que el tablero dice del negocio: Diego vive de **cobrar y pagar en el
-tiempo**, no sólo de vender. Tres de los siete bloques son cuentas por
-cobrar o por pagar.
+Es lo que más aparece. No es un campo "pagado sí/no": es un saldo que se
+mueve.
 
-## La pantalla de ventas: el patrón a seguir
+- Cada venta puede cobrarse en **varios pagos**, cada uno con su método
+  (efectivo, transferencia, tarjeta, cheque), su cuenta y su fecha.
+- Un cliente tiene **balance de deuda** y **saldo a favor**. Si paga de más,
+  queda a favor y se usa en la venta siguiente.
+- Hay **deuda inicial** para cargar lo que ya se debía antes de usar el
+  sistema.
+- Lo mismo para proveedores, del otro lado.
+- Los cobros tienen **vencimiento**, y el tablero avisa los que vencen en 7
+  días.
 
-Es la más completa y la que mejor muestra qué espera alguien de un sistema de
-gestión en escritorio.
+### 2. Caja
 
-**Arriba, cuatro totales del filtro aplicado**: cantidad de ventas (7.331),
-cobrado, a cobrar, total. Cambian con el filtro; no son del negocio entero.
+Separado de las ventas. El punto de venta ("Gestión rápida") tiene:
 
-**Filtros en dos niveles.** Cuatro a la vista —fecha (como rango), sucursal,
-cliente, estado de pago— y un botón "Filtros" que despliega el resto:
-usuario, vendedor, origen, método de pago, estado de envío, estado de
-facturación, vencimiento.
+- Apertura y **cierre de caja**.
+- **Retiros** y **depósitos**, cada uno con nota y responsable.
+- **Egresos** que no son compras.
+- Pago de cuenta corriente desde el mostrador.
+- Devolución de productos.
 
-**La tabla, con 14 columnas**: acción, emisión, cliente, envío, notas,
-estado, total, cobrado, a cobrar, sucursal, vencimiento, a pagar
-(devolución), número de factura.
+Y un informe de cajas por usuario, con totales de efectivo, tarjeta y
+cheques.
 
-**Por fila, dos controles**: un menú "Acciones" y un acceso directo a la
-orden de venta. Casillas para seleccionar varias.
+### 3. Costo y rentabilidad
 
-**Y arriba de todo**: "Nueva venta", "Devoluciones" y "Tablero de envíos".
+Cada producto guarda **precio de costo** además del de venta. Con eso el
+sistema calcula, en el informe de beneficios:
 
-Nada de esto se puede hacer hoy en LaFranciaGO. No por falta de datos, sino
-porque la pantalla no está pensada para operar sobre muchas filas.
+- ganancia bruta y neta por fecha, por día, por factura, por producto
+- el **porcentaje de ganancia** de cada venta (se ven márgenes del 8% al 60%)
 
-## El alta de una venta
+Sin guardar el costo, este informe no existe. Es una decisión de base de
+datos, no de pantalla.
 
-Una sola pantalla, sin pasos:
+### 4. Operar sobre muchas filas
 
-- Vendedor, fecha de emisión, cliente (con botón para crear uno nuevo ahí
-  mismo).
-- **Búsqueda de producto por nombre, SKU o código de barras** — pensada para
-  un lector, no para el mouse.
-- Tabla de items con cantidad, precio, descuento por línea, subtotal, IVA.
-- Descuento general aparte del de cada línea.
-- **Varios pagos en una venta**: importe, método, cuenta de pago y nota, con
-  "Agregar nuevo pago". Muestra el saldo a favor del cliente.
+Toda pantalla de listado tiene la misma forma:
 
-El detalle que más dice: se pueden registrar **pagos parciales y de varios
-métodos en la misma venta**. Eso es cuenta corriente de verdad, no un campo
-"pagado sí/no".
+- **Totales arriba** que responden al filtro aplicado, no al negocio entero.
+- **Filtros en dos niveles**: los cuatro más usados a la vista, el resto
+  detrás de un botón "Filtros".
+- **Selector de cuántas filas** mostrar y buscador.
+- **Acciones por fila** (Ver, Editar, Duplicar, Borrar) y casillas para
+  seleccionar varias.
+- Acciones masivas sobre lo seleccionado.
 
-## Qué tiene que LaFranciaGO no tiene
+En ventas son 14 columnas y 11 filtros sobre 7.331 registros.
 
-| Módulo | Qué resuelve | ¿Existe hoy? |
+## Lo demás que tiene
+
+| Módulo | Qué hace |
+|---|---|
+| Presupuestos | Cotizar antes de vender; se convierte en venta |
+| Compras a proveedores | Reponer stock y registrar deuda |
+| Otros ingresos / egresos | Movimientos que no son venta ni compra, con categorías |
+| Devoluciones | Devolver productos con comprobante imprimible |
+| Listas de precios | Varios precios por producto; se elige en la venta |
+| Importar productos | Desde Excel, mapeando cada columna a un campo |
+| Actualizar precios masivamente | Exportar a Excel, editar, volver a importar |
+| Scanner | Buscar por código de barras, con cámara o lector |
+| Catálogo QR | Catálogo público con QR, con o sin stock visible |
+| Etiquetas | Imprimir etiquetas de productos |
+| Envíos | Estado de entrega, transportista, tablero de envíos |
+| Usuarios, vendedores, roles | Varias personas con permisos distintos |
+| Auditoría | Cada pago registra quién lo creó y si fue modificado |
+| ARCA (ex AFIP) | Facturación electrónica: CUIT, punto de venta, factura A |
+
+### Los ocho informes
+
+Cuenta corriente · Ingresos y egresos · Resumen de beneficios · Ranking de
+productos · Informe de stock · Ventas a clientes · Pagos a proveedores ·
+Cobros.
+
+Todos con rango de fechas y exportables.
+
+## Qué tiene LaFranciaGO hoy
+
+| | Don Gestión | LaFranciaGO |
 |---|---|---|
-| Ventas con cobro parcial | Vender y cobrar en momentos distintos | No |
-| Presupuestos | Cotizar antes de vender | No |
-| Compras a proveedores | Reponer stock y registrar deuda | No |
-| Otros ingresos / egresos | Movimientos que no son venta ni compra | No |
-| Clientes como ficha | Historial, saldo, datos | No (hay pedidos, no personas) |
-| Proveedores | A quién se le compra y cuánto se debe | No |
-| Lista de precios | Precios distintos por lista | No |
-| Cuentas y operaciones | Caja, bancos, transferencias | No |
-| Informes | Consultas por rango y exportables | Parcial (sólo métricas del día) |
-| Usuarios, vendedores, roles | Varias personas con permisos distintos | No |
-| ARCA (ex AFIP) | Facturación electrónica | No |
-| Sucursales | Más de un local | No |
-| Código de barras | Cargar con lector | No |
+| Vender | Sí, con cobro parcial | Sí, pago completo |
+| Cuenta corriente | Sí | No |
+| Caja | Sí | No |
+| Costo y rentabilidad | Sí | No |
+| Clientes como ficha | Sí | No (hay pedidos, no personas) |
+| Proveedores y compras | Sí | No |
+| Presupuestos | Sí | No |
+| Stock | Sí, con alertas | Sí |
+| Informes | Ocho, por rango | Métricas del día |
+| Usuarios y permisos | Sí | No, una cuenta por comercio |
+| Facturación | Sí (ARCA) | No |
+| Listado operable | Sí | No |
 
-## Lo que conviene mirar con cuidado
+Lo que LaFranciaGO tiene y Don Gestión no: **el cliente final pide desde la
+app**, con delivery, flete, chat y seguimiento. Eso no es un módulo menos:
+es otro negocio, y es la razón por la que el comercio querría las dos cosas
+en un solo lugar.
 
-**ARCA es un mundo aparte.** La facturación electrónica argentina exige
-certificados, homologación y responsabilidad fiscal. No es un módulo más:
-es un proyecto propio. Conviene decidir explícitamente si entra, y si entra,
-cotizarlo aparte.
+## Lo que hay que decidir antes de construir
 
-**Sucursales atraviesa todo.** Se ve en casi cada pantalla (columna
-"Sucursal", filtro "Sucursal"). Si Diego lo necesita, hay que decidirlo
-ahora: agregarlo después obliga a tocar todas las tablas.
+**ARCA es un proyecto aparte.** Certificados, homologación, responsabilidad
+fiscal. Conviene decidir explícitamente si entra y cotizarlo por separado.
 
-**Hay funciones que probablemente no use.** 481 productos con alerta de
-stock en cero sugiere que el control de stock está configurado pero no
-mantenido. Antes de replicar el módulo entero conviene preguntarle qué mira
-de verdad.
+**Sucursales: probablemente no.** El plan de Diego tiene una sola. Si se
+descarta, se ahorra una columna en casi todas las tablas.
+
+**Hay funciones que no usa.** 481 productos con alerta de stock, todos en
+cero, sugieren control configurado pero no mantenido. Y en el informe de
+cajas aparecen 5 usuarios cuando el plan permite 2.
 
 ## Lo que falta preguntarle a Diego
 
-El material muestra **qué tiene el sistema**. Falta lo que ninguna captura
+El recorrido muestra **qué tiene el sistema**. Falta lo que ninguna captura
 dice:
 
 1. **Qué abre todos los días** y qué nunca tocó.
 2. **Qué hace en papel, WhatsApp o Excel** porque el sistema no se lo cubre.
-3. **Si necesita facturar** electrónicamente desde LaFranciaGO o le alcanza
-   con seguir facturando donde factura hoy.
-4. **Si tiene más de un local**, ahora o pensado.
-5. **Cuántas personas** usan el sistema y si necesitan ver cosas distintas.
+3. **Si necesita facturar** desde LaFranciaGO o le alcanza con seguir
+   facturando donde factura hoy.
+4. **Cuánta gente** usa el sistema y si necesitan ver cosas distintas.
+5. **Si lleva fiado** de verdad, y a cuánta gente.
 
-Las dos primeras separan lo que hay que construir de lo que sólo ocupa lugar
-en un menú.
+La quinta es la más importante: si la cuenta corriente es central en su día,
+es el primer módulo. Si casi todo se cobra al contado, el orden cambia.
