@@ -484,6 +484,7 @@ export async function rutasGestion(
       pagos?: PagoPedido[];
       clienteNombre?: string;
       clienteId?: string;
+      cuentaFiadoId?: string;
       descuentoCentavos?: number;
       nota?: string;
     };
@@ -511,6 +512,27 @@ export async function rutasGestion(
       return error('Estás cobrando más que el total de la venta', 400, cors);
     }
 
+    /* Si hay un pago fiado tiene que decir a quién: "fiado" sin cuenta es
+       plata que sale del negocio y no queda anotada en ningún lado. */
+    const hayFiado = pagosLimpios.pagos.some((p) => p.metodo === 'cuenta_corriente');
+    let cuentaFiado: { id: string; nombre: string } | null = null;
+
+    if (hayFiado || cuerpo.cuentaFiadoId) {
+      if (!cuerpo.cuentaFiadoId) {
+        return error('Decí a qué cuenta se le fía', 400, cors);
+      }
+
+      cuentaFiado = await env.DB.prepare(
+        "SELECT id, nombre FROM cuentas_fiado WHERE id = ? AND comercio_id = ? AND activa = 1",
+      )
+        .bind(cuerpo.cuentaFiadoId, comercioId)
+        .first<{ id: string; nombre: string }>();
+
+      if (!cuentaFiado) {
+        return error('Esa cuenta de fiado no existe', 404, cors);
+      }
+    }
+
     const caja = await cajaAbierta(env, comercioId);
     const id = nuevoId();
     const numero = await proximoNumero(env, comercioId);
@@ -518,8 +540,8 @@ export async function rutasGestion(
     await env.DB.prepare(
       `INSERT INTO ventas (id, comercio_id, numero, cliente_id, cliente_nombre, caja_id,
                            vendedor_id, total_centavos, descuento_centavos, costo_centavos,
-                           cobrado_centavos, nota)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                           cobrado_centavos, nota, cuenta_fiado_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
         id,
@@ -534,6 +556,7 @@ export async function rutasGestion(
         costo,
         cobrado,
         cuerpo.nota ?? null,
+        cuentaFiado?.id ?? null,
       )
       .run();
 
@@ -574,6 +597,28 @@ export async function rutasGestion(
           ventaId: id,
           usuarioId: usuario.id,
         });
+      }
+
+      /* Lo fiado no entra al cajón —no hay plata— pero queda anotado en la
+         cuenta. Es lo que hace que la caja cierre cuando alguien se lleva
+         mercadería sin pagar: el sistema sabe que salió y a nombre de quién,
+         y a la persona del mostrador no le falta plata. */
+      if (pago.metodo === 'cuenta_corriente' && cuentaFiado) {
+        await env.DB.prepare(
+          `INSERT INTO fiado_movimientos (id, cuenta_id, monto_centavos, concepto, venta_id, caja_id, metodo, creado_por)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+          .bind(
+            nuevoId(),
+            cuentaFiado.id,
+            pago.montoCentavos,
+            `Venta #${numero}`,
+            id,
+            caja?.id ?? null,
+            'cuenta_corriente',
+            usuario.id,
+          )
+          .run();
       }
     }
 
@@ -681,6 +726,170 @@ export async function rutasGestion(
     }
 
     return json({ cobrado_centavos: venta.cobrado_centavos + pago.montoCentavos }, {}, cors);
+  }
+
+  /* ── Fiado ── */
+
+  if (ruta === '/gestion/fiado' && metodo === 'GET') {
+    /* El saldo sale de sumar los movimientos y no de un campo guardado: con
+       un campo hay dos verdades posibles, y la que se desactualiza es
+       siempre la que mira el comercio. */
+    const { results } = await env.DB.prepare(
+      `SELECT c.id, c.nombre, c.telefono, c.nota, c.tope_centavos, c.activa,
+              COALESCE((SELECT SUM(m.monto_centavos) FROM fiado_movimientos m
+                         WHERE m.cuenta_id = c.id), 0) AS saldo_centavos,
+              (SELECT MAX(m.creado_en) FROM fiado_movimientos m
+                WHERE m.cuenta_id = c.id) AS ultimo_movimiento
+         FROM cuentas_fiado c
+        WHERE c.comercio_id = ?
+        ORDER BY c.activa DESC, saldo_centavos DESC, c.nombre`,
+    )
+      .bind(comercioId)
+      .all();
+
+    const total = results.reduce(
+      (suma, fila) => suma + Number((fila as { saldo_centavos: number }).saldo_centavos),
+      0,
+    );
+
+    return json({ cuentas: results, totalAdeudado: total }, {}, cors);
+  }
+
+  if (ruta === '/gestion/fiado' && metodo === 'POST') {
+    const cuerpo = (await request.json().catch(() => ({}))) as {
+      nombre?: string;
+      telefono?: string;
+      nota?: string;
+      topeCentavos?: number | null;
+    };
+
+    const nombre = String(cuerpo.nombre ?? '').trim();
+
+    if (nombre.length < 2) {
+      return error('Poné un nombre para la cuenta', 400, cors);
+    }
+
+    const id = nuevoId();
+
+    await env.DB.prepare(
+      'INSERT INTO cuentas_fiado (id, comercio_id, nombre, telefono, nota, tope_centavos) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+      .bind(
+        id,
+        comercioId,
+        nombre,
+        cuerpo.telefono ?? null,
+        cuerpo.nota ?? null,
+        cuerpo.topeCentavos ?? null,
+      )
+      .run();
+
+    return json({ id, nombre }, { status: 201 }, cors);
+  }
+
+  /* ── Detalle de una cuenta, con su historial ── */
+
+  const cuentaDetalle = /^\/gestion\/fiado\/([\w-]+)$/.exec(ruta);
+
+  if (cuentaDetalle && metodo === 'GET') {
+    const cuenta = await env.DB.prepare(
+      'SELECT * FROM cuentas_fiado WHERE id = ? AND comercio_id = ?',
+    )
+      .bind(cuentaDetalle[1], comercioId)
+      .first();
+
+    if (!cuenta) {
+      return error('Esa cuenta no existe', 404, cors);
+    }
+
+    const { results: movimientos } = await env.DB.prepare(
+      `SELECT m.id, m.monto_centavos, m.concepto, m.venta_id, m.metodo, m.creado_en,
+              u.nombre AS creado_por_nombre, v.numero AS venta_numero
+         FROM fiado_movimientos m
+         JOIN usuarios u ON u.id = m.creado_por
+         LEFT JOIN ventas v ON v.id = m.venta_id
+        WHERE m.cuenta_id = ?
+        ORDER BY m.creado_en DESC`,
+    )
+      .bind(cuentaDetalle[1])
+      .all();
+
+    const saldo = movimientos.reduce(
+      (suma, fila) => suma + Number((fila as { monto_centavos: number }).monto_centavos),
+      0,
+    );
+
+    return json({ cuenta: { ...cuenta, saldo_centavos: saldo }, movimientos }, {}, cors);
+  }
+
+  /* ── Cobrar lo que debe una cuenta ── */
+
+  const cobrarFiado = /^\/gestion\/fiado\/([\w-]+)\/pagos$/.exec(ruta);
+
+  if (cobrarFiado && metodo === 'POST') {
+    const cuenta = await env.DB.prepare(
+      'SELECT id, nombre FROM cuentas_fiado WHERE id = ? AND comercio_id = ?',
+    )
+      .bind(cobrarFiado[1], comercioId)
+      .first<{ id: string; nombre: string }>();
+
+    if (!cuenta) {
+      return error('Esa cuenta no existe', 404, cors);
+    }
+
+    const cuerpo = (await request.json().catch(() => ({}))) as {
+      montoCentavos?: number;
+      metodo?: string;
+      concepto?: string;
+    };
+
+    const monto = Math.round(Number(cuerpo.montoCentavos));
+    const formaPago = String(cuerpo.metodo ?? 'efectivo');
+
+    if (!Number.isFinite(monto) || monto <= 0) {
+      return error('El importe tiene que ser mayor a cero', 400, cors);
+    }
+
+    if (!METODOS.includes(formaPago)) {
+      return error('Forma de pago desconocida', 400, cors);
+    }
+
+    const caja = await cajaAbierta(env, comercioId);
+
+    await env.DB.prepare(
+      `INSERT INTO fiado_movimientos (id, cuenta_id, monto_centavos, concepto, caja_id, metodo, creado_por)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        nuevoId(),
+        cuenta.id,
+        /* Negativo: lo que paga baja lo que debe. */
+        -monto,
+        cuerpo.concepto ?? `Pago de ${cuenta.nombre}`,
+        caja?.id ?? null,
+        formaPago,
+        usuario.id,
+      )
+      .run();
+
+    /* El pago en efectivo entra al cajón; el resto va al banco. */
+    if (formaPago === 'efectivo' && caja) {
+      await anotarMovimiento(env, {
+        cajaId: caja.id,
+        tipo: 'venta',
+        montoCentavos: monto,
+        concepto: `Cobro de ${cuenta.nombre}`,
+        usuarioId: usuario.id,
+      });
+    }
+
+    const fila = await env.DB.prepare(
+      'SELECT COALESCE(SUM(monto_centavos), 0) AS saldo FROM fiado_movimientos WHERE cuenta_id = ?',
+    )
+      .bind(cuenta.id)
+      .first<{ saldo: number }>();
+
+    return json({ saldo_centavos: fila?.saldo ?? 0 }, {}, cors);
   }
 
   /* ── Buscar producto para el mostrador ── */

@@ -19,6 +19,7 @@ import {
   Receipt,
   ScanBarcode,
   Store,
+  HandCoins,
   Truck,
   Users,
   Wallet,
@@ -69,6 +70,7 @@ export const GRUPOS: Grupo[] = [
         funcion: 'cajaRapida',
       },
       { id: 'caja', nombre: 'Caja', icono: Wallet, ruta: '/gestion/caja' },
+      { id: 'fiado', nombre: 'Fiado', icono: HandCoins, ruta: '/gestion/fiado' },
     ],
   },
   {

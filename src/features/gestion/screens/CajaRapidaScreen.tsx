@@ -13,8 +13,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 
 import {
+  type CuentaFiadoApi,
   type MetodoPago,
   type ProductoMostradorApi,
+  fiadoApi,
   gestionApi,
 } from '@core/data/services/apiClient';
 import { mostrarCentavos } from '../dinero';
@@ -47,6 +49,8 @@ export function CajaRapidaScreen() {
   const [resultados, setResultados] = useState<ProductoMostradorApi[]>([]);
   const [lineas, setLineas] = useState<LineaVenta[]>([]);
   const [metodo, setMetodo] = useState<MetodoPago>('efectivo');
+  const [cuentasFiado, setCuentasFiado] = useState<CuentaFiadoApi[]>([]);
+  const [cuentaFiado, setCuentaFiado] = useState('');
   const [aviso, setAviso] = useState<string | null>(null);
   const [cobrando, setCobrando] = useState(false);
 
@@ -56,6 +60,15 @@ export function CajaRapidaScreen() {
     (suma, l) => suma + Math.round((l.precioCentavos * l.cantidad) / 1000),
     0,
   );
+
+  /* Las cuentas de fiado se traen una vez: son dos o tres y no cambian
+     entre venta y venta. */
+  useEffect(() => {
+    void fiadoApi
+      .listar()
+      .then((datos) => setCuentasFiado(datos.cuentas.filter((c) => c.activa)))
+      .catch(() => setCuentasFiado([]));
+  }, []);
 
   /* Busca mientras se escribe, con una pausa: sin ella, cada tecla sería un
      viaje al servidor y la lectora manda el código de golpe. */
@@ -123,6 +136,11 @@ export function CajaRapidaScreen() {
       return;
     }
 
+    if (metodo === 'cuenta_corriente' && !cuentaFiado) {
+      setAviso('Elegí a quién se le fía');
+      return;
+    }
+
     setCobrando(true);
     setAviso(null);
 
@@ -134,6 +152,7 @@ export function CajaRapidaScreen() {
           precioCentavos: l.precioCentavos,
         })),
         pagos: [{ metodo, montoCentavos: total }],
+        cuentaFiadoId: metodo === 'cuenta_corriente' ? cuentaFiado : undefined,
       });
 
       setAviso(`Venta #${venta.numero} cobrada: ${mostrarCentavos(venta.total_centavos)}`);
@@ -239,6 +258,20 @@ export function CajaRapidaScreen() {
             <option value="cuenta_corriente">Que lo pague después</option>
           </select>
         </Campo>
+
+        {metodo === 'cuenta_corriente' ? (
+          <Campo>
+            <span>A nombre de quién</span>
+            <select value={cuentaFiado} onChange={(evento) => setCuentaFiado(evento.target.value)}>
+              <option value="">Elegí la cuenta</option>
+              {cuentasFiado.map((cuenta) => (
+                <option key={cuenta.id} value={cuenta.id}>
+                  {cuenta.nombre}
+                </option>
+              ))}
+            </select>
+          </Campo>
+        ) : null}
 
         <Accion
           type="button"

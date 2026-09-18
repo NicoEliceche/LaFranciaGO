@@ -90,6 +90,10 @@ const CajaRapidaScreen = lazy(() =>
 const VentasScreen = lazy(() =>
   import('@features/gestion/screens/VentasScreen').then((m) => ({ default: m.VentasScreen })),
 );
+
+const FiadoScreen = lazy(() =>
+  import('@features/gestion/screens/FiadoScreen').then((m) => ({ default: m.FiadoScreen })),
+);
 const ProductFormScreen = lazy(() =>
   import('@features/marketplace/screens/ProductFormScreen').then((m) => ({ default: m.ProductFormScreen })),
 );
@@ -259,6 +263,14 @@ function App() {
               element={
                 <RutaPrivada>
                   <VentasScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/gestion/fiado"
+              element={
+                <RutaPrivada>
+                  <FiadoScreen />
                 </RutaPrivada>
               }
             />

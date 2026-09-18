@@ -215,7 +215,7 @@ export function ProductoDialog({ open, producto, onClose, onGuardar }: Props) {
                 type="number"
                 inputMode="decimal"
                 min="0"
-                step="1"
+                step="0.01"
                 defaultValue={producto?.precio ?? ''}
                 placeholder="0"
                 required
@@ -230,7 +230,7 @@ export function ProductoDialog({ open, producto, onClose, onGuardar }: Props) {
                 type="number"
                 inputMode="decimal"
                 min="0"
-                step="1"
+                step="0.01"
                 defaultValue={producto?.costo ?? ''}
                 placeholder="Dejalo vacío si no lo llevás"
               />

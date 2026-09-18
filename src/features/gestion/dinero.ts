@@ -8,10 +8,22 @@
  * El resto de la aplicación trabaja en pesos, así que estas funciones dicen
  * "centavos" en el nombre para que no se mezclen sin querer.
  */
-import { formatMoney } from '@shared/utils/format';
+/**
+ * 674950 → "$ 6.749,50"
+ *
+ * Con los dos decimales siempre, como cualquier sistema de gestión de acá.
+ * El formateador del marketplace redondea a pesos enteros, que está bien
+ * para una góndola y mal para un arqueo: si el cajón tiene $6.749,50 y la
+ * pantalla dice $6.750, la caja nunca cierra y nadie sabe por qué.
+ */
+const FORMATO = new Intl.NumberFormat('es-AR', {
+  style: 'currency',
+  currency: 'ARS',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
-/** 1550000 → "$ 15.500" */
-export const mostrarCentavos = (centavos: number) => formatMoney(centavos / 100);
+export const mostrarCentavos = (centavos: number) => FORMATO.format(centavos / 100);
 
 /**
  * Lo que escribió una persona → centavos.

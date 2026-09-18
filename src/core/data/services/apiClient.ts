@@ -956,6 +956,8 @@ export const gestionApi = {
     }>;
     pagos?: Array<{ metodo: MetodoPago; montoCentavos: number; nota?: string }>;
     clienteNombre?: string;
+    /** Obligatorio cuando algún pago es fiado: sin cuenta no se puede fiar. */
+    cuentaFiadoId?: string;
     descuentoCentavos?: number;
     nota?: string;
   }) =>
@@ -971,4 +973,39 @@ export const gestionApi = {
     api.get<{ productos: ProductoMostradorApi[] }>(
       `/gestion/buscar?q=${encodeURIComponent(termino)}`,
     ),
+};
+
+/* ── Fiado ── */
+
+export interface CuentaFiadoApi {
+  id: string;
+  nombre: string;
+  telefono: string | null;
+  nota: string | null;
+  tope_centavos: number | null;
+  activa: number;
+  saldo_centavos: number;
+  ultimo_movimiento: string | null;
+}
+
+export interface MovimientoFiadoApi {
+  id: string;
+  monto_centavos: number;
+  concepto: string | null;
+  venta_id: string | null;
+  venta_numero: number | null;
+  metodo: string | null;
+  creado_en: string;
+  creado_por_nombre: string;
+}
+
+export const fiadoApi = {
+  listar: () =>
+    api.get<{ cuentas: CuentaFiadoApi[]; totalAdeudado: number }>('/gestion/fiado'),
+  crear: (datos: { nombre: string; telefono?: string; nota?: string; topeCentavos?: number | null }) =>
+    api.post<{ id: string; nombre: string }>('/gestion/fiado', datos),
+  detalle: (id: string) =>
+    api.get<{ cuenta: CuentaFiadoApi; movimientos: MovimientoFiadoApi[] }>(`/gestion/fiado/${id}`),
+  cobrar: (id: string, datos: { montoCentavos: number; metodo: MetodoPago; concepto?: string }) =>
+    api.post<{ saldo_centavos: number }>(`/gestion/fiado/${id}/pagos`, datos),
 };
