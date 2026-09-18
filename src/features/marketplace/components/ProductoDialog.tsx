@@ -144,6 +144,9 @@ export function ProductoDialog({ open, producto, onClose, onGuardar }: Props) {
         precio,
         unidadVenta: unidad,
         stock: datos.get('stock') ? Number(datos.get('stock')) : null,
+        /* Vacío es "no lo cargué", que no es lo mismo que cero. */
+        costo: datos.get('costo') ? Number(datos.get('costo')) : null,
+        codigoBarras: String(datos.get('codigoBarras') ?? '').trim() || null,
         fotos: [...(producto?.fotos ?? []), ...nuevas],
         videoUrl,
       });
@@ -217,6 +220,33 @@ export function ProductoDialog({ open, producto, onClose, onGuardar }: Props) {
                 placeholder="0"
                 required
               />
+            </FieldGroup>
+
+            <FieldGroup htmlFor="prod-costo">
+              <FieldLabel>Cuánto te cuesta</FieldLabel>
+              <FieldInput
+                id="prod-costo"
+                name="costo"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="1"
+                defaultValue={producto?.costo ?? ''}
+                placeholder="Dejalo vacío si no lo llevás"
+              />
+              <FieldHint>Con esto el sistema calcula cuánto ganás en cada venta.</FieldHint>
+            </FieldGroup>
+
+            <FieldGroup htmlFor="prod-codigo">
+              <FieldLabel>Código de barras</FieldLabel>
+              <FieldInput
+                id="prod-codigo"
+                name="codigoBarras"
+                inputMode="numeric"
+                defaultValue={producto?.codigoBarras ?? ''}
+                placeholder="El que trae impreso"
+              />
+              <FieldHint>Sirve para cobrarlo con la lectora del mostrador.</FieldHint>
             </FieldGroup>
 
             <FieldGroup htmlFor="prod-stock">

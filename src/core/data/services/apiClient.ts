@@ -108,6 +108,10 @@ export interface ProductoApi {
   fotos: string[];
   video_url: string | null;
   stock: number | null;
+  /** Lo que le cuesta al comercio. Null es "no lo cargó", que no es cero. */
+  costo?: number | null;
+  /** El código impreso, para cobrarlo con la lectora del mostrador. */
+  codigoBarras?: string | null;
 }
 
 export interface PedidoApi {

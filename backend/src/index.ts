@@ -5639,6 +5639,12 @@ const comercioSalida = (fila: Record<string, unknown>) => ({
 const productoSalida = (fila: Record<string, unknown>) => ({
   ...fila,
   precio: aPesos(Number(fila.precio_centavos)),
+  /* Null se conserva: "no cargué el costo" no es lo mismo que "me sale
+     gratis", y de la diferencia depende que la ganancia se pueda calcular. */
+  costo: fila.costo_centavos === null || fila.costo_centavos === undefined
+    ? null
+    : aPesos(Number(fila.costo_centavos)),
+  codigoBarras: fila.codigo_barras ?? null,
   fotos: JSON.parse(String(fila.fotos ?? '[]')),
 });
 
