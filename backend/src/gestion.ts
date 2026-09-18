@@ -892,6 +892,537 @@ export async function rutasGestion(
     return json({ saldo_centavos: fila?.saldo ?? 0 }, {}, cors);
   }
 
+  /* -- Proveedores -- */
+
+  if (ruta === '/gestion/proveedores' && metodo === 'GET') {
+    const { results } = await env.DB.prepare(
+      `SELECT p.id, p.nombre, p.telefono, p.email, p.cuit, p.activo,
+              COALESCE((SELECT SUM(c.total_centavos - c.pagado_centavos)
+                          FROM compras c
+                         WHERE c.proveedor_id = p.id AND c.estado = 'abierta'), 0) AS deuda_centavos,
+              (SELECT COUNT(*) FROM compras c WHERE c.proveedor_id = p.id) AS compras
+         FROM proveedores p
+        WHERE p.comercio_id = ?
+        ORDER BY p.activo DESC, deuda_centavos DESC, p.nombre`,
+    )
+      .bind(comercioId)
+      .all();
+
+    const total = results.reduce(
+      (suma, fila) => suma + Number((fila as { deuda_centavos: number }).deuda_centavos),
+      0,
+    );
+
+    return json({ proveedores: results, totalDeuda: total }, {}, cors);
+  }
+
+  if (ruta === '/gestion/proveedores' && metodo === 'POST') {
+    const cuerpo = (await request.json().catch(() => ({}))) as {
+      nombre?: string;
+      telefono?: string;
+      email?: string;
+      cuit?: string;
+      direccion?: string;
+    };
+
+    const nombre = String(cuerpo.nombre ?? '').trim();
+
+    if (nombre.length < 2) {
+      return error('Pone el nombre del proveedor', 400, cors);
+    }
+
+    const id = nuevoId();
+
+    await env.DB.prepare(
+      'INSERT INTO proveedores (id, comercio_id, nombre, telefono, email, cuit, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    )
+      .bind(
+        id,
+        comercioId,
+        nombre,
+        cuerpo.telefono ?? null,
+        cuerpo.email ?? null,
+        cuerpo.cuit ?? null,
+        cuerpo.direccion ?? null,
+      )
+      .run();
+
+    return json({ id, nombre }, { status: 201 }, cors);
+  }
+
+  /* -- Compras -- */
+
+  if (ruta === '/gestion/compras' && metodo === 'GET') {
+    const url = new URL(request.url);
+    const pagina = Math.max(1, Number(url.searchParams.get('pagina') ?? 1));
+    const porPagina = Math.min(100, Math.max(5, Number(url.searchParams.get('porPagina') ?? 25)));
+    const estadoPago = url.searchParams.get('pago');
+
+    const condiciones = ['c.comercio_id = ?'];
+    const valores: unknown[] = [comercioId];
+
+    if (estadoPago === 'pagada') {
+      condiciones.push('c.pagado_centavos >= c.total_centavos');
+    } else if (estadoPago === 'debe') {
+      condiciones.push('c.pagado_centavos < c.total_centavos');
+    }
+
+    const donde = condiciones.join(' AND ');
+
+    const totales = await env.DB.prepare(
+      `SELECT COUNT(*) AS cantidad,
+              COALESCE(SUM(c.total_centavos), 0) AS total,
+              COALESCE(SUM(c.pagado_centavos), 0) AS pagado,
+              COALESCE(SUM(c.total_centavos - c.pagado_centavos), 0) AS adeudado
+         FROM compras c
+        WHERE ${donde} AND c.estado = 'abierta'`,
+    )
+      .bind(...valores)
+      .first();
+
+    const { results: compras } = await env.DB.prepare(
+      `SELECT c.id, c.numero, c.comprobante, c.total_centavos, c.pagado_centavos,
+              c.estado, c.fecha, c.creado_en,
+              p.nombre AS proveedor_nombre,
+              (SELECT COUNT(*) FROM compra_items i WHERE i.compra_id = c.id) AS items
+         FROM compras c
+         LEFT JOIN proveedores p ON p.id = c.proveedor_id
+        WHERE ${donde}
+        ORDER BY c.fecha DESC, c.creado_en DESC
+        LIMIT ? OFFSET ?`,
+    )
+      .bind(...valores, porPagina, (pagina - 1) * porPagina)
+      .all();
+
+    return json({ compras, totales, pagina, porPagina }, {}, cors);
+  }
+
+  if (ruta === '/gestion/compras' && metodo === 'POST') {
+    const cuerpo = (await request.json().catch(() => ({}))) as {
+      proveedorId?: string;
+      comprobante?: string;
+      fecha?: string;
+      nota?: string;
+      items?: Array<{
+        productoId?: string | null;
+        nombre?: string;
+        cantidadMilesimos: number;
+        costoCentavos: number;
+      }>;
+      pagos?: PagoPedido[];
+    };
+
+    const items = cuerpo.items ?? [];
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return error('La compra no tiene productos', 400, cors);
+    }
+
+    const lineas: Array<{
+      productoId: string | null;
+      nombre: string;
+      cantidadMilesimos: number;
+      costoCentavos: number;
+      subtotalCentavos: number;
+    }> = [];
+
+    for (const item of items) {
+      const cantidad = Number(item.cantidadMilesimos);
+      const costo = Math.round(Number(item.costoCentavos));
+
+      if (!Number.isFinite(cantidad) || cantidad <= 0) {
+        return error('Cantidad invalida', 400, cors);
+      }
+
+      if (!Number.isFinite(costo) || costo < 0) {
+        return error('Costo invalido', 400, cors);
+      }
+
+      let nombre = String(item.nombre ?? '').trim();
+
+      if (item.productoId) {
+        const producto = await env.DB.prepare(
+          'SELECT id, nombre FROM productos WHERE id = ? AND comercio_id = ?',
+        )
+          .bind(item.productoId, comercioId)
+          .first<{ id: string; nombre: string }>();
+
+        if (!producto) {
+          return error('Ese producto no es de este comercio', 404, cors);
+        }
+
+        nombre = producto.nombre;
+      }
+
+      if (!nombre) {
+        return error('Cada linea necesita un nombre', 400, cors);
+      }
+
+      lineas.push({
+        productoId: item.productoId ?? null,
+        nombre: nombre.slice(0, 120),
+        cantidadMilesimos: cantidad,
+        costoCentavos: costo,
+        subtotalCentavos: Math.round((costo * cantidad) / 1000),
+      });
+    }
+
+    const pagosLimpios = validarPagos(cuerpo.pagos);
+
+    if ('error' in pagosLimpios) {
+      return error(pagosLimpios.error, 400, cors);
+    }
+
+    const total = lineas.reduce((suma, l) => suma + l.subtotalCentavos, 0);
+    const pagado = pagosLimpios.pagos.reduce((suma, p) => suma + p.montoCentavos, 0);
+
+    if (pagado > total) {
+      return error('Estas pagando mas que el total de la compra', 400, cors);
+    }
+
+    if (cuerpo.proveedorId) {
+      const existe = await env.DB.prepare(
+        'SELECT id FROM proveedores WHERE id = ? AND comercio_id = ?',
+      )
+        .bind(cuerpo.proveedorId, comercioId)
+        .first();
+
+      if (!existe) {
+        return error('Ese proveedor no existe', 404, cors);
+      }
+    }
+
+    const fila = await env.DB.prepare(
+      'SELECT COALESCE(MAX(numero), 0) AS ultimo FROM compras WHERE comercio_id = ?',
+    )
+      .bind(comercioId)
+      .first<{ ultimo: number }>();
+
+    const numero = (fila?.ultimo ?? 0) + 1;
+    const id = nuevoId();
+    const caja = await cajaAbierta(env, comercioId);
+
+    await env.DB.prepare(
+      `INSERT INTO compras (id, comercio_id, proveedor_id, numero, comprobante,
+                            total_centavos, pagado_centavos, nota, fecha, creado_por)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, date('now')), ?)`,
+    )
+      .bind(
+        id,
+        comercioId,
+        cuerpo.proveedorId ?? null,
+        numero,
+        cuerpo.comprobante ?? null,
+        total,
+        pagado,
+        cuerpo.nota ?? null,
+        cuerpo.fecha ?? null,
+        usuario.id,
+      )
+      .run();
+
+    for (const linea of lineas) {
+      await env.DB.prepare(
+        `INSERT INTO compra_items (id, compra_id, producto_id, nombre, cantidad_milesimos,
+                                   costo_centavos, subtotal_centavos)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      )
+        .bind(
+          nuevoId(),
+          id,
+          linea.productoId,
+          linea.nombre,
+          linea.cantidadMilesimos,
+          linea.costoCentavos,
+          linea.subtotalCentavos,
+        )
+        .run();
+
+      /* Lo que llega sube el stock y pasa a ser el costo del producto: es
+         el sentido de cargar la compra, que el sistema sepa cuanto salio sin
+         que nadie lo escriba dos veces. */
+      if (linea.productoId) {
+        await env.DB.prepare(
+          `UPDATE productos
+              SET costo_centavos = ?,
+                  stock = CASE WHEN stock IS NULL THEN NULL ELSE stock + ? END
+            WHERE id = ?`,
+        )
+          .bind(linea.costoCentavos, Math.ceil(linea.cantidadMilesimos / 1000), linea.productoId)
+          .run();
+      }
+    }
+
+    for (const pago of pagosLimpios.pagos) {
+      await env.DB.prepare(
+        'INSERT INTO compra_pagos (id, compra_id, metodo, monto_centavos, nota, caja_id, creado_por) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      )
+        .bind(
+          nuevoId(),
+          id,
+          pago.metodo,
+          pago.montoCentavos,
+          pago.nota ?? null,
+          caja?.id ?? null,
+          usuario.id,
+        )
+        .run();
+
+      /* Pagar al proveedor en efectivo saca plata del cajon. */
+      if (pago.metodo === 'efectivo' && caja) {
+        await anotarMovimiento(env, {
+          cajaId: caja.id,
+          tipo: 'egreso',
+          montoCentavos: -pago.montoCentavos,
+          concepto: `Compra #${numero}`,
+          usuarioId: usuario.id,
+        });
+      }
+    }
+
+    return json({ id, numero, total_centavos: total }, { status: 201 }, cors);
+  }
+
+  /* -- Detalle de una compra -- */
+
+  const compraDetalle = /^\/gestion\/compras\/([\w-]+)$/.exec(ruta);
+
+  if (compraDetalle && metodo === 'GET') {
+    const compra = await env.DB.prepare(
+      `SELECT c.*, p.nombre AS proveedor_nombre, u.nombre AS creado_por_nombre
+         FROM compras c
+         LEFT JOIN proveedores p ON p.id = c.proveedor_id
+         JOIN usuarios u ON u.id = c.creado_por
+        WHERE c.id = ? AND c.comercio_id = ?`,
+    )
+      .bind(compraDetalle[1], comercioId)
+      .first();
+
+    if (!compra) {
+      return error('Esa compra no existe', 404, cors);
+    }
+
+    const { results: items } = await env.DB.prepare(
+      'SELECT * FROM compra_items WHERE compra_id = ?',
+    )
+      .bind(compraDetalle[1])
+      .all();
+
+    const { results: pagos } = await env.DB.prepare(
+      `SELECT p.*, u.nombre AS creado_por_nombre
+         FROM compra_pagos p JOIN usuarios u ON u.id = p.creado_por
+        WHERE p.compra_id = ? ORDER BY p.creado_en`,
+    )
+      .bind(compraDetalle[1])
+      .all();
+
+    return json({ compra, items, pagos }, {}, cors);
+  }
+
+  /* -- Pagarle al proveedor lo que falta -- */
+
+  const pagarCompra = /^\/gestion\/compras\/([\w-]+)\/pagos$/.exec(ruta);
+
+  if (pagarCompra && metodo === 'POST') {
+    const compra = await env.DB.prepare(
+      'SELECT id, numero, total_centavos, pagado_centavos FROM compras WHERE id = ? AND comercio_id = ?',
+    )
+      .bind(pagarCompra[1], comercioId)
+      .first<{ id: string; numero: number; total_centavos: number; pagado_centavos: number }>();
+
+    if (!compra) {
+      return error('Esa compra no existe', 404, cors);
+    }
+
+    const cuerpo = (await request.json().catch(() => ({}))) as PagoPedido;
+    const limpios = validarPagos([cuerpo]);
+
+    if ('error' in limpios) {
+      return error(limpios.error, 400, cors);
+    }
+
+    const pago = limpios.pagos[0];
+    const falta = compra.total_centavos - compra.pagado_centavos;
+
+    if (pago.montoCentavos > falta) {
+      return error('Ese importe es mayor a lo que falta pagar', 400, cors);
+    }
+
+    const caja = await cajaAbierta(env, comercioId);
+
+    await env.DB.prepare(
+      'INSERT INTO compra_pagos (id, compra_id, metodo, monto_centavos, nota, caja_id, creado_por) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    )
+      .bind(
+        nuevoId(),
+        compra.id,
+        pago.metodo,
+        pago.montoCentavos,
+        pago.nota ?? null,
+        caja?.id ?? null,
+        usuario.id,
+      )
+      .run();
+
+    await env.DB.prepare('UPDATE compras SET pagado_centavos = pagado_centavos + ? WHERE id = ?')
+      .bind(pago.montoCentavos, compra.id)
+      .run();
+
+    if (pago.metodo === 'efectivo' && caja) {
+      await anotarMovimiento(env, {
+        cajaId: caja.id,
+        tipo: 'egreso',
+        montoCentavos: -pago.montoCentavos,
+        concepto: `Pago compra #${compra.numero}`,
+        usuarioId: usuario.id,
+      });
+    }
+
+    return json({ pagado_centavos: compra.pagado_centavos + pago.montoCentavos }, {}, cors);
+  }
+
+  /* -- Informes -- */
+
+  if (ruta === '/gestion/informes' && metodo === 'GET') {
+    const url = new URL(request.url);
+    /* Por defecto el mes corriente: es el rango que el comercio mira mas
+       seguido, y arrancar sin filtro con toda la historia hace esperar de
+       gusto. */
+    const desde = url.searchParams.get('desde') || new Date().toISOString().slice(0, 8) + '01';
+    const hasta = url.searchParams.get('hasta') || new Date().toISOString().slice(0, 10);
+    const hastaFin = `${hasta} 23:59:59`;
+
+    /* Lo que se vendio y lo que dejo. */
+    const ventas = await env.DB.prepare(
+      `SELECT COUNT(*) AS cantidad,
+              COALESCE(SUM(total_centavos), 0) AS total,
+              COALESCE(SUM(costo_centavos), 0) AS costo,
+              COALESCE(SUM(cobrado_centavos), 0) AS cobrado,
+              COALESCE(SUM(total_centavos - cobrado_centavos), 0) AS adeudado
+         FROM ventas
+        WHERE comercio_id = ? AND estado = 'abierta'
+          AND creado_en >= ? AND creado_en <= ?`,
+    )
+      .bind(comercioId, desde, hastaFin)
+      .first<{
+        cantidad: number;
+        total: number;
+        costo: number;
+        cobrado: number;
+        adeudado: number;
+      }>();
+
+    const compras = await env.DB.prepare(
+      `SELECT COUNT(*) AS cantidad,
+              COALESCE(SUM(total_centavos), 0) AS total,
+              COALESCE(SUM(total_centavos - pagado_centavos), 0) AS adeudado
+         FROM compras
+        WHERE comercio_id = ? AND estado = 'abierta'
+          AND fecha >= ? AND fecha <= ?`,
+    )
+      .bind(comercioId, desde, hasta)
+      .first<{ cantidad: number; total: number; adeudado: number }>();
+
+    /* Dia por dia, para el grafico. */
+    const { results: porDia } = await env.DB.prepare(
+      `SELECT date(creado_en) AS dia,
+              COUNT(*) AS ventas,
+              COALESCE(SUM(total_centavos), 0) AS total,
+              COALESCE(SUM(total_centavos - costo_centavos), 0) AS ganancia
+         FROM ventas
+        WHERE comercio_id = ? AND estado = 'abierta'
+          AND creado_en >= ? AND creado_en <= ?
+        GROUP BY date(creado_en)
+        ORDER BY dia`,
+    )
+      .bind(comercioId, desde, hastaFin)
+      .all();
+
+    /* Lo que mas se vendio, con su margen. Es el informe que decide que
+       conviene tener en gondola. */
+    const { results: productos } = await env.DB.prepare(
+      `SELECT i.nombre,
+              SUM(i.cantidad_milesimos) / 1000.0 AS unidades,
+              SUM(i.subtotal_centavos) AS total,
+              SUM(i.subtotal_centavos - i.costo_centavos) AS ganancia
+         FROM venta_items i
+         JOIN ventas v ON v.id = i.venta_id
+        WHERE v.comercio_id = ? AND v.estado = 'abierta'
+          AND v.creado_en >= ? AND v.creado_en <= ?
+        GROUP BY i.nombre
+        ORDER BY total DESC
+        LIMIT 20`,
+    )
+      .bind(comercioId, desde, hastaFin)
+      .all();
+
+    /* Como paga la gente: sirve para saber cuanto efectivo se maneja. */
+    const { results: metodos } = await env.DB.prepare(
+      `SELECT p.metodo, COUNT(*) AS veces, COALESCE(SUM(p.monto_centavos), 0) AS total
+         FROM venta_pagos p
+         JOIN ventas v ON v.id = p.venta_id
+        WHERE v.comercio_id = ? AND v.estado = 'abierta'
+          AND p.creado_en >= ? AND p.creado_en <= ?
+        GROUP BY p.metodo
+        ORDER BY total DESC`,
+    )
+      .bind(comercioId, desde, hastaFin)
+      .all();
+
+    /* Los cierres del periodo, con sus diferencias. */
+    const { results: cierres } = await env.DB.prepare(
+      `SELECT id, abierta_en, cerrada_en, contado_centavos, esperado_centavos,
+              diferencia_centavos
+         FROM cajas
+        WHERE comercio_id = ? AND estado = 'cerrada'
+          AND cerrada_en >= ? AND cerrada_en <= ?
+        ORDER BY cerrada_en DESC`,
+    )
+      .bind(comercioId, desde, hastaFin)
+      .all();
+
+    const totalVentas = ventas?.total ?? 0;
+    const totalCosto = ventas?.costo ?? 0;
+
+    return json(
+      {
+        periodo: { desde, hasta },
+        ventas,
+        compras,
+        /* La ganancia y el margen se calculan aca y no en la pantalla: es
+           una cuenta sola y tiene que dar igual en todos lados. */
+        ganancia: totalVentas - totalCosto,
+        margen: totalVentas > 0 ? Math.round(((totalVentas - totalCosto) / totalVentas) * 1000) / 10 : 0,
+        porDia,
+        productos,
+        metodos,
+        cierres,
+      },
+      {},
+      cors,
+    );
+  }
+
+  /* -- Que hay que reponer -- */
+
+  if (ruta === '/gestion/informes/stock' && metodo === 'GET') {
+    const limite = Math.max(0, Number(new URL(request.url).searchParams.get('limite') ?? 5));
+
+    /* Solo los que llevan control: stock null es "no lo cuento", y meterlos
+       llenaria la lista de cosas que nunca se van a reponer. */
+    const { results } = await env.DB.prepare(
+      `SELECT id, nombre, stock, precio_centavos, costo_centavos, codigo_barras
+         FROM productos
+        WHERE comercio_id = ? AND activo = 1 AND stock IS NOT NULL AND stock <= ?
+        ORDER BY stock, nombre
+        LIMIT 100`,
+    )
+      .bind(comercioId, limite)
+      .all();
+
+    return json({ productos: results, limite }, {}, cors);
+  }
+
   /* ── Buscar producto para el mostrador ── */
 
   if (ruta === '/gestion/buscar' && metodo === 'GET') {

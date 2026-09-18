@@ -1009,3 +1009,120 @@ export const fiadoApi = {
   cobrar: (id: string, datos: { montoCentavos: number; metodo: MetodoPago; concepto?: string }) =>
     api.post<{ saldo_centavos: number }>(`/gestion/fiado/${id}/pagos`, datos),
 };
+
+/* ── Compras y proveedores ── */
+
+export interface ProveedorApi {
+  id: string;
+  nombre: string;
+  telefono: string | null;
+  email: string | null;
+  cuit: string | null;
+  activo: number;
+  deuda_centavos: number;
+  compras: number;
+}
+
+export interface CompraApi {
+  id: string;
+  numero: number;
+  comprobante: string | null;
+  total_centavos: number;
+  pagado_centavos: number;
+  estado: string;
+  fecha: string;
+  creado_en: string;
+  proveedor_nombre: string | null;
+  items: number;
+}
+
+export const comprasApi = {
+  proveedores: () =>
+    api.get<{ proveedores: ProveedorApi[]; totalDeuda: number }>('/gestion/proveedores'),
+  crearProveedor: (datos: {
+    nombre: string;
+    telefono?: string;
+    email?: string;
+    cuit?: string;
+    direccion?: string;
+  }) => api.post<{ id: string; nombre: string }>('/gestion/proveedores', datos),
+
+  listar: (filtro: { pago?: 'pagada' | 'debe'; pagina?: number } = {}) => {
+    const busca = new URLSearchParams();
+
+    for (const [clave, valor] of Object.entries(filtro)) {
+      if (valor !== undefined) busca.set(clave, String(valor));
+    }
+
+    const consulta = busca.toString();
+
+    return api.get<{
+      compras: CompraApi[];
+      totales: { cantidad: number; total: number; pagado: number; adeudado: number };
+      pagina: number;
+    }>(`/gestion/compras${consulta ? `?${consulta}` : ''}`);
+  },
+  crear: (datos: {
+    proveedorId?: string;
+    comprobante?: string;
+    fecha?: string;
+    nota?: string;
+    items: Array<{
+      productoId?: string | null;
+      nombre?: string;
+      cantidadMilesimos: number;
+      costoCentavos: number;
+    }>;
+    pagos?: Array<{ metodo: MetodoPago; montoCentavos: number }>;
+  }) =>
+    api.post<{ id: string; numero: number; total_centavos: number }>('/gestion/compras', datos),
+  pagar: (compraId: string, pago: { metodo: MetodoPago; montoCentavos: number }) =>
+    api.post<{ pagado_centavos: number }>(`/gestion/compras/${compraId}/pagos`, pago),
+};
+
+/* ── Informes ── */
+
+export interface InformeApi {
+  periodo: { desde: string; hasta: string };
+  ventas: { cantidad: number; total: number; costo: number; cobrado: number; adeudado: number };
+  compras: { cantidad: number; total: number; adeudado: number };
+  ganancia: number;
+  /** Porcentaje con un decimal: 38.7 es 38,7%. */
+  margen: number;
+  porDia: Array<{ dia: string; ventas: number; total: number; ganancia: number }>;
+  productos: Array<{ nombre: string; unidades: number; total: number; ganancia: number }>;
+  metodos: Array<{ metodo: string; veces: number; total: number }>;
+  cierres: Array<{
+    id: string;
+    cerrada_en: string;
+    contado_centavos: number;
+    esperado_centavos: number;
+    diferencia_centavos: number;
+  }>;
+}
+
+export const informesApi = {
+  general: (rango: { desde?: string; hasta?: string } = {}) => {
+    const busca = new URLSearchParams();
+
+    for (const [clave, valor] of Object.entries(rango)) {
+      if (valor) busca.set(clave, valor);
+    }
+
+    const consulta = busca.toString();
+
+    return api.get<InformeApi>(`/gestion/informes${consulta ? `?${consulta}` : ''}`);
+  },
+  porReponer: (limite = 5) =>
+    api.get<{
+      productos: Array<{
+        id: string;
+        nombre: string;
+        stock: number;
+        precio_centavos: number;
+        costo_centavos: number | null;
+        codigo_barras: string | null;
+      }>;
+      limite: number;
+    }>(`/gestion/informes/stock?limite=${limite}`),
+};

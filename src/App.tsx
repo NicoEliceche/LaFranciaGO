@@ -94,6 +94,14 @@ const VentasScreen = lazy(() =>
 const FiadoScreen = lazy(() =>
   import('@features/gestion/screens/FiadoScreen').then((m) => ({ default: m.FiadoScreen })),
 );
+
+const ComprasScreen = lazy(() =>
+  import('@features/gestion/screens/ComprasScreen').then((m) => ({ default: m.ComprasScreen })),
+);
+
+const InformesScreen = lazy(() =>
+  import('@features/gestion/screens/InformesScreen').then((m) => ({ default: m.InformesScreen })),
+);
 const ProductFormScreen = lazy(() =>
   import('@features/marketplace/screens/ProductFormScreen').then((m) => ({ default: m.ProductFormScreen })),
 );
@@ -271,6 +279,22 @@ function App() {
               element={
                 <RutaPrivada>
                   <FiadoScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/gestion/compras"
+              element={
+                <RutaPrivada>
+                  <ComprasScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/gestion/informes"
+              element={
+                <RutaPrivada>
+                  <InformesScreen />
                 </RutaPrivada>
               }
             />
