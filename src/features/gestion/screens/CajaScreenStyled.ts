@@ -1,0 +1,195 @@
+import styled from 'styled-components';
+
+export const Panel = styled.section`
+  margin-top: ${({ theme }) => theme.spacing[3]};
+  padding: ${({ theme }) => theme.spacing[3]};
+
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: ${({ theme }) => theme.color.surface};
+`;
+
+export const TituloPanel = styled.h2`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  margin: 0 0 ${({ theme }) => theme.spacing[2]};
+
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.base};
+  line-height: 1.2;
+
+  > svg {
+    color: ${({ theme }) => theme.color.primary};
+  }
+`;
+
+export const Formulario = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing[2]};
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    align-items: end;
+  }
+`;
+
+export const Campo = styled.label`
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+
+  > span {
+    color: ${({ theme }) => theme.color.textSoft};
+    font-size: ${({ theme }) => theme.typography.size.xs};
+  }
+
+  > input,
+  > select {
+    width: 100%;
+    min-width: 0;
+    height: 2.5rem;
+    padding: 0 ${({ theme }) => theme.spacing[2]};
+
+    border: 1px solid ${({ theme }) => theme.color.border};
+    border-radius: ${({ theme }) => theme.radius.md};
+    background: ${({ theme }) => theme.color.surface};
+    color: ${({ theme }) => theme.color.text};
+    font-family: inherit;
+    font-size: ${({ theme }) => theme.typography.size.sm};
+
+    /* Los importes se leen mejor con todos los dígitos del mismo ancho. */
+    font-variant-numeric: tabular-nums;
+
+    &:focus-visible {
+      outline: 2px solid ${({ theme }) => theme.color.primary};
+      outline-offset: 1px;
+    }
+  }
+`;
+
+export const Accion = styled.button`
+  height: 2.5rem;
+  padding: 0 ${({ theme }) => theme.spacing[3]};
+
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ theme }) => theme.color.surface};
+  color: ${({ theme }) => theme.color.text};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: 600;
+  cursor: pointer;
+
+  &[data-tono='fuerte'] {
+    border-color: ${({ theme }) => theme.color.primary};
+    background: ${({ theme }) => theme.color.primary};
+    color: ${({ theme }) => theme.color.onPrimary};
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.primary};
+    outline-offset: 2px;
+  }
+`;
+
+export const Acciones = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing[2]};
+`;
+
+export const Lista = styled.div`
+  display: grid;
+`;
+
+export const Fila = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[2]} 0;
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+
+  &:first-child {
+    border-top: 0;
+  }
+
+  > div {
+    flex: 1 1 auto;
+    min-width: 0;
+
+    > strong {
+      display: block;
+      font-size: ${({ theme }) => theme.typography.size.sm};
+    }
+
+    > span {
+      display: block;
+      color: ${({ theme }) => theme.color.textSoft};
+      font-size: ${({ theme }) => theme.typography.size.xs};
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+`;
+
+export const Monto = styled.span`
+  flex: none;
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-variant-numeric: tabular-nums;
+
+  &[data-signo='mas'] {
+    color: ${({ theme }) => theme.color.success};
+  }
+
+  &[data-signo='menos'] {
+    color: ${({ theme }) => theme.color.danger};
+  }
+`;
+
+export const Cierre = styled(Fila)``;
+
+export const Diferencia = styled.span`
+  flex: none;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+
+  &[data-tono='justo'] {
+    background: rgba(15, 157, 88, 0.14);
+    color: ${({ theme }) => theme.color.success};
+  }
+
+  &[data-tono='dispar'] {
+    background: rgba(217, 119, 6, 0.16);
+    color: ${({ theme }) => theme.color.warning};
+  }
+`;
+
+export const Vacio = styled.p`
+  margin: 0;
+  padding: ${({ theme }) => theme.spacing[3]} 0;
+  color: ${({ theme }) => theme.color.textSoft};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  text-align: center;
+`;
+
+export const Aviso = styled.p`
+  margin: 0 0 ${({ theme }) => theme.spacing[3]};
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-inline-start: 3px solid ${({ theme }) => theme.color.primary};
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ theme }) => theme.color.surfaceMuted};
+  color: ${({ theme }) => theme.color.text};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+`;

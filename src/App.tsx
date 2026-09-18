@@ -76,6 +76,20 @@ const GestionResumenScreen = lazy(() =>
     default: m.GestionResumenScreen,
   })),
 );
+
+const CajaScreen = lazy(() =>
+  import('@features/gestion/screens/CajaScreen').then((m) => ({ default: m.CajaScreen })),
+);
+
+const CajaRapidaScreen = lazy(() =>
+  import('@features/gestion/screens/CajaRapidaScreen').then((m) => ({
+    default: m.CajaRapidaScreen,
+  })),
+);
+
+const VentasScreen = lazy(() =>
+  import('@features/gestion/screens/VentasScreen').then((m) => ({ default: m.VentasScreen })),
+);
 const ProductFormScreen = lazy(() =>
   import('@features/marketplace/screens/ProductFormScreen').then((m) => ({ default: m.ProductFormScreen })),
 );
@@ -221,6 +235,30 @@ function App() {
               element={
                 <RutaPrivada>
                   <GestionResumenScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/gestion/caja"
+              element={
+                <RutaPrivada>
+                  <CajaScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/gestion/caja-rapida"
+              element={
+                <RutaPrivada>
+                  <CajaRapidaScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/gestion/ventas"
+              element={
+                <RutaPrivada>
+                  <VentasScreen />
                 </RutaPrivada>
               }
             />

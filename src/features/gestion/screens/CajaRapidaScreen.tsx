@@ -1,0 +1,254 @@
+/**
+ * La caja rápida: cobrar en el mostrador.
+ *
+ * Está pensada para la pistola lectora, no para el mouse: el foco vuelve
+ * solo al buscador después de cada producto, y un código leído entero entra
+ * directo sin pedir confirmación. Con alguien esperando del otro lado del
+ * mostrador, cada clic de más se siente.
+ *
+ * Se ve en todos lados pero sólo funciona en la computadora del negocio,
+ * donde están la lectora y la impresora.
+ */
+import { useEffect, useRef, useState } from 'react';
+import { Trash2 } from 'lucide-react';
+
+import {
+  type MetodoPago,
+  type ProductoMostradorApi,
+  gestionApi,
+} from '@core/data/services/apiClient';
+import { mostrarCentavos } from '../dinero';
+
+import { GestionFrame } from '../components/GestionFrame';
+import { esEscritorio } from '../entorno';
+import { Accion, Aviso, Campo, Panel, TituloPanel, Vacio } from './CajaScreenStyled';
+import {
+  Buscador,
+  Cobro,
+  Linea,
+  Lineas,
+  Quitar,
+  Resultado,
+  Resultados,
+  TotalGrande,
+} from './CajaRapidaScreenStyled';
+
+interface LineaVenta {
+  clave: string;
+  productoId: string;
+  nombre: string;
+  /** En milésimos: 1000 es una unidad. */
+  cantidad: number;
+  precioCentavos: number;
+}
+
+export function CajaRapidaScreen() {
+  const [termino, setTermino] = useState('');
+  const [resultados, setResultados] = useState<ProductoMostradorApi[]>([]);
+  const [lineas, setLineas] = useState<LineaVenta[]>([]);
+  const [metodo, setMetodo] = useState<MetodoPago>('efectivo');
+  const [aviso, setAviso] = useState<string | null>(null);
+  const [cobrando, setCobrando] = useState(false);
+
+  const buscador = useRef<HTMLInputElement | null>(null);
+
+  const total = lineas.reduce(
+    (suma, l) => suma + Math.round((l.precioCentavos * l.cantidad) / 1000),
+    0,
+  );
+
+  /* Busca mientras se escribe, con una pausa: sin ella, cada tecla sería un
+     viaje al servidor y la lectora manda el código de golpe. */
+  useEffect(() => {
+    if (termino.trim().length < 2) {
+      setResultados([]);
+      return;
+    }
+
+    const id = window.setTimeout(() => {
+      void gestionApi
+        .buscar(termino.trim())
+        .then((datos) => setResultados(datos.productos))
+        .catch(() => setResultados([]));
+    }, 220);
+
+    return () => window.clearTimeout(id);
+  }, [termino]);
+
+  const agregar = (producto: ProductoMostradorApi) => {
+    setLineas((previas) => {
+      /* Si ya está en la lista suma una unidad en vez de repetir la línea:
+         es lo que espera quien pasa tres veces el mismo producto. */
+      const yaEsta = previas.find((l) => l.productoId === producto.id);
+
+      if (yaEsta) {
+        return previas.map((l) =>
+          l.productoId === producto.id ? { ...l, cantidad: l.cantidad + 1000 } : l,
+        );
+      }
+
+      return [
+        ...previas,
+        {
+          clave: `${producto.id}-${Date.now()}`,
+          productoId: producto.id,
+          nombre: producto.nombre,
+          cantidad: 1000,
+          precioCentavos: producto.precio_centavos,
+        },
+      ];
+    });
+
+    setTermino('');
+    setResultados([]);
+    buscador.current?.focus();
+  };
+
+  const cambiarCantidad = (clave: string, unidades: number) => {
+    const milesimos = Math.round(unidades * 1000);
+
+    if (milesimos <= 0) {
+      setLineas((previas) => previas.filter((l) => l.clave !== clave));
+      return;
+    }
+
+    setLineas((previas) =>
+      previas.map((l) => (l.clave === clave ? { ...l, cantidad: milesimos } : l)),
+    );
+  };
+
+  const cobrar = async () => {
+    if (lineas.length === 0) {
+      setAviso('Agregá algo antes de cobrar');
+      return;
+    }
+
+    setCobrando(true);
+    setAviso(null);
+
+    try {
+      const venta = await gestionApi.crearVenta({
+        items: lineas.map((l) => ({
+          productoId: l.productoId,
+          cantidadMilesimos: l.cantidad,
+          precioCentavos: l.precioCentavos,
+        })),
+        pagos: [{ metodo, montoCentavos: total }],
+      });
+
+      setAviso(`Venta #${venta.numero} cobrada: ${mostrarCentavos(venta.total_centavos)}`);
+      setLineas([]);
+      buscador.current?.focus();
+    } catch (fallo) {
+      setAviso(fallo instanceof Error ? fallo.message : 'No pudimos registrar la venta');
+    } finally {
+      setCobrando(false);
+    }
+  };
+
+  /* Cuando no se está en el mostrador se explica una sola vez arriba, en vez
+     de apagar cada control: acá la pantalla entera depende del hardware. */
+  const enMostrador = esEscritorio();
+
+  return (
+    <GestionFrame titulo="Caja rápida">
+      {!enMostrador ? (
+        <Aviso role="note">
+          Esta pantalla cobra con la lectora de códigos y la impresora del negocio, así que
+          funciona en la computadora del local. Acá se ve igual para que sepas cómo es.
+        </Aviso>
+      ) : null}
+
+      {aviso ? <Aviso role="status">{aviso}</Aviso> : null}
+
+      <Panel>
+        <TituloPanel>Qué se lleva</TituloPanel>
+
+        <Buscador>
+          <input
+            ref={buscador}
+            value={termino}
+            onChange={(evento) => setTermino(evento.target.value)}
+            placeholder="Pasá el código o escribí el nombre"
+            autoFocus={enMostrador}
+            disabled={!enMostrador}
+          />
+        </Buscador>
+
+        {resultados.length > 0 ? (
+          <Resultados>
+            {resultados.map((producto) => (
+              <Resultado key={producto.id} type="button" onClick={() => agregar(producto)}>
+                <strong>{producto.nombre}</strong>
+                <span>
+                  {mostrarCentavos(producto.precio_centavos)}
+                  {producto.stock !== null ? ` · quedan ${producto.stock}` : ''}
+                </span>
+              </Resultado>
+            ))}
+          </Resultados>
+        ) : null}
+
+        {lineas.length === 0 ? (
+          <Vacio>Todavía no agregaste nada.</Vacio>
+        ) : (
+          <Lineas>
+            {lineas.map((linea) => (
+              <Linea key={linea.clave}>
+                <div>
+                  <strong>{linea.nombre}</strong>
+                  <span>{mostrarCentavos(linea.precioCentavos)} cada uno</span>
+                </div>
+
+                <input
+                  type="number"
+                  min="0"
+                  step="0.001"
+                  value={linea.cantidad / 1000}
+                  onChange={(evento) => cambiarCantidad(linea.clave, Number(evento.target.value))}
+                  aria-label={`Cuántos ${linea.nombre}`}
+                />
+
+                <strong>{mostrarCentavos(Math.round((linea.precioCentavos * linea.cantidad) / 1000))}</strong>
+
+                <Quitar
+                  type="button"
+                  onClick={() => cambiarCantidad(linea.clave, 0)}
+                  aria-label={`Sacar ${linea.nombre}`}
+                >
+                  <Trash2 size={15} aria-hidden="true" />
+                </Quitar>
+              </Linea>
+            ))}
+          </Lineas>
+        )}
+      </Panel>
+
+      <Cobro>
+        <TotalGrande>
+          <span>Total</span>
+          <strong>{mostrarCentavos(total)}</strong>
+        </TotalGrande>
+
+        <Campo>
+          <span>Cómo paga</span>
+          <select value={metodo} onChange={(evento) => setMetodo(evento.target.value as MetodoPago)}>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="tarjeta">Tarjeta</option>
+            <option value="cuenta_corriente">Que lo pague después</option>
+          </select>
+        </Campo>
+
+        <Accion
+          type="button"
+          data-tono="fuerte"
+          onClick={cobrar}
+          disabled={cobrando || lineas.length === 0 || !enMostrador}
+        >
+          Cobrar
+        </Accion>
+      </Cobro>
+    </GestionFrame>
+  );
+}

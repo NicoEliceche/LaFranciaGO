@@ -6,6 +6,7 @@
  * instalando el sistema en la computadora del local.
  */
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ScanBarcode, Wallet } from 'lucide-react';
 
 import { formatMoney } from '@features/marketplace/marketplace.utils';
@@ -17,6 +18,7 @@ import { Total, Totales } from '../components/TablaStyled';
 import { Atajo, Atajos, Bloque, TituloBloque } from './GestionResumenScreenStyled';
 
 export function GestionResumenScreen() {
+  const navegar = useNavigate();
   const [metricas, setMetricas] = useState<MetricasComercioApi | null>(null);
   const [cargando, setCargando] = useState(true);
 
@@ -71,14 +73,14 @@ export function GestionResumenScreen() {
           {/* En el navegador se ve apagada, con el motivo. En la computadora
               del negocio anda. */}
           <SoloMostrador funcion="cajaRapida">
-            <Atajo type="button">
+            <Atajo type="button" onClick={() => navegar('/gestion/caja-rapida')}>
               <ScanBarcode size={20} aria-hidden="true" />
               <strong>Caja rápida</strong>
               <span>Cobrar con la lectora de códigos</span>
             </Atajo>
           </SoloMostrador>
 
-          <Atajo type="button">
+          <Atajo type="button" onClick={() => navegar('/gestion/caja')}>
             <Wallet size={20} aria-hidden="true" />
             <strong>Caja</strong>
             <span>Abrir, retirar y cerrar el día</span>

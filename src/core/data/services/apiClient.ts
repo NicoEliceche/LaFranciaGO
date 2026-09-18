@@ -831,3 +831,140 @@ export const mediaApi = {
     return api.post<{ clave: string; url: string }>('/media', formulario);
   },
 };
+
+/* ── El sistema de gestión ── */
+
+export interface CajaApi {
+  id: string;
+  inicial_centavos: number;
+  esperado_centavos: number;
+  abierta_en: string;
+}
+
+export interface MovimientoCajaApi {
+  id: string;
+  tipo: 'venta' | 'retiro' | 'deposito' | 'egreso' | 'ajuste';
+  monto_centavos: number;
+  concepto: string | null;
+  venta_id: string | null;
+  creado_en: string;
+  creado_por_nombre: string;
+}
+
+export interface CierreApi {
+  id: string;
+  inicial_centavos: number;
+  contado_centavos: number;
+  esperado_centavos: number;
+  diferencia_centavos: number;
+  abierta_en: string;
+  cerrada_en: string;
+}
+
+export interface VentaApi {
+  id: string;
+  numero: number;
+  cliente_nombre: string | null;
+  total_centavos: number;
+  cobrado_centavos: number;
+  costo_centavos: number;
+  descuento_centavos: number;
+  estado: string;
+  creado_en: string;
+  vendedor_nombre: string;
+  items: number;
+  /** Las formas de pago usadas, separadas por coma. */
+  metodos: string | null;
+}
+
+export interface TotalesVentasApi {
+  cantidad: number;
+  total: number;
+  cobrado: number;
+  adeudado: number;
+  ganancia: number;
+}
+
+export interface ProductoMostradorApi {
+  id: string;
+  nombre: string;
+  precio_centavos: number;
+  costo_centavos: number | null;
+  stock: number | null;
+  codigo_barras: string | null;
+  unidad_venta: string;
+}
+
+export type MetodoPago = 'efectivo' | 'transferencia' | 'tarjeta' | 'cheque' | 'cuenta_corriente';
+
+export interface FiltroVentas {
+  desde?: string;
+  hasta?: string;
+  pago?: 'cobrada' | 'debe';
+  q?: string;
+  pagina?: number;
+  porPagina?: number;
+}
+
+export const gestionApi = {
+  /* ── Caja ── */
+  caja: () =>
+    api.get<{ caja: CajaApi | null; movimientos?: MovimientoCajaApi[]; anteriores?: CierreApi[] }>(
+      '/gestion/caja',
+    ),
+  abrirCaja: (inicialCentavos: number) =>
+    api.post<{ id: string; inicial_centavos: number }>('/gestion/caja/abrir', { inicialCentavos }),
+  movimiento: (datos: {
+    tipo: 'retiro' | 'deposito' | 'egreso' | 'ajuste';
+    montoCentavos: number;
+    concepto?: string;
+  }) => api.post<{ id: string; esperado_centavos: number }>('/gestion/caja/movimiento', datos),
+  cerrarCaja: (contadoCentavos: number, nota?: string) =>
+    api.post<{
+      contado_centavos: number;
+      esperado_centavos: number;
+      diferencia_centavos: number;
+    }>('/gestion/caja/cerrar', { contadoCentavos, nota }),
+
+  /* ── Ventas ── */
+  ventas: (filtro: FiltroVentas = {}) => {
+    const busca = new URLSearchParams();
+
+    for (const [clave, valor] of Object.entries(filtro)) {
+      if (valor !== undefined && valor !== '') busca.set(clave, String(valor));
+    }
+
+    const consulta = busca.toString();
+
+    return api.get<{
+      ventas: VentaApi[];
+      totales: TotalesVentasApi;
+      pagina: number;
+      porPagina: number;
+    }>(`/gestion/ventas${consulta ? `?${consulta}` : ''}`);
+  },
+  crearVenta: (datos: {
+    items: Array<{
+      productoId?: string | null;
+      nombre?: string;
+      cantidadMilesimos: number;
+      precioCentavos?: number;
+    }>;
+    pagos?: Array<{ metodo: MetodoPago; montoCentavos: number; nota?: string }>;
+    clienteNombre?: string;
+    descuentoCentavos?: number;
+    nota?: string;
+  }) =>
+    api.post<{ id: string; numero: number; total_centavos: number; costo_centavos: number }>(
+      '/gestion/ventas',
+      datos,
+    ),
+  cobrar: (ventaId: string, pago: { metodo: MetodoPago; montoCentavos: number; nota?: string }) =>
+    api.post<{ cobrado_centavos: number }>(`/gestion/ventas/${ventaId}/pagos`, pago),
+
+  /** Busca por nombre o por el código que lee la pistola. */
+  buscar: (termino: string) =>
+    api.get<{ productos: ProductoMostradorApi[] }>(
+      `/gestion/buscar?q=${encodeURIComponent(termino)}`,
+    ),
+};
