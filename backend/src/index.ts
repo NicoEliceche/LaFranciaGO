@@ -62,6 +62,7 @@ import {
   estadoDeStock,
   proximaApertura,
 } from './comercio';
+import { rutasGestion } from './gestion';
 
 /**
  * API de LaFranciaGO.
@@ -1112,7 +1113,7 @@ async function enrutar(
 
     const { results: productos } = await env.DB.prepare(
       `SELECT id, categoria_id, nombre, descripcion, precio_centavos, unidad_venta,
-              fotos, video_url, stock, activo
+              fotos, video_url, stock, activo, costo_centavos, codigo_barras
          FROM productos WHERE comercio_id = ? ORDER BY creado_en DESC`,
     )
       .bind(comercio.id)
@@ -4167,6 +4168,30 @@ async function enrutar(
     );
   }
 
+  // ── El sistema de gestión ──
+  //
+  // Todo lo que cuelga de /gestion pide comercio propio, así que la guardia
+  // se hace una sola vez acá en lugar de repetirla en cada ruta.
+
+  if (ruta.startsWith('/gestion/')) {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    const respuesta = await rutasGestion(ruta, metodo, request, {
+      env,
+      usuario: propio.usuario,
+      comercioId: propio.comercioId,
+      cors,
+    });
+
+    if (respuesta) {
+      return respuesta;
+    }
+  }
+
   // ── Datos y horarios del comercio ──
 
   /** El comercio corrige sus datos: dirección, teléfono, logo. */
@@ -4366,10 +4391,18 @@ async function enrutar(
 
     const id = nuevoId();
 
+    /* El costo es opcional: sin él la venta se registra igual, sólo que no
+       se puede saber la ganancia. Cero y "no lo cargué" son cosas distintas,
+       así que se guarda null y no 0. */
+    const costo =
+      body.costo === undefined || body.costo === null || body.costo === ''
+        ? null
+        : aCentavos(Number(body.costo));
+
     await env.DB.prepare(
       `INSERT INTO productos
-        (id, comercio_id, categoria_id, nombre, descripcion, precio_centavos, unidad_venta, fotos, video_url, stock, tamano)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, comercio_id, categoria_id, nombre, descripcion, precio_centavos, unidad_venta, fotos, video_url, stock, tamano, costo_centavos, codigo_barras)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
         id,
@@ -4386,6 +4419,8 @@ async function enrutar(
            no lo declara se sugiere por rubro, para no sumarle un campo más a
            cada alta. */
         String(body.tamano ?? tamanoSugerido(propio.rubro_id, String(body.unidadVenta ?? 'unidad'))),
+        costo,
+        body.codigoBarras ? String(body.codigoBarras).trim() : null,
       )
       .run();
 
@@ -4423,11 +4458,24 @@ async function enrutar(
 
     const body = await leerJson<Record<string, unknown>>(request);
 
+    /* El costo y el código sólo se tocan si vinieron en el cuerpo: así una
+       pantalla que no los muestra no los borra sin querer al guardar. */
+    const tocaCosto = 'costo' in body;
+    const costo =
+      body.costo === undefined || body.costo === null || body.costo === ''
+        ? null
+        : aCentavos(Number(body.costo));
+
+    const tocaCodigo = 'codigoBarras' in body;
+    const codigo = body.codigoBarras ? String(body.codigoBarras).trim() : null;
+
     await env.DB.prepare(
       `UPDATE productos
           SET nombre = ?, descripcion = ?, precio_centavos = ?, unidad_venta = ?,
               fotos = ?, video_url = ?, stock = ?, categoria_id = ?,
-              tamano = COALESCE(?, tamano)
+              tamano = COALESCE(?, tamano),
+              costo_centavos = CASE WHEN ? = 1 THEN ? ELSE costo_centavos END,
+              codigo_barras = CASE WHEN ? = 1 THEN ? ELSE codigo_barras END
         WHERE id = ?`,
     )
       .bind(
@@ -4440,6 +4488,10 @@ async function enrutar(
         body.stock ?? null,
         body.categoriaId ?? null,
         body.tamano ?? null,
+        tocaCosto ? 1 : 0,
+        costo,
+        tocaCodigo ? 1 : 0,
+        codigo,
         producto[1],
       )
       .run();
