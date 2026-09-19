@@ -130,6 +130,30 @@ export function CajaRapidaScreen() {
     );
   };
 
+  /* Imprime el ticket si hay impresora. No corta la venta si falla: la
+     plata ya se cobró, y quedarse sin papel no puede trabar el mostrador. */
+  const imprimir = async (numero: number) => {
+    const escritorio = window.lafranciagoEscritorio;
+
+    if (!escritorio?.imprimir) return;
+
+    const salida = await escritorio.imprimir({
+      numero,
+      items: lineas.map((l) => ({
+        nombre: l.nombre,
+        cantidadMilesimos: l.cantidad,
+        precioCentavos: l.precioCentavos,
+        subtotalCentavos: Math.round((l.precioCentavos * l.cantidad) / 1000),
+      })),
+      total,
+      pagos: [{ metodo, montoCentavos: total }],
+    });
+
+    if (!salida.ok) {
+      setAviso((previo) => `${previo ?? ''} (no se pudo imprimir: ${salida.error})`.trim());
+    }
+  };
+
   const cobrar = async () => {
     if (lineas.length === 0) {
       setAviso('Agregá algo antes de cobrar');
@@ -144,22 +168,41 @@ export function CajaRapidaScreen() {
     setCobrando(true);
     setAviso(null);
 
+    const datos = {
+      items: lineas.map((l) => ({
+        productoId: l.productoId,
+        cantidadMilesimos: l.cantidad,
+        precioCentavos: l.precioCentavos,
+      })),
+      pagos: [{ metodo, montoCentavos: total }],
+      cuentaFiadoId: metodo === 'cuenta_corriente' ? cuentaFiado : undefined,
+    };
+
     try {
-      const venta = await gestionApi.crearVenta({
-        items: lineas.map((l) => ({
-          productoId: l.productoId,
-          cantidadMilesimos: l.cantidad,
-          precioCentavos: l.precioCentavos,
-        })),
-        pagos: [{ metodo, montoCentavos: total }],
-        cuentaFiadoId: metodo === 'cuenta_corriente' ? cuentaFiado : undefined,
-      });
+      const venta = await gestionApi.crearVenta(datos);
 
       setAviso(`Venta #${venta.numero} cobrada: ${mostrarCentavos(venta.total_centavos)}`);
+      await imprimir(venta.numero);
       setLineas([]);
       buscador.current?.focus();
     } catch (fallo) {
-      setAviso(fallo instanceof Error ? fallo.message : 'No pudimos registrar la venta');
+      /* Sin internet la venta igual pasó: la mercadería salió del negocio y
+         la plata entró al cajón. Se guarda en disco y sube sola cuando
+         vuelve la conexión, en vez de perderse. */
+      const escritorio = window.lafranciagoEscritorio;
+
+      if (escritorio?.encolar && !navigator.onLine) {
+        const guardada = await escritorio.encolar(datos);
+
+        setAviso(
+          `Sin internet: la venta quedó guardada y sube sola. Hay ${guardada.pendientes} esperando.`,
+        );
+        await imprimir(0);
+        setLineas([]);
+        buscador.current?.focus();
+      } else {
+        setAviso(fallo instanceof Error ? fallo.message : 'No pudimos registrar la venta');
+      }
     } finally {
       setCobrando(false);
     }

@@ -27,8 +27,34 @@ declare global {
       version: string;
       /** Qué aparatos encontró conectados al arrancar. */
       hardware?: string[];
+      /** Imprime el ticket de una venta y abre el cajón. */
+      imprimir?: (datos: TicketVenta) => Promise<{ ok: boolean; error?: string }>;
+      /** Las impresoras que ve Windows. */
+      impresoras?: () => Promise<Array<{ nombre: string; predeterminada: boolean }>>;
+      /** Guarda la venta en disco y la sube cuando haya internet. */
+      encolar?: (venta: unknown) => Promise<{ idLocal: string; pendientes: number }>;
+      /** Cuántas ventas están esperando subir. */
+      pendientes?: () => Promise<{ cantidad: number; masVieja: string | null; conError: number }>;
+      /** Fuerza un intento de subida. */
+      sincronizar?: () => Promise<{ subidas: number; pendientes: number }>;
     };
   }
+}
+
+/** Lo que necesita la impresora para armar el ticket. */
+export interface TicketVenta {
+  comercio?: { nombre: string; direccion?: string };
+  numero: number;
+  fecha?: string;
+  items: Array<{
+    nombre: string;
+    cantidadMilesimos: number;
+    precioCentavos: number;
+    subtotalCentavos: number;
+  }>;
+  total: number;
+  pagos?: Array<{ metodo: string; montoCentavos: number }>;
+  impresora?: string;
 }
 
 export function entornoActual(): Entorno {
