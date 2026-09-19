@@ -484,6 +484,8 @@ export async function rutasGestion(
       pagos?: PagoPedido[];
       clienteNombre?: string;
       clienteId?: string;
+      /* La ficha del comercio, distinta del usuario de la aplicacion. */
+      clienteFichaId?: string;
       cuentaFiadoId?: string;
       descuentoCentavos?: number;
       nota?: string;
@@ -540,8 +542,8 @@ export async function rutasGestion(
     await env.DB.prepare(
       `INSERT INTO ventas (id, comercio_id, numero, cliente_id, cliente_nombre, caja_id,
                            vendedor_id, total_centavos, descuento_centavos, costo_centavos,
-                           cobrado_centavos, nota, cuenta_fiado_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                           cobrado_centavos, nota, cuenta_fiado_id, cliente_ficha_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
         id,
@@ -557,6 +559,7 @@ export async function rutasGestion(
         cobrado,
         cuerpo.nota ?? null,
         cuentaFiado?.id ?? null,
+        cuerpo.clienteFichaId ?? null,
       )
       .run();
 
@@ -1421,6 +1424,497 @@ export async function rutasGestion(
       .all();
 
     return json({ productos: results, limite }, {}, cors);
+  }
+
+  /* -- Clientes -- */
+
+  if (ruta === '/gestion/clientes' && metodo === 'GET') {
+    const busqueda = new URL(request.url).searchParams.get('q')?.trim() ?? '';
+
+    const condiciones = ['c.comercio_id = ?'];
+    const valores: unknown[] = [comercioId];
+
+    if (busqueda) {
+      condiciones.push('(c.nombre LIKE ? OR c.telefono LIKE ?)');
+      valores.push(`%${busqueda}%`, `%${busqueda}%`);
+    }
+
+    /* Lo que compró de las dos formas: por el mostrador y por la
+       aplicación. Separarlo en dos consultas y sumarlo en la pantalla daría
+       el mismo número con el doble de viajes. */
+    const { results } = await env.DB.prepare(
+      `SELECT c.id, c.nombre, c.telefono, c.email, c.direccion, c.nota, c.activo,
+              c.usuario_id,
+              COALESCE((SELECT COUNT(*) FROM ventas v
+                         WHERE v.cliente_ficha_id = c.id AND v.estado = 'abierta'), 0) AS compras,
+              COALESCE((SELECT SUM(v.total_centavos) FROM ventas v
+                         WHERE v.cliente_ficha_id = c.id AND v.estado = 'abierta'), 0) AS gastado_centavos,
+              COALESCE((SELECT SUM(v.total_centavos - v.cobrado_centavos) FROM ventas v
+                         WHERE v.cliente_ficha_id = c.id AND v.estado = 'abierta'), 0) AS debe_centavos,
+              (SELECT MAX(v.creado_en) FROM ventas v
+                WHERE v.cliente_ficha_id = c.id) AS ultima_compra
+         FROM clientes c
+        WHERE ${condiciones.join(' AND ')}
+        ORDER BY c.activo DESC, ultima_compra DESC, c.nombre
+        LIMIT 200`,
+    )
+      .bind(...valores)
+      .all();
+
+    return json({ clientes: results }, {}, cors);
+  }
+
+  if (ruta === '/gestion/clientes' && metodo === 'POST') {
+    const cuerpo = (await request.json().catch(() => ({}))) as {
+      nombre?: string;
+      telefono?: string;
+      email?: string;
+      direccion?: string;
+      nota?: string;
+    };
+
+    const nombre = String(cuerpo.nombre ?? '').trim();
+
+    if (nombre.length < 2) {
+      return error('Pone el nombre del cliente', 400, cors);
+    }
+
+    const telefono = String(cuerpo.telefono ?? '').trim() || null;
+
+    /* El teléfono es único por comercio: si ya está, es la misma persona y
+       hay que usar su ficha en vez de crear una segunda. */
+    if (telefono) {
+      const repetido = await env.DB.prepare(
+        'SELECT id, nombre FROM clientes WHERE comercio_id = ? AND telefono = ?',
+      )
+        .bind(comercioId, telefono)
+        .first<{ id: string; nombre: string }>();
+
+      if (repetido) {
+        return error(`Ese telefono ya es de ${repetido.nombre}`, 409, cors);
+      }
+    }
+
+    const id = nuevoId();
+
+    await env.DB.prepare(
+      'INSERT INTO clientes (id, comercio_id, nombre, telefono, email, direccion, nota) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    )
+      .bind(
+        id,
+        comercioId,
+        nombre,
+        telefono,
+        cuerpo.email ?? null,
+        cuerpo.direccion ?? null,
+        cuerpo.nota ?? null,
+      )
+      .run();
+
+    return json({ id, nombre }, { status: 201 }, cors);
+  }
+
+  /* -- La ficha de un cliente, con todo lo que hizo -- */
+
+  const clienteDetalle = /^\/gestion\/clientes\/([\w-]+)$/.exec(ruta);
+
+  if (clienteDetalle && metodo === 'GET') {
+    const cliente = await env.DB.prepare(
+      'SELECT * FROM clientes WHERE id = ? AND comercio_id = ?',
+    )
+      .bind(clienteDetalle[1], comercioId)
+      .first<{ id: string; usuario_id: string | null }>();
+
+    if (!cliente) {
+      return error('Ese cliente no existe', 404, cors);
+    }
+
+    const { results: ventas } = await env.DB.prepare(
+      `SELECT id, numero, total_centavos, cobrado_centavos, creado_en, estado
+         FROM ventas
+        WHERE cliente_ficha_id = ?
+        ORDER BY creado_en DESC
+        LIMIT 50`,
+    )
+      .bind(cliente.id)
+      .all();
+
+    /* Si además tiene cuenta, lo que pidió por la aplicación. Es la mitad
+       del historial que el comercio no ve en ningún otro lado. */
+    let pedidos: unknown[] = [];
+
+    if (cliente.usuario_id) {
+      const { results } = await env.DB.prepare(
+        `SELECT id, codigo, total_centavos, estado, creado_en
+           FROM pedidos
+          WHERE usuario_id = ? AND comercio_id = ?
+          ORDER BY creado_en DESC
+          LIMIT 50`,
+      )
+        .bind(cliente.usuario_id, comercioId)
+        .all();
+
+      pedidos = results;
+    }
+
+    const { results: presupuestos } = await env.DB.prepare(
+      `SELECT id, numero, total_centavos, estado, vence_el, creado_en
+         FROM presupuestos
+        WHERE cliente_id = ?
+        ORDER BY creado_en DESC
+        LIMIT 20`,
+    )
+      .bind(cliente.id)
+      .all();
+
+    /* Lo que más le gusta: sirve para ofrecerle algo cuando entra. */
+    const { results: favoritos } = await env.DB.prepare(
+      `SELECT i.nombre, SUM(i.cantidad_milesimos) / 1000.0 AS unidades,
+              SUM(i.subtotal_centavos) AS total
+         FROM venta_items i
+         JOIN ventas v ON v.id = i.venta_id
+        WHERE v.cliente_ficha_id = ? AND v.estado = 'abierta'
+        GROUP BY i.nombre
+        ORDER BY total DESC
+        LIMIT 8`,
+    )
+      .bind(cliente.id)
+      .all();
+
+    return json({ cliente, ventas, pedidos, presupuestos, favoritos }, {}, cors);
+  }
+
+  /* -- Presupuestos -- */
+
+  if (ruta === '/gestion/presupuestos' && metodo === 'GET') {
+    const estado = new URL(request.url).searchParams.get('estado');
+
+    const condiciones = ['p.comercio_id = ?'];
+    const valores: unknown[] = [comercioId];
+
+    if (estado === 'pendiente' || estado === 'aceptado' || estado === 'rechazado') {
+      condiciones.push('p.estado = ?');
+      valores.push(estado);
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT p.id, p.numero, p.cliente_nombre, p.total_centavos, p.costo_centavos,
+              p.estado, p.vence_el, p.creado_en, p.venta_id,
+              c.nombre AS cliente_ficha_nombre,
+              (SELECT COUNT(*) FROM presupuesto_items i WHERE i.presupuesto_id = p.id) AS items,
+              /* Vencido se calcula, no se guarda: asi no hace falta un
+                 proceso diario que actualice filas que nadie mira. */
+              CASE WHEN p.estado = 'pendiente' AND p.vence_el < date('now') THEN 1 ELSE 0 END AS vencido
+         FROM presupuestos p
+         LEFT JOIN clientes c ON c.id = p.cliente_id
+        WHERE ${condiciones.join(' AND ')}
+        ORDER BY p.creado_en DESC
+        LIMIT 100`,
+    )
+      .bind(...valores)
+      .all();
+
+    const totales = await env.DB.prepare(
+      `SELECT COUNT(*) AS cantidad,
+              COALESCE(SUM(CASE WHEN estado = 'pendiente' THEN total_centavos ELSE 0 END), 0) AS pendiente,
+              COALESCE(SUM(CASE WHEN estado = 'aceptado' THEN total_centavos ELSE 0 END), 0) AS aceptado
+         FROM presupuestos WHERE comercio_id = ?`,
+    )
+      .bind(comercioId)
+      .first();
+
+    return json({ presupuestos: results, totales }, {}, cors);
+  }
+
+  if (ruta === '/gestion/presupuestos' && metodo === 'POST') {
+    const cuerpo = (await request.json().catch(() => ({}))) as {
+      items?: ItemPedido[];
+      clienteId?: string;
+      clienteNombre?: string;
+      descuentoCentavos?: number;
+      /* Cuantos dias vale. Por defecto siete: con inflacion, prometer un
+         precio por mas tiempo es arriesgado. */
+      diasValidez?: number;
+      nota?: string;
+    };
+
+    const resueltas = await resolverLineas(env, comercioId, cuerpo.items ?? []);
+
+    if ('error' in resueltas) {
+      return error(resueltas.error, 400, cors);
+    }
+
+    const { lineas } = resueltas;
+    const descuento = Math.max(0, Math.round(Number(cuerpo.descuentoCentavos ?? 0)));
+    const bruto = lineas.reduce((suma, l) => suma + l.subtotalCentavos, 0);
+    const total = Math.max(0, bruto - descuento);
+    const costo = lineas.reduce((suma, l) => suma + l.costoCentavos, 0);
+
+    const dias = Math.min(90, Math.max(1, Math.round(Number(cuerpo.diasValidez ?? 7))));
+
+    const fila = await env.DB.prepare(
+      'SELECT COALESCE(MAX(numero), 0) AS ultimo FROM presupuestos WHERE comercio_id = ?',
+    )
+      .bind(comercioId)
+      .first<{ ultimo: number }>();
+
+    const numero = (fila?.ultimo ?? 0) + 1;
+    const id = nuevoId();
+
+    await env.DB.prepare(
+      `INSERT INTO presupuestos (id, comercio_id, numero, cliente_id, cliente_nombre,
+                                 total_centavos, descuento_centavos, costo_centavos,
+                                 nota, vence_el, creado_por)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, date('now', '+' || ? || ' days'), ?)`,
+    )
+      .bind(
+        id,
+        comercioId,
+        numero,
+        cuerpo.clienteId ?? null,
+        cuerpo.clienteNombre ?? null,
+        total,
+        descuento,
+        costo,
+        cuerpo.nota ?? null,
+        dias,
+        usuario.id,
+      )
+      .run();
+
+    for (const linea of lineas) {
+      await env.DB.prepare(
+        `INSERT INTO presupuesto_items (id, presupuesto_id, producto_id, nombre,
+                                        cantidad_milesimos, precio_centavos, costo_centavos, subtotal_centavos)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+        .bind(
+          nuevoId(),
+          id,
+          linea.productoId,
+          linea.nombre,
+          linea.cantidadMilesimos,
+          linea.precioCentavos,
+          linea.costoCentavos,
+          linea.subtotalCentavos,
+        )
+        .run();
+    }
+
+    return json({ id, numero, total_centavos: total, dias }, { status: 201 }, cors);
+  }
+
+  /* -- El detalle, para imprimirlo o mandarlo -- */
+
+  const presuDetalle = /^\/gestion\/presupuestos\/([\w-]+)$/.exec(ruta);
+
+  if (presuDetalle && metodo === 'GET') {
+    const presupuesto = await env.DB.prepare(
+      `SELECT p.*, c.nombre AS cliente_ficha_nombre, c.telefono AS cliente_telefono,
+              u.nombre AS creado_por_nombre,
+              CASE WHEN p.estado = 'pendiente' AND p.vence_el < date('now') THEN 1 ELSE 0 END AS vencido
+         FROM presupuestos p
+         LEFT JOIN clientes c ON c.id = p.cliente_id
+         JOIN usuarios u ON u.id = p.creado_por
+        WHERE p.id = ? AND p.comercio_id = ?`,
+    )
+      .bind(presuDetalle[1], comercioId)
+      .first();
+
+    if (!presupuesto) {
+      return error('Ese presupuesto no existe', 404, cors);
+    }
+
+    const { results: items } = await env.DB.prepare(
+      'SELECT * FROM presupuesto_items WHERE presupuesto_id = ?',
+    )
+      .bind(presuDetalle[1])
+      .all();
+
+    return json({ presupuesto, items }, {}, cors);
+  }
+
+  /* -- Aceptarlo: se convierte en venta -- */
+
+  const aceptar = /^\/gestion\/presupuestos\/([\w-]+)\/aceptar$/.exec(ruta);
+
+  if (aceptar && metodo === 'POST') {
+    const presupuesto = await env.DB.prepare(
+      `SELECT id, numero, estado, cliente_id, cliente_nombre, descuento_centavos, vence_el,
+              CASE WHEN vence_el < date('now') THEN 1 ELSE 0 END AS vencido
+         FROM presupuestos WHERE id = ? AND comercio_id = ?`,
+    )
+      .bind(aceptar[1], comercioId)
+      .first<{
+        id: string;
+        numero: number;
+        estado: string;
+        cliente_id: string | null;
+        cliente_nombre: string | null;
+        descuento_centavos: number;
+        vence_el: string;
+        vencido: number;
+      }>();
+
+    if (!presupuesto) {
+      return error('Ese presupuesto no existe', 404, cors);
+    }
+
+    if (presupuesto.estado !== 'pendiente') {
+      return error('Ese presupuesto ya se cerro', 409, cors);
+    }
+
+    const cuerpo = (await request.json().catch(() => ({}))) as {
+      pagos?: PagoPedido[];
+      /* Aceptar uno vencido es decision del comercio, pero tiene que ser
+         explicita: si no, se entrega mercaderia a precio viejo sin que nadie
+         se de cuenta. */
+      igualmente?: boolean;
+    };
+
+    if (presupuesto.vencido && !cuerpo.igualmente) {
+      return error(
+        `Ese presupuesto vencio el ${presupuesto.vence_el}. Confirma si lo queres respetar igual.`,
+        409,
+        cors,
+      );
+    }
+
+    const { results: items } = await env.DB.prepare(
+      'SELECT * FROM presupuesto_items WHERE presupuesto_id = ?',
+    )
+      .bind(presupuesto.id)
+      .all<{
+        producto_id: string | null;
+        nombre: string;
+        cantidad_milesimos: number;
+        precio_centavos: number;
+        costo_centavos: number;
+        subtotal_centavos: number;
+      }>();
+
+    if (items.length === 0) {
+      return error('Ese presupuesto no tiene productos', 400, cors);
+    }
+
+    const pagosLimpios = validarPagos(cuerpo.pagos);
+
+    if ('error' in pagosLimpios) {
+      return error(pagosLimpios.error, 400, cors);
+    }
+
+    const bruto = items.reduce((suma, i) => suma + i.subtotal_centavos, 0);
+    const total = Math.max(0, bruto - presupuesto.descuento_centavos);
+    const costo = items.reduce((suma, i) => suma + i.costo_centavos, 0);
+    const cobrado = pagosLimpios.pagos.reduce((suma, p) => suma + p.montoCentavos, 0);
+
+    if (cobrado > total) {
+      return error('Estas cobrando mas que el total', 400, cors);
+    }
+
+    const caja = await cajaAbierta(env, comercioId);
+    const ventaId = nuevoId();
+    const numeroVenta = await proximoNumero(env, comercioId);
+
+    await env.DB.prepare(
+      `INSERT INTO ventas (id, comercio_id, numero, cliente_nombre, cliente_ficha_id, caja_id,
+                           vendedor_id, total_centavos, descuento_centavos, costo_centavos,
+                           cobrado_centavos, nota)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        ventaId,
+        comercioId,
+        numeroVenta,
+        presupuesto.cliente_nombre,
+        presupuesto.cliente_id,
+        caja?.id ?? null,
+        usuario.id,
+        total,
+        presupuesto.descuento_centavos,
+        costo,
+        cobrado,
+        `Del presupuesto #${presupuesto.numero}`,
+      )
+      .run();
+
+    for (const item of items) {
+      await env.DB.prepare(
+        `INSERT INTO venta_items (id, venta_id, producto_id, nombre, cantidad_milesimos,
+                                  precio_centavos, costo_centavos, subtotal_centavos)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+        .bind(
+          nuevoId(),
+          ventaId,
+          item.producto_id,
+          item.nombre,
+          item.cantidad_milesimos,
+          item.precio_centavos,
+          item.costo_centavos,
+          item.subtotal_centavos,
+        )
+        .run();
+    }
+
+    for (const pago of pagosLimpios.pagos) {
+      await env.DB.prepare(
+        'INSERT INTO venta_pagos (id, venta_id, metodo, monto_centavos, creado_por) VALUES (?, ?, ?, ?, ?)',
+      )
+        .bind(nuevoId(), ventaId, pago.metodo, pago.montoCentavos, usuario.id)
+        .run();
+
+      if (pago.metodo === 'efectivo' && caja) {
+        await anotarMovimiento(env, {
+          cajaId: caja.id,
+          tipo: 'venta',
+          montoCentavos: pago.montoCentavos,
+          concepto: `Venta #${numeroVenta}`,
+          ventaId,
+          usuarioId: usuario.id,
+        });
+      }
+    }
+
+    /* Recien acá baja el stock: mientras era presupuesto la mercadería no
+       se había movido. */
+    await descontarStock(
+      env,
+      items
+        .filter((i) => i.producto_id)
+        .map((i) => ({
+          productoId: i.producto_id as string,
+          unidades: Math.ceil(i.cantidad_milesimos / 1000),
+        })),
+    );
+
+    await env.DB.prepare(
+      "UPDATE presupuestos SET estado = 'aceptado', venta_id = ?, cerrado_en = datetime('now') WHERE id = ?",
+    )
+      .bind(ventaId, presupuesto.id)
+      .run();
+
+    return json({ ventaId, numero: numeroVenta, total_centavos: total }, { status: 201 }, cors);
+  }
+
+  /* -- Rechazarlo -- */
+
+  const rechazar = /^\/gestion\/presupuestos\/([\w-]+)\/rechazar$/.exec(ruta);
+
+  if (rechazar && metodo === 'POST') {
+    const resultado = await env.DB.prepare(
+      `UPDATE presupuestos
+          SET estado = 'rechazado', cerrado_en = datetime('now')
+        WHERE id = ? AND comercio_id = ? AND estado = 'pendiente'`,
+    )
+      .bind(rechazar[1], comercioId)
+      .run();
+
+    if (!resultado.meta.changes) {
+      return error('Ese presupuesto no existe o ya se cerro', 404, cors);
+    }
+
+    return json({ ok: true }, {}, cors);
   }
 
   /* ── Buscar producto para el mostrador ── */

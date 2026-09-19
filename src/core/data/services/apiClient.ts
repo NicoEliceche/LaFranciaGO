@@ -1126,3 +1126,95 @@ export const informesApi = {
       limite: number;
     }>(`/gestion/informes/stock?limite=${limite}`),
 };
+
+/* ── Clientes y presupuestos ── */
+
+export interface ClienteApi {
+  id: string;
+  nombre: string;
+  telefono: string | null;
+  email: string | null;
+  direccion: string | null;
+  nota: string | null;
+  activo: number;
+  usuario_id: string | null;
+  compras: number;
+  gastado_centavos: number;
+  debe_centavos: number;
+  ultima_compra: string | null;
+}
+
+export interface PresupuestoApi {
+  id: string;
+  numero: number;
+  cliente_nombre: string | null;
+  cliente_ficha_nombre: string | null;
+  total_centavos: number;
+  costo_centavos: number;
+  estado: 'pendiente' | 'aceptado' | 'rechazado';
+  vence_el: string;
+  creado_en: string;
+  venta_id: string | null;
+  items: number;
+  /** 1 cuando está pendiente y la fecha ya pasó. */
+  vencido: number;
+}
+
+export const clientesApi = {
+  listar: (busqueda?: string) =>
+    api.get<{ clientes: ClienteApi[] }>(
+      `/gestion/clientes${busqueda ? `?q=${encodeURIComponent(busqueda)}` : ''}`,
+    ),
+  crear: (datos: {
+    nombre: string;
+    telefono?: string;
+    email?: string;
+    direccion?: string;
+    nota?: string;
+  }) => api.post<{ id: string; nombre: string }>('/gestion/clientes', datos),
+  ficha: (id: string) =>
+    api.get<{
+      cliente: ClienteApi;
+      ventas: Array<{
+        id: string;
+        numero: number;
+        total_centavos: number;
+        cobrado_centavos: number;
+        creado_en: string;
+      }>;
+      pedidos: Array<{
+        id: string;
+        codigo: string;
+        total_centavos: number;
+        estado: string;
+        creado_en: string;
+      }>;
+      presupuestos: PresupuestoApi[];
+      favoritos: Array<{ nombre: string; unidades: number; total: number }>;
+    }>(`/gestion/clientes/${id}`),
+};
+
+export const presupuestosApi = {
+  listar: (estado?: 'pendiente' | 'aceptado' | 'rechazado') =>
+    api.get<{
+      presupuestos: PresupuestoApi[];
+      totales: { cantidad: number; pendiente: number; aceptado: number };
+    }>(`/gestion/presupuestos${estado ? `?estado=${estado}` : ''}`),
+  crear: (datos: {
+    items: Array<{ productoId?: string | null; cantidadMilesimos: number; precioCentavos?: number }>;
+    clienteId?: string;
+    clienteNombre?: string;
+    diasValidez?: number;
+    nota?: string;
+  }) =>
+    api.post<{ id: string; numero: number; total_centavos: number; dias: number }>(
+      '/gestion/presupuestos',
+      datos,
+    ),
+  aceptar: (id: string, datos: { pagos?: Array<{ metodo: MetodoPago; montoCentavos: number }>; igualmente?: boolean }) =>
+    api.post<{ ventaId: string; numero: number; total_centavos: number }>(
+      `/gestion/presupuestos/${id}/aceptar`,
+      datos,
+    ),
+  rechazar: (id: string) => api.post<{ ok: true }>(`/gestion/presupuestos/${id}/rechazar`),
+};

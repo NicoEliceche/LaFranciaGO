@@ -19,6 +19,7 @@ import {
   Receipt,
   ScanBarcode,
   Store,
+  FileText,
   HandCoins,
   Truck,
   Users,
@@ -77,6 +78,7 @@ export const GRUPOS: Grupo[] = [
     titulo: 'Lo que entra y sale',
     entradas: [
       { id: 'ventas', nombre: 'Ventas', icono: Receipt, ruta: '/gestion/ventas' },
+      { id: 'presupuestos', nombre: 'Presupuestos', icono: FileText, ruta: '/gestion/presupuestos' },
       { id: 'compras', nombre: 'Compras', icono: ArrowLeftRight, ruta: '/gestion/compras' },
       { id: 'pedidos', nombre: 'Pedidos de la app', icono: ClipboardList, ruta: '/gestion/pedidos' },
       { id: 'envios', nombre: 'Envíos', icono: Truck, ruta: '/gestion/envios' },
@@ -87,7 +89,7 @@ export const GRUPOS: Grupo[] = [
     entradas: [
       { id: 'productos', nombre: 'Productos', icono: Boxes, ruta: '/gestion/productos' },
       { id: 'ofertas', nombre: 'Ofertas', icono: BadgePercent, ruta: '/gestion/ofertas' },
-      { id: 'contactos', nombre: 'Clientes y proveedores', icono: Users, ruta: '/gestion/contactos' },
+      { id: 'clientes', nombre: 'Clientes', icono: Users, ruta: '/gestion/clientes' },
       { id: 'chats', nombre: 'Chats', icono: MessagesSquare, ruta: '/gestion/chats' },
     ],
   },

@@ -102,6 +102,16 @@ const ComprasScreen = lazy(() =>
 const InformesScreen = lazy(() =>
   import('@features/gestion/screens/InformesScreen').then((m) => ({ default: m.InformesScreen })),
 );
+
+const ClientesScreen = lazy(() =>
+  import('@features/gestion/screens/ClientesScreen').then((m) => ({ default: m.ClientesScreen })),
+);
+
+const PresupuestosScreen = lazy(() =>
+  import('@features/gestion/screens/PresupuestosScreen').then((m) => ({
+    default: m.PresupuestosScreen,
+  })),
+);
 const ProductFormScreen = lazy(() =>
   import('@features/marketplace/screens/ProductFormScreen').then((m) => ({ default: m.ProductFormScreen })),
 );
@@ -295,6 +305,22 @@ function App() {
               element={
                 <RutaPrivada>
                   <InformesScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/gestion/clientes"
+              element={
+                <RutaPrivada>
+                  <ClientesScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/gestion/presupuestos"
+              element={
+                <RutaPrivada>
+                  <PresupuestosScreen />
                 </RutaPrivada>
               }
             />
