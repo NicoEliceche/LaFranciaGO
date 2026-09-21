@@ -16,6 +16,7 @@ import {
   ClipboardList,
   Menu,
   MessagesSquare,
+  Monitor,
   Receipt,
   ScanBarcode,
   Store,
@@ -96,6 +97,12 @@ export const GRUPOS: Grupo[] = [
   {
     titulo: 'Para mirar',
     entradas: [{ id: 'informes', nombre: 'Informes', icono: BarChart3, ruta: '/gestion/informes' }],
+  },
+  {
+    titulo: 'Esta computadora',
+    entradas: [
+      { id: 'mostrador', nombre: 'Este mostrador', icono: Monitor, ruta: '/gestion/mostrador' },
+    ],
   },
 ];
 

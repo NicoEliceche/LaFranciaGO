@@ -92,10 +92,41 @@ npm run empaquetar
 
 Deja un instalador en `escritorio/salida/`.
 
+## Cómo llegan las versiones nuevas
+
+En desarrollo la ventana carga el servidor de Vite, así que un cambio en la
+web se ve al instante.
+
+Instalado es distinto, y por eso hace lo siguiente: **si hay internet carga
+la aplicación publicada**, la misma que abre cualquiera en el navegador.
+Entonces un cambio en la web llega al negocio con sólo recargar, sin ir con
+un pendrive.
+
+Si no hay internet al arrancar —que en un negocio pasa— usa la copia que
+venía en el instalador. El sistema abre igual, con la caja y las ventas
+pendientes andando.
+
+Lo que sí requiere reinstalar es un cambio en estos archivos: la impresora,
+la cola, la ventana. Eso cambia mucho menos seguido que las pantallas.
+
+## Configurar la instalación
+
+Dentro del sistema, en **Esta computadora**:
+
+- **Qué impresora** usar, con un botón para imprimir una hoja de prueba.
+- **Si imprime solo** al terminar la venta, y si abre el cajón.
+- **Cómo se llama esta caja** (`CAJA1`, `CAJA2`). Va adelante del número de
+  las ventas hechas sin internet, para que dos cajas no repitan número.
+- **Qué ventas esperan subir**, con un botón para intentar ahora.
+
+Todo eso queda guardado en `%APPDATA%/lafranciago-escritorio/ajustes.json`.
+
+El aviso de ventas pendientes también aparece **arriba de la caja rápida**,
+que es donde está la persona cuando se corta internet.
+
 ## Qué falta
 
-- **Elegir la impresora** desde la aplicación (hoy usa la predeterminada de
-  Windows).
-- **Avisar en pantalla** cuántas ventas están esperando subir.
 - **Firmar el instalador**, para que Windows no muestre la advertencia de
   editor desconocido.
+- **Probar con una lectora y una impresora de verdad.** Todo lo demás está
+  verificado; el hardware no se puede simular.

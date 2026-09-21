@@ -31,6 +31,14 @@ declare global {
       imprimir?: (datos: TicketVenta) => Promise<{ ok: boolean; error?: string }>;
       /** Las impresoras que ve Windows. */
       impresoras?: () => Promise<Array<{ nombre: string; predeterminada: boolean }>>;
+      /** Imprime una hoja de prueba. */
+      probarImpresora?: (impresora?: string) => Promise<{ ok: boolean; error?: string }>;
+      /** Qué recuerda esta instalación. */
+      ajustes?: () => Promise<AjustesEscritorio>;
+      /** Guarda los cambios y devuelve cómo quedó. */
+      guardarAjustes?: (cambios: Partial<AjustesEscritorio>) => Promise<AjustesEscritorio>;
+      /** Versión y plataforma, más los ajustes. */
+      info?: () => Promise<AjustesEscritorio & { version: string; plataforma: string }>;
       /** Guarda la venta en disco y la sube cuando haya internet. */
       encolar?: (venta: unknown) => Promise<{ idLocal: string; pendientes: number }>;
       /** Cuántas ventas están esperando subir. */
@@ -39,6 +47,18 @@ declare global {
       sincronizar?: () => Promise<{ subidas: number; pendientes: number }>;
     };
   }
+}
+
+/** Lo que esta instalación recuerda entre sesiones. */
+export interface AjustesEscritorio {
+  /** Vacío significa "la predeterminada de Windows". */
+  impresora: string;
+  /** Cómo se llama esta caja. Va adelante del número de venta. */
+  puesto: string;
+  /** Si imprime el ticket sin preguntar al terminar la venta. */
+  imprimirSolo: boolean;
+  /** Si abre el cajón al imprimir. */
+  abrirCajon: boolean;
 }
 
 /** Lo que necesita la impresora para armar el ticket. */

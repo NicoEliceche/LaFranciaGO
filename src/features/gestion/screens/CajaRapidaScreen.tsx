@@ -53,6 +53,9 @@ export function CajaRapidaScreen() {
   const [cuentaFiado, setCuentaFiado] = useState('');
   const [aviso, setAviso] = useState<string | null>(null);
   const [cobrando, setCobrando] = useState(false);
+  /* Cuántas ventas quedaron guardadas sin subir. Se muestra acá porque es
+     donde la persona está cuando se corta internet. */
+  const [sinSubir, setSinSubir] = useState(0);
 
   const buscador = useRef<HTMLInputElement | null>(null);
 
@@ -60,6 +63,20 @@ export function CajaRapidaScreen() {
     (suma, l) => suma + Math.round((l.precioCentavos * l.cantidad) / 1000),
     0,
   );
+
+  /* Las pendientes se miran seguido: si se cortó internet, la persona del
+     mostrador tiene que enterarse sin ir a buscarlo a otra pantalla. */
+  useEffect(() => {
+    const mirar = () => {
+      void window.lafranciagoEscritorio?.pendientes?.().then((p) => setSinSubir(p.cantidad));
+    };
+
+    mirar();
+
+    const id = window.setInterval(mirar, 20_000);
+
+    return () => window.clearInterval(id);
+  }, []);
 
   /* Las cuentas de fiado se traen una vez: son dos o tres y no cambian
      entre venta y venta. */
@@ -194,6 +211,7 @@ export function CajaRapidaScreen() {
       if (escritorio?.encolar && !navigator.onLine) {
         const guardada = await escritorio.encolar(datos);
 
+        setSinSubir(guardada.pendientes);
         setAviso(
           `Sin internet: la venta quedó guardada y sube sola. Hay ${guardada.pendientes} esperando.`,
         );
@@ -218,6 +236,13 @@ export function CajaRapidaScreen() {
         <Aviso role="note">
           Esta pantalla cobra con la lectora de códigos y la impresora del negocio, así que
           funciona en la computadora del local. Acá se ve igual para que sepas cómo es.
+        </Aviso>
+      ) : null}
+
+      {sinSubir > 0 ? (
+        <Aviso role="status">
+          Hay {sinSubir} {sinSubir === 1 ? 'venta guardada' : 'ventas guardadas'} en esta
+          computadora esperando internet. Suben solas cuando vuelve; podés seguir cobrando.
         </Aviso>
       ) : null}
 

@@ -112,6 +112,10 @@ const PresupuestosScreen = lazy(() =>
     default: m.PresupuestosScreen,
   })),
 );
+
+const MostradorScreen = lazy(() =>
+  import('@features/gestion/screens/MostradorScreen').then((m) => ({ default: m.MostradorScreen })),
+);
 const ProductFormScreen = lazy(() =>
   import('@features/marketplace/screens/ProductFormScreen').then((m) => ({ default: m.ProductFormScreen })),
 );
@@ -321,6 +325,14 @@ function App() {
               element={
                 <RutaPrivada>
                   <PresupuestosScreen />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/gestion/mostrador"
+              element={
+                <RutaPrivada>
+                  <MostradorScreen />
                 </RutaPrivada>
               }
             />

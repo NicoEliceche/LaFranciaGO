@@ -14,6 +14,8 @@ const path = require('node:path');
 
 const { abrirBaseLocal, encolarVenta, pendientes, sincronizar } = require('./cola');
 const { imprimirTicket, listarImpresoras } = require('./impresora');
+const { cargarAjustes, guardarAjustes, leerAjustes } = require('./ajustes');
+const { origenDeLaApp } = require('./actualizacion');
 
 /* En desarrollo se carga del servidor de Vite, para ver los cambios al
    instante; instalado, de los archivos que quedaron en el paquete. */
@@ -22,7 +24,7 @@ const URL_DESARROLLO = process.env.LAFRANCIAGO_DEV_URL ?? 'http://localhost:8081
 
 let ventana = null;
 
-function crearVentana() {
+async function crearVentana() {
   ventana = new BrowserWindow({
     width: 1280,
     height: 820,
@@ -47,9 +49,19 @@ function crearVentana() {
   ventana.once('ready-to-show', () => ventana.show());
 
   if (EN_DESARROLLO) {
-    void ventana.loadURL(URL_DESARROLLO);
+    await ventana.loadURL(URL_DESARROLLO);
   } else {
-    void ventana.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
+    /* Con internet se carga la aplicacion publicada: asi un cambio en la web
+       llega al negocio con solo recargar, sin ir con un pendrive. Sin
+       internet se usa la copia del instalador, que alcanza para seguir
+       cobrando. */
+    const publicada = await origenDeLaApp();
+
+    if (publicada) {
+      await ventana.loadURL(publicada);
+    } else {
+      await ventana.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
+    }
   }
 
   /* Los enlaces externos abren en el navegador y no adentro de la
@@ -62,13 +74,14 @@ function crearVentana() {
 }
 
 app.whenReady().then(async () => {
+  await cargarAjustes();
   await abrirBaseLocal();
-  crearVentana();
+  await crearVentana();
 
   /* Una sola instancia: dos ventanas abiertas contra la misma caja llevan a
      dos personas cobrando sin verse. */
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) crearVentana();
+    if (BrowserWindow.getAllWindows().length === 0) void crearVentana();
   });
 });
 
@@ -81,9 +94,46 @@ app.on('window-all-closed', () => {
 ipcMain.handle('lafranciago:version', () => ({
   version: app.getVersion(),
   plataforma: process.platform,
+  ...leerAjustes(),
 }));
 
-ipcMain.handle('lafranciago:imprimir', async (_evento, datos) => imprimirTicket(datos));
+ipcMain.handle('lafranciago:ajustes', () => leerAjustes());
+
+ipcMain.handle('lafranciago:guardarAjustes', async (_evento, cambios) =>
+  guardarAjustes(cambios ?? {}),
+);
+
+ipcMain.handle('lafranciago:imprimir', async (_evento, datos) => {
+  const config = leerAjustes();
+
+  /* La pantalla no tiene que saber que impresora se eligio: eso lo decide la
+     instalacion, y asi el mismo codigo anda en cualquier negocio. */
+  return imprimirTicket({
+    ...datos,
+    impresora: datos.impresora || config.impresora || undefined,
+    cajon: datos.cajon ?? config.abrirCajon,
+  });
+});
+
+/** Imprime una hoja de prueba, para ver si la impresora quedo bien elegida. */
+ipcMain.handle('lafranciago:probarImpresora', async (_evento, impresora) =>
+  imprimirTicket({
+    numero: 0,
+    comercio: { nombre: 'Prueba de impresion' },
+    items: [
+      {
+        nombre: 'Si lees esto, la impresora anda',
+        cantidadMilesimos: 1000,
+        precioCentavos: 100,
+        subtotalCentavos: 100,
+      },
+    ],
+    total: 100,
+    pagos: [],
+    impresora: impresora || leerAjustes().impresora || undefined,
+    cajon: false,
+  }),
+);
 
 ipcMain.handle('lafranciago:impresoras', async () => listarImpresoras());
 

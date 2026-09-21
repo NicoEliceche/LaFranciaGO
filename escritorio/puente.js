@@ -25,6 +25,17 @@ contextBridge.exposeInMainWorld('lafranciagoEscritorio', {
   /** Las impresoras que ve Windows, para elegir una. */
   impresoras: () => ipcRenderer.invoke('lafranciago:impresoras'),
 
+  /** Imprime una hoja de prueba con la impresora elegida. */
+  probarImpresora: (impresora) => ipcRenderer.invoke('lafranciago:probarImpresora', impresora),
+
+  /* ── Lo que esta instalación recuerda ── */
+
+  /** Qué impresora usa, cómo se llama este puesto, si imprime solo. */
+  ajustes: () => ipcRenderer.invoke('lafranciago:ajustes'),
+
+  /** Guarda los cambios y devuelve cómo quedó todo. */
+  guardarAjustes: (cambios) => ipcRenderer.invoke('lafranciago:guardarAjustes', cambios),
+
   /* ── Ventas sin internet ── */
 
   /** Guarda la venta en disco y la sube cuando se pueda. */
