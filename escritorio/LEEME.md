@@ -124,9 +124,48 @@ Todo eso queda guardado en `%APPDATA%/lafranciago-escritorio/ajustes.json`.
 El aviso de ventas pendientes también aparece **arriba de la caja rápida**,
 que es donde está la persona cuando se corta internet.
 
+## La advertencia de Windows al instalar
+
+El instalador no está firmado con un certificado, así que al abrirlo Windows
+muestra una pantalla azul que dice **"Windows protegió tu PC"**. Para
+continuar: *Más información* → *Ejecutar de todas formas*.
+
+No es un error ni significa que el programa tenga algo raro. Es lo que
+Windows hace con cualquier programa que no venga con un certificado comprado.
+
+**Por qué no está firmado, por ahora.** Un certificado cuesta entre US$200 y
+US$600 por año y hay que guardarlo en un token USB físico. Para una sola
+instalación, hecha por quien desarrolló el sistema, no se justifica:
+
+- La instalación la hace Nicolás, no el comercio.
+- Es una máquina, no una descarga pública.
+- **Las actualizaciones no muestran la advertencia**: el sistema baja el
+  instalador por su cuenta y lo ejecuta, sin pasar por el navegador.
+
+**Cuándo conviene comprarlo.** Si el sistema empieza a venderse a otros
+comercios y cada uno se lo instala solo. Ahí la advertencia se vuelve un
+problema de ventas: alguien que ve "Windows protegió tu PC" probablemente no
+siga.
+
+Cuando llegue ese momento, hace falta:
+
+1. Comprar un certificado de firma de código (Sectigo, DigiCert). El de tipo
+   **EV** saca la advertencia desde el primer día; el **OV** es más barato
+   pero la advertencia sigue hasta que Windows acumule confianza.
+2. Esperar la validación de identidad: días o semanas.
+3. Recibir el token USB por correo.
+4. Agregar a `package.json`, dentro de `build.win`:
+
+```json
+"certificateSubjectName": "Nicolas Eliceche",
+"signingHashAlgorithms": ["sha256"]
+```
+
+Mientras tanto el instalador sí lleva los datos del editor adentro: al hacer
+clic derecho sobre el `.exe` → *Propiedades* → *Detalles*, dice quién lo
+hizo. No saca la advertencia, pero el archivo no es anónimo.
+
 ## Qué falta
 
-- **Firmar el instalador**, para que Windows no muestre la advertencia de
-  editor desconocido.
 - **Probar con una lectora y una impresora de verdad.** Todo lo demás está
   verificado; el hardware no se puede simular.

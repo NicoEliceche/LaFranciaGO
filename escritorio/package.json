@@ -27,15 +27,30 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
-      ]
+      ],
+      "publisherName": "Nicolas Eliceche",
+      "legalTrademarks": "LaFranciaGO",
+      "signAndEditExecutable": true
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "LaFranciaGO"
-    }
-  }
+      "shortcutName": "LaFranciaGO",
+      "perMachine": false,
+      "allowElevation": false,
+      "deleteAppDataOnUninstall": false,
+      "uninstallDisplayName": "LaFranciaGO"
+    },
+    "copyright": "Copyright 2026 Nicolas Eliceche"
+  },
+  "author": {
+    "name": "Nicolas Eliceche",
+    "email": "nico.elicechediz@gmail.com"
+  },
+  "homepage": "https://nicoeliceche.github.io/LaFranciaGO/"
 }
