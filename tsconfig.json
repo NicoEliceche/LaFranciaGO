@@ -24,10 +24,13 @@
       "@core/*": ["core/*"],
       "@features/*": ["features/*"],
       "@shared/*": ["shared/*"],
-      "@assets/*": ["assets/*"]
+      "@assets/*": ["assets/*"],
+      "@compartido": ["../compartido/src/index.ts"],
+      "@compartido/*": ["../compartido/src/*"]
     }
   },
   "include": [
-    "src"
+    "src",
+    "../compartido/src"
   ]
 }

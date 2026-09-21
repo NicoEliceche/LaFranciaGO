@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    /* DOM va sólo por los tipos de fetch, FormData y URLSearchParams, que
+       existen igual en React Native aunque TypeScript los declare ahí. Lo
+       que no se puede usar —document, window, localStorage— lo atrapa la
+       revisión de abajo, que corre con el typecheck. */
+    "lib": ["ES2022", "DOM"],
+    "types": []
+  },
+  "include": ["src"]
+}

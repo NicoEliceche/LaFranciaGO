@@ -1,0 +1,16 @@
+{
+  "name": "@lafranciago/compartido",
+  "version": "1.0.0",
+  "description": "Lo que comparten la web y las aplicaciones del teléfono: la API, las cuentas de plata y las fechas.",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit && node revisar.mjs",
+    "revisar": "node revisar.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

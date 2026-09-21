@@ -202,7 +202,17 @@ export interface UsuarioSesion {
  */
 export async function usuarioActual(request: Request, env: Env): Promise<UsuarioSesion | null> {
   const cookie = request.headers.get('Cookie') ?? '';
-  const token = /(?:^|;\s*)sesion=([^;]+)/.exec(cookie)?.[1];
+
+  /* El navegador manda la sesión en una cookie; las aplicaciones del
+     teléfono, en la cabecera, porque ahí no hay cookies que sobrevivan a
+     cerrar la aplicación. Se aceptan las dos para que el mismo backend sirva
+     a los dos lados sin rutas duplicadas. */
+  const deLaCookie = /(?:^|;\s*)sesion=([^;]+)/.exec(cookie)?.[1];
+  const deLaCabecera = /^Bearer\s+(.+)$/i.exec(
+    request.headers.get('Authorization') ?? '',
+  )?.[1];
+
+  const token = deLaCookie ?? deLaCabecera?.trim();
 
   if (!token) {
     return null;

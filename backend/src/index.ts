@@ -206,6 +206,12 @@ async function enrutar(
         nombre: usuario.nombre,
         rol: usuario.rol,
         foto_url: usuario.foto_url,
+        /* El mismo token que va en la cookie, también en el cuerpo. El
+           navegador usa la cookie y lo ignora; las aplicaciones del teléfono
+           lo necesitan porque ahí no hay cookies que sobrevivan a cerrar la
+           aplicación. */
+        token,
+        expira,
       },
       {},
       { ...cors, 'Set-Cookie': cookieSesion(token, expira) },
