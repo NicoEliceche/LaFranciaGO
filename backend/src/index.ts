@@ -63,6 +63,7 @@ import {
   proximaApertura,
 } from './comercio';
 import { rutasGestion } from './gestion';
+import { rutaVersiones } from './versiones';
 
 /**
  * API de LaFranciaGO.
@@ -927,6 +928,15 @@ async function enrutar(
   }
 
   // ── Comercios ──
+
+  /* Qué versión debería estar usando cada aplicación. Va antes de todo y
+     sin sesión: una aplicación que quedó vieja tiene que poder enterarse
+     aunque no pueda iniciar sesión. */
+  const versiones = rutaVersiones(ruta, metodo, request, env, cors);
+
+  if (versiones) {
+    return versiones;
+  }
 
   if (ruta === '/comercios' && metodo === 'GET') {
     const rubro = url.searchParams.get('rubro');

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 
 import { disponible } from '../entorno';
+import { AvisoActualizacion } from './AvisoActualizacion';
 import {
   BarraSuperior,
   BotonMenu,
@@ -186,7 +187,10 @@ export function GestionFrame({ titulo, children, acciones, sinLeer = 0 }: Gestio
           {acciones}
         </BarraSuperior>
 
-        <Contenido>{children}</Contenido>
+        <Contenido>
+          <AvisoActualizacion />
+          {children}
+        </Contenido>
       </Cuerpo>
 
       {cajonAbierto ? (

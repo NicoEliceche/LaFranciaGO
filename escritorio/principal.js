@@ -15,7 +15,14 @@ const path = require('node:path');
 const { abrirBaseLocal, encolarVenta, pendientes, sincronizar } = require('./cola');
 const { imprimirTicket, listarImpresoras } = require('./impresora');
 const { cargarAjustes, guardarAjustes, leerAjustes } = require('./ajustes');
-const { origenDeLaApp } = require('./actualizacion');
+const {
+  cancelarProgramada,
+  consultarVersion,
+  estadoActualizacion,
+  instalarAhora,
+  origenDeLaApp,
+  programar,
+} = require('./actualizacion');
 
 /* En desarrollo se carga del servidor de Vite, para ver los cambios al
    instante; instalado, de los archivos que quedaron en el paquete. */
@@ -78,6 +85,10 @@ app.whenReady().then(async () => {
   await abrirBaseLocal();
   await crearVentana();
 
+  /* Se consulta despues de abrir: enterarse de que hay una version nueva no
+     puede demorar el arranque del mostrador. */
+  void consultarVersion();
+
   /* Una sola instancia: dos ventanas abiertas contra la misma caja llevan a
      dos personas cobrando sin verse. */
   app.on('activate', () => {
@@ -136,6 +147,18 @@ ipcMain.handle('lafranciago:probarImpresora', async (_evento, impresora) =>
 );
 
 ipcMain.handle('lafranciago:impresoras', async () => listarImpresoras());
+
+/* ── Actualizaciones ── */
+
+ipcMain.handle('lafranciago:actualizacion', async () => estadoActualizacion());
+
+ipcMain.handle('lafranciago:buscarActualizacion', async () => consultarVersion());
+
+ipcMain.handle('lafranciago:instalarAhora', async () => instalarAhora());
+
+ipcMain.handle('lafranciago:programarActualizacion', async (_evento, cuando) =>
+  cuando ? programar(cuando) : cancelarProgramada(),
+);
 
 /* ── La cola de ventas ── */
 

@@ -36,6 +36,21 @@ contextBridge.exposeInMainWorld('lafranciagoEscritorio', {
   /** Guarda los cambios y devuelve cómo quedó todo. */
   guardarAjustes: (cambios) => ipcRenderer.invoke('lafranciago:guardarAjustes', cambios),
 
+  /* ── Actualizaciones ── */
+
+  /** Si hay una versión nueva, y si es obligatoria. */
+  actualizacion: () => ipcRenderer.invoke('lafranciago:actualizacion'),
+
+  /** Le pregunta al servidor ahora mismo. */
+  buscarActualizacion: () => ipcRenderer.invoke('lafranciago:buscarActualizacion'),
+
+  /** Instala y reinicia. Avisar antes: se cierra la ventana. */
+  instalarAhora: () => ipcRenderer.invoke('lafranciago:instalarAhora'),
+
+  /** Deja programado a qué hora instalar. Sin fecha, cancela. */
+  programarActualizacion: (cuando) =>
+    ipcRenderer.invoke('lafranciago:programarActualizacion', cuando),
+
   /* ── Ventas sin internet ── */
 
   /** Guarda la venta en disco y la sube cuando se pueda. */

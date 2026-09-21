@@ -45,8 +45,38 @@ declare global {
       pendientes?: () => Promise<{ cantidad: number; masVieja: string | null; conError: number }>;
       /** Fuerza un intento de subida. */
       sincronizar?: () => Promise<{ subidas: number; pendientes: number }>;
+      /** Si hay una versión nueva, y si es obligatoria. */
+      actualizacion?: () => Promise<EstadoActualizacion>;
+      /** Le pregunta al servidor ahora mismo. */
+      buscarActualizacion?: () => Promise<EstadoActualizacion>;
+      /** Instala y reinicia. */
+      instalarAhora?: () => Promise<{ ok: boolean; error?: string }>;
+      /** Deja programado cuándo instalar. Sin fecha, cancela. */
+      programarActualizacion?: (
+        cuando: string | null,
+      ) => Promise<{ ok: boolean; programadaPara?: string | null }>;
     };
   }
+}
+
+/**
+ * Qué hacer con la versión instalada.
+ *
+ * Son tres situaciones distintas y conviene no mezclarlas: no pasa nada, hay
+ * algo nuevo que puede esperar, o la versión ya no sirve para hablar con el
+ * sistema.
+ */
+export interface EstadoActualizacion {
+  estado: 'al-dia' | 'hay-nueva' | 'obligatoria';
+  ultima?: string;
+  instalada?: string;
+  novedades?: string;
+  descarga?: string;
+  motivoObligatorio?: string;
+  /** Si el instalador ya está bajado y listo. */
+  descargada?: boolean;
+  /** Cuándo quedó programada, si el comercio eligió un horario. */
+  programadaPara?: string | null;
 }
 
 /** Lo que esta instalación recuerda entre sesiones. */
