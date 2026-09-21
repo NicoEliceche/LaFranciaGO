@@ -26,10 +26,49 @@ npm install
 npm run dev
 ```
 
-La ventana carga `http://localhost:8081`. Si tu servidor está en otro puerto:
+**No hace falta decirle el puerto.** La ventana busca sola en los que suele
+usar Vite (8081, 8087, 8086, 8085, 5173, 3000) y carga el primero que
+conteste. Si no encuentra ninguno, muestra una pantalla explicando que falta
+arrancar el servidor, en vez de quedar en blanco.
+
+Para forzar uno en particular, en PowerShell:
+
+```powershell
+$env:LAFRANCIAGO_DEV_URL = "http://localhost:8090"
+npm run dev
+```
+
+(En PowerShell es `$env:`, no `set`. `set` es de `cmd.exe` y ahí no hace
+nada.)
+
+### Comprobar el arranque sin mirar la ventana
 
 ```bash
-set LAFRANCIAGO_DEV_URL=http://localhost:8090 && npm run dev
+node verificar-arranque.mjs
+```
+
+Abre la ventana, espera a que cargue y dice qué encontró:
+
+```
+ok · titulo="LaFranciaGO | Marketplace local" · http://localhost:8087/
+FALLO · titulo="LaFranciaGO" · data:text/html...
+```
+
+## Si aparece "Electron failed to install correctly"
+
+Electron necesita bajar el binario de Chromium —unos 270 MB que no vienen en
+el paquete— y algunos npm tienen bloqueados los scripts de instalación. Se ve
+así al instalar:
+
+```
+npm warn install-scripts electron@34.5.8 (postinstall: node install.js)
+```
+
+Queda una carpeta sin ejecutable, y `npm run dev` falla sin explicar por qué.
+Se arregla con:
+
+```bash
+npm run reparar
 ```
 
 ## Ver cómo sale un ticket, sin impresora

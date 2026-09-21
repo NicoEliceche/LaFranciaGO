@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "electron .",
     "empaquetar": "electron-builder --win --x64",
-    "probar-ticket": "node probar-ticket.js"
+    "probar-ticket": "node probar-ticket.js",
+    "postinstall": "node node_modules/electron/install.js",
+    "reparar": "node node_modules/electron/install.js"
   },
   "devDependencies": {
     "electron": "^34.0.0",
