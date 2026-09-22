@@ -56,7 +56,7 @@ export const ChatFila = styled.div`
 export const ChatBurbuja = styled.span`
   position: relative;
   max-width: min(78%, 32rem);
-  padding: 0.45rem ${({ theme }) => theme.spacing[3]} 0.45rem;
+  padding: 0.4rem ${({ theme }) => theme.spacing[3]} 0.4rem;
   border-radius: 1.1rem;
   background: ${({ theme }) => theme.color.surface};
   color: ${({ theme }) => theme.color.text};
@@ -81,21 +81,33 @@ export const ChatBurbuja = styled.span`
     border-bottom-right-radius: 0.3rem;
   }
 
-  /* Sitio para la hora, al final del texto. */
-  > .texto::after {
-    content: '';
-    display: inline-block;
-    width: 3.2rem;
-  }
 `;
 
+/**
+ * La hora, al final del mensaje.
+ *
+ * Va en el flujo del texto y no posicionada contra el borde, que es como lo
+ * hace WhatsApp: si el mensaje es corto la hora queda a su derecha, en la
+ * misma línea, y la burbuja crece apenas lo necesario. Posicionada contra el
+ * borde derecho, en un "Hola" quedaba colgando abajo y lejos, con la burbuja
+ * ancha de gusto.
+ *
+ * Cuando el texto llena la última línea, la hora baja sola a la siguiente:
+ * es texto en línea, no hace falta reservarle lugar.
+ */
 export const ChatHora = styled.span`
-  position: absolute;
-  right: ${({ theme }) => theme.spacing[3]};
-  bottom: 0.4rem;
-  font-size: 0.65rem;
+  /* El espacio que la separa de la última palabra. Va en la hora y no en el
+     texto para que no quede un hueco cuando la hora baja de línea. */
+  margin-left: 0.5rem;
+  /* Baja entera, sin partirse entre dos líneas. */
+  display: inline-block;
+  /* Apoyada sobre la línea de base del texto, no sobre su caja. */
+  vertical-align: baseline;
+  font-size: 0.68rem;
   font-variant-numeric: tabular-nums;
-  opacity: 0.65;
+  opacity: 0.7;
+  /* Sin esto, la hora se lleva el hueco al renglón de abajo. */
+  white-space: nowrap;
 `;
 
 /**
