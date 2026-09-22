@@ -63,6 +63,7 @@ import {
   proximaApertura,
 } from './comercio';
 import { rutasGestion } from './gestion';
+import { limiteAlcanzado, limpiarVentanasViejas } from './limite';
 import { rutaVersiones } from './versiones';
 
 /**
@@ -96,8 +97,18 @@ const TIPOS_MEDIA = ['image/webp', 'image/jpeg', 'image/png', 'video/mp4', 'vide
  */
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, contexto: ExecutionContext): Promise<Response> {
     const cors = corsHeaders(request, env);
+
+    /* Cada tanto se barren las ventanas viejas del limitador, en segundo
+       plano: waitUntil deja que la respuesta salga y la limpieza siga
+       después, así no le agrega tiempo a nadie.
+
+       Una de cada doscientas peticiones alcanza: la tabla crece de a una fila
+       por IP y por minuto. */
+    if (Math.random() < 0.005) {
+      contexto.waitUntil(limpiarVentanasViejas(env));
+    }
 
     /* Preflight: el navegador pregunta antes de mandar POST con credenciales. */
     if (request.method === 'OPTIONS') {
@@ -106,6 +117,14 @@ export default {
 
     const url = new URL(request.url);
     const ruta = url.pathname.replace(/\/+$/, '') || '/';
+
+    /* Antes de mirar la ruta: si esta IP se pasó del volumen, se corta acá y
+       no se toca la base para nada más. Va después del preflight porque el
+       navegador manda uno por cada petición con credenciales, y contarlos
+       gastaría la mitad del cupo en preguntas. */
+    const pasado = await limiteAlcanzado(request, env, ruta, cors);
+
+    if (pasado) return pasado;
 
     try {
       return await enrutar(request, env, ruta, url, cors);
