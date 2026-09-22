@@ -18,33 +18,29 @@ están y se reajustan el rol y el plan.
 
 ## Las cuentas
 
-La contraseña de todas es **`demo`**
+La contraseña de todas es **`Demo2026!`**
 
 | Email | Qué muestra |
 |---|---|
-| `cliente@demo.ar` | El vecino que compra |
-| `comercio@demo.ar` | Comercio **sin** el sistema de gestión |
-| `gestion@demo.ar` | Comercio **con** el sistema de gestión |
-| `delivery@demo.ar` | El que reparte |
-| `flete@demo.ar` | El que hace fletes |
+| `cliente@lafrancia.ar` | El vecino que compra |
+| `comercio@lafrancia.ar` | Comercio **sin** el sistema de gestión |
+| `gestion@lafrancia.ar` | Comercio **con** el sistema de gestión |
+| `delivery@lafrancia.ar` | El que reparte |
+| `flete@lafrancia.ar` | El que hace fletes |
 
 Los comercios entran como cliente y hay que cambiar abajo a la izquierda, en
 **Cambiar de cuenta → Comercio**. Es a propósito: el dueño del almacén
 también compra en la panadería.
 
-El dominio es `demo.ar` y no sólo `demo` porque el registro exige un punto,
-como cualquier email de verdad.
+La contraseña cumple lo que pide el registro —ocho caracteres, y no está
+entre las más usadas— y eso no es casual: **el formulario de ingreso también
+lo comprueba en el navegador**, con `minLength={8}` en el campo. Una clave
+más corta ni siquiera llega al servidor; el campo se pone en rojo y no deja
+seguir, aunque la cuenta exista.
 
-La contraseña, en cambio, no pasa por el registro: ahí el mínimo son ocho
-caracteres, así que el script la escribe directamente en la base con el mismo
-hash que usaría el registro (PBKDF2-SHA512, 100.000 iteraciones, un salt por
-cuenta). La comprobación queda intacta a propósito: bajar el mínimo para la
-demo lo bajaría para las cuentas reales, y ese mínimo es lo que compensa que
-el runtime de Workers no deje pasar de 100.000 iteraciones.
-
-Probado: las cinco entran con `demo`, y un registro real con una clave de
-cuatro caracteres sigue dando `400 La contraseña necesita al menos 8
-caracteres`.
+Por eso las cuentas se crean por el registro normal y no escribiendo el hash
+a mano: si la clave tiene que pasar por el formulario igual, no hay nada que
+esquivar.
 
 ## Por qué hay dos comercios
 
