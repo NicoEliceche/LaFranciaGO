@@ -26,6 +26,7 @@ import {
   CampoIcono,
   CampoMarco,
   Divisor,
+  Encabezado,
   Entrar,
   Fondo,
   Formulario,
@@ -33,7 +34,6 @@ import {
   Haz,
   Marca,
   MarcaIcono,
-  MarcaTexto,
   Nota,
   Panel,
   Pantalla,
@@ -152,20 +152,21 @@ export function IngresarScreen() {
       <Haz aria-hidden="true" />
 
       <Panel aria-labelledby="titulo-ingreso">
-        <header>
+        <Encabezado>
+          {/* La volanta y el nombre son celdas sueltas de la grilla, sin un
+              envoltorio en el medio: el logo tiene que poder centrarse contra
+              el nombre solo, y envueltos serían un bloque único. */}
           <Marca>
             <MarcaIcono>
               <img src={iconoMarca} alt="" aria-hidden="true" />
             </MarcaIcono>
 
-            <MarcaTexto>
-              <Volanta>Acceso seguro</Volanta>
-              <Titulo id="titulo-ingreso">Bienvenido a LaFranciaGO</Titulo>
-            </MarcaTexto>
+            <Volanta>Acceso seguro</Volanta>
+            <Titulo id="titulo-ingreso">Bienvenido a LaFranciaGO</Titulo>
           </Marca>
 
           <Nota>Ingresá tus credenciales para continuar.</Nota>
-        </header>
+        </Encabezado>
 
         <Formulario onSubmit={enviar} noValidate>
           {error ? <Aviso role="alert">{error}</Aviso> : null}

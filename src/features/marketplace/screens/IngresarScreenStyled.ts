@@ -158,6 +158,17 @@ export const Haz = styled.div`
   }
 `;
 
+/**
+ * El encabezado del panel: logo, nombre y la línea que explica qué hacer.
+ *
+ * Con gap y no con márgenes sueltos, así la separación no depende de qué
+ * elemento quedó arriba ni se duplica al colapsar.
+ */
+export const Encabezado = styled.header`
+  display: grid;
+  gap: 0.625rem;
+`;
+
 export const Panel = styled.section`
   position: relative;
   width: min(100%, 470px);
@@ -184,19 +195,41 @@ export const Panel = styled.section`
   }
 `;
 
+/**
+ * El logo y el nombre, centrados en el panel.
+ *
+ * Es una grilla de dos filas y no un flex de dos columnas porque el logo se
+ * centra contra el nombre solo, sin contar la volanta. Con un flex, que
+ * alinea contra el bloque entero, el logo se ve caído: la volanta es una
+ * línea chica que corre el centro hacia abajo, y el ojo compara el logo con
+ * el texto grande.
+ */
 export const Marca = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  margin-bottom: 1.5rem;
+  display: grid;
+  grid-template-columns: auto auto;
+  /* La primera fila mide lo que mide la volanta y la segunda lo que mide el
+     nombre: así el logo, que ocupa las dos y se centra en esa caja, cae
+     sobre el centro del nombre y no sobre el del bloque entero. */
+  grid-template-rows: min-content auto;
+  justify-content: center;
+  column-gap: 0.875rem;
+  margin-bottom: 1rem;
+  text-align: center;
 
   @media (max-width: 520px) {
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.875rem;
   }
 `;
 
 export const MarcaIcono = styled.div`
-  flex: 0 0 auto;
+  /* Anclado a la fila del nombre y centrado en ella: así los dos centros
+     coinciden sin importar cuántas líneas ocupe el nombre. Ocupar las dos
+     filas lo dejaría a media altura del bloque, que con la volanta arriba se
+     ve caído. El desborde hacia la fila de la volanta no molesta: esa
+     columna está vacía. */
+  grid-column: 1;
+  grid-row: 2;
+  align-self: center;
   width: 66px;
   height: 66px;
   border-radius: 18px;
@@ -224,12 +257,14 @@ export const MarcaIcono = styled.div`
   }
 `;
 
-export const MarcaTexto = styled.div`
-  min-width: 0;
-`;
-
 export const Volanta = styled.p`
-  margin: 0 0 0.3rem;
+  /* Pegada al nombre: es su antetítulo, no una línea suelta. El espacio que
+     la separa del logo lo pone el gap de la grilla. */
+  grid-column: 2;
+  grid-row: 1;
+  align-self: end;
+  margin: 0 0 0.2rem;
+  text-align: center;
   color: ${({ theme }) => theme.color.primary};
   font-size: 0.76rem;
   font-weight: 800;
@@ -238,7 +273,10 @@ export const Volanta = styled.p`
 `;
 
 export const Titulo = styled.h1`
+  grid-column: 2;
+  grid-row: 2;
   margin: 0;
+  text-align: center;
   font-size: clamp(1.45rem, 4vw, 1.9rem);
   line-height: 1.08;
   letter-spacing: -0.035em;
@@ -247,7 +285,8 @@ export const Titulo = styled.h1`
 `;
 
 export const Nota = styled.p`
-  margin: 0.625rem 0 0;
+  margin: 0;
+  text-align: center;
   color: ${({ theme }) => theme.color.textMuted};
   font-size: 0.94rem;
   line-height: 1.55;
