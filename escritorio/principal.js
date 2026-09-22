@@ -10,9 +10,11 @@
  * mañana se rediseña la caja rápida entera, acá no cambia nada.
  */
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { existsSync } = require('node:fs');
 const path = require('node:path');
 
 const { abrirBaseLocal, encolarVenta, pendientes, sincronizar } = require('./cola');
+const { servirCompilada } = require('./servir');
 const { imprimirTicket, listarImpresoras } = require('./impresora');
 const { cargarAjustes, guardarAjustes, leerAjustes } = require('./ajustes');
 const {
@@ -109,12 +111,31 @@ async function crearVentana() {
 
   if (EN_DESARROLLO) {
     const local = await buscarServidorLocal();
+    const compilada = path.join(__dirname, '..', 'dist', 'index.html');
 
     if (local) {
       await ventana.loadURL(local);
+    } else if (existsSync(compilada)) {
+      /* Sin servidor, pero hay una compilación: se sirve esa. Así la ventana
+         se puede mirar sin tener que levantar Vite, que es como anda en el
+         negocio.
+
+         Lo que se ve es de cuando se corrió `npm run build`, no lo que se
+         está editando ahora. Por eso se avisa arriba: si no, uno cambia un
+         archivo, no ve el cambio, y busca el error donde no está. */
+      const { url } = await servirCompilada(path.dirname(compilada));
+
+      await ventana.loadURL(url);
+
+      /* Se avisa en el título y no encima de la página: un cartel flotante
+         tapa parte de la aplicación justo cuando se la quiere mirar, y hay
+         que acordarse de sacarlo antes de una captura. */
+      ventana.setTitle('LaFranciaGO — compilación del disco (npm run dev para ver cambios)');
+      ventana.webContents.on('page-title-updated', (evento) => evento.preventDefault());
     } else {
-      /* Sin servidor no hay nada que mostrar, y una ventana en blanco no
-         explica nada. Se dice qué falta y cómo arreglarlo. */
+      /* Sin servidor y sin compilación no hay nada que mostrar, y una
+         ventana en blanco no explica nada. Se dice qué falta y cómo
+         arreglarlo. */
       await ventana.loadURL(
         'data:text/html;charset=utf-8,' +
           encodeURIComponent(`<!doctype html>
@@ -131,12 +152,15 @@ async function crearVentana() {
          background:#0F1730; color:#5B8CFF; font-size:.9rem; }
 </style>
 <div>
-  <h1>Falta arrancar el servidor de desarrollo</h1>
-  <p>Esta ventana carga la aplicación desde tu máquina. En otra terminal, en la
-     carpeta del proyecto:</p>
+  <h1>No hay nada para mostrar todavía</h1>
+  <p>Esta ventana no tiene pantallas propias: carga la misma aplicación que
+     anda en el navegador. Hay dos formas de dársela.</p>
+  <p><b>Para trabajar</b>, con los cambios en vivo:</p>
   <code>npm run dev</code>
-  <p>Después cerrá y volvé a abrir esta ventana. Se busca sola en los puertos
-     ${PUERTOS.join(', ')}.</p>
+  <p><b>O una copia compilada</b>, que abre sin servidor, como en el negocio:</p>
+  <code>npm run build</code>
+  <p>Cualquiera de las dos, y volvés a abrir esta ventana. El servidor se
+     busca solo en los puertos ${PUERTOS.join(', ')}.</p>
 </div>`),
       );
     }
@@ -150,7 +174,12 @@ async function crearVentana() {
     if (publicada) {
       await ventana.loadURL(publicada);
     } else {
-      await ventana.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
+      /* Se sirve por HTTP y no se abre como archivo: Vite compila con rutas
+         absolutas para GitHub Pages, y con `file://` la raíz es la del disco,
+         así que no encontraría ni el JS ni el CSS. */
+      const { url } = await servirCompilada(path.join(__dirname, '..', 'dist'));
+
+      await ventana.loadURL(url);
     }
   }
 

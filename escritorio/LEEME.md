@@ -23,8 +23,32 @@ ninguno, así que cierra los procesos de Electron. Tienen que ser todos,
 porque Chromium abre varios por ventana y con uno vivo queda la ventana
 puesta.
 
-El puerto sí lo busca, igual que la ventana: si no hay servidor no abre nada
-y dice que falta `npm run dev`.
+### No hace falta la web corriendo
+
+Si hay servidor de desarrollo, la ventana lo usa y se ven los cambios al
+instante. Si no hay, usa la compilación del disco; y si tampoco está, la
+genera con `npm run build`.
+
+Así se puede abrir la ventana sola, que es como anda en el negocio: ahí
+nadie levanta Vite.
+
+Cuando abre de la compilación, el título lo dice, porque lo que se ve es de
+la última vez que se compiló y no lo que se está editando:
+
+```
+LaFranciaGO — compilación del disco (npm run dev para ver cambios)
+```
+
+### Por qué hay un servidor adentro de la aplicación
+
+`dist/` no se puede abrir como archivo. Vite compila con las rutas de GitHub
+Pages —`/LaFranciaGO/assets/...`— que son absolutas, y con `file://` la raíz
+es la del disco: el navegador busca en `C:\LaFranciaGOssets\`, no
+encuentra nada, y la ventana queda negra sin decir por qué.
+
+Por eso `servir.js` lo sirve por HTTP en 127.0.0.1, con un puerto que elige
+el sistema. El mismo `dist/` sirve para la web y para la aplicación, sin
+compilar dos veces ni tocar la configuración de Vite.
 
 ### A mano
 

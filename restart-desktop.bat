@@ -11,9 +11,10 @@ rem programa. Lo que se cierra son los procesos de Electron, y hay que
 rem cerrarlos TODOS: Chromium abre varios por ventana (el principal, el que
 rem dibuja, la GPU, la red) y si queda uno vivo queda su ventana puesta.
 rem
-rem El servidor de desarrollo si tiene que estar levantado, porque la
-rem ventana carga la aplicacion desde ahi. Si no lo encuentra avisa en
-rem pantalla, pero mejor avisarlo antes de abrirla.
+rem La ventana no tiene pantallas propias: carga la misma aplicacion que anda
+rem en el navegador. Si hay servidor de desarrollo usa ese, y se ven los
+rem cambios en vivo. Si no hay, usa la compilacion del disco, que es como
+rem anda en el negocio; y si tampoco hay, la genera.
 
 set "ROOT=%~dp0"
 set "APP=%ROOT%escritorio"
@@ -51,24 +52,34 @@ for %%P in (8081 8087 8086 8085 5173 3000) do (
   )
 )
 
-if not defined DEV (
-  echo.
-  echo       No hay servidor de desarrollo escuchando.
-  echo.
-  echo       La ventana carga la aplicacion desde tu maquina, asi que sin
-  echo       servidor no hay nada que mostrar. En otra terminal:
-  echo.
-  echo         npm run dev
-  echo.
-  echo       O corre restart.bat, que lo levanta.
-  echo.
-  popd
-  endlocal
-  pause
-  exit /b 1
-)
+if defined DEV goto :hay_servidor
 
-echo       Encontrado en el puerto %DEV%.
+rem Sin servidor se abre la compilacion del disco, que es como anda en el
+rem negocio: ahi nadie levanta Vite. Lo que se ve es de la ultima vez que se
+rem corrio npm run build, y la ventana lo avisa arriba.
+echo       No hay ninguno. Se usa la compilacion del disco.
+
+if exist "%ROOT%dist\index.html" goto :hay_compilacion
+
+echo       No hay compilacion. Generandola, esto tarda un rato...
+pushd "%ROOT%"
+call npm run build
+popd
+
+if exist "%ROOT%dist\index.html" goto :hay_compilacion
+
+echo.
+echo       La compilacion fallo. Mira el error de arriba.
+echo.
+popd
+endlocal
+pause
+exit /b 1
+
+:hay_servidor
+if defined DEV echo       Encontrado en el puerto %DEV%.
+
+:hay_compilacion
 
 echo [3/4] Revisando que Electron este instalado...
 if not exist "%APP%\node_modules\electron\dist\electron.exe" (
