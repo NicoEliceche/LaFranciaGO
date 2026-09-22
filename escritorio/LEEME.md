@@ -10,45 +10,32 @@ Si mañana se rediseña la caja rápida entera, estos archivos no cambian.
 
 ## Probarlo
 
-Lo más corto, con el servidor de la web ya levantado:
+Un solo comando, sin nada mas abierto:
 
 ```bash
 restart-desktop.bat
 ```
 
-Cierra la ventana si estaba abierta y la abre de nuevo. Es el equivalente de
-`restart.bat` para la web, pero con una diferencia: `restart.bat` cierra al
-programa que ocupa el puerto, y la aplicación de escritorio no ocupa
-ninguno, así que cierra los procesos de Electron. Tienen que ser todos,
-porque Chromium abre varios por ventana y con uno vivo queda la ventana
-puesta.
+Hace esto, en orden:
 
-### No hace falta la web corriendo
+1. Cierra la ventana si estaba abierta.
+2. Mira si la web esta corriendo.
+3. Si no esta, llama a `restart.bat` y **espera a que el puerto conteste**.
+4. Abre la ventana.
 
-Si hay servidor de desarrollo, la ventana lo usa y se ven los cambios al
-instante. Si no hay, usa la compilación del disco; y si tampoco está, la
-genera con `npm run build`.
+Si la web ya estaba corriendo no la toca, y salta el paso 3: reiniciarla
+obligaria a recompilar y a esperar de gusto. Solo se reinicia la ventana.
 
-Así se puede abrir la ventana sola, que es como anda en el negocio: ahí
-nadie levanta Vite.
+La espera del paso 3 hace falta porque `restart.bat` usa `start`, asi que
+vuelve enseguida, cuando Vite todavia esta compilando. Si la ventana abriera
+ahi, no encontraria servidor. Espera hasta 60 segundos y si no contesta lo
+dice, en vez de abrir una ventana vacia.
 
-Cuando abre de la compilación, el título lo dice, porque lo que se ve es de
-la última vez que se compiló y no lo que se está editando:
-
-```
-LaFranciaGO — compilación del disco (npm run dev para ver cambios)
-```
-
-### Por qué hay un servidor adentro de la aplicación
-
-`dist/` no se puede abrir como archivo. Vite compila con las rutas de GitHub
-Pages —`/LaFranciaGO/assets/...`— que son absolutas, y con `file://` la raíz
-es la del disco: el navegador busca en `C:\LaFranciaGOssets\`, no
-encuentra nada, y la ventana queda negra sin decir por qué.
-
-Por eso `servir.js` lo sirve por HTTP en 127.0.0.1, con un puerto que elige
-el sistema. El mismo `dist/` sirve para la web y para la aplicación, sin
-compilar dos veces ni tocar la configuración de Vite.
+Es el equivalente de `restart.bat` para la aplicacion de escritorio, con una
+diferencia: `restart.bat` cierra al programa que ocupa el puerto, y la
+aplicacion de escritorio no ocupa ninguno. Asi que cierra los procesos de
+Electron, y tienen que ser todos, porque Chromium abre varios por ventana y
+con uno vivo queda la ventana puesta.
 
 ### A mano
 
