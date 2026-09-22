@@ -2,6 +2,7 @@ import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react
 import {
   BadgePercent,
   BarChart3,
+  ChevronRight,
   Clock,
   Store as StoreIcono,
   MessageSquare,
@@ -33,6 +34,8 @@ import {
 import { formatMoney } from '@shared/utils/format';
 import { priceSuffix, stepLabel } from '@core/data/saleUnits';
 import type { SaleUnitId } from '@shared/types/saleUnit.types';
+
+import { Link } from 'react-router-dom';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { ChatPedidoDialog } from '../components/ChatPedidoDialog';
@@ -83,6 +86,7 @@ import {
   TramoFila,
   SeccionBadge,
   SeccionChip,
+  EntradaGestion,
   SeccionRow,
 } from './MiComercioScreenStyled';
 
@@ -577,6 +581,22 @@ export function MiComercioScreen() {
                 text="Cuando aprobemos tu alta vas a poder cargar productos."
                 dashed
               />
+            ) : null}
+
+            {/* El sistema de gestión se paga aparte, así que sólo aparece si
+                está contratado. El comercio que no lo tiene sigue usando todo
+                lo demás: sus datos, sus productos, sus precios y sus ofertas.
+
+                El backend igual responde 403 a /gestion sin el plan; esto es
+                para no ofrecer una puerta que después no abre. */}
+            {comercio?.gestionActiva ? (
+              <EntradaGestion to="/gestion">
+                <span>
+                  <strong>Sistema de gestión</strong>
+                  Caja, ventas del mostrador, compras e informes.
+                </span>
+                <ChevronRight size={18} aria-hidden="true" />
+              </EntradaGestion>
             ) : null}
 
             {comercio ? (

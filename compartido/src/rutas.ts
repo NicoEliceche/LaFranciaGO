@@ -44,7 +44,10 @@ export interface ComercioApi {
   zona: string | null;
   descripcion: string | null;
   logo_url: string | null;
+  /* Dos planes distintos: `premium` mejora la posición en el listado,
+     `gestionActiva` abre el sistema de gestión. Se cobran por separado. */
   premium: boolean;
+  gestionActiva: boolean;
   minimo: number;
 }
 

@@ -1,4 +1,6 @@
 import styled from 'styled-components';
+import { Link } from 'react-router-dom';
+
 
 // ── Panel del comercio ──
 
@@ -153,6 +155,48 @@ export const ProductoBotonIcono = styled.button`
 `;
 
 // ── Secciones del panel ──
+
+/**
+ * El acceso al sistema de gestión.
+ *
+ * Va con el color de acento y no como una pestaña más porque no es una
+ * sección de esta pantalla: lleva a otro lado. Tratarlo igual que las demás
+ * haría que se busque el panel entre las pestañas y no se encuentre.
+ */
+export const EntradaGestion = styled(Link)`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing[3]};
+  padding: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[4]};
+  border: 1px solid ${({ theme }) => theme.color.primary};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: ${({ theme }) => theme.color.surface};
+  color: ${({ theme }) => theme.color.text};
+  text-decoration: none;
+  transition: background 0.15s ease;
+
+  span {
+    display: grid;
+    gap: 0.15rem;
+    font-size: 0.85rem;
+    color: ${({ theme }) => theme.color.textMuted};
+  }
+
+  strong {
+    font-size: 0.98rem;
+    color: ${({ theme }) => theme.color.text};
+  }
+
+  svg {
+    flex-shrink: 0;
+    color: ${({ theme }) => theme.color.primary};
+  }
+
+  &:hover {
+    background: ${({ theme }) => theme.color.surfaceMuted};
+  }
+`;
 
 export const SeccionRow = styled.div`
   display: flex;

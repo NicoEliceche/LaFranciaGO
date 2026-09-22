@@ -4,6 +4,7 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from '@core/theme';
 import { MarketplaceHomeScreen } from '@features/marketplace/screens/MarketplaceHomeScreen';
 import { RutaPrivada } from '@features/marketplace/components/RutaPrivada';
+import { RutaGestion } from '@features/gestion/components/RutaGestion';
 
 /**
  * Sólo Inicio viaja en el bundle principal: es la primera pantalla y debe
@@ -259,81 +260,81 @@ function App() {
             <Route
               path="/gestion"
               element={
-                <RutaPrivada>
+                <RutaGestion>
                   <GestionResumenScreen />
-                </RutaPrivada>
+                </RutaGestion>
               }
             />
             <Route
               path="/gestion/caja"
               element={
-                <RutaPrivada>
+                <RutaGestion>
                   <CajaScreen />
-                </RutaPrivada>
+                </RutaGestion>
               }
             />
             <Route
               path="/gestion/caja-rapida"
               element={
-                <RutaPrivada>
+                <RutaGestion>
                   <CajaRapidaScreen />
-                </RutaPrivada>
+                </RutaGestion>
               }
             />
             <Route
               path="/gestion/ventas"
               element={
-                <RutaPrivada>
+                <RutaGestion>
                   <VentasScreen />
-                </RutaPrivada>
+                </RutaGestion>
               }
             />
             <Route
               path="/gestion/fiado"
               element={
-                <RutaPrivada>
+                <RutaGestion>
                   <FiadoScreen />
-                </RutaPrivada>
+                </RutaGestion>
               }
             />
             <Route
               path="/gestion/compras"
               element={
-                <RutaPrivada>
+                <RutaGestion>
                   <ComprasScreen />
-                </RutaPrivada>
+                </RutaGestion>
               }
             />
             <Route
               path="/gestion/informes"
               element={
-                <RutaPrivada>
+                <RutaGestion>
                   <InformesScreen />
-                </RutaPrivada>
+                </RutaGestion>
               }
             />
             <Route
               path="/gestion/clientes"
               element={
-                <RutaPrivada>
+                <RutaGestion>
                   <ClientesScreen />
-                </RutaPrivada>
+                </RutaGestion>
               }
             />
             <Route
               path="/gestion/presupuestos"
               element={
-                <RutaPrivada>
+                <RutaGestion>
                   <PresupuestosScreen />
-                </RutaPrivada>
+                </RutaGestion>
               }
             />
             <Route
               path="/gestion/mostrador"
               element={
-                <RutaPrivada>
+                <RutaGestion>
                   <MostradorScreen />
-                </RutaPrivada>
+                </RutaGestion>
               }
             />
             <Route

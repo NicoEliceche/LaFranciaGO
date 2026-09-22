@@ -4196,6 +4196,24 @@ async function enrutar(
       return propio.respuesta;
     }
 
+    /* El sistema de gestión se paga aparte. Sin esto, cualquier comercio
+       aprobado lo tendría entero: la guardia de arriba sólo mira que el
+       comercio sea suyo, no que lo haya contratado.
+
+       Se comprueba acá y no en cada ruta porque son más de veinte, y la que
+       se olvide queda abierta. El frontend además esconde el menú, pero eso
+       es comodidad: quien escriba la dirección a mano llega igual, y la
+       decisión de quién entra no puede vivir en el navegador. */
+    const plan = await env.DB.prepare(
+      'SELECT gestion_activa FROM comercios WHERE id = ?',
+    )
+      .bind(propio.comercioId)
+      .first<{ gestion_activa: number }>();
+
+    if (!plan?.gestion_activa) {
+      return error('Tu comercio no tiene el sistema de gestión activo', 403, cors);
+    }
+
     const respuesta = await rutasGestion(ruta, metodo, request, {
       env,
       usuario: propio.usuario,
@@ -5648,7 +5666,10 @@ function factorEscalon(unidad: string, escalon: number) {
 
 const comercioSalida = (fila: Record<string, unknown>) => ({
   ...fila,
+  /* Dos planes distintos, que se cobran por separado: `premium` mejora la
+     posición en el listado, `gestionActiva` abre el sistema de gestión. */
   premium: Boolean(fila.premium),
+  gestionActiva: Boolean(fila.gestion_activa),
   minimo: fila.minimo_centavos ? aPesos(Number(fila.minimo_centavos)) : 0,
 });
 
