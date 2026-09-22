@@ -77,15 +77,15 @@ export const GamerToggleLed = styled.span`
 `;
 
 export const GamerToggleCopy = styled.span`
-  display: grid;
-  gap: 0.05rem;
   min-width: 0;
   text-align: left;
 `;
 
 export const GamerToggleTitle = styled.span`
   display: inline-flex;
-  align-items: center;
+  /* Por la línea de base y no por el centro de cada caja: "NOCHE" es más
+     chica que "Modo", y centradas por caja quedaban a distinta altura. */
+  align-items: baseline;
   gap: 0.35rem;
   font-family: ${({ theme }) => theme.typography.fontFamily.heading};
   font-size: ${({ theme }) => theme.typography.size.sm};
@@ -93,27 +93,21 @@ export const GamerToggleTitle = styled.span`
   color: ${({ theme }) => theme.color.text};
 `;
 
+/**
+ * NOCHE o DÍA, al lado de "Modo".
+ *
+ * Sólo la palabra va coloreada, sin recuadro: la pastilla la separaba de
+ * "Modo" como si fueran dos cosas distintas, cuando se leen de corrido.
+ */
 export const GamerToggleMode = styled.span`
-  padding: 0.05rem 0.35rem;
-  border-radius: ${({ theme }) => theme.radius.sm};
-  background: ${({ theme }) => theme.color.primarySoft};
   color: ${({ theme }) => theme.color.primary};
-  font-size: 0.6875rem;
+  font-size: ${({ theme }) => theme.typography.size.sm};
   font-weight: ${({ theme }) => theme.typography.weight.extrabold};
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
 
   &[data-dark='true'] {
-    background: rgba(77, 229, 255, 0.14);
     color: #4de5ff;
   }
-`;
-
-export const GamerToggleSubtitle = styled.span`
-  color: ${({ theme }) => theme.color.textSoft};
-  font-size: ${({ theme }) => theme.typography.size.xs};
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 `;
 
 export const GamerToggleTrack = styled.span`

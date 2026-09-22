@@ -8,7 +8,6 @@ import {
   GamerToggleRail,
   GamerToggleScanline,
   GamerToggleShell,
-  GamerToggleSubtitle,
   GamerToggleThumb,
   GamerToggleTitle,
   GamerToggleTrack,
@@ -44,7 +43,6 @@ export function GamerThemeToggle({ isDarkMode, onToggle }: GamerThemeToggleProps
             {isDarkMode ? 'NOCHE' : 'DÍA'}
           </GamerToggleMode>
         </GamerToggleTitle>
-        <GamerToggleSubtitle>Cambiá el contraste de toda la app.</GamerToggleSubtitle>
       </GamerToggleCopy>
 
       <GamerToggleTrack data-dark={isDarkMode} aria-hidden="true">
