@@ -18,7 +18,7 @@ están y se reajustan el rol y el plan.
 
 ## Las cuentas
 
-La contraseña de todas es **`demo1234`**
+La contraseña de todas es **`demo`**
 
 | Email | Qué muestra |
 |---|---|
@@ -33,9 +33,18 @@ Los comercios entran como cliente y hay que cambiar abajo a la izquierda, en
 también compra en la panadería.
 
 El dominio es `demo.ar` y no sólo `demo` porque el registro exige un punto,
-como cualquier email de verdad; y la clave tiene ocho caracteres por el
-mínimo del registro. Aflojar cualquiera de las dos comprobaciones para la
-demo las aflojaría también para las cuentas reales.
+como cualquier email de verdad.
+
+La contraseña, en cambio, no pasa por el registro: ahí el mínimo son ocho
+caracteres, así que el script la escribe directamente en la base con el mismo
+hash que usaría el registro (PBKDF2-SHA512, 100.000 iteraciones, un salt por
+cuenta). La comprobación queda intacta a propósito: bajar el mínimo para la
+demo lo bajaría para las cuentas reales, y ese mínimo es lo que compensa que
+el runtime de Workers no deje pasar de 100.000 iteraciones.
+
+Probado: las cinco entran con `demo`, y un registro real con una clave de
+cuatro caracteres sigue dando `400 La contraseña necesita al menos 8
+caracteres`.
 
 ## Por qué hay dos comercios
 

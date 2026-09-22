@@ -29,21 +29,31 @@
  *   node demo/cuentas.mjs --remoto      contra el de producción
  */
 import { spawnSync } from 'node:child_process';
+import { webcrypto as crypto } from 'node:crypto';
 import { rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const REMOTO = process.argv.includes('--remoto');
 const API = process.env.API_DEMO ?? 'http://127.0.0.1:8787';
 
-/* Una sola contraseña para todas: son cuentas de demostración, se muestran en
-   pantalla y se rehacen cuando haga falta. Que sea la misma evita el error de
-   probar una cuenta con la contraseña de otra.
+/* Una sola contraseña para todas, y corta: se tipea muchas veces seguidas al
+   ir de una cuenta a otra mostrando la aplicación. Que sea la misma evita
+   además el error de probar una cuenta con la contraseña de otra. */
+const CLAVE = 'demo';
 
-   Tiene ocho caracteres porque ese es el mínimo del registro, y el dominio
-   lleva punto por la misma razón. Aflojar cualquiera de las dos
-   comprobaciones para la demo las aflojaría también para las cuentas de
-   verdad. */
-const CLAVE = 'demo1234';
+/* El registro pide ocho caracteres, así que "demo" no pasa por ahí: la clave
+   se guarda directamente en la base, con el mismo hash que usaría el
+   registro.
+
+   Es a propósito que la comprobación quede intacta. Bajar el mínimo para la
+   demo lo bajaría para las cuentas reales, y el mínimo es lo que compensa
+   que el runtime de Workers no deje pasar de 100.000 iteraciones. Acá el
+   riesgo no existe: son cuentas de demostración, con datos inventados, cuya
+   contraseña está escrita en el LEEME. */
+
+/* El mismo número que src/lib.ts: es el tope que admite el runtime de
+   Workers. Si cambia allá, tiene que cambiar acá. */
+const ITERACIONES = 100_000;
 
 const CUENTAS = [
   {
@@ -141,14 +151,55 @@ function sql(consulta) {
   }
 }
 
-/** Crea la cuenta, o sigue de largo si ya estaba. */
+/**
+ * El hash de una contraseña, en el formato que guarda el backend.
+ *
+ * Tiene que dar lo mismo que `hashPassword` de src/lib.ts: PBKDF2-SHA512,
+ * 100.000 iteraciones, 512 bits, salt de 16 bytes al azar. Si alguno de esos
+ * números cambia allá, hay que cambiarlo acá o las cuentas de demostración
+ * dejan de entrar.
+ *
+ * Node trae el mismo `crypto.subtle` que el runtime de Workers, así que es
+ * literalmente el mismo cálculo.
+ */
+async function hashDe(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+
+  const clave = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits'],
+  );
+
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: ITERACIONES, hash: 'SHA-512' },
+    clave,
+    512,
+  );
+
+  const base64 = (datos) => Buffer.from(datos).toString('base64');
+
+  return `pbkdf2$${ITERACIONES}$${base64(salt)}$${base64(new Uint8Array(bits))}`;
+}
+
+/**
+ * Crea la cuenta, o sigue de largo si ya estaba.
+ *
+ * Se registra con una contraseña larga y después se reemplaza por la corta
+ * al escribir en la base. Da una vuelta, pero el registro es el que crea el
+ * usuario con su id y sus valores por defecto, y repetir eso a mano sería
+ * copiar una parte del backend que después se desincroniza.
+ */
 async function registrar(cuenta) {
   const respuesta = await fetch(`${API}/auth/registro`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email: cuenta.email,
-      password: CLAVE,
+      /* Sólo para pasar el registro: abajo se cambia por CLAVE. */
+      password: `provisoria-${Date.now()}`,
       nombre: cuenta.nombre,
       telefono: cuenta.telefono,
     }),
@@ -199,8 +250,8 @@ async function principal() {
     creadas.push({ cuenta, estado: await registrar(cuenta) });
   }
 
-  /* Una sola consulta con todo: los roles, los comercios y el plan, para que
-     wrangler se llame una vez y no una por cuenta. */
+  /* Una sola consulta con todo: la contraseña, los roles, los comercios y el
+     plan, para que wrangler se llame una vez y no una por cuenta. */
   const ids = idsDe(CUENTAS.map((cuenta) => cuenta.email));
   const sentencias = [];
 
@@ -208,6 +259,15 @@ async function principal() {
     const id = ids[cuenta.email];
 
     if (!id) throw new Error(`no encuentro el usuario ${cuenta.email}`);
+
+    /* La contraseña corta se escribe acá y no en el registro, que pide ocho
+       caracteres. Cada cuenta lleva su propio salt, igual que las de verdad.
+
+       Va siempre, no sólo al crear: si una corrida anterior la dejó con otra
+       clave, así vuelve a quedar con la de la demo. */
+    sentencias.push(
+      `UPDATE usuarios SET password_hash = '${await hashDe(CLAVE)}' WHERE id = '${id}';`,
+    );
 
     /* El rol va aprobado de entrada: en la aplicación real lo aprueba un
        administrador, y acá no hay a quién esperar. */
