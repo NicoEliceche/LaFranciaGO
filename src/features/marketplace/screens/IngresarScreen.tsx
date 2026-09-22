@@ -153,9 +153,6 @@ export function IngresarScreen() {
 
       <Panel aria-labelledby="titulo-ingreso">
         <Encabezado>
-          {/* La volanta y el nombre son celdas sueltas de la grilla, sin un
-              envoltorio en el medio: el logo tiene que poder centrarse contra
-              el nombre solo, y envueltos serían un bloque único. */}
           <Marca>
             <MarcaIcono>
               <img src={iconoMarca} alt="" aria-hidden="true" />

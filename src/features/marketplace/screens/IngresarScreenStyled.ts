@@ -67,6 +67,10 @@ export const Pantalla = styled.main`
   @media (max-width: 520px) {
     padding: 1.125rem 0.875rem;
   }
+
+  @media (max-height: 860px) {
+    padding: 1rem;
+  }
 `;
 
 /** Los dos resplandores que se mueven despacio detrás de todo. */
@@ -193,91 +197,103 @@ export const Panel = styled.section`
     padding: 1.375rem 1.125rem;
     border-radius: 24px;
   }
+
+  /* En pantallas bajas —muchas notebooks, y el teléfono apaisado— el panel
+     se aprieta para entrar entero. Tener que bajar para ver el botón de
+     entrar es peor que un poco menos de aire. */
+  @media (max-height: 860px) {
+    padding: 1.25rem 1.5rem;
+  }
 `;
 
 /**
- * El logo y el nombre, centrados en el panel.
+ * El logo y el nombre, uno debajo del otro y centrados.
  *
- * Es una grilla de dos filas y no un flex de dos columnas porque el logo se
- * centra contra el nombre solo, sin contar la volanta. Con un flex, que
- * alinea contra el bloque entero, el logo se ve caído: la volanta es una
- * línea chica que corre el centro hacia abajo, y el ojo compara el logo con
- * el texto grande.
+ * El logo va arriba y no al costado. Al costado hay que elegir entre dos
+ * males: si entra en el flujo, corre el texto a la derecha tanto como mida
+ * el logo, y el nombre queda centrado respecto del hueco que sobra en vez de
+ * la pantalla; y si sale del flujo, el texto se centra bien pero el logo le
+ * pisa las primeras letras.
+ *
+ * Arriba no hay nada que elegir: los tres comparten el mismo eje, nada se
+ * tapa, y el nombre entra en una línea.
  */
 export const Marca = styled.div`
   display: grid;
-  grid-template-columns: auto auto;
-  /* La primera fila mide lo que mide la volanta y la segunda lo que mide el
-     nombre: así el logo, que ocupa las dos y se centra en esa caja, cae
-     sobre el centro del nombre y no sobre el del bloque entero. */
-  grid-template-rows: min-content auto;
-  justify-content: center;
-  column-gap: 0.875rem;
+  justify-items: center;
+  gap: 0.625rem;
   margin-bottom: 1rem;
   text-align: center;
 
   @media (max-width: 520px) {
     margin-bottom: 0.875rem;
   }
+
+  @media (max-height: 860px) {
+    gap: 0.375rem;
+    margin-bottom: 0.5rem;
+  }
 `;
 
 export const MarcaIcono = styled.div`
-  /* Anclado a la fila del nombre y centrado en ella: así los dos centros
-     coinciden sin importar cuántas líneas ocupe el nombre. Ocupar las dos
-     filas lo dejaría a media altura del bloque, que con la volanta arriba se
-     ve caído. El desborde hacia la fila de la volanta no molesta: esa
-     columna está vacía. */
-  grid-column: 1;
-  grid-row: 2;
-  align-self: center;
-  width: 66px;
-  height: 66px;
-  border-radius: 18px;
+  width: 132px;
+  height: 132px;
+  border-radius: 34px;
   display: grid;
   place-items: center;
   background: ${({ theme }) => `${theme.color.primary}24`};
   border: 1px solid ${({ theme }) => `${theme.color.primary}47`};
 
   img {
-    width: 54px;
-    height: 54px;
+    width: 108px;
+    height: 108px;
     display: block;
     object-fit: contain;
   }
 
+  /* En el teléfono va algo más chico: con el logo grande y los campos, el
+     panel pasaba de largo la pantalla y aparecía un scroll de unos pocos
+     píxeles, que se siente como si algo no cerrara. */
   @media (max-width: 520px) {
-    width: 58px;
-    height: 58px;
-    border-radius: 16px;
+    width: 104px;
+    height: 104px;
+    border-radius: 28px;
 
     img {
-      width: 48px;
-      height: 48px;
+      width: 86px;
+      height: 86px;
+    }
+  }
+
+  /* Lo mismo en pantallas bajas, que es el caso de muchas notebooks: el
+     ingreso tiene que entrar entero sin tener que bajar. */
+  @media (max-height: 860px) {
+    width: 96px;
+    height: 96px;
+    border-radius: 26px;
+
+    img {
+      width: 80px;
+      height: 80px;
     }
   }
 `;
 
 export const Volanta = styled.p`
-  /* Pegada al nombre: es su antetítulo, no una línea suelta. El espacio que
-     la separa del logo lo pone el gap de la grilla. */
-  grid-column: 2;
-  grid-row: 1;
-  align-self: end;
-  margin: 0 0 0.2rem;
+  /* El aire con el logo y con el nombre lo pone el gap de la grilla. */
+  margin: 0;
   text-align: center;
   color: ${({ theme }) => theme.color.primary};
-  font-size: 0.76rem;
+  font-size: 0.86rem;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 `;
 
 export const Titulo = styled.h1`
-  grid-column: 2;
-  grid-row: 2;
   margin: 0;
   text-align: center;
-  font-size: clamp(1.45rem, 4vw, 1.9rem);
+  font-size: clamp(1.6rem, 4.4vw, 2.05rem);
   line-height: 1.08;
   letter-spacing: -0.035em;
   /* El nombre no se parte al medio en pantallas angostas. */
@@ -288,7 +304,7 @@ export const Nota = styled.p`
   margin: 0;
   text-align: center;
   color: ${({ theme }) => theme.color.textMuted};
-  font-size: 0.94rem;
+  font-size: 1.02rem;
   line-height: 1.55;
 `;
 
@@ -296,6 +312,11 @@ export const Formulario = styled.form`
   display: grid;
   gap: 1rem;
   margin-top: 1.5rem;
+
+  @media (max-height: 860px) {
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
 `;
 
 export const Campo = styled.div`
@@ -304,7 +325,7 @@ export const Campo = styled.div`
 
   label {
     color: ${({ theme }) => theme.color.text};
-    font-size: 0.84rem;
+    font-size: 0.95rem;
     font-weight: 700;
   }
 `;
@@ -317,7 +338,7 @@ export const CampoFila = styled.div`
 
   a {
     color: ${({ theme }) => theme.color.primary};
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none;
 
@@ -448,7 +469,7 @@ export const Divisor = styled.div`
   align-items: center;
   gap: 0.75rem;
   color: ${({ theme }) => theme.color.textSoft};
-  font-size: 0.76rem;
+  font-size: 0.86rem;
 
   &::before,
   &::after {
@@ -463,7 +484,7 @@ export const Pie = styled.p`
   margin: 0;
   text-align: center;
   color: ${({ theme }) => theme.color.textMuted};
-  font-size: 0.84rem;
+  font-size: 0.95rem;
   line-height: 1.55;
 
   a {
@@ -484,7 +505,7 @@ export const Aviso = styled.p`
   border: 1px solid ${({ theme }) => `${theme.color.danger}59`};
   background: ${({ theme }) => `${theme.color.danger}1A`};
   color: ${({ theme }) => theme.color.danger};
-  font-size: 0.88rem;
+  font-size: 0.97rem;
   line-height: 1.45;
 `;
 
@@ -495,7 +516,7 @@ export const Seguridad = styled.div`
   gap: 0.5rem;
   margin-top: 1.125rem;
   color: ${({ theme }) => theme.color.textSoft};
-  font-size: 0.74rem;
+  font-size: 0.85rem;
 
   svg {
     width: 15px;
