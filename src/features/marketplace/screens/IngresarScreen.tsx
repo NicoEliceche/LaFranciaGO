@@ -61,17 +61,22 @@ const DESTINOS: Array<[rol: string, panel: string]> = [
 ];
 
 /**
- * El panel que le corresponde a una cuenta, o la portada si sólo compra.
+ * Desde qué rol entra una cuenta y a qué panel va, o la portada si sólo
+ * compra.
  *
  * Se miran los roles disponibles y no el activo: el login devuelve "cliente"
  * hasta que se cambia a mano, así que fijarse en él mandaría al comercio a la
  * portada, que es justamente lo que este rediseño vino a resolver.
+ *
+ * Devuelve el rol junto con el panel y no sólo el panel, porque delivery y
+ * flete comparten pantalla: buscar el rol a partir del destino daba siempre
+ * "delivery", y al fletero se le pedía entrar con un rol que no tiene.
  */
-function panelDe(roles: string[] | undefined) {
+function ingresoDe(roles: string[] | undefined) {
   const suyos = roles ?? [];
   const encontrado = DESTINOS.find(([rol]) => suyos.includes(rol));
 
-  return encontrado?.[1] ?? '/';
+  return { rol: encontrado?.[0], panel: encontrado?.[1] ?? '/' };
 }
 
 export function IngresarScreen() {
@@ -107,21 +112,17 @@ export function IngresarScreen() {
          lo arma /auth/yo. Sin preguntarlo, un comercio aterrizaría en la
          portada como cliente, que es lo que este rediseño vino a evitar. */
       const completo = usuario?.roles ? usuario : await authApi.yo().catch(() => usuario);
-      const panel = panelDe(completo?.roles);
+      const { rol, panel } = ingresoDe(completo?.roles);
 
       /* Además de llevarlo al panel hay que pararse en ese rol: la sesión
          arranca siempre como cliente, y el menú y las pantallas miran el rol
          activo. Sin esto el comercio llega a su panel pero con el menú del
-         vecino. */
-      if (panel !== '/') {
-        const rol = DESTINOS.find(([, destino]) => destino === panel)?.[0];
-
-        if (rol && completo?.rol !== rol) {
-          try {
-            await cambiarRol(rol);
-          } catch {
-            /* Si no se pudo cambiar, igual entra: lo hace desde el menú. */
-          }
+         vecino, y quien reparte ve las categorías y los favoritos. */
+      if (rol && completo?.rol !== rol) {
+        try {
+          await cambiarRol(rol);
+        } catch {
+          /* Si no se pudo cambiar, igual entra: lo hace desde el menú. */
         }
       }
 

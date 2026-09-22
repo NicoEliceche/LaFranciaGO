@@ -35,6 +35,7 @@ import { useThemeMode } from '@core/theme';
 import { MotoDeliveryIcon } from '@shared/components/icons/MotoDeliveryIcon';
 
 import { useProfilePhoto } from '../profileStore';
+import { useSesion } from '../sessionStore';
 import { AddressSheet } from './AddressSheet';
 import { CuentaSidebar } from './CuentaSidebar';
 import { MenuComercio } from './MenuComercio';
@@ -161,20 +162,105 @@ const deliveryAddress = 'Av. San Martín 123';
 const MENU_DRAWER_TRANSITION_MS = 420;
 const NOTIFICATIONS_TRANSITION_MS = 260;
 
-const drawerPrimaryItems: DrawerItemData[] = [
-  { to: '/', title: 'Inicio', subtitle: 'Portada y promociones', icon: Home, end: true },
+/* ── El menú, que cambia según desde qué rol se esté mirando ── */
+
+const ITEM_INICIO_CLIENTE: DrawerItemData = {
+  to: '/',
+  title: 'Inicio',
+  subtitle: 'Portada y promociones',
+  icon: Home,
+  end: true,
+};
+
+/* Para quien reparte, "Inicio" es su tablero y no la portada del
+   marketplace: abre la aplicación para ver qué hay para llevar, no para
+   comprar. Es la misma pantalla para delivery y para flete, que ya distingue
+   entre "Pedidos disponibles" y "Fletes disponibles"; el subtítulo la
+   acompaña para que el menú no nombre las cosas de otra manera. */
+const inicioDeReparto = (esFletero: boolean): DrawerItemData => ({
+  to: '/panel/repartidor',
+  title: 'Inicio',
+  subtitle: esFletero ? 'Fletes disponibles y en curso' : 'Pedidos disponibles y en curso',
+  icon: Home,
+  end: true,
+});
+
+const ITEM_CUENTA: DrawerItemData = {
+  to: '/mi-cuenta',
+  title: 'Cuenta',
+  subtitle: 'Perfil y seguridad',
+  icon: UserRound,
+};
+
+const ITEMS_COMPRA: DrawerItemData[] = [
   { to: '/categorias', title: 'Categorías', subtitle: 'Navegá por rubros', icon: LayoutGrid },
   { to: '/pedidos', title: 'Mis pedidos', subtitle: 'Historial y seguimiento', icon: PackageSearch },
   { to: '/favoritos', title: 'Favoritos', subtitle: 'Guardados para después', icon: Heart },
-  { to: '/mi-cuenta', title: 'Cuenta', subtitle: 'Perfil y seguridad', icon: UserRound },
 ];
 
-const drawerActionItems: DrawerItemData[] = [
-  { to: '/registro/comercio', title: 'Publicar comercio', subtitle: 'Sumá tu negocio', icon: Store },
-  { to: '/trabaja-con-nosotros', title: 'Registrate como delivery', subtitle: 'Trabajá repartiendo pedidos', icon: MotoDeliveryIcon },
-  { to: '/registro/fletero', title: 'Registrate como fletero', subtitle: 'Trabajá haciendo fletes', icon: Truck },
-  { to: '/notificaciones', title: 'Notificaciones', subtitle: 'Alertas y seguimientos', icon: Bell },
-];
+const ITEM_PUBLICAR: DrawerItemData = {
+  to: '/registro/comercio',
+  title: 'Publicar comercio',
+  subtitle: 'Sumá tu negocio',
+  icon: Store,
+};
+
+const ITEM_SER_DELIVERY: DrawerItemData = {
+  to: '/trabaja-con-nosotros',
+  title: 'Registrate como delivery',
+  subtitle: 'Trabajá repartiendo pedidos',
+  icon: MotoDeliveryIcon,
+};
+
+const ITEM_SER_FLETERO: DrawerItemData = {
+  to: '/registro/fletero',
+  title: 'Registrate como fletero',
+  subtitle: 'Trabajá haciendo fletes',
+  icon: Truck,
+};
+
+const ITEM_NOTIFICACIONES: DrawerItemData = {
+  to: '/notificaciones',
+  title: 'Notificaciones',
+  subtitle: 'Alertas y seguimientos',
+  icon: Bell,
+};
+
+/**
+ * Qué se ve en el menú desde cada rol.
+ *
+ * Quien reparte no compra desde la misma sesión: no le aparecen las
+ * categorías, sus pedidos ni sus favoritos, porque llenan el menú de cosas
+ * que no va a tocar mientras trabaja. Si quiere comprar, cambia de cuenta al
+ * pie del menú, que es la misma sesión mirando desde otro lado.
+ *
+ * Y el ofrecimiento va cruzado: al delivery se le ofrece el flete y al
+ * fletero el delivery. Ofrecerle a alguien que se registre en lo que ya hace
+ * es ruido, y lo que sí puede sumarle es el otro.
+ *
+ * El comercio ve lo mismo que el cliente por ahora. Su panel y el sistema de
+ * gestión tienen su propia entrada, más abajo.
+ */
+function menuDe(rol: string | undefined) {
+  const esDelivery = rol === 'delivery';
+  const esFletero = rol === 'fletero';
+
+  if (esDelivery || esFletero) {
+    return {
+      navegacion: [inicioDeReparto(esFletero), ITEM_CUENTA],
+      acciones: [
+        ITEM_PUBLICAR,
+        esDelivery ? ITEM_SER_FLETERO : ITEM_SER_DELIVERY,
+        ITEM_NOTIFICACIONES,
+      ],
+    };
+  }
+
+  return {
+    navegacion: [ITEM_INICIO_CLIENTE, ...ITEMS_COMPRA, ITEM_CUENTA],
+    acciones: [ITEM_PUBLICAR, ITEM_SER_DELIVERY, ITEM_SER_FLETERO, ITEM_NOTIFICACIONES],
+  };
+}
 
 const DesktopSidebar = styled.aside`
   display: none;
@@ -267,13 +353,29 @@ const topLinks = [
   { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
 ] as const;
 
-const bottomLinks = [
+type EnlaceInferior = { to: string; label: string; icon: AppIcon };
+
+const ENLACES_INFERIORES_CLIENTE: EnlaceInferior[] = [
   { to: '/', label: 'Inicio', icon: Home },
   { to: '/categorias', label: 'Categorías', icon: LayoutGrid },
   { to: '/pedidos', label: 'Mis pedidos', icon: PackageSearch },
   { to: '/favoritos', label: 'Favoritos', icon: Heart },
   { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
-] as const;
+];
+
+/* La barra de abajo sigue al menú: si ahí no está lo de comprar, acá tampoco.
+   Es la que más se usa en el teléfono, que es donde trabaja quien reparte. */
+const ENLACES_INFERIORES_REPARTO: EnlaceInferior[] = [
+  { to: '/panel/repartidor', label: 'Inicio', icon: Home },
+  { to: '/notificaciones', label: 'Avisos', icon: Bell },
+  { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
+];
+
+function enlacesInferioresDe(rol: string | undefined) {
+  return rol === 'delivery' || rol === 'fletero'
+    ? ENLACES_INFERIORES_REPARTO
+    : ENLACES_INFERIORES_CLIENTE;
+}
 
 export function MarketplaceFrame({
   children,
@@ -286,6 +388,16 @@ export function MarketplaceFrame({
   const { sinLeer: notificationsCount } = useNotificaciones();
 
   const { isDarkMode, toggleMode } = useThemeMode();
+  const { usuario } = useSesion();
+
+  /* El menu cambia segun el rol activo: quien reparte no ve lo de comprar. */
+  const menu = useMemo(() => menuDe(usuario?.rol), [usuario?.rol]);
+  const enlacesInferiores = useMemo(() => enlacesInferioresDe(usuario?.rol), [usuario?.rol]);
+
+  /* El boton grande del medio: para el cliente son sus pedidos y para quien
+     reparte su tablero, que es la pantalla a la que vuelve todo el dia. */
+  const destacadoAbajo =
+    usuario?.rol === 'delivery' || usuario?.rol === 'fletero' ? '/panel/repartidor' : '/pedidos';
   const { photo: profilePhoto } = useProfilePhoto();
   const navigate = useNavigate();
   const hasSearch = typeof query === 'string' && typeof onQueryChange === 'function';
@@ -611,7 +723,7 @@ export function MarketplaceFrame({
           <DrawerSection>
             <DrawerSectionLabel>NAVEGACIÓN</DrawerSectionLabel>
             <DrawerList aria-label="Navegación principal">
-              {drawerPrimaryItems.map((item) => {
+              {menu.navegacion.map((item) => {
                 const Icon = item.icon;
 
                 return (
@@ -640,7 +752,7 @@ export function MarketplaceFrame({
           <DrawerSection>
             <DrawerSectionLabel>ACCIONES</DrawerSectionLabel>
             <DrawerList aria-label="Acciones rápidas">
-              {drawerActionItems.map((item) => {
+              {menu.acciones.map((item) => {
                 const Icon = item.icon;
 
                 return (
@@ -679,14 +791,14 @@ export function MarketplaceFrame({
 
       <BottomNav aria-label="Navegación móvil">
         <BottomNavList>
-          {bottomLinks.map((link) => {
+          {enlacesInferiores.map((link) => {
             const Icon = link.icon;
 
             return (
               <li key={link.to}>
-                <BottomNavLink to={link.to} data-primary={link.to === '/pedidos'}>
+                <BottomNavLink to={link.to} data-primary={link.to === destacadoAbajo}>
                   <BottomNavIcon>
-                    <Icon size={link.to === '/pedidos' ? 32 : 18} aria-hidden="true" />
+                    <Icon size={link.to === destacadoAbajo ? 32 : 18} aria-hidden="true" />
                   </BottomNavIcon>
                   <span>{link.label}</span>
                 </BottomNavLink>
@@ -729,7 +841,7 @@ export function MarketplaceFrame({
               <DrawerSection>
                 <DrawerSectionLabel>Navegación</DrawerSectionLabel>
                 <DrawerList aria-label="Navegación principal">
-                  {drawerPrimaryItems.map((item) => {
+                  {menu.navegacion.map((item) => {
                     const Icon = item.icon;
 
                     return (
@@ -758,7 +870,7 @@ export function MarketplaceFrame({
               <DrawerSection>
                 <DrawerSectionLabel>Acciones</DrawerSectionLabel>
                 <DrawerList aria-label="Acciones rápidas">
-                  {drawerActionItems.map((item) => {
+                  {menu.acciones.map((item) => {
                     const Icon = item.icon;
 
                     return (
