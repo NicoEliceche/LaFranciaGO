@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 
 /**
@@ -321,6 +322,9 @@ export const Formulario = styled.form`
 
 export const Campo = styled.div`
   display: grid;
+  /* Dos columnas: la etiqueta a la izquierda y, cuando lo hay, un enlace a la
+     derecha. El campo en sí ocupa las dos. */
+  grid-template-columns: 1fr auto;
   gap: 0.5rem;
 
   label {
@@ -330,26 +334,39 @@ export const Campo = styled.div`
   }
 `;
 
-export const CampoFila = styled.div`
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
+/**
+ * La etiqueta de un campo que además lleva un enlace al costado.
+ *
+ * Ocupa la primera columna; el enlace ocupa la segunda de esa misma fila
+ * aunque en el HTML venga después del campo. Ese desfasaje es a propósito: el
+ * tabulador sigue el orden del documento, y con el enlace escrito antes, al
+ * salir del email el foco caía ahí en vez de la contraseña.
+ */
+export const CampoEtiqueta = styled.label`
+  grid-column: 1;
+  grid-row: 1;
+  align-self: baseline;
+`;
 
-  a {
-    color: ${({ theme }) => theme.color.primary};
-    font-size: 0.9rem;
-    font-weight: 600;
-    text-decoration: none;
+export const CampoOlvide = styled(Link)`
+  grid-column: 2;
+  grid-row: 1;
+  align-self: baseline;
+  justify-self: end;
+  color: ${({ theme }) => theme.color.primary};
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
 
-    &:hover {
-      text-decoration: underline;
-    }
+  &:hover {
+    text-decoration: underline;
   }
 `;
 
 export const CampoMarco = styled.div`
   position: relative;
+  /* De borde a borde, tenga el campo enlace al costado o no. */
+  grid-column: 1 / -1;
 
   input {
     width: 100%;

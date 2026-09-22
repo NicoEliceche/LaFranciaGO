@@ -22,9 +22,10 @@ import { ingresarConGoogle, useSesion } from '../sessionStore';
 import {
   Aviso,
   Campo,
-  CampoFila,
+  CampoEtiqueta,
   CampoIcono,
   CampoMarco,
+  CampoOlvide,
   Divisor,
   Encabezado,
   Entrar,
@@ -169,7 +170,7 @@ export function IngresarScreen() {
           {error ? <Aviso role="alert">{error}</Aviso> : null}
 
           <Campo>
-            <label htmlFor="email">Email</label>
+            <CampoEtiqueta htmlFor="email">Email</CampoEtiqueta>
             <CampoMarco>
               <CampoIcono aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
@@ -195,11 +196,13 @@ export function IngresarScreen() {
             </CampoMarco>
           </Campo>
 
+          {/* "¿La olvidaste?" va después del campo en el HTML aunque se vea
+              arriba, porque el orden del documento es el que sigue el
+              tabulador: antes, al salir del email con Tab, el foco caía en el
+              enlace y había que tocar Tab otra vez para escribir la
+              contraseña. La grilla lo devuelve a su lugar visual. */}
           <Campo>
-            <CampoFila>
-              <label htmlFor="password">Contraseña</label>
-              <Link to="/recuperar">¿La olvidaste?</Link>
-            </CampoFila>
+            <CampoEtiqueta htmlFor="password">Contraseña</CampoEtiqueta>
 
             <CampoMarco>
               <CampoIcono aria-hidden="true">
@@ -231,6 +234,8 @@ export function IngresarScreen() {
                 required
               />
             </CampoMarco>
+
+            <CampoOlvide to="/recuperar">¿La olvidaste?</CampoOlvide>
           </Campo>
 
           <Entrar type="submit" disabled={enviando}>
