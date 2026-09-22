@@ -216,20 +216,39 @@ export const PanelPestana = styled.button`
  * Decide qué pedidos puede tomar, así que va arriba de todo: es lo primero
  * que hay que confirmar al abrir el panel.
  */
+/**
+ * Con qué vehículo se trabaja hoy.
+ *
+ * Mide lo que mide su contenido y va centrada, en lugar de ocupar todo el
+ * ancho: son tres cosas cortas —una etiqueta y dos botones— y estiradas de
+ * borde a borde dejaban un hueco enorme en el medio, con el texto pegado a
+ * la izquierda y los botones al otro extremo.
+ */
 export const VehiculoBarra = styled.div`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: ${({ theme }) => theme.spacing[2]};
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
   padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
   border-radius: ${({ theme }) => theme.radius.lg};
   border: 1px solid ${({ theme }) => theme.color.border};
   background: ${({ theme }) => theme.color.surfaceMuted};
 
   > span {
-    flex: 1 1 auto;
+    /* Sin crecer: antes empujaba los botones contra el borde derecho. */
+    flex: 0 0 auto;
     color: ${({ theme }) => theme.color.textSoft};
     font-size: ${({ theme }) => theme.typography.size.xs};
     font-weight: ${({ theme }) => theme.typography.weight.bold};
+  }
+
+  /* En pantallas angostas el contenido manda: si no entra en una línea,
+     baja, en lugar de desbordar. */
+  @media (max-width: 380px) {
+    flex-wrap: wrap;
   }
 `;
 

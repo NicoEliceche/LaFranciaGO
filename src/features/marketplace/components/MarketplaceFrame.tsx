@@ -241,24 +241,29 @@ const ITEM_NOTIFICACIONES: DrawerItemData = {
  * El comercio ve lo mismo que el cliente por ahora. Su panel y el sistema de
  * gestión tienen su propia entrada, más abajo.
  */
-function menuDe(rol: string | undefined) {
+function menuDe(rol: string | undefined, roles: string[] = []) {
   const esDelivery = rol === 'delivery';
   const esFletero = rol === 'fletero';
+
+  /* No se ofrece registrarse en lo que ya se tiene. Se miran todos los roles
+     y no sólo el activo: quien ya tiene comercio no necesita que se lo
+     ofrezcan mientras mira como cliente. */
+  const ofrecimientos = [
+    roles.includes('comercio') ? null : ITEM_PUBLICAR,
+    roles.includes('delivery') ? null : ITEM_SER_DELIVERY,
+    roles.includes('fletero') ? null : ITEM_SER_FLETERO,
+  ].filter((item): item is DrawerItemData => item !== null);
 
   if (esDelivery || esFletero) {
     return {
       navegacion: [inicioDeReparto(esFletero), ITEM_CUENTA],
-      acciones: [
-        ITEM_PUBLICAR,
-        esDelivery ? ITEM_SER_FLETERO : ITEM_SER_DELIVERY,
-        ITEM_NOTIFICACIONES,
-      ],
+      acciones: [...ofrecimientos, ITEM_NOTIFICACIONES],
     };
   }
 
   return {
     navegacion: [ITEM_INICIO_CLIENTE, ...ITEMS_COMPRA, ITEM_CUENTA],
-    acciones: [ITEM_PUBLICAR, ITEM_SER_DELIVERY, ITEM_SER_FLETERO, ITEM_NOTIFICACIONES],
+    acciones: [...ofrecimientos, ITEM_NOTIFICACIONES],
   };
 }
 
@@ -391,7 +396,10 @@ export function MarketplaceFrame({
   const { usuario } = useSesion();
 
   /* El menu cambia segun el rol activo: quien reparte no ve lo de comprar. */
-  const menu = useMemo(() => menuDe(usuario?.rol), [usuario?.rol]);
+  const menu = useMemo(
+    () => menuDe(usuario?.rol, usuario?.roles),
+    [usuario?.rol, usuario?.roles],
+  );
   const enlacesInferiores = useMemo(() => enlacesInferioresDe(usuario?.rol), [usuario?.rol]);
 
   /* El boton grande del medio: para el cliente son sus pedidos y para quien

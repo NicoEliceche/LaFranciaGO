@@ -16,6 +16,8 @@ import { Check, Wallet } from 'lucide-react';
 
 import { planGestionApi, type PlanGestionApi } from '@core/data/services/apiClient';
 
+import { anotarPlan } from '@features/marketplace/planGestionStore';
+
 import { MarketplaceFrame } from '@features/marketplace/components/MarketplaceFrame';
 
 import { mostrarCentavos } from '../dinero';
@@ -80,6 +82,9 @@ export function ContratarGestionScreen() {
 
     try {
       await planGestionApi.contratar();
+
+      /* El menu se entera sin volver a preguntar. */
+      anotarPlan(true);
       navegar('/gestion', { replace: true });
     } catch {
       setFallo('No pudimos activarlo. Probá de nuevo en un rato.');

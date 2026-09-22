@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import { ArrowRight, LayoutDashboard, Wallet } from 'lucide-react';
+import { useEffect, useSyncExternalStore } from 'react';
+import { ArrowRight, LayoutDashboard, Sparkles } from 'lucide-react';
 
-import { hayBackend, planGestionApi } from '@core/data/services/apiClient';
+import { hayBackend } from '@core/data/services/apiClient';
 
+import { consultarPlan, escucharPlan, leerPlan } from '../planGestionStore';
 import { useSesion } from '../sessionStore';
 import {
-  DrawerItem,
   DrawerItemArrow,
   DrawerItemIcon,
   DrawerItemSubtitle,
@@ -15,6 +15,7 @@ import {
   DrawerSection,
   DrawerSectionLabel,
 } from './MarketplaceFrameStyled';
+import { ItemGestion } from './MenuComercioStyled';
 
 /**
  * La sección del menú que sólo ve el comercio.
@@ -27,39 +28,23 @@ import {
  * adentro del panel del comercio: quien no lo tiene no sabe que existe, y un
  * producto que no se ofrece no se vende.
  *
- * Vive en su propio archivo porque el menú se dibuja dos veces —la barra de
- * escritorio y el cajón del teléfono— y duplicar la consulta del plan haría
- * dos llamadas por cada carga de página.
+ * Si el plan todavía no se consultó se muestra igual, ofreciéndolo. Antes se
+ * escondía hasta tener la respuesta, y como el menú se vuelve a montar en
+ * cada pantalla, la entrada desaparecía y reaparecía al navegar.
  */
 export function MenuComercio({ onNavegar }: { onNavegar?: () => void }) {
   const { usuario } = useSesion();
   const esComercio = usuario?.rol === 'comercio';
 
-  const [plan, setPlan] = useState<'cargando' | 'si' | 'no'>('cargando');
+  const plan = useSyncExternalStore(escucharPlan, leerPlan);
 
   useEffect(() => {
-    if (!esComercio || !hayBackend()) return;
+    if (!esComercio || !hayBackend() || !usuario?.id) return;
 
-    let vigente = true;
-
-    planGestionApi
-      .ver()
-      .then((datos) => {
-        if (vigente) setPlan(datos.activo ? 'si' : 'no');
-      })
-      .catch(() => {
-        /* Si no se pudo consultar se ofrece contratarlo: es lo que le sirve a
-           quien todavía no lo tiene, y quien sí lo tiene llega al panel por
-           su propia pantalla igual. */
-        if (vigente) setPlan('no');
-      });
-
-    return () => {
-      vigente = false;
-    };
+    consultarPlan(usuario.id);
   }, [esComercio, usuario?.id]);
 
-  if (!esComercio || plan === 'cargando') return null;
+  if (!esComercio) return null;
 
   const tiene = plan === 'si';
 
@@ -67,15 +52,16 @@ export function MenuComercio({ onNavegar }: { onNavegar?: () => void }) {
     <DrawerSection>
       <DrawerSectionLabel>MI NEGOCIO</DrawerSectionLabel>
       <DrawerList aria-label="Sistema de gestión">
-        <DrawerItem
+        <ItemGestion
           to={tiene ? '/gestion' : '/gestion/contratar'}
+          data-contratado={tiene}
           onClick={() => onNavegar?.()}
         >
           <DrawerItemIcon aria-hidden="true">
             {tiene ? (
               <LayoutDashboard size={18} aria-hidden="true" />
             ) : (
-              <Wallet size={18} aria-hidden="true" />
+              <Sparkles size={18} aria-hidden="true" />
             )}
           </DrawerItemIcon>
           <DrawerItemText>
@@ -83,15 +69,13 @@ export function MenuComercio({ onNavegar }: { onNavegar?: () => void }) {
               {tiene ? 'Sistema de gestión' : 'Activar el sistema de gestión'}
             </DrawerItemTitle>
             <DrawerItemSubtitle>
-              {tiene
-                ? 'Caja, ventas, compras e informes'
-                : 'Caja, costos y stock del mostrador'}
+              {tiene ? 'Caja, ventas, compras e informes' : 'Caja, costos y stock del mostrador'}
             </DrawerItemSubtitle>
           </DrawerItemText>
           <DrawerItemArrow aria-hidden="true">
             <ArrowRight size={16} aria-hidden="true" />
           </DrawerItemArrow>
-        </DrawerItem>
+        </ItemGestion>
       </DrawerList>
     </DrawerSection>
   );

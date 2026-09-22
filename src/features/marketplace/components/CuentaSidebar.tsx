@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, LogOut, Repeat2 } from 'lucide-react';
 
+import { olvidarPlan } from '../planGestionStore';
 import { olvidarInvitado } from './PortadaOIngreso';
 import { useSesion } from '../sessionStore';
 import {
@@ -90,6 +91,7 @@ export function CuentaSidebar({ onNavegar }: Props) {
     /* Se olvida que habia elegido mirar sin cuenta: si no, al cerrar sesion
        volveria al marketplace como invitado en vez de al ingreso. */
     olvidarInvitado();
+    olvidarPlan();
     onNavegar?.();
     navigate('/ingresar', { replace: true });
   };

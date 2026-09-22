@@ -48,6 +48,14 @@ export function CustomerAccountScreen() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  /* Qué roles tiene la cuenta, para no ofrecerle registrarse en algo que ya
+     es. Se miran todos y no sólo el activo: quien ya tiene comercio no
+     necesita que se lo ofrezcan mientras mira como cliente. */
+  const roles = usuario?.roles ?? [];
+  const esComercio = roles.includes('comercio');
+  const esDelivery = roles.includes('delivery');
+  const esFletero = roles.includes('fletero');
+
   /**
    * La foto se comprime antes de guardarla y se convierte a data URL: un
    * object URL se pierde al recargar, y acá tiene que sobrevivir.
@@ -205,25 +213,35 @@ export function CustomerAccountScreen() {
           <SectionStack>
             <SectionHeading title="Sumate" />
 
+            {/* No se le ofrece a nadie registrarse en lo que ya hace: al
+                comercio no le aparece publicar comercio, al delivery no le
+                aparece delivery y al fletero no le aparece flete. Lo mismo
+                que en el menú lateral. */}
             <SettingsList>
-              <SettingsRow
-                icon={Store}
-                title="Publicar mi comercio"
-                subtitle="Registrá tu negocio"
-                to="/registro/comercio"
-              />
-              <SettingsRow
-                icon={MotoDeliveryIcon}
-                title="Registrate como delivery"
-                subtitle="Trabajá repartiendo pedidos"
-                to="/trabaja-con-nosotros"
-              />
-              <SettingsRow
-                icon={Truck}
-                title="Registrate como fletero"
-                subtitle="Trabajá haciendo fletes"
-                to="/registro/fletero"
-              />
+              {esComercio ? null : (
+                <SettingsRow
+                  icon={Store}
+                  title="Publicar mi comercio"
+                  subtitle="Registrá tu negocio"
+                  to="/registro/comercio"
+                />
+              )}
+              {esDelivery ? null : (
+                <SettingsRow
+                  icon={MotoDeliveryIcon}
+                  title="Registrate como delivery"
+                  subtitle="Trabajá repartiendo pedidos"
+                  to="/trabaja-con-nosotros"
+                />
+              )}
+              {esFletero ? null : (
+                <SettingsRow
+                  icon={Truck}
+                  title="Registrate como fletero"
+                  subtitle="Trabajá haciendo fletes"
+                  to="/registro/fletero"
+                />
+              )}
             </SettingsList>
           </SectionStack>
         </SectionInner>
