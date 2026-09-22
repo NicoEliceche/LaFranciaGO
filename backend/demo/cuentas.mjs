@@ -33,7 +33,23 @@ import { rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const REMOTO = process.argv.includes('--remoto');
-const API = process.env.API_DEMO ?? 'http://127.0.0.1:8787';
+
+/**
+ * Contra qué API se crean las cuentas.
+ *
+ * Con --remoto va al Worker publicado, que es el que usa la aplicación de
+ * escritorio y el que va a usar Diego. Sin la marca, al backend de esta
+ * máquina.
+ */
+const API =
+  process.env.API_DEMO ??
+  (REMOTO ? 'https://lafranciago-api.lafranciago-api.workers.dev' : 'http://127.0.0.1:8787');
+
+/* La base que usa ese Worker. Ojo: el Worker publicado es `lafranciago-api`,
+   que apunta a la base `lafranciago` —la misma que en desarrollo, pero la
+   copia remota—, no a `lafranciago-prod`. Esa otra es del entorno `prod` de
+   wrangler.toml, que todavía no está desplegado. */
+const BASE = 'lafranciago';
 
 /* Una sola contraseña para todas: que sea la misma evita el error de probar
    una cuenta con la contraseña de otra.
@@ -117,10 +133,13 @@ function sql(consulta) {
         'wrangler',
         'd1',
         'execute',
-        REMOTO ? 'lafranciago-prod' : 'lafranciago',
+        BASE,
         REMOTO ? '--remote' : '--local',
         '--file',
         archivo,
+        /* `--json` junto con `--file` hace que wrangler imprima la salida de
+           siempre, sin JSON. Por eso las lecturas que necesitan la respuesta
+           mandan la consulta por `--command`, más abajo. */
         '--json',
       ],
       {
@@ -138,6 +157,48 @@ function sql(consulta) {
   } finally {
     rmSync(archivo, { force: true });
   }
+}
+
+/**
+ * Una consulta de lectura, que devuelve las filas ya interpretadas.
+ *
+ * Va por `--command` y no por archivo porque `--file` y `--json` juntos no
+ * funcionan: wrangler ignora el JSON y escribe su salida de siempre. Son
+ * consultas cortas, así que el límite de largo de la línea de comandos no
+ * molesta.
+ */
+function leer(consulta) {
+  const salida = spawnSync(
+    'npx',
+    [
+      'wrangler',
+      'd1',
+      'execute',
+      BASE,
+      REMOTO ? '--remote' : '--local',
+      '--command',
+      JSON.stringify(consulta),
+      '--json',
+    ],
+    {
+      encoding: 'utf8',
+      shell: true,
+      cwd: path.join(import.meta.dirname, '..'),
+    },
+  );
+
+  if (salida.status !== 0) {
+    throw new Error(`falló la consulta: ${salida.stderr || salida.stdout}`);
+  }
+
+  /* El JSON arranca en el primer corchete: lo de antes son avisos de npm. */
+  const desde = salida.stdout.indexOf('[');
+
+  if (desde === -1) {
+    throw new Error(`wrangler no devolvió JSON:\n${salida.stdout.slice(0, 400)}`);
+  }
+
+  return JSON.parse(salida.stdout.slice(desde)).flatMap((bloque) => bloque.results ?? []);
 }
 
 /** Crea la cuenta, o sigue de largo si ya estaba. */
@@ -164,20 +225,21 @@ async function registrar(cuenta) {
   throw new Error(`${cuenta.email}: ${respuesta.status} ${cuerpo}`);
 }
 
-/** Los ids de varios usuarios, de una sola consulta. */
+/**
+ * Los ids de varios usuarios, de una sola consulta.
+ *
+ * Se interpreta el JSON en vez de buscar los pares con una expresión
+ * regular: wrangler imprime avisos de npm antes del JSON, y contra la base
+ * remota agrega además un bloque `meta` con su propio `size_after` y demás,
+ * donde una expresión suelta encuentra cosas que no son lo que busca.
+ */
 function idsDe(emails) {
   const lista = emails.map((correo) => `'${correo}'`).join(', ');
-  const salida = sql(`SELECT id, email FROM usuarios WHERE email IN (${lista})`);
+  const filas = leer(`SELECT id, email FROM usuarios WHERE email IN (${lista})`);
   const porEmail = {};
 
-  /* La salida de wrangler trae el JSON entre otras líneas, así que se buscan
-     los pares id/email en vez de intentar interpretar todo. */
-  const patron = /"id":\s*"([^"]+)"[\s\S]{0,160}?"email":\s*"([^"]+)"/g;
-  let encontrado = patron.exec(salida);
-
-  while (encontrado !== null) {
-    porEmail[encontrado[2]] = encontrado[1];
-    encontrado = patron.exec(salida);
+  for (const fila of filas) {
+    porEmail[fila.email] = fila.id;
   }
 
   return porEmail;
