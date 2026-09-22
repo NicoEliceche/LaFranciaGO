@@ -4,6 +4,7 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from '@core/theme';
 import { MarketplaceHomeScreen } from '@features/marketplace/screens/MarketplaceHomeScreen';
 import { RutaPrivada } from '@features/marketplace/components/RutaPrivada';
+import { PortadaOIngreso } from '@features/marketplace/components/PortadaOIngreso';
 import { RutaGestion } from '@features/gestion/components/RutaGestion';
 
 /**
@@ -13,6 +14,9 @@ import { RutaGestion } from '@features/gestion/components/RutaGestion';
  */
 const AuthScreen = lazy(() =>
   import('@features/marketplace/screens/AuthScreen').then((m) => ({ default: m.AuthScreen })),
+);
+const Ingreso = lazy(() =>
+  import('@features/marketplace/screens/Ingreso').then((m) => ({ default: m.Ingreso })),
 );
 const RecuperarScreen = lazy(() =>
   import('@features/marketplace/screens/RecuperarScreen').then((m) => ({
@@ -151,8 +155,15 @@ function App() {
       <ThemeProvider>
         <Suspense fallback={null}>
           <Routes>
-            <Route path="/" element={<MarketplaceHomeScreen />} />
-            <Route path="/ingresar" element={<AuthScreen />} />
+            <Route
+              path="/"
+              element={
+                <PortadaOIngreso>
+                  <MarketplaceHomeScreen />
+                </PortadaOIngreso>
+              }
+            />
+            <Route path="/ingresar" element={<Ingreso />} />
             {/* La misma pantalla pide el enlace y, con token, cambia la clave. */}
             <Route path="/recuperar" element={<RecuperarScreen />} />
             <Route path="/recuperar/:token" element={<RecuperarScreen />} />

@@ -22,3 +22,7 @@ backend/.wrangler/
 # Secretos locales de Wrangler: van con `wrangler secret put`, nunca al repo.
 backend/.dev.vars
 backend/.dev.vars.*
+
+# Maqueta de referencia del login: 177 KB con la imagen embebida, y ya
+# está implementada en IngresarScreen.
+public/media/login_gamer_responsive.html

@@ -94,8 +94,15 @@ export function useSesion() {
     };
   }, []);
 
+  /* Devuelve la cuenta para que quien llama sepa a qué panel llevarla: el
+     comercio al suyo, el repartidor al suyo, el vecino a la portada. Leerla
+     del estado justo después no sirve, porque todavía no se redibujó. */
   const entrar = useCallback(async (email: string, password: string) => {
-    aplicar(await authApi.login({ email, password }));
+    const cuenta = await authApi.login({ email, password });
+
+    aplicar(cuenta);
+
+    return cuenta;
   }, []);
 
   const registrar = useCallback(
