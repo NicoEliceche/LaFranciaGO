@@ -76,6 +76,16 @@ import { rutaVersiones } from './versiones';
 const PRECIO_GESTION_CENTAVOS = 7_999_900;
 
 /**
+ * Los únicos tipos de archivo que se aceptan y se sirven.
+ *
+ * Una sola lista para las dos puntas: si subir y servir tuvieran cada uno la
+ * suya, agregar un formato en un lado y olvidarlo en el otro dejaría archivos
+ * que entran pero no se pueden mostrar, o peor, que se sirven con un tipo que
+ * el navegador ejecuta.
+ */
+const TIPOS_MEDIA = ['image/webp', 'image/jpeg', 'image/png', 'video/mp4', 'video/webm'];
+
+/**
  * API de LaFranciaGO.
  *
  * Un solo Worker con enrutado a mano: son unas treinta rutas y meter un router
@@ -142,6 +152,18 @@ async function enrutar(
       return error('Revisá el email.', 400, cors);
     }
 
+    /* El mismo límite que el ingreso, contado por IP: sin esto se pueden
+       crear cuentas en masa desde una sola máquina, que es como se arma un
+       registro basura o se tantea qué emails ya existen.
+
+       Se cuenta contra el email pedido y la IP, así que alguien probando
+       muchos emails distintos igual choca con el límite por IP. */
+    const ipRegistro = request.headers.get('CF-Connecting-IP') ?? 'desconocida';
+
+    if (await intentosAgotados(env, email, ipRegistro)) {
+      return respuestaBloqueado(cors);
+    }
+
     if (nombre.length < 2 || nombre.length > 80) {
       return error('Poné tu nombre.', 400, cors);
     }
@@ -157,6 +179,11 @@ async function enrutar(
       .first();
 
     if (existe) {
+      /* Se cuenta como intento fallido: probar emails contra el registro es
+         justamente la forma de averiguar quién tiene cuenta, y sin contarlo
+         el límite de arriba no llega a activarse nunca. */
+      await registrarIntentoFallido(env, email, ipRegistro);
+
       /* Mismo mensaje que un login fallido: decir "ese email ya existe"
          permite averiguar quién está registrado en la app. */
       return error('No pudimos crear la cuenta con esos datos.', 409, cors);
@@ -1425,6 +1452,13 @@ async function enrutar(
       return repartidor.respuesta;
     }
 
+    /* Tener el rol no alcanza para ver cualquier pedido: acá salen el nombre
+       y el teléfono del cliente y a dónde vive. Sin esta condición, cualquier
+       repartidor registrado leía los datos de un pedido ajeno con sólo tener
+       el id, aunque lo estuviera llevando otro.
+
+       Se ve si está disponible para tomar —el mismo criterio que la lista de
+       disponibles— o si es suyo porque ya lo tomó. */
     const pedido = await env.DB.prepare(
       `SELECT p.id, p.codigo, p.direccion_texto, p.subtotal_centavos, p.envio_centavos,
               p.total_centavos, p.metodo_pago, p.creado_en, p.usuario_id,
@@ -1434,9 +1468,14 @@ async function enrutar(
          FROM pedidos p
          JOIN comercios c ON c.id = p.comercio_id
          JOIN usuarios u ON u.id = p.usuario_id
-        WHERE p.id = ?`,
+         LEFT JOIN envios e ON e.pedido_id = p.id
+        WHERE p.id = ?
+          AND (
+            e.repartidor_id = ?
+            OR (p.estado = 'proceso' AND (e.id IS NULL OR e.estado = 'buscando'))
+          )`,
     )
-      .bind(detallePedido[1])
+      .bind(detallePedido[1], repartidor.usuario.id)
       .first();
 
     if (!pedido) {
@@ -5012,10 +5051,9 @@ async function enrutar(
     };
 
     /* El tipo lo declara el navegador y se puede falsear, así que se acota a
-       lo que la app sabe mostrar y se limita el peso. */
-    const permitidos = ['image/webp', 'image/jpeg', 'image/png', 'video/mp4', 'video/webm'];
-
-    if (!permitidos.includes(archivo.type)) {
+       lo que la app sabe mostrar y se limita el peso. Al servirlo se vuelve a
+       comprobar, porque esto solo no garantiza qué hay adentro. */
+    if (!TIPOS_MEDIA.includes(archivo.type)) {
       return error('Formato no permitido', 415, cors);
     }
 
@@ -5042,11 +5080,26 @@ async function enrutar(
       return error('No encontrado', 404, cors);
     }
 
+    /* El tipo se vuelve a acotar al servir y no se confía en lo que quedó
+       guardado: si algún día entrara un archivo con un tipo que no
+       corresponde, acá se sirve como binario en vez de como algo que el
+       navegador podría ejecutar. */
+    const guardado = objeto.httpMetadata?.contentType ?? '';
+    const tipo = TIPOS_MEDIA.includes(guardado) ? guardado : 'application/octet-stream';
+
     return new Response(objeto.body, {
       headers: {
-        'Content-Type': objeto.httpMetadata?.contentType ?? 'application/octet-stream',
+        'Content-Type': tipo,
         /* Inmutable: la clave incluye un uuid, así que el archivo nunca cambia. */
         'Cache-Control': 'public, max-age=31536000, immutable',
+        /* Que el navegador no lo interprete como otra cosa, y que nada de lo
+           que venga de acá se ejecute: un archivo subido por un usuario no
+           tiene por qué correr scripts en el dominio de la API. */
+        'X-Content-Type-Options': 'nosniff',
+        'Content-Security-Policy': "default-src 'none'; sandbox",
+        /* Se descarga en vez de abrirse, salvo las imágenes y videos que la
+           app muestra: si algo se coló con otro tipo, no se abre solo. */
+        'Content-Disposition': TIPOS_MEDIA.includes(guardado) ? 'inline' : 'attachment',
         ...cors,
       },
     });

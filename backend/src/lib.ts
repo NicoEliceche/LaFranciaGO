@@ -35,6 +35,21 @@ const baseHeaders = {
   'Content-Type': 'application/json; charset=utf-8',
   /* El navegador no debe adivinar el tipo: es un vector de XSS conocido. */
   'X-Content-Type-Options': 'nosniff',
+  /* La API no se muestra dentro de un marco. Sin esto, otro sitio podría
+     embeberla y engañar a alguien para que haga clic donde no cree. */
+  'X-Frame-Options': 'DENY',
+  /* Sólo por HTTPS, y que el navegador lo recuerde. Una sola petición en
+     claro alcanza para que alguien en el medio robe la cookie de sesión. */
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  /* Al salir hacia otro sitio no se manda la dirección completa: las
+     direcciones de la API llevan ids de pedidos y de comercios. */
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  /* La API no necesita cámara, micrófono ni ubicación: si algo los pide
+     desde acá, es que algo anda mal. */
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+  /* Nada de lo que devuelve la API se ejecuta ni se muestra como página, así
+     que se corta todo por las dudas. */
+  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'",
 };
 
 /**
