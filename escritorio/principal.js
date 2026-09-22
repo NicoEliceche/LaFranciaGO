@@ -163,21 +163,38 @@ async function crearVentana() {
   });
 }
 
-app.whenReady().then(async () => {
-  await cargarAjustes();
-  await abrirBaseLocal();
-  await crearVentana();
+/* Una sola ventana por maquina. Dos abiertas contra la misma caja son dos
+   personas cobrando sin verse, y al cerrar el turno la plata no da.
 
-  /* Se consulta despues de abrir: enterarse de que hay una version nueva no
-     puede demorar el arranque del mostrador. */
-  void consultarVersion();
+   Pasa sin querer: el icono se toca dos veces porque la primera no parecio
+   hacer nada. Windows no lo impide solo, hay que pedir el candado.
 
-  /* Una sola instancia: dos ventanas abiertas contra la misma caja llevan a
-     dos personas cobrando sin verse. */
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) void crearVentana();
+   Si no se consigue, es que ya hay otra corriendo: esta se va sin abrir
+   nada, y la que estaba se trae al frente. */
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (!ventana) return;
+
+    if (ventana.isMinimized()) ventana.restore();
+    ventana.focus();
   });
-});
+
+  app.whenReady().then(async () => {
+    await cargarAjustes();
+    await abrirBaseLocal();
+    await crearVentana();
+
+    /* Se consulta despues de abrir: enterarse de que hay una version nueva no
+       puede demorar el arranque del mostrador. */
+    void consultarVersion();
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) void crearVentana();
+    });
+  });
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

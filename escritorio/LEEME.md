@@ -54,6 +54,29 @@ ok · titulo="LaFranciaGO | Marketplace local" · http://localhost:8087/
 FALLO · titulo="LaFranciaGO" · data:text/html...
 ```
 
+Al terminar cierra todo lo que abrió. Vale aclararlo porque no es gratis:
+Chromium abre varios procesos por ventana, y en Windows cerrar el que
+arrancamos deja los otros vivos con su ventana puesta. Por eso usa
+`taskkill /T`, que baja el árbol entero.
+
+## Una sola ventana por máquina
+
+Si la aplicación ya está abierta y se la vuelve a abrir, la segunda se cierra
+sola y trae al frente la que estaba.
+
+No es un detalle de prolijidad: pasa cuando alguien toca el ícono dos veces
+porque la primera no pareció hacer nada, y dos ventanas contra la misma caja
+son dos personas cobrando sin verse. Al cerrar el turno la plata no da y no
+hay forma de saber por qué.
+
+Para comprobarlo, con la aplicación abierta:
+
+```bash
+npx electron .
+```
+
+No debe aparecer una ventana nueva.
+
 ## Si aparece "Electron failed to install correctly"
 
 Electron necesita bajar el binario de Chromium —unos 270 MB que no vienen en
