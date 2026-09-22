@@ -26,3 +26,7 @@ backend/.dev.vars.*
 # Maqueta de referencia del login: 177 KB con la imagen embebida, y ya
 # está implementada en IngresarScreen.
 public/media/login_gamer_responsive.html
+
+# Informes de Lighthouse: 7 MB de JSON que se regeneran corriendo la
+# medicion de nuevo, y el repositorio es publico.
+informes/

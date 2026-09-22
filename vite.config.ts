@@ -55,8 +55,16 @@ export default defineConfig(({ command }) => ({
       output: {
         /* Se separan las dependencias grandes para que el bundle inicial
            no arrastre el mapa ni todo el set de íconos. */
+        /* Las librerías que casi no cambian van en trozos propios: así un
+           despliegue que toca sólo pantallas no obliga a volver a bajar React
+           ni los íconos, que el navegador ya tenía guardados.
+
+           No baja lo que se descarga la primera vez, pero sí lo que se
+           descarga cada vez que se publica algo. */
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
+          estilos: ['styled-components'],
+          iconos: ['lucide-react'],
         },
       },
     },

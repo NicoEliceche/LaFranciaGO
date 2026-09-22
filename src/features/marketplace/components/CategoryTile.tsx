@@ -17,7 +17,15 @@ export function CategoryTile({ id, name, to, count, priority }: CategoryTileProp
   return (
     <CategoryTileShell to={to}>
       <MediaFrame $ratio="1 / 1">
-        <MediaImage src={categoryImage(id)} alt={name} loading={priority ? 'eager' : 'lazy'} />
+        {/* La imagen es decorativa: el nombre del rubro ya está escrito
+            abajo, así que con alt un lector de pantalla lo decía dos veces
+            —"Almacén, imagen, Almacén"—. Vacío y aria-hidden la saltea. */}
+        <MediaImage
+          src={categoryImage(id)}
+          alt=""
+          aria-hidden="true"
+          loading={priority ? 'eager' : 'lazy'}
+        />
         {typeof count === 'number' ? (
           <CategoryTileCount>
             {count} {count === 1 ? 'negocio' : 'negocios'}

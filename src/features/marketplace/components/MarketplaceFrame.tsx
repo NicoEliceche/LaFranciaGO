@@ -667,9 +667,13 @@ export function MarketplaceFrame({
               ) : null}
 
               <HeaderActionsRow aria-label="Acciones rápidas">
+              {/* La etiqueta arranca con el texto que se ve y sigue con lo que
+                  hace el botón, separado por coma y no por punto: quien navega
+                  por voz dice "entregar en" y tiene que activarse el mismo
+                  botón que ve alguien mirando. */}
               <AddressButton
                 type="button"
-                aria-label={`Entregar en ${address.label}. Cambiar dirección`}
+                aria-label={`Entregar en ${address.label}, cambiar dirección`}
                 aria-haspopup="dialog"
                 aria-expanded={addressOpen}
                 onClick={() => setAddressOpen(true)}

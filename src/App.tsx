@@ -5,18 +5,20 @@ import { ThemeProvider } from '@core/theme';
 import { MarketplaceHomeScreen } from '@features/marketplace/screens/MarketplaceHomeScreen';
 import { RutaPrivada } from '@features/marketplace/components/RutaPrivada';
 import { PortadaOIngreso } from '@features/marketplace/components/PortadaOIngreso';
+import { Ingreso } from '@features/marketplace/screens/Ingreso';
 import { RutaGestion } from '@features/gestion/components/RutaGestion';
 
 /**
- * Sólo Inicio viaja en el bundle principal: es la primera pantalla y debe
- * pintar cuanto antes. El resto se descarga al navegar, lo que baja el peso
- * inicial sin cambiar nada de la interfaz.
+ * Inicio y el ingreso viajan en el bundle principal: son las dos primeras
+ * pantallas —la portada con sesión, el ingreso sin ella— y tienen que pintar
+ * cuanto antes. Diferido, el ingreso esperaba un segundo viaje después del
+ * JavaScript principal y el título tardaba 4,5 s en aparecer.
+ *
+ * El resto se descarga al navegar, lo que baja el peso inicial sin cambiar
+ * nada de la interfaz.
  */
 const AuthScreen = lazy(() =>
   import('@features/marketplace/screens/AuthScreen').then((m) => ({ default: m.AuthScreen })),
-);
-const Ingreso = lazy(() =>
-  import('@features/marketplace/screens/Ingreso').then((m) => ({ default: m.Ingreso })),
 );
 const RecuperarScreen = lazy(() =>
   import('@features/marketplace/screens/RecuperarScreen').then((m) => ({
