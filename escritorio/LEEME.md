@@ -10,6 +10,24 @@ Si mañana se rediseña la caja rápida entera, estos archivos no cambian.
 
 ## Probarlo
 
+Lo más corto, con el servidor de la web ya levantado:
+
+```bash
+restart-desktop.bat
+```
+
+Cierra la ventana si estaba abierta y la abre de nuevo. Es el equivalente de
+`restart.bat` para la web, pero con una diferencia: `restart.bat` cierra al
+programa que ocupa el puerto, y la aplicación de escritorio no ocupa
+ninguno, así que cierra los procesos de Electron. Tienen que ser todos,
+porque Chromium abre varios por ventana y con uno vivo queda la ventana
+puesta.
+
+El puerto sí lo busca, igual que la ventana: si no hay servidor no abre nada
+y dice que falta `npm run dev`.
+
+### A mano
+
 Hacen falta dos terminales.
 
 En la primera, la aplicación web como siempre:
