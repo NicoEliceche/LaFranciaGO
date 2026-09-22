@@ -6,11 +6,11 @@
  *
  * Son cinco, porque el comercio son dos casos distintos:
  *
- *   cliente            el vecino que compra
- *   comercio           el negocio sin el sistema de gestión
- *   comercio premium   el mismo, con el sistema contratado
- *   delivery           el que reparte
- *   fletero            el que hace fletes
+ *   cliente     el vecino que compra
+ *   comercio    el negocio sin el sistema de gestión
+ *   gestion     el mismo, con el sistema contratado
+ *   delivery    el que reparte
+ *   flete       el que hace fletes
  *
  * Las dos cuentas de comercio existen porque ahí está la diferencia que más
  * se confunde: sin el plan se ve el perfil, los productos, los precios y las
@@ -37,19 +37,24 @@ const API = process.env.API_DEMO ?? 'http://127.0.0.1:8787';
 
 /* Una sola contraseña para todas: son cuentas de demostración, se muestran en
    pantalla y se rehacen cuando haga falta. Que sea la misma evita el error de
-   probar una cuenta con la contraseña de otra. */
-const CLAVE = 'Demo2026!';
+   probar una cuenta con la contraseña de otra.
+
+   Tiene ocho caracteres porque ese es el mínimo del registro, y el dominio
+   lleva punto por la misma razón. Aflojar cualquiera de las dos
+   comprobaciones para la demo las aflojaría también para las cuentas de
+   verdad. */
+const CLAVE = 'demo1234';
 
 const CUENTAS = [
   {
-    email: 'cliente@demo.lafranciago.ar',
+    email: 'cliente@demo.ar',
     nombre: 'Ana, clienta',
     telefono: '3564000001',
     rol: null,
     que: 'Compra en el marketplace',
   },
   {
-    email: 'comercio@demo.lafranciago.ar',
+    email: 'comercio@demo.ar',
     nombre: 'Almacén Don Pedro',
     telefono: '3564000002',
     rol: 'comercio',
@@ -63,7 +68,7 @@ const CUENTAS = [
     que: 'Comercio SIN el sistema de gestión',
   },
   {
-    email: 'gestion@demo.lafranciago.ar',
+    email: 'gestion@demo.ar',
     nombre: 'Supermercado La Esquina',
     telefono: '3564000003',
     rol: 'comercio',
@@ -77,14 +82,14 @@ const CUENTAS = [
     que: 'Comercio CON el sistema de gestión',
   },
   {
-    email: 'delivery@demo.lafranciago.ar',
+    email: 'delivery@demo.ar',
     nombre: 'Martín, repartidor',
     telefono: '3564000004',
     rol: 'delivery',
     que: 'Reparte pedidos',
   },
   {
-    email: 'flete@demo.lafranciago.ar',
+    email: 'flete@demo.ar',
     nombre: 'Jorge, fletero',
     telefono: '3564000005',
     rol: 'fletero',
@@ -93,12 +98,12 @@ const CUENTAS = [
 ];
 
 /**
- * Corre una consulta contra la base, local o remota segun se haya pedido.
+ * Corre una consulta contra la base, local o remota según se haya pedido.
  *
  * La consulta va por archivo y no por --command: en Windows hay que llamar a
  * wrangler con shell, y con shell el SQL se parte en palabras sueltas
  * ("SELECT", "id", "FROM"...) que wrangler rechaza como argumentos
- * desconocidos. Un archivo no tiene ese problema y ademas no le pone limite
+ * desconocidos. Un archivo no tiene ese problema y además no le pone límite
  * al largo.
  */
 function sql(consulta) {
@@ -127,8 +132,7 @@ function sql(consulta) {
     );
 
     if (salida.status !== 0) {
-      throw new Error(`fallo la consulta:
-${salida.stderr || salida.stdout}`);
+      throw new Error(`falló la consulta: ${salida.stderr || salida.stdout}`);
     }
 
     return salida.stdout;
@@ -161,55 +165,83 @@ async function registrar(cuenta) {
   throw new Error(`${cuenta.email}: ${respuesta.status} ${cuerpo}`);
 }
 
-/** El id del usuario, para las consultas que siguen. */
-function idDe(email) {
-  const salida = sql(`SELECT id FROM usuarios WHERE email = '${email}'`);
-  const encontrado = /\b([0-9a-f-]{8,})\b/i.exec(salida.replace(/\s+/g, ' '));
+/** Los ids de varios usuarios, de una sola consulta. */
+function idsDe(emails) {
+  const lista = emails.map((correo) => `'${correo}'`).join(', ');
+  const salida = sql(`SELECT id, email FROM usuarios WHERE email IN (${lista})`);
+  const porEmail = {};
 
-  if (!encontrado) throw new Error(`no encuentro el usuario ${email}`);
+  /* La salida de wrangler trae el JSON entre otras líneas, así que se buscan
+     los pares id/email en vez de intentar interpretar todo. */
+  const patron = /"id":\s*"([^"]+)"[\s\S]{0,160}?"email":\s*"([^"]+)"/g;
+  let encontrado = patron.exec(salida);
 
-  return encontrado[1];
+  while (encontrado !== null) {
+    porEmail[encontrado[2]] = encontrado[1];
+    encontrado = patron.exec(salida);
+  }
+
+  return porEmail;
 }
 
 async function principal() {
   console.log(`\nCuentas de demostración — ${REMOTO ? 'PRODUCCIÓN' : 'local'}`);
   console.log(`API: ${API}\n`);
 
+  /* Primero se crean todas por la API, y recién después se toca la base.
+     Separarlo no es prolijidad: cada llamada a wrangler abre su propia
+     conexión a la base local, y hacerlo entre registro y registro reinicia
+     el servidor de desarrollo que está escuchando, que es lo que cortaba la
+     corrida por la mitad. */
+  const creadas = [];
+
   for (const cuenta of CUENTAS) {
-    const estado = await registrar(cuenta);
-    const id = idDe(cuenta.email);
+    creadas.push({ cuenta, estado: await registrar(cuenta) });
+  }
+
+  /* Una sola consulta con todo: los roles, los comercios y el plan, para que
+     wrangler se llame una vez y no una por cuenta. */
+  const ids = idsDe(CUENTAS.map((cuenta) => cuenta.email));
+  const sentencias = [];
+
+  for (const cuenta of CUENTAS) {
+    const id = ids[cuenta.email];
+
+    if (!id) throw new Error(`no encuentro el usuario ${cuenta.email}`);
 
     /* El rol va aprobado de entrada: en la aplicación real lo aprueba un
        administrador, y acá no hay a quién esperar. */
     if (cuenta.rol) {
-      sql(
+      sentencias.push(
         `INSERT OR REPLACE INTO usuario_roles (id, usuario_id, rol, estado)
-         VALUES ('rol-demo-${cuenta.rol}-${id}', '${id}', '${cuenta.rol}', 'aprobado')`,
+         VALUES ('rol-demo-${cuenta.rol}-${id}', '${id}', '${cuenta.rol}', 'aprobado');`,
       );
     }
 
     if (cuenta.comercio) {
-      const comercioId = `com-demo-${id}`;
-
-      sql(
+      sentencias.push(
         `INSERT OR REPLACE INTO comercios
            (id, usuario_id, nombre, rubro_id, rubro_nombre, direccion, telefono,
             estado, gestion_activa, gestion_desde)
-         VALUES ('${comercioId}', '${id}', '${cuenta.comercio.nombre}',
+         VALUES ('com-demo-${id}', '${id}', '${cuenta.comercio.nombre}',
                  '${cuenta.comercio.rubroId}', '${cuenta.comercio.rubro}',
                  '${cuenta.comercio.direccion}', '${cuenta.telefono}', 'aprobado',
                  ${cuenta.gestion ? 1 : 0},
-                 ${cuenta.gestion ? "datetime('now')" : 'NULL'})`,
+                 ${cuenta.gestion ? "datetime('now')" : 'NULL'});`,
       );
     }
+  }
 
-    console.log(`  ${cuenta.email.padEnd(34)} ${estado.padEnd(10)} ${cuenta.que}`);
+  sql(sentencias.join('\n'));
+
+  for (const { cuenta, estado } of creadas) {
+    console.log(`  ${cuenta.email.padEnd(20)} ${estado.padEnd(10)} ${cuenta.que}`);
   }
 
   console.log(`\n  La contraseña de todas: ${CLAVE}\n`);
 }
 
-principal().catch((e) => {
-  console.error(`\nNo se pudieron crear: ${e.message}\n`);
+principal().catch((fallo) => {
+  console.error(`\nNo se pudieron crear: ${fallo.message}\n`);
   process.exit(1);
 });

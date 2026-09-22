@@ -37,6 +37,7 @@ import { MotoDeliveryIcon } from '@shared/components/icons/MotoDeliveryIcon';
 import { useProfilePhoto } from '../profileStore';
 import { AddressSheet } from './AddressSheet';
 import { CuentaSidebar } from './CuentaSidebar';
+import { MenuComercio } from './MenuComercio';
 import { useNotificaciones } from '../useNotificaciones';
 import { SearchBar } from './SearchBar';
 import { GamerThemeToggle } from './GamerThemeToggle';
@@ -662,6 +663,8 @@ export function MarketplaceFrame({
 
           <div style={{ flex: 1 }} aria-hidden="true" />
 
+          <MenuComercio />
+
           <CuentaSidebar />
 
           <DrawerThemeSection>
@@ -779,6 +782,8 @@ export function MarketplaceFrame({
                   })}
                 </DrawerList>
               </DrawerSection>
+
+              <MenuComercio onNavegar={closeOverlays} />
 
               <CuentaSidebar onNavegar={closeOverlays} />
 

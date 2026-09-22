@@ -66,6 +66,16 @@ import { rutasGestion } from './gestion';
 import { rutaVersiones } from './versiones';
 
 /**
+ * Lo que sale por mes el sistema de gestión, en centavos.
+ *
+ * Vive acá y no en las pantallas porque el día que cambie tiene que cambiar
+ * en la web y en las dos aplicaciones del teléfono a la vez. Una copia en
+ * cada lado se desincroniza, y un cartel que diga un precio distinto del que
+ * se cobra es un problema serio.
+ */
+const PRECIO_GESTION_CENTAVOS = 7_999_900;
+
+/**
  * API de LaFranciaGO.
  *
  * Un solo Worker con enrutado a mano: son unas treinta rutas y meter un router
@@ -4182,6 +4192,83 @@ async function enrutar(
       {},
       cors,
     );
+  }
+
+  // ── El plan del sistema de gestión ──
+
+  /**
+   * Cuánto sale y si el comercio ya lo tiene.
+   *
+   * El precio vive acá y no en la pantalla porque el día que cambie tiene que
+   * cambiar en la web y en las dos aplicaciones a la vez. Una copia en cada
+   * lado se desincroniza, y un cartel que diga un precio distinto del que se
+   * cobra es un problema serio.
+   */
+  if (ruta === '/plan-gestion' && metodo === 'GET') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    const fila = await env.DB.prepare(
+      'SELECT gestion_activa, gestion_desde FROM comercios WHERE id = ?',
+    )
+      .bind(propio.comercioId)
+      .first<{ gestion_activa: number; gestion_desde: string | null }>();
+
+    return json(
+      {
+        activo: Boolean(fila?.gestion_activa),
+        desde: fila?.gestion_desde ?? null,
+        precioCentavos: PRECIO_GESTION_CENTAVOS,
+        precio: aPesos(PRECIO_GESTION_CENTAVOS),
+      },
+      {},
+      cors,
+    );
+  }
+
+  /**
+   * Contratar el sistema de gestión.
+   *
+   * Por ahora se activa en el momento. Cuando haya que cobrarlo de verdad,
+   * acá va la preferencia de Mercado Pago y la activación pasa a hacerla el
+   * aviso de pago, igual que con los pedidos: la vuelta del navegador puede
+   * no ocurrir nunca y el pago estar hecho igual.
+   */
+  if (ruta === '/plan-gestion' && metodo === 'POST') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    await env.DB.prepare(
+      `UPDATE comercios
+          SET gestion_activa = 1,
+              gestion_desde = COALESCE(gestion_desde, datetime('now'))
+        WHERE id = ?`,
+    )
+      .bind(propio.comercioId)
+      .run();
+
+    return json({ activo: true }, {}, cors);
+  }
+
+  /** Dar de baja el sistema. Los datos quedan: si vuelve, están. */
+  if (ruta === '/plan-gestion' && metodo === 'DELETE') {
+    const propio = await comercioDelUsuario(request, env, cors);
+
+    if ('respuesta' in propio) {
+      return propio.respuesta;
+    }
+
+    await env.DB.prepare('UPDATE comercios SET gestion_activa = 0 WHERE id = ?')
+      .bind(propio.comercioId)
+      .run();
+
+    return json({ activo: false }, {}, cors);
   }
 
   // ── El sistema de gestión ──

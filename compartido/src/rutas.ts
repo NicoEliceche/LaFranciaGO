@@ -225,6 +225,21 @@ export const ofertasApi = {
   portada: () => api.get<{ ofertas: OfertaPortadaApi[] }>('/ofertas'),
 };
 
+export interface PlanGestionApi {
+  activo: boolean;
+  desde: string | null;
+  /* El precio viene del backend y no se escribe en la pantalla: si estuviera
+     en los dos lados, el día que cambie uno quedaría mintiendo. */
+  precioCentavos: number;
+  precio: number;
+}
+
+export const planGestionApi = {
+  ver: () => api.get<PlanGestionApi>('/plan-gestion'),
+  contratar: () => api.post<{ activo: true }>('/plan-gestion', {}),
+  darDeBaja: () => api.delete<{ activo: false }>('/plan-gestion'),
+};
+
 export const miComercioApi = {
   ver: () =>
     api.get<{ comercio: ComercioApi | null; productos: ProductoApi[] }>('/mi-comercio'),
