@@ -132,6 +132,53 @@ export const postulacionesApi = {
     }>('/postulaciones/mias'),
 };
 
+
+/** Una línea del registro, como se ve en la lista. */
+export interface LineaRegistroApi {
+  id: string;
+  nivel: 'error' | 'aviso' | 'info';
+  area: string | null;
+  mensaje: string;
+  ruta: string | null;
+  metodo: string | null;
+  estado: number | null;
+  usuario_id: string | null;
+  ip: string | null;
+  ms: number | null;
+  creado_en: string;
+}
+
+/** La misma línea con el detalle completo: el stack y el cuerpo. */
+export interface DetalleRegistroApi extends LineaRegistroApi {
+  detalle: string | null;
+}
+
+export const registroApi = {
+  /** Las últimas cien, con los filtros que se apliquen. */
+  ver: (filtros: { nivel?: string; area?: string; buscar?: string; desde?: number } = {}) => {
+    const p = new URLSearchParams();
+
+    if (filtros.nivel) p.set('nivel', filtros.nivel);
+    if (filtros.area) p.set('area', filtros.area);
+    if (filtros.buscar) p.set('buscar', filtros.buscar);
+    if (filtros.desde) p.set('desde', String(filtros.desde));
+
+    const cola = p.toString();
+
+    return api.get<{
+      lineas: LineaRegistroApi[];
+      resumen: Array<{ nivel: string; cuantas: number }>;
+      total: number;
+    }>(`/admin/registro${cola ? `?${cola}` : ''}`);
+  },
+
+  /** El detalle de una, con el stack y el cuerpo que la provocó. */
+  linea: (id: string) => api.get<{ linea: DetalleRegistroApi }>(`/admin/registro/${id}`),
+
+  /** Qué áreas existen, para armar el filtro. */
+  areas: () => api.get<{ areas: Array<{ area: string; cuantas: number }> }>('/admin/registro/areas'),
+};
+
 export const adminApi = {
   postulaciones: (estado = 'pendiente') =>
     api.get<{ postulaciones: PostulacionApi[] }>(`/admin/postulaciones?estado=${estado}`),

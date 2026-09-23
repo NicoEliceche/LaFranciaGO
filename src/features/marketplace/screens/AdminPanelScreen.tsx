@@ -5,6 +5,7 @@ import {
   Ban,
   Clock,
   FileCheck2,
+  FileText,
   Split,
   Star,
   TrendingDown,
@@ -219,6 +220,17 @@ export function AdminPanelScreen() {
                 </AtencionNumero>
                 <AtencionTexto>
                   <AlertTriangle size={13} aria-hidden="true" /> Comercios sin aprobar
+                </AtencionTexto>
+              </AtencionTarjeta>
+
+              {/* El registro no cuenta pendientes: no es algo que haya que
+                  resolver, es adónde se mira cuando algo falló. */}
+              <AtencionTarjeta to="/panel/admin/registro">
+                <AtencionNumero>
+                  <FileText size={20} aria-hidden="true" />
+                </AtencionNumero>
+                <AtencionTexto>
+                  <FileText size={13} aria-hidden="true" /> Registro de errores
                 </AtencionTexto>
               </AtencionTarjeta>
             </AtencionGrilla>

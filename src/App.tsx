@@ -144,6 +144,11 @@ const AdminPostulacionesScreen = lazy(() =>
     default: m.AdminPostulacionesScreen,
   })),
 );
+const AdminRegistroScreen = lazy(() =>
+  import('@features/marketplace/screens/AdminRegistroScreen').then((m) => ({
+    default: m.AdminRegistroScreen,
+  })),
+);
 const AdminPanelScreen = lazy(() =>
   import('@features/marketplace/screens/AdminPanelScreen').then((m) => ({ default: m.AdminPanelScreen })),
 );
@@ -408,6 +413,17 @@ function App() {
               element={
                 <RutaPrivada>
                   <AdminPostulacionesScreen />
+                </RutaPrivada>
+              }
+            />
+            {/* El registro de errores. Como el resto de administración, acá
+                sólo se pide sesión: quién puede verlo lo decide el servidor,
+                que responde 404 a quien no es administrador. */}
+            <Route
+              path="/panel/admin/registro"
+              element={
+                <RutaPrivada>
+                  <AdminRegistroScreen />
                 </RutaPrivada>
               }
             />

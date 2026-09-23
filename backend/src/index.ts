@@ -64,6 +64,7 @@ import {
 } from './comercio';
 import { rutasGestion } from './gestion';
 import { limiteAlcanzado, limpiarVentanasViejas } from './limite';
+import { anotar, anotarFallo, limpiarRegistro } from './registro';
 import { rutaVersiones } from './versiones';
 
 /**
@@ -100,15 +101,25 @@ export default {
   async fetch(request: Request, env: Env, contexto: ExecutionContext): Promise<Response> {
     const cors = corsHeaders(request, env);
 
-    /* Cada tanto se barren las ventanas viejas del limitador, en segundo
-       plano: waitUntil deja que la respuesta salga y la limpieza siga
-       después, así no le agrega tiempo a nadie.
+    /* Cada tanto se barren las ventanas viejas del limitador y el registro,
+       en segundo plano: waitUntil deja que la respuesta salga y la limpieza
+       siga después, así no le agrega tiempo a nadie.
 
-       Una de cada doscientas peticiones alcanza: la tabla crece de a una fila
-       por IP y por minuto. */
+       Una de cada doscientas peticiones alcanza: la tabla del limitador crece
+       de a una fila por IP y por minuto. */
     if (Math.random() < 0.005) {
       contexto.waitUntil(limpiarVentanasViejas(env));
+      contexto.waitUntil(limpiarRegistro(env));
     }
+
+    /* Para medir cuánto tardó lo que falló: un error que además tarda ocho
+       segundos suele ser otro problema que uno que falla al instante. */
+    const arranque = Date.now();
+
+    /* Se clona acá y no en el catch: el cuerpo es un stream de una sola
+       lectura, y para cuando la petición falla la ruta ya lo consumió. Este
+       clon guarda una copia intacta por si hay que mirarla. */
+    const copia = request.clone();
 
     /* Preflight: el navegador pregunta antes de mandar POST con credenciales. */
     if (request.method === 'OPTIONS') {
@@ -127,16 +138,119 @@ export default {
     if (pasado) return pasado;
 
     try {
-      return await enrutar(request, env, ruta, url, cors);
-    } catch (fallo) {
-      /* El detalle va al log de Cloudflare, no a la respuesta: un stack trace
-         le dice a un atacante qué versión y qué estructura tiene la app. */
-      console.error('Error no controlado', fallo);
+      const respuesta = await enrutar(request, env, ruta, url, cors);
 
+      /* Los 5xx que devuelve el propio código, sin excepción de por medio,
+         también se anotan: son fallas nuestras aunque no hayan roto nada. */
+      if (respuesta.status >= 500) {
+        contexto.waitUntil(
+          anotar(env, 'error', `Respuesta ${respuesta.status} en ${ruta}`, {
+            area: areaDe(ruta),
+            ruta,
+            metodo: request.method,
+            estado: respuesta.status,
+            ip: request.headers.get('CF-Connecting-IP'),
+            ms: Date.now() - arranque,
+          }),
+        );
+      }
+
+      return respuesta;
+    } catch (fallo) {
+      /* Acá cae cualquier excepción que haya escapado de cualquier ruta, sin
+         que haya que acordarse de poner un try en cada una. Se guarda todo lo
+         que hace falta para reconstruir qué pasó: qué se pidió, quién lo
+         pidió, con qué cuerpo, cuánto tardó y en qué línea rompió.
+
+         Es en segundo plano para no demorarle la respuesta a quien ya está
+         viendo un error. */
+      contexto.waitUntil(
+        anotarFallo(env, fallo, {
+          area: areaDe(ruta),
+          ruta,
+          metodo: request.method,
+          estado: 500,
+          usuarioId: await idDeSesion(request, env),
+          ip: request.headers.get('CF-Connecting-IP'),
+          ms: Date.now() - arranque,
+          detalle: await cuerpoDelPedido(copia),
+        }),
+      );
+
+      /* A quien pregunta se le dice sólo que falló: un stack trace le diría a
+         un atacante qué versión y qué estructura tiene la aplicación. El
+         detalle queda del lado de adentro. */
       return error('Error interno', 500, cors);
     }
   },
 };
+
+/* ── Ayudas del registro ── */
+
+/**
+ * A qué parte de la aplicación pertenece una ruta.
+ *
+ * Sirve para filtrar el registro por tema —"mostrame todo lo que falló en
+ * cobros"— sin tener que leer el texto de cada línea.
+ */
+function areaDe(ruta: string): string {
+  const primera = ruta.split('/').filter(Boolean)[0] ?? 'raiz';
+
+  const AREAS: Record<string, string> = {
+    auth: 'sesion',
+    pagos: 'pagos',
+    gestion: 'gestion',
+    delivery: 'reparto',
+    fletes: 'reparto',
+    pedidos: 'pedidos',
+    comercios: 'catalogo',
+    productos: 'catalogo',
+    'mi-comercio': 'comercio',
+    admin: 'admin',
+    media: 'archivos',
+  };
+
+  return AREAS[primera] ?? primera;
+}
+
+/**
+ * Quién era, si había sesión.
+ *
+ * Se envuelve en su propio try porque esto corre mientras se está manejando
+ * un error: si la base está caída, lo que falla es justamente esta consulta,
+ * y no puede tumbar el registro del error original.
+ */
+async function idDeSesion(request: Request, env: Env): Promise<string | null> {
+  try {
+    const usuario = await usuarioActual(request, env);
+
+    return usuario?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * El cuerpo del pedido que falló.
+ *
+ * Es lo que más veces responde "por qué": casi siempre el problema está en un
+ * dato que llegó distinto de lo esperado.
+ *
+ * Se clona antes de leerlo porque el cuerpo es un stream de una sola lectura:
+ * si la ruta ya lo consumió, leerlo de nuevo lanza. Y si viene un archivo, se
+ * omite: no aporta nada y son megabytes.
+ */
+async function cuerpoDelPedido(copia: Request): Promise<unknown> {
+  const tipo = copia.headers.get('Content-Type') ?? '';
+
+  if (!tipo.includes('application/json')) return null;
+
+  try {
+    return await copia.json();
+  } catch {
+    return null;
+  }
+}
 
 async function enrutar(
   request: Request,
@@ -4250,6 +4364,123 @@ async function enrutar(
       {},
       cors,
     );
+  }
+
+  // ── El registro, para quien programa ──
+  //
+  // Sólo administración: acá se ven mensajes de error con datos de la
+  // aplicación y cuerpos de peticiones. No es para el comercio.
+
+  /** Las últimas líneas, con filtros para encontrar lo que se busca. */
+  if (ruta === '/admin/registro' && metodo === 'GET') {
+    const admin = await exigirAdmin(request, env, cors);
+
+    if ('respuesta' in admin) {
+      return admin.respuesta;
+    }
+
+    const nivel = url.searchParams.get('nivel');
+    const area = url.searchParams.get('area');
+    const buscar = url.searchParams.get('buscar');
+    const desde = Number(url.searchParams.get('desde') ?? 0);
+
+    const condiciones: string[] = [];
+    const valores: unknown[] = [];
+
+    /* Cada filtro es una condición con su marcador: los valores nunca se
+       pegan a la consulta. */
+    if (nivel && ['error', 'aviso', 'info'].includes(nivel)) {
+      condiciones.push('nivel = ?');
+      valores.push(nivel);
+    }
+
+    if (area) {
+      condiciones.push('area = ?');
+      valores.push(area);
+    }
+
+    if (buscar) {
+      condiciones.push('(mensaje LIKE ? OR detalle LIKE ? OR ruta LIKE ?)');
+      valores.push(`%${buscar}%`, `%${buscar}%`, `%${buscar}%`);
+    }
+
+    const donde = condiciones.length > 0 ? `WHERE ${condiciones.join(' AND ')}` : '';
+
+    const { results } = await env.DB.prepare(
+      `SELECT id, nivel, area, mensaje, ruta, metodo, estado, usuario_id, ip, ms, creado_en
+         FROM registro
+         ${donde}
+        ORDER BY creado_en DESC
+        LIMIT 100 OFFSET ?`,
+    )
+      .bind(...valores, Math.max(0, desde))
+      .all();
+
+    /* El resumen de las últimas 24 horas: sirve para ver de un vistazo si hay
+       algo raro pasando ahora, sin leer línea por línea. */
+    const resumen = await env.DB.prepare(
+      `SELECT nivel, COUNT(*) AS cuantas
+         FROM registro
+        WHERE creado_en > datetime('now', '-1 day')
+        GROUP BY nivel`,
+    ).all();
+
+    const total = await env.DB.prepare('SELECT COUNT(*) AS cuantas FROM registro').first<{
+      cuantas: number;
+    }>();
+
+    return json(
+      {
+        lineas: results,
+        resumen: resumen.results,
+        total: total?.cuantas ?? 0,
+      },
+      {},
+      cors,
+    );
+  }
+
+  /** Qué áreas hay, para armar el filtro sin inventar nombres.
+   *
+   * Va antes que la ruta con id: "areas" entra en el patrón [w-]+ y la de
+   * abajo se lo quedaría, devolviendo "no encontrada". */
+  if (ruta === '/admin/registro/areas' && metodo === 'GET') {
+    const admin = await exigirAdmin(request, env, cors);
+
+    if ('respuesta' in admin) {
+      return admin.respuesta;
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT area, COUNT(*) AS cuantas
+         FROM registro
+        WHERE area IS NOT NULL
+        GROUP BY area
+        ORDER BY cuantas DESC`,
+    ).all();
+
+    return json({ areas: results }, {}, cors);
+  }
+
+  /** El detalle completo de una línea: el stack y el cuerpo que la provocó. */
+  const lineaRegistro = /^\/admin\/registro\/([\w-]+)$/.exec(ruta);
+
+  if (lineaRegistro && metodo === 'GET') {
+    const admin = await exigirAdmin(request, env, cors);
+
+    if ('respuesta' in admin) {
+      return admin.respuesta;
+    }
+
+    const linea = await env.DB.prepare('SELECT * FROM registro WHERE id = ?')
+      .bind(lineaRegistro[1])
+      .first();
+
+    if (!linea) {
+      return error('No encontrada', 404, cors);
+    }
+
+    return json({ linea }, {}, cors);
   }
 
   // ── El plan del sistema de gestión ──
