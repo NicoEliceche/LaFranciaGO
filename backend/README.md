@@ -194,3 +194,24 @@ Probado contra la API publicada, con base y bucket reales:
 Desde el 1 de septiembre de 2026 Cloudflare corta las consultas al superar el
 límite diario, en lugar de cobrar. Para La Francia, con unos pocos miles de
 habitantes, estos números quedan lejos.
+
+## Migraciones
+
+```bash
+cd backend && npx wrangler d1 migrations apply lafranciago --remote
+```
+
+La base de produccion se creo con `setup.mjs` y no con migraciones, asi que
+la tabla `d1_migrations` quedo vacia aunque el esquema estaba completo. Con
+ese desfasaje, `migrations apply` intentaba correr todo desde `0001` y moria
+en `table usuarios already exists`, sin aplicar nada.
+
+Se corrigio el 24 de septiembre de 2026 anotando las 21 migraciones
+existentes como aplicadas. De ahi en mas el comando funciona normal: aplica
+solo lo nuevo.
+
+Si vuelve a pasar en otra base, el arreglo es el mismo: comprobar que el
+esquema ya este (`PRAGMA table_info`, `sqlite_master`), y recien entonces
+registrar las migraciones ya contenidas en `d1_migrations` sin ejecutarlas.
+Nunca al reves: anotar una migracion que no se aplico deja la base a medias
+sin que nada avise.
