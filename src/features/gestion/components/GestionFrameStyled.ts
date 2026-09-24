@@ -23,6 +23,15 @@ export const Marco = styled.div`
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     grid-template-columns: 15rem minmax(0, 1fr);
   }
+
+  /* Plegado, el lateral queda del ancho de un ícono y el contenido se lleva
+     el resto: en un sistema de gestión esas 12rem son dos columnas más de
+     una tabla. */
+  &[data-plegado='si'] {
+    @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+      grid-template-columns: 3.75rem minmax(0, 1fr);
+    }
+  }
 `;
 
 export const Lateral = styled.aside`
@@ -41,6 +50,12 @@ export const Lateral = styled.aside`
 
     background: ${({ theme }) => theme.color.surface};
     border-inline-end: 1px solid ${({ theme }) => theme.color.border};
+  }
+
+  &[data-plegado='si'] {
+    @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+      padding-inline: ${({ theme }) => theme.spacing[1]};
+    }
   }
 `;
 
@@ -66,6 +81,19 @@ export const MarcaLateral = styled.div`
 
 export const GrupoLateral = styled.div`
   margin-top: ${({ theme }) => theme.spacing[3]};
+
+  /* Plegado no hay lugar para el título del grupo; queda la línea que
+     separa, que alcanza para que no sea una lista corrida. */
+  [data-plegado='si'] & > h3 {
+    @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+      height: 1px;
+      margin: 0 0 ${({ theme }) => theme.spacing[1]};
+      padding: 0;
+      overflow: hidden;
+      color: transparent;
+      background: ${({ theme }) => theme.color.border};
+    }
+  }
 
   > h3 {
     margin: 0 0 ${({ theme }) => theme.spacing[1]};
@@ -126,9 +154,47 @@ export const ItemLateral = styled.button`
     outline-offset: 2px;
   }
 
+  /* Plegado se va el texto y queda el ícono centrado. El nombre sigue
+     estando en el globo del botón. */
+  &[data-comprimido='si'] {
+    @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+      justify-content: center;
+      gap: 0;
+
+      > span {
+        display: none;
+      }
+    }
+  }
+
+  /* Plegar el menú no tiene sentido en el teléfono: ahí el menú entero se
+     cierra al elegir algo. */
+  &[data-solo-escritorio='si'] {
+    display: none;
+
+    @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+      display: flex;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     transition: none;
   }
+`;
+
+/**
+ * El pie del menú: salir, cambiar el tema y plegar.
+ *
+ * Va al fondo y separado del resto porque no son secciones del sistema sino
+ * cosas sobre el sistema. Mezclarlas con "Ventas" y "Caja" hace dudar de si
+ * son otra pantalla más.
+ */
+export const PieLateral = styled.div`
+  display: grid;
+  gap: 0.1rem;
+  margin-top: auto;
+  padding-top: ${({ theme }) => theme.spacing[3]};
+  border-block-start: 1px solid ${({ theme }) => theme.color.border};
 `;
 
 export const Contador = styled.span`
@@ -238,5 +304,71 @@ export const Cajon = styled.nav`
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     display: none;
+  }
+`;
+
+/**
+ * Volver a la aplicación.
+ *
+ * Se entra al sistema desde el botón dorado del menú, pero hasta ahora no
+ * había por dónde salir: el comercio quedaba adentro y dependía del botón
+ * de atrás del navegador, que en la aplicación instalada no está.
+ *
+ * Va arriba del todo en el pie y con la flecha a la izquierda, que es como se
+ * lee "salir de acá" en cualquier pantalla.
+ */
+export const VolverALaApp = styled.button`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing[2]};
+  border: 0;
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: transparent;
+  color: ${({ theme }) => theme.color.textMuted};
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+
+  > svg {
+    flex: none;
+  }
+
+  > span {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &:hover {
+    background: ${({ theme }) => theme.color.surfaceMuted};
+    color: ${({ theme }) => theme.color.text};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.primary};
+    outline-offset: 2px;
+  }
+
+  &[data-comprimido='si'] {
+    @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+      justify-content: center;
+      gap: 0;
+
+      > span {
+        display: none;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 `;

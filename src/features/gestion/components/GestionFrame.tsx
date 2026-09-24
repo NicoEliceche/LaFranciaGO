@@ -9,6 +9,7 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
+  ArrowLeft,
   ArrowLeftRight,
   BadgePercent,
   BarChart3,
@@ -17,16 +18,22 @@ import {
   Menu,
   MessagesSquare,
   Monitor,
+  Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
   Receipt,
   ScanBarcode,
   Store,
   FileText,
   HandCoins,
+  Sun,
   Truck,
   Users,
   Wallet,
   X,
 } from 'lucide-react';
+
+import { useThemeMode } from '@core/theme/ThemeProvider';
 
 import { disponible } from '../entorno';
 import { AvisoActualizacion } from './AvisoActualizacion';
@@ -42,6 +49,8 @@ import {
   ItemLateral,
   Lateral,
   Marco,
+  PieLateral,
+  VolverALaApp,
 } from './GestionFrameStyled';
 
 interface Entrada {
@@ -119,7 +128,36 @@ interface GestionFrameProps {
 export function GestionFrame({ titulo, children, acciones, sinLeer = 0 }: GestionFrameProps) {
   const navegar = useNavigate();
   const { pathname } = useLocation();
+  const { isDarkMode, toggleMode } = useThemeMode();
   const [cajonAbierto, setCajonAbierto] = useState(false);
+
+  /* Si el lateral está plegado, en escritorio. Se recuerda entre pantallas
+     porque es una preferencia de cómo trabajar, no de dónde se está: quien
+     lo plegó para ver más columnas no quiere volver a plegarlo en cada
+     sección. */
+  const [plegado, setPlegado] = useState(() => {
+    try {
+      return window.localStorage.getItem('gestion:lateral') === 'plegado';
+    } catch {
+      /* Navegador sin almacenamiento (ventana privada): se abre entero, que
+         es lo que espera quien entra por primera vez. */
+      return false;
+    }
+  });
+
+  const alternarPlegado = () => {
+    setPlegado((antes) => {
+      const ahora = !antes;
+
+      try {
+        window.localStorage.setItem('gestion:lateral', ahora ? 'plegado' : 'abierto');
+      } catch {
+        /* Que no se recuerde no es motivo para no plegarlo ahora. */
+      }
+
+      return ahora;
+    });
+  };
 
   /* Al cambiar de pantalla el cajón se cierra solo: si no, queda tapando lo
      que la persona acaba de elegir. */
@@ -136,7 +174,10 @@ export function GestionFrame({ titulo, children, acciones, sinLeer = 0 }: Gestio
     return () => window.removeEventListener('keydown', alSalir);
   }, [cajonAbierto]);
 
-  const menu = (
+  /* El menú se dibuja dos veces —al costado en escritorio, en el cajón en el
+     teléfono— y en el cajón nunca va plegado: ahí el espacio no es el
+     problema, y un menú de íconos sueltos no se entiende. */
+  const dibujarMenu = (comprimido: boolean) => (
     <>
       {GRUPOS.map((grupo) => (
         <GrupoLateral key={grupo.titulo}>
@@ -144,9 +185,11 @@ export function GestionFrame({ titulo, children, acciones, sinLeer = 0 }: Gestio
 
           {grupo.entradas.map((entrada) => {
             const Icono = entrada.icono;
-            /* La ruta del resumen es prefijo de todas: se compara exacto. */
-            const activo =
-              entrada.ruta === '/gestion' ? pathname === '/gestion' : pathname.startsWith(entrada.ruta);
+            /* Se compara exacto y no por prefijo. Con `startsWith`, "Caja"
+               (/gestion/caja) se pintaba también estando en "Caja rápida"
+               (/gestion/caja-rapida), porque una ruta empieza con la otra.
+               Todas las secciones son hermanas, ninguna cuelga de otra. */
+            const activo = pathname === entrada.ruta;
             const sePuede = !entrada.funcion || disponible(entrada.funcion);
 
             return (
@@ -154,8 +197,17 @@ export function GestionFrame({ titulo, children, acciones, sinLeer = 0 }: Gestio
                 key={entrada.id}
                 type="button"
                 data-activo={activo ? 'si' : 'no'}
+                data-comprimido={comprimido ? 'si' : 'no'}
                 onClick={() => navegar(entrada.ruta)}
-                title={sePuede ? undefined : 'Funciona en la computadora del negocio'}
+                /* Plegado, el nombre sólo está en el globo: sin esto queda una
+                   columna de íconos que hay que adivinar. */
+                title={
+                  sePuede
+                    ? comprimido
+                      ? entrada.nombre
+                      : undefined
+                    : 'Funciona en la computadora del negocio'
+                }
               >
                 <Icono size={17} aria-hidden="true" />
                 <span>{entrada.nombre}</span>
@@ -166,12 +218,63 @@ export function GestionFrame({ titulo, children, acciones, sinLeer = 0 }: Gestio
           })}
         </GrupoLateral>
       ))}
+
+      <PieLateral>
+        {/* La salida hacia la aplicación. Se entra al sistema desde el menú
+            dorado, pero no había por dónde volver: el comercio quedaba
+            adentro y tenía que usar el botón del navegador, que en el
+            teléfono instalado no existe. */}
+        <VolverALaApp
+          type="button"
+          data-comprimido={comprimido ? 'si' : 'no'}
+          onClick={() => navegar('/panel/comercio')}
+          title={comprimido ? 'Volver a la app' : undefined}
+        >
+          <ArrowLeft size={17} aria-hidden="true" />
+          <span>Volver a la app</span>
+        </VolverALaApp>
+
+        <ItemLateral
+          type="button"
+          data-activo="no"
+          data-comprimido={comprimido ? 'si' : 'no'}
+          onClick={toggleMode}
+          title={comprimido ? (isDarkMode ? 'Modo día' : 'Modo noche') : undefined}
+        >
+          {isDarkMode ? (
+            <Sun size={17} aria-hidden="true" />
+          ) : (
+            <Moon size={17} aria-hidden="true" />
+          )}
+          <span>{isDarkMode ? 'Modo día' : 'Modo noche'}</span>
+        </ItemLateral>
+
+        {/* Plegar es sólo de escritorio: en el teléfono el menú ya se cierra
+            entero al elegir algo. */}
+        <ItemLateral
+          type="button"
+          data-activo="no"
+          data-comprimido={comprimido ? 'si' : 'no'}
+          data-solo-escritorio="si"
+          onClick={alternarPlegado}
+          title={comprimido ? 'Ampliar el menú' : undefined}
+        >
+          {comprimido ? (
+            <PanelLeftOpen size={17} aria-hidden="true" />
+          ) : (
+            <PanelLeftClose size={17} aria-hidden="true" />
+          )}
+          <span>Plegar el menú</span>
+        </ItemLateral>
+      </PieLateral>
     </>
   );
 
   return (
-    <Marco>
-      <Lateral aria-label="Secciones de la gestión">{menu}</Lateral>
+    <Marco data-plegado={plegado ? 'si' : 'no'}>
+      <Lateral aria-label="Secciones de la gestión" data-plegado={plegado ? 'si' : 'no'}>
+        {dibujarMenu(plegado)}
+      </Lateral>
 
       <Cuerpo>
         <BarraSuperior>
@@ -204,7 +307,7 @@ export function GestionFrame({ titulo, children, acciones, sinLeer = 0 }: Gestio
             >
               <X size={19} aria-hidden="true" />
             </BotonMenu>
-            {menu}
+            {dibujarMenu(false)}
           </Cajon>
         </>
       ) : null}

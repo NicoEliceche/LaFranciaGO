@@ -125,6 +125,12 @@ const ContratarGestionScreen = lazy(() =>
     default: m.ContratarGestionScreen,
   })),
 );
+const GestionComercioScreen = lazy(() =>
+  import('@features/gestion/screens/GestionComercioScreen').then((m) => ({
+    default: m.GestionComercioScreen,
+  })),
+);
+
 const MostradorScreen = lazy(() =>
   import('@features/gestion/screens/MostradorScreen').then((m) => ({ default: m.MostradorScreen })),
 );
@@ -368,6 +374,23 @@ function App() {
                 </RutaGestion>
               }
             />
+            {/* Estas cinco secciones son las mismas del panel del comercio,
+                dibujadas adentro del sistema. Sin estas rutas, el menú de la
+                gestión las ofrecía y el router mandaba a la portada: el
+                comercio terminaba afuera del sistema sin haberlo pedido. */}
+            {(['pedidos', 'envios', 'productos', 'ofertas', 'chats'] as const).map(
+              (seccion) => (
+                <Route
+                  key={seccion}
+                  path={`/gestion/${seccion}`}
+                  element={
+                    <RutaGestion>
+                      <GestionComercioScreen seccion={seccion} />
+                    </RutaGestion>
+                  }
+                />
+              ),
+            )}
             <Route
               path="/panel/comercio/metricas"
               element={

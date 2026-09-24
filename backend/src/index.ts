@@ -76,7 +76,31 @@ import { rutaVersiones } from './versiones';
  * cada lado se desincroniza, y un cartel que diga un precio distinto del que
  * se cobra es un problema serio.
  */
-const PRECIO_GESTION_CENTAVOS = 7_999_900;
+/**
+ * Los planes del sistema de gestión.
+ *
+ * "go" es el sistema del mostrador completo: cobrar, caja, fiado, stock,
+ * pedidos de la aplicación. Es el que va a usar casi todo comercio.
+ *
+ * "pro" agrega lo que sirve cuando el negocio crece: los informes que
+ * explican qué se gana de verdad, y manejar más de un local desde la misma
+ * cuenta.
+ *
+ * Los precios viven acá y no en la pantalla: el que cobra es el servidor, y
+ * un precio escrito en el navegador lo puede cambiar cualquiera.
+ */
+const PLANES_GESTION = {
+  go: { id: 'go', nombre: 'Comercio GO', precioCentavos: 9_999_900 },
+  pro: { id: 'pro', nombre: 'Comercio GO PRO', precioCentavos: 14_999_900 },
+} as const;
+
+type PlanGestion = keyof typeof PLANES_GESTION;
+
+const esPlanValido = (valor: unknown): valor is PlanGestion =>
+  valor === 'go' || valor === 'pro';
+
+/** Lo que sólo trae el PRO. El resto del sistema entra en los dos. */
+const SOLO_PRO = ['informes'] as const;
 
 /**
  * Los únicos tipos de archivo que se aceptan y se sirven.
@@ -4579,17 +4603,29 @@ async function enrutar(
     }
 
     const fila = await env.DB.prepare(
-      'SELECT gestion_activa, gestion_desde FROM comercios WHERE id = ?',
+      'SELECT gestion_activa, gestion_desde, gestion_plan FROM comercios WHERE id = ?',
     )
       .bind(propio.comercioId)
-      .first<{ gestion_activa: number; gestion_desde: string | null }>();
+      .first<{
+        gestion_activa: number;
+        gestion_desde: string | null;
+        gestion_plan: string | null;
+      }>();
 
     return json(
       {
         activo: Boolean(fila?.gestion_activa),
         desde: fila?.gestion_desde ?? null,
-        precioCentavos: PRECIO_GESTION_CENTAVOS,
-        precio: aPesos(PRECIO_GESTION_CENTAVOS),
+        /* Cuál tiene, para que la pantalla marque el contratado y ofrezca
+           pasar al otro en lugar de volver a venderle el mismo. */
+        plan: esPlanValido(fila?.gestion_plan) ? fila.gestion_plan : null,
+        /* Qué secciones son sólo del PRO: así la pantalla no tiene que
+           repetir la lista y quedar desincronizada del servidor. */
+        soloPro: SOLO_PRO,
+        planes: Object.values(PLANES_GESTION).map((plan) => ({
+          ...plan,
+          precio: aPesos(plan.precioCentavos),
+        })),
       },
       {},
       cors,
@@ -4611,16 +4647,25 @@ async function enrutar(
       return propio.respuesta;
     }
 
+    const cuerpo = await leerJson<{ plan?: string }>(request);
+
+    /* Sin plan válido no se activa nada: el precio depende de esto, y
+       adivinar el más caro o el más barato está mal de las dos maneras. */
+    if (!esPlanValido(cuerpo.plan)) {
+      return error('Elegí un plan.', 400, cors);
+    }
+
     await env.DB.prepare(
       `UPDATE comercios
           SET gestion_activa = 1,
+              gestion_plan = ?,
               gestion_desde = COALESCE(gestion_desde, datetime('now'))
         WHERE id = ?`,
     )
-      .bind(propio.comercioId)
+      .bind(cuerpo.plan, propio.comercioId)
       .run();
 
-    return json({ activo: true }, {}, cors);
+    return json({ activo: true, plan: cuerpo.plan }, {}, cors);
   }
 
   /** Dar de baja el sistema. Los datos quedan: si vuelve, están. */
@@ -4659,13 +4704,22 @@ async function enrutar(
        es comodidad: quien escriba la dirección a mano llega igual, y la
        decisión de quién entra no puede vivir en el navegador. */
     const plan = await env.DB.prepare(
-      'SELECT gestion_activa FROM comercios WHERE id = ?',
+      'SELECT gestion_activa, gestion_plan FROM comercios WHERE id = ?',
     )
       .bind(propio.comercioId)
-      .first<{ gestion_activa: number }>();
+      .first<{ gestion_activa: number; gestion_plan: string | null }>();
 
     if (!plan?.gestion_activa) {
       return error('Tu comercio no tiene el sistema de gestión activo', 403, cors);
+    }
+
+    /* Los informes son del PRO. Va acá por lo mismo que la guardia de
+       arriba: esconder el botón no alcanza, quien escriba la dirección a
+       mano llega igual. */
+    const seccion = ruta.split('/')[2] ?? '';
+
+    if (SOLO_PRO.includes(seccion as (typeof SOLO_PRO)[number]) && plan.gestion_plan !== 'pro') {
+      return error('Esta sección es del plan Comercio GO PRO', 403, cors);
     }
 
     const respuesta = await rutasGestion(ruta, metodo, request, {

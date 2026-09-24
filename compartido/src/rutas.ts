@@ -296,18 +296,33 @@ export const ofertasApi = {
   portada: () => api.get<{ ofertas: OfertaPortadaApi[] }>('/ofertas'),
 };
 
-export interface PlanGestionApi {
-  activo: boolean;
-  desde: string | null;
+/** Cuál de los dos planes del sistema de gestión. */
+export type PlanGestionId = 'go' | 'pro';
+
+export interface PlanGestionOpcion {
+  id: PlanGestionId;
+  nombre: string;
   /* El precio viene del backend y no se escribe en la pantalla: si estuviera
-     en los dos lados, el día que cambie uno quedaría mintiendo. */
+     en los dos lados, el día que cambie uno quedaría mintiendo. Y el que
+     cobra es el servidor, así que es el único que puede decirlo. */
   precioCentavos: number;
   precio: number;
 }
 
+export interface PlanGestionApi {
+  activo: boolean;
+  desde: string | null;
+  /** Cuál tiene contratado, si tiene alguno. */
+  plan: PlanGestionId | null;
+  /** Qué secciones son sólo del PRO, según el servidor. */
+  soloPro: string[];
+  planes: PlanGestionOpcion[];
+}
+
 export const planGestionApi = {
   ver: () => api.get<PlanGestionApi>('/plan-gestion'),
-  contratar: () => api.post<{ activo: true }>('/plan-gestion', {}),
+  contratar: (plan: PlanGestionId) =>
+    api.post<{ activo: true; plan: PlanGestionId }>('/plan-gestion', { plan }),
   darDeBaja: () => api.delete<{ activo: false }>('/plan-gestion'),
 };
 

@@ -1,4 +1,4 @@
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BadgePercent,
   BarChart3,
@@ -243,7 +243,31 @@ const desdeCuando = (iso: string) => {
   return `hace ${Math.round(minutos / 60)} h`;
 };
 
-export function MiComercioScreen() {
+/**
+ * Dónde se dibuja esta pantalla.
+ *
+ * Es la misma en los dos lados —los pedidos, los envíos y los productos del
+ * comercio son los mismos— pero el marco cambia: desde la aplicación va con
+ * el menú del marketplace, y desde el sistema de gestión con el suyo.
+ *
+ * Sin esto, tocar "Pedidos de la app" adentro del sistema sacaba al comercio
+ * a la portada de LaFranciaGO, que es justo lo contrario de lo que espera
+ * quien está trabajando.
+ */
+interface MiComercioScreenProps {
+  /** El marco que envuelve la pantalla. Por defecto, el del marketplace. */
+  marco?: (contenido: ReactNode) => JSX.Element;
+  /** Con qué sección abrir, cuando la elige el menú de la gestión. */
+  seccionInicial?: Seccion;
+  /** Si deja cambiar de sección desde las pestañas de arriba. */
+  conPestanas?: boolean;
+}
+
+export function MiComercioScreen({
+  marco,
+  seccionInicial,
+  conPestanas = true,
+}: MiComercioScreenProps = {}) {
   const [comercio, setComercio] = useState<ComercioApi | null>(null);
   const [productos, setProductos] = useState<ProductoApi[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -253,10 +277,22 @@ export function MiComercioScreen() {
      ?ver=pedidos para abrir los pedidos de una. Sin parámetro se abre en el
      resumen, que es de dónde se mira todo lo demás. */
   const [seccion, setSeccion] = useState<Seccion>(() => {
+    /* Cuando la pantalla vive adentro del sistema de gestión, la sección la
+       elige su menú y no la dirección. */
+    if (seccionInicial) {
+      return seccionInicial;
+    }
+
     const pedida = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('ver');
 
     return SECCIONES.some((item) => item.id === pedida) ? (pedida as Seccion) : 'resumen';
   });
+
+  /* Dentro de la gestión, cambiar de entrada en el menú monta la misma
+     pantalla con otra sección: hay que seguirla. */
+  useEffect(() => {
+    if (seccionInicial) setSeccion(seccionInicial);
+  }, [seccionInicial]);
   const [pedidos, setPedidos] = useState<PedidoComercioApi[]>([]);
   const [envios, setEnvios] = useState<EnvioApi[]>([]);
   const [chat, setChat] = useState<PedidoComercioApi | null>(null);
@@ -549,8 +585,15 @@ export function MiComercioScreen() {
     }
   };
 
-  return (
-    <MarketplaceFrame showSearch={false}>
+  /* El contenido es el mismo; lo que cambia es quién lo envuelve. */
+  const envolver =
+    marco ??
+    ((contenido: ReactNode) => (
+      <MarketplaceFrame showSearch={false}>{contenido}</MarketplaceFrame>
+    ));
+
+  return envolver(
+    <>
       <CompactSection>
         <SectionInner>
           <SectionStack>
@@ -606,7 +649,10 @@ export function MiComercioScreen() {
               </EntradaGestion>
             ) : null}
 
-            {comercio ? (
+            {/* Dentro del sistema de gestión las pestañas sobran: el menú de
+                la izquierda ya elige la sección, y dos navegaciones para lo
+                mismo se contradicen apenas no coinciden. */}
+            {comercio && conPestanas ? (
               <SeccionRow>
                 {SECCIONES.map((item) => (
                   <SeccionChip
@@ -1281,6 +1327,6 @@ export function MiComercioScreen() {
         onCancel={() => setPorBorrar(null)}
         onConfirm={() => void borrar()}
       />
-    </MarketplaceFrame>
+    </>,
   );
 }
