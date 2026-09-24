@@ -25,7 +25,7 @@ import { StoreHero } from '../components/StoreHero';
 import { findStoreById, formatDistance, formatMoney } from '../marketplace.utils';
 import { customerOrders } from '../marketplaceContent';
 import { addToCart } from '../cartStore';
-import { useStoreCatalog } from '../useStoreCatalog';
+import { SECCION_OFERTAS, useStoreCatalog } from '../useStoreCatalog';
 import { useStores } from '../useStores';
 import {
   AccentBadge,
@@ -1006,6 +1006,47 @@ export function StoreProfileScreen() {
     setQuantities(initialQuantities);
   }, [allProducts, store.id]);
 
+  /* Llega con el id de la oferta cuando el cliente la tocó en la portada. */
+  const ofertaBuscada = searchParams.get('oferta');
+
+  /* La sección de ofertas, para bajar hasta ahí. */
+  const ofertasRef = useRef<HTMLDivElement | null>(null);
+
+  /**
+   * Baja hasta las ofertas cuando se entra tocando una.
+   *
+   * Sin esto, tocar una promoción en la portada dejaba al cliente arriba de
+   * todo: veía la ficha del comercio y tenía que buscar a mano lo que acababa
+   * de elegir, que es la clase de cosa por la que alguien se va.
+   *
+   * Espera a que el catálogo esté dibujado —si no, no hay a dónde bajar— y
+   * respeta a quien pidió menos movimiento en el sistema.
+   */
+  useEffect(() => {
+    if (!ofertaBuscada || cargandoCatalogo) {
+      return;
+    }
+
+    const destino = ofertasRef.current;
+
+    if (!destino) {
+      return;
+    }
+
+    const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* Un cuadro de espera: el navegador tiene que terminar de acomodar la
+       lista antes de que la posición a la que baja signifique algo. */
+    const id = window.requestAnimationFrame(() => {
+      destino.scrollIntoView({
+        behavior: sinMovimiento ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    });
+
+    return () => window.cancelAnimationFrame(id);
+  }, [cargandoCatalogo, ofertaBuscada, store.id]);
+
   const selectedSectionProducts = useMemo(() => {
     const normalizedQuery = query.trim();
 
@@ -1258,7 +1299,12 @@ export function StoreProfileScreen() {
 
             {selectedSectionProducts.length > 0 ? (
               selectedSectionProducts.map((section, sectionIndex) => (
-                <SectionStack key={section.id}>
+                <SectionStack
+                  key={section.id}
+                  /* La sección de ofertas es a donde baja el scroll cuando se
+                     entra tocando una promoción de la portada. */
+                  ref={section.id === SECCION_OFERTAS ? ofertasRef : undefined}
+                >
                   <SectionHeading title={section.label} subtitle={section.description} />
 
                   <CatalogGrid>

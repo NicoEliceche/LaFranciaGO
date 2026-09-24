@@ -110,8 +110,13 @@ export function useHomeData() {
           tone: TONO_POR_RUBRO[oferta.rubroId] ?? TONOS[indice % TONOS.length],
           imageLabel: oferta.productos[0]?.nombre ?? oferta.titulo,
           /* Lleva al comercio y no a un producto: una oferta puede ser un
-             combo de varios, y no hay una página que muestre eso sola. */
-          href: `/comercios/${oferta.comercioId}`,
+             combo de varios, y no hay una página que muestre eso sola.
+
+             Va con el id de la oferta para que la ficha del comercio baje
+             sola hasta ella y la resalte. Sin eso, tocar una promoción de la
+             portada dejaba al cliente arriba de todo, teniendo que buscar a
+             mano lo que acababa de elegir. */
+          href: `/comercios/${oferta.comercioId}?oferta=${oferta.id}`,
         };
       }),
     [ofertas, stores],

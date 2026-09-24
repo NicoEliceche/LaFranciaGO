@@ -201,6 +201,31 @@ const ITEMS_COMPRA: DrawerItemData[] = [
   { to: '/favoritos', title: 'Favoritos', subtitle: 'Guardados para después', icon: Heart },
 ];
 
+/* Para el comercio, "Inicio" es su panel y no la portada del marketplace:
+   abre la aplicación para atender, no para comprar. */
+const ITEM_INICIO_COMERCIO: DrawerItemData = {
+  to: '/panel/comercio',
+  title: 'Inicio',
+  subtitle: 'Resumen de tu negocio',
+  icon: Home,
+  end: true,
+};
+
+const ITEMS_COMERCIO: DrawerItemData[] = [
+  {
+    to: '/panel/comercio?ver=negocio',
+    title: 'Mi comercio',
+    subtitle: 'Ficha, horarios y productos',
+    icon: Store,
+  },
+  {
+    to: '/panel/comercio?ver=pedidos',
+    title: 'Mis pedidos',
+    subtitle: 'Lo que entra y hay que preparar',
+    icon: PackageSearch,
+  },
+];
+
 const ITEM_PUBLICAR: DrawerItemData = {
   to: '/registro/comercio',
   title: 'Publicar comercio',
@@ -241,8 +266,8 @@ const ITEM_NOTIFICACIONES: DrawerItemData = {
  * fletero el delivery. Ofrecerle a alguien que se registre en lo que ya hace
  * es ruido, y lo que sí puede sumarle es el otro.
  *
- * El comercio ve lo mismo que el cliente por ahora. Su panel y el sistema de
- * gestión tienen su propia entrada, más abajo.
+ * El comercio tiene su propia lista: lo de comprar no le sirve, y lo que abre
+ * todos los días es su ficha y los pedidos que le entran.
  */
 function menuDe(rol: string | undefined, roles: string[] = []) {
   const esDelivery = rol === 'delivery';
@@ -260,6 +285,19 @@ function menuDe(rol: string | undefined, roles: string[] = []) {
   if (esDelivery || esFletero) {
     return {
       navegacion: [inicioDeReparto(esFletero), ITEM_CUENTA],
+      acciones: [...ofrecimientos, ITEM_NOTIFICACIONES],
+    };
+  }
+
+  /* El comercio no compra desde acá: "Categorías" y "Favoritos" son del
+     cliente que busca dónde comprar. Sus propias categorías las ordena en el
+     panel, que es otra cosa aunque se llame igual.
+
+     En su lugar van las dos pantallas que abre todos los días: su ficha y los
+     pedidos que tiene que preparar. */
+  if (rol === 'comercio') {
+    return {
+      navegacion: [ITEM_INICIO_COMERCIO, ...ITEMS_COMERCIO, ITEM_CUENTA],
       acciones: [...ofrecimientos, ITEM_NOTIFICACIONES],
     };
   }

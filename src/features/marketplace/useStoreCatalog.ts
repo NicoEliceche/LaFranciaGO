@@ -64,6 +64,15 @@ export type SeccionCatalogo = {
 const TONOS: CatalogoTono[] = ['blue', 'green', 'orange', 'violet', 'red', 'slate'];
 
 /**
+ * El id de la sección de ofertas.
+ *
+ * Se exporta porque la pantalla necesita reconocerla para llevar el scroll
+ * hasta ahí cuando alguien llega desde una oferta de la portada. Un texto
+ * suelto en dos archivos se desincroniza el día que alguien lo cambie.
+ */
+export const SECCION_OFERTAS = 'ofertas';
+
+/**
  * Arma la etiqueta que se muestra sobre el producto.
  *
  * Cada tipo se explica distinto: un descuento se dice en porcentaje, una
@@ -192,6 +201,37 @@ export function useStoreCatalog(comercioId: string): Resultado {
               .map((producto, indice) => aProducto(producto, categoria.nombre, indice)),
           }))
           .filter((seccion) => seccion.products.length > 0);
+
+        /* Las ofertas van primero, antes que cualquier categoría.
+
+           Un comercio que arma una promoción la arma para que se vea: si
+           queda repartida entre las categorías, el cliente la encuentra sólo
+           si justo scrollea hasta ahí, y una oferta que no se ve no vende. El
+           producto sigue apareciendo también en su categoría, para quien
+           entra buscando algo puntual y no mirando promociones.
+
+           Se arma a partir de los productos ya convertidos, así la sección
+           muestra exactamente las mismas tarjetas que el resto del catálogo,
+           con su etiqueta y su precio. */
+        const enOferta = productos
+          .filter((producto) => ofertaDe.has(producto.id))
+          .map((producto, indice) =>
+            aProducto(
+              producto,
+              categorias.find((categoria) => categoria.id === producto.categoria_id)?.nombre ??
+                'Otros',
+              indice,
+            ),
+          );
+
+        if (enOferta.length > 0) {
+          secciones.unshift({
+            id: SECCION_OFERTAS,
+            label: 'Ofertas',
+            description: 'Lo que está en promoción ahora.',
+            products: enOferta,
+          });
+        }
 
         const sueltos = productos.filter(
           (producto) =>
