@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   ArrowRight,
@@ -206,7 +206,7 @@ const ITEMS_COMPRA: DrawerItemData[] = [
 const ITEM_INICIO_COMERCIO: DrawerItemData = {
   to: '/panel/comercio',
   title: 'Inicio',
-  subtitle: 'Resumen de tu negocio',
+  subtitle: 'Ventas del día y pendientes',
   icon: Home,
   end: true,
 };
@@ -214,8 +214,10 @@ const ITEM_INICIO_COMERCIO: DrawerItemData = {
 const ITEMS_COMERCIO: DrawerItemData[] = [
   {
     to: '/panel/comercio?ver=negocio',
-    title: 'Mi comercio',
-    subtitle: 'Ficha, horarios y productos',
+    title: 'Mi negocio',
+    /* Se llama como la sección a la que lleva. Decírle "Mi comercio" cuando
+       adentro dice "Mi negocio" hace dudar de si son la misma cosa. */
+    subtitle: 'Ficha pública y horarios',
     icon: Store,
   },
   {
@@ -402,6 +404,57 @@ const topLinks = [
 type EnlaceInferior = { to: string; label: string; icon: AppIcon; end?: boolean };
 
 /**
+ * Si un enlace del menú apunta a lo que se está viendo.
+ *
+ * Hace falta porque los paneles no son pantallas distintas: el repartidor y
+ * el comercio cambian de sección con ?ver=, y para el router todas esas
+ * direcciones son la misma ruta. Con la comparación que trae de fábrica se
+ * pintaban las cuatro a la vez, como si se estuviera en todas.
+ *
+ * Por eso se mira también el ?ver=: es lo único que las diferencia. El resto
+ * de los parámetros no cuenta —un ?pedido= no cambia en qué sección se
+ * está— y el enlace sin ?ver= es el de la sección de entrada, así que
+ * coincide cuando tampoco lo trae la dirección actual.
+ */
+function enlaceActivo(destino: string, rutaActual: string, busquedaActual: string) {
+  const [ruta, consulta] = destino.split('?');
+
+  if (ruta !== rutaActual) {
+    return false;
+  }
+
+  const verDelEnlace = new URLSearchParams(consulta ?? '').get('ver');
+  const verActual = new URLSearchParams(busquedaActual).get('ver');
+
+  return verDelEnlace === verActual;
+}
+
+/**
+ * Lo que hay que pasarle a un enlace del menú para que se pinte bien.
+ *
+ * No alcanza con agregarle una clase: NavLink calcula la suya y además pone
+ * `aria-current`, que el estilo también mira, así que el enlace se pintaba
+ * igual por más que dijéramos lo contrario. Hay que reemplazar las dos
+ * cosas, y como son cinco los lugares donde se dibujan enlaces, salen de una
+ * sola función para que no se desincronicen.
+ */
+function propsDeEnlace(destino: string, rutaActual: string, busquedaActual: string) {
+  const activo = enlaceActivo(destino, rutaActual, busquedaActual);
+
+  return {
+    /* Va como atributo y no como clase: NavLink calcula su propia `active`
+       comparando sólo la ruta, y como estas secciones se distinguen por el
+       ?ver=, para él todas son la misma y las pintaba juntas. Pisarle la
+       clase no se puede —styled-components resuelve la suya antes— así que
+       el estilo mira este atributo, que nadie más toca. */
+    'data-activo': activo ? 'true' : undefined,
+    /* Lo mismo con esto, que NavLink pone por su cuenta: sin apagarlo, el
+       lector de pantalla anuncia cuatro secciones actuales a la vez. */
+    'aria-current': activo ? ('page' as const) : undefined,
+  };
+}
+
+/**
  * La barra de abajo, siempre con cinco botones.
  *
  * Cinco y no los que sobren: el del medio es más grande y sobresale, así que
@@ -476,6 +529,9 @@ export function MarketplaceFrame({
   const { sinLeer: notificationsCount } = useNotificaciones();
 
   const { isDarkMode, toggleMode } = useThemeMode();
+  /* Para saber qué enlace pintar: los paneles cambian de sección con ?ver=,
+     que el router no mira por su cuenta. */
+  const { pathname, search } = useLocation();
   const { usuario } = useSesion();
 
   /* El menu cambia segun el rol activo: quien reparte no ve lo de comprar. */
@@ -827,6 +883,7 @@ export function MarketplaceFrame({
                     key={item.to}
                     to={item.to}
                     end={item.end}
+                    {...propsDeEnlace(item.to, pathname, search)}
                     onClick={(event) => handleDrawerItemClick(event, item.to)}
                   >
                     <DrawerItemIcon aria-hidden="true">
@@ -852,7 +909,12 @@ export function MarketplaceFrame({
                 const Icon = item.icon;
 
                 return (
-                  <DrawerItem key={item.to} to={item.to} onClick={(event) => handleDrawerItemClick(event, item.to)}>
+                  <DrawerItem
+                    key={item.to}
+                    to={item.to}
+                    {...propsDeEnlace(item.to, pathname, search)}
+                    onClick={(event) => handleDrawerItemClick(event, item.to)}
+                  >
                     <DrawerItemIcon aria-hidden="true">
                       <Icon size={18} aria-hidden="true" />
                     </DrawerItemIcon>
@@ -892,7 +954,11 @@ export function MarketplaceFrame({
 
             return (
               <li key={link.to}>
-                <BottomNavLink to={link.to} data-primary={link.to === destacadoAbajo}>
+                <BottomNavLink
+                  to={link.to}
+                  data-primary={link.to === destacadoAbajo}
+                  {...propsDeEnlace(link.to, pathname, search)}
+                >
                   <BottomNavIcon>
                     <Icon size={link.to === destacadoAbajo ? 32 : 18} aria-hidden="true" />
                   </BottomNavIcon>
@@ -945,6 +1011,7 @@ export function MarketplaceFrame({
                         key={item.to}
                         to={item.to}
                         end={item.end}
+                        {...propsDeEnlace(item.to, pathname, search)}
                         onClick={(event) => handleDrawerItemClick(event, item.to)}
                       >
                         <DrawerItemIcon aria-hidden="true">
@@ -973,6 +1040,7 @@ export function MarketplaceFrame({
                       <DrawerItem
                         key={item.to}
                         to={item.to}
+                        {...propsDeEnlace(item.to, pathname, search)}
                         onClick={(event) => handleDrawerItemClick(event, item.to)}
                       >
                         <DrawerItemIcon aria-hidden="true">

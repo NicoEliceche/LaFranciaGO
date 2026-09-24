@@ -826,7 +826,11 @@ export const TopNavLink = styled(NavLink)`
   font-weight: ${({ theme }) => theme.typography.weight.semibold};
   white-space: nowrap;
 
-  &.active {
+  /* Se mira data-activo y no .active ni aria-current: los paneles cambian de
+     seccion con ?ver=, que NavLink no compara, asi que su calculo pintaba
+     todas las secciones a la vez. La pantalla decide cual esta activa y lo
+     dice aca. */
+  &[data-activo='true'] {
     background: ${({ theme }) => theme.color.primarySoft};
     color: ${({ theme }) => theme.color.primary};
   }
@@ -917,7 +921,11 @@ export const BottomNavLink = styled(NavLink)`
     background-color 180ms ease,
     color 180ms ease;
 
-  &.active {
+  /* Se mira data-activo y no .active ni aria-current: los paneles cambian de
+     seccion con ?ver=, que NavLink no compara, asi que su calculo pintaba
+     todas las secciones a la vez. La pantalla decide cual esta activa y lo
+     dice aca. */
+  &[data-activo='true'] {
     color: ${({ theme }) => theme.color.primary};
 
     ${({ theme }) =>
@@ -929,20 +937,18 @@ export const BottomNavLink = styled(NavLink)`
 
   /* Sólo la pestaña activa lleva el cian pleno con halo: es la que indica
      dónde está parado el usuario. Las demás acompañan en reposo. */
-  &.active ${BottomNavIcon},
-  &[aria-current='page'] ${BottomNavIcon} {
+  &[data-activo='true'] ${BottomNavIcon} {
     ${neonIconActive};
   }
 
   /* Salvo el central: ahí el ícono se mantiene blanco y plano. */
   &[data-primary='true'].active ${BottomNavIcon},
-  &[data-primary='true'][aria-current='page'] ${BottomNavIcon} {
+  &[data-primary='true'][data-activo='true'] ${BottomNavIcon} {
     color: ${({ theme }) => theme.color.onPrimary};
     filter: none;
   }
 
-  &.active::before,
-  &[aria-current='page']::before {
+  &[data-activo='true']::before {
     content: '';
     position: absolute;
     inset: -0.14rem 0.05rem -0.14rem;

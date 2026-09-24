@@ -117,8 +117,11 @@ export const DrawerItem = styled(NavLink)`
   color: ${({ theme }) => theme.color.text};
   box-shadow: ${({ theme }) => theme.shadow.sm};
 
-  &.active,
-  &[aria-current='page'] {
+  /* Se mira data-activo y no .active ni aria-current: los paneles cambian de
+     seccion con ?ver=, que NavLink no compara, asi que su calculo pintaba
+     todas las secciones a la vez. La pantalla decide cual esta activa y lo
+     dice aca. */
+  &[data-activo='true'] {
     border-color: rgba(0, 71, 231, 0.16);
     background: ${({ theme }) => theme.color.primarySoft};
     color: ${({ theme }) => theme.color.primary};
@@ -126,8 +129,7 @@ export const DrawerItem = styled(NavLink)`
 
   /* El cian pleno queda para lo activo y para el hover: son las señales de
      interacción, no el estado de reposo de toda la lista. */
-  &.active ${DrawerItemIcon},
-  &[aria-current='page'] ${DrawerItemIcon} {
+  &[data-activo='true'] ${DrawerItemIcon} {
     ${neonIconActive};
     background: ${({ theme }) =>
       theme.mode === 'dark' ? 'rgba(77, 229, 255, 0.14)' : 'rgba(0, 71, 231, 0.12)'};
