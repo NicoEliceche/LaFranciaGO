@@ -65,6 +65,7 @@ import {
 import { rutasGestion } from './gestion';
 import { limiteAlcanzado, limpiarVentanasViejas } from './limite';
 import { anotar, anotarFallo, limpiarRegistro } from './registro';
+import { enviarReporte } from './soporte';
 import { rutaVersiones } from './versiones';
 
 /**
@@ -162,25 +163,33 @@ export default {
          que hace falta para reconstruir qué pasó: qué se pidió, quién lo
          pidió, con qué cuerpo, cuánto tardó y en qué línea rompió.
 
-         Es en segundo plano para no demorarle la respuesta a quien ya está
-         viendo un error. */
-      contexto.waitUntil(
-        anotarFallo(env, fallo, {
-          area: areaDe(ruta),
-          ruta,
-          metodo: request.method,
-          estado: 500,
-          usuarioId: await idDeSesion(request, env),
-          ip: request.headers.get('CF-Connecting-IP'),
-          ms: Date.now() - arranque,
-          detalle: await cuerpoDelPedido(copia),
-        }),
-      );
+         Se espera a que termine, a diferencia de los otros casos, porque el
+         id que devuelve viaja en la respuesta: es lo que permite que la
+         persona toque "avisar" y el correo llegue con el error adjunto en
+         lugar de un "no me anda". Son unos milisegundos sobre una petición
+         que ya falló. */
+      const idDelError = await anotarFallo(env, fallo, {
+        area: areaDe(ruta),
+        ruta,
+        metodo: request.method,
+        estado: 500,
+        usuarioId: await idDeSesion(request, env),
+        ip: request.headers.get('CF-Connecting-IP'),
+        ms: Date.now() - arranque,
+        detalle: await cuerpoDelPedido(copia),
+      });
 
       /* A quien pregunta se le dice sólo que falló: un stack trace le diría a
          un atacante qué versión y qué estructura tiene la aplicación. El
-         detalle queda del lado de adentro. */
-      return error('Error interno', 500, cors);
+         detalle queda del lado de adentro.
+
+         El id sí va: por sí solo no revela nada —es un identificador— y sin
+         él el reporte llegaría sin el error técnico. */
+      return json(
+        { error: 'Error interno', referencia: idDelError },
+        { status: 500 },
+        cors,
+      );
     }
   },
 };
@@ -4364,6 +4373,72 @@ async function enrutar(
       {},
       cors,
     );
+  }
+
+  /**
+   * Alguien avisa que algo no le funcionó.
+   *
+   * No pide sesión: quien no puede entrar es justamente el que más necesita
+   * reportarlo, y pedirle que inicie sesión para avisar que no puede iniciar
+   * sesión no tendría sentido.
+   */
+  if (ruta === '/soporte' && metodo === 'POST') {
+    const body = await leerJson<{
+      comentario?: string;
+      registroId?: string;
+      pantalla?: string;
+    }>(request);
+
+    const comentario = String(body.comentario ?? '').slice(0, 2000);
+
+    /* El correo sale igual sin comentario —el error técnico ya dice
+       bastante— pero sin nada de nada es un reporte vacío. */
+    if (!comentario.trim() && !body.registroId) {
+      return error('Contanos qué pasó.', 400, cors);
+    }
+
+    const usuario = await usuarioActual(request, env).catch(() => null);
+
+    /* El detalle técnico sale del registro por id, y sólo si esa línea es de
+       esta persona o no tiene dueño. Sin esa condición, mandando ids al azar
+       se podrían leer los errores de otros por correo. */
+    let detalle: Record<string, unknown> | null = null;
+
+    if (body.registroId) {
+      const linea = await env.DB.prepare(
+        `SELECT mensaje, ruta, metodo, estado, ms, detalle
+           FROM registro
+          WHERE id = ?
+            AND (usuario_id IS NULL OR usuario_id = ?)`,
+      )
+        .bind(body.registroId, usuario?.id ?? null)
+        .first<Record<string, unknown>>();
+
+      detalle = linea ?? null;
+    }
+
+    const enviado = await enviarReporte(
+      env,
+      {
+        comentario,
+        registroId: body.registroId ?? null,
+        pantalla: String(body.pantalla ?? '').slice(0, 200),
+        aparato: request.headers.get('User-Agent')?.slice(0, 200) ?? null,
+      },
+      {
+        id: usuario?.id ?? null,
+        email: usuario?.email ?? null,
+        nombre: usuario?.nombre ?? null,
+        rol: usuario?.rol ?? null,
+      },
+      detalle,
+    );
+
+    /* Se responde que sí aunque el correo haya fallado: el reporte quedó
+       anotado en el registro igual, así que no se perdió, y decirle a la
+       persona que su aviso falló justo después de que algo le falló es
+       ensañarse. */
+    return json({ ok: true, porCorreo: enviado }, {}, cors);
   }
 
   // ── El registro, para quien programa ──

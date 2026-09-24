@@ -100,7 +100,10 @@ function serializar(valor: unknown): string | null {
 }
 
 /**
- * Anota una línea.
+ * Anota una línea y devuelve su id, para poder referirse a ella después.
+ *
+ * El id es lo que permite que alguien reporte "esto me falló" y el correo
+ * llegue con el error técnico adjunto, en lugar de un "no me anda".
  *
  * Nunca lanza. Si el registro fallara y eso rompiera la petición, se
  * convertiría en la causa de los problemas que vino a diagnosticar.
@@ -110,7 +113,9 @@ export async function anotar(
   nivel: Nivel,
   mensaje: string,
   contexto: Contexto = {},
-): Promise<void> {
+): Promise<string | null> {
+  const id = nuevoId();
+
   try {
     await env.DB.prepare(
       `INSERT INTO registro
@@ -118,7 +123,7 @@ export async function anotar(
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
-        nuevoId(),
+        id,
         nivel,
         contexto.area ?? null,
         mensaje.slice(0, 500),
@@ -131,9 +136,13 @@ export async function anotar(
         contexto.ms ?? null,
       )
       .run();
+
+    return id;
   } catch (fallo) {
     /* Último recurso: al menos que quede en los logs de Cloudflare. */
     console.error('No se pudo anotar en el registro', mensaje, fallo);
+
+    return null;
   }
 }
 
@@ -142,10 +151,10 @@ export async function anotarFallo(
   env: Env,
   fallo: unknown,
   contexto: Contexto = {},
-): Promise<void> {
+): Promise<string | null> {
   const { mensaje, stack, causa } = describir(fallo);
 
-  await anotar(env, 'error', mensaje, {
+  return anotar(env, 'error', mensaje, {
     ...contexto,
     detalle: { stack, causa, ...(contexto.detalle ? { extra: contexto.detalle } : {}) },
   });

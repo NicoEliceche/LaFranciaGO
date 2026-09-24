@@ -130,9 +130,15 @@ export function PanelRepartidorScreen() {
 
   const [vehiculo, setVehiculo] = useState<Vehiculo | null>(null);
   const [envios, setEnvios] = useState<EnvioAsignadoApi[]>([]);
-  const [pestana, setPestana] = useState<'disponibles' | 'mios' | 'ganancias'>(
-    'disponibles',
-  );
+  /* La pestaña puede venir en la dirección: la barra de abajo apunta a
+     ?ver=mios para abrir "Mis envíos" de una, sin tener que tocar dos veces.
+     Sin parámetro se abre en lo disponible, que es lo que se mira al empezar
+     el día. */
+  const [pestana, setPestana] = useState<'disponibles' | 'mios' | 'ganancias'>(() => {
+    const pedida = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('ver');
+
+    return pedida === 'mios' || pedida === 'ganancias' ? pedida : 'disponibles';
+  });
   const [avanzando, setAvanzando] = useState<string | null>(null);
 
   /* Qué flete se esta cotizando: un flete no se toma, se ofrece un

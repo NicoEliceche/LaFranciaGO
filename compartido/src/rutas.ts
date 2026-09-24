@@ -179,6 +179,18 @@ export const registroApi = {
   areas: () => api.get<{ areas: Array<{ area: string; cuantas: number }> }>('/admin/registro/areas'),
 };
 
+/** Avisar que algo no funcionó. */
+export const soporteApi = {
+  /**
+   * Manda el reporte al equipo.
+   *
+   * No pide sesión: quien no puede entrar es justamente el que más necesita
+   * reportarlo. Si la hay, el correo llega con su email y su rol.
+   */
+  reportar: (datos: { comentario: string; registroId?: string | null; pantalla?: string }) =>
+    api.post<{ ok: true; porCorreo: boolean }>('/soporte', datos),
+};
+
 export const adminApi = {
   postulaciones: (estado = 'pendiente') =>
     api.get<{ postulaciones: PostulacionApi[] }>(`/admin/postulaciones?estado=${estado}`),

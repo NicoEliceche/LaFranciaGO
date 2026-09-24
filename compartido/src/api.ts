@@ -12,6 +12,14 @@ export class ApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    /**
+     * El id con el que quedó anotado el error del lado del servidor.
+     *
+     * Sólo viene en los 500. Es lo que permite que la persona toque "avisar"
+     * y el reporte llegue con el error técnico adjunto, en lugar de un "no me
+     * anda" que hay que ir a preguntar.
+     */
+    readonly referencia?: string | null,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -43,13 +51,18 @@ async function pedir<T>(ruta: string, init: RequestInit = {}): Promise<T> {
   });
 
   if (!respuesta.ok) {
-    /* El backend manda { error }; si no, se usa el código como referencia. */
-    const detalle = await respuesta
+    /* El backend manda { error } y, en los 500, { referencia }: el id con el
+       que quedó anotado del otro lado. Si no viene nada, se usa el código. */
+    const cuerpo = await respuesta
       .json()
-      .then((cuerpo: { error?: string }) => cuerpo.error)
-      .catch(() => null);
+      .then((datos: { error?: string; referencia?: string }) => datos)
+      .catch(() => ({}) as { error?: string; referencia?: string });
 
-    throw new ApiError(detalle ?? `Error ${respuesta.status}`, respuesta.status);
+    throw new ApiError(
+      cuerpo.error ?? `Error ${respuesta.status}`,
+      respuesta.status,
+      cuerpo.referencia ?? null,
+    );
   }
 
   /* Algunas respuestas no traen cuerpo (204). Parsear igual tiraría un error

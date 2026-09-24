@@ -249,7 +249,14 @@ export function MiComercioScreen() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [seccion, setSeccion] = useState<Seccion>('resumen');
+  /* La sección puede venir en la dirección: la barra de abajo apunta a
+     ?ver=pedidos para abrir los pedidos de una. Sin parámetro se abre en el
+     resumen, que es de dónde se mira todo lo demás. */
+  const [seccion, setSeccion] = useState<Seccion>(() => {
+    const pedida = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('ver');
+
+    return SECCIONES.some((item) => item.id === pedida) ? (pedida as Seccion) : 'resumen';
+  });
   const [pedidos, setPedidos] = useState<PedidoComercioApi[]>([]);
   const [envios, setEnvios] = useState<EnvioApi[]>([]);
   const [chat, setChat] = useState<PedidoComercioApi | null>(null);

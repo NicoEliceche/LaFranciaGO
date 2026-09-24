@@ -21,6 +21,7 @@ import {
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { EmptyState } from '../components/EmptyState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { AvisarProblema } from '../components/AvisarProblema';
 import { categoryImage } from '@shared/utils/media';
 import {
   type PreferenciaEnvio,
@@ -98,6 +99,7 @@ import {
   CartStep,
   CartStepLabel,
   CartStepNumber,
+  CartFalloPedido,
   CartSection,
   CartStack,
 } from './CartScreenStyled';
@@ -252,6 +254,10 @@ export function CartScreen() {
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
   const [errorPedido, setErrorPedido] = useState<string | null>(null);
+
+  /* El error tal cual vino, que lleva la referencia con la que quedó anotado
+     del otro lado: es lo que hace que el reporte llegue con el detalle. */
+  const [ultimoFallo, setUltimoFallo] = useState<unknown>(null);
 
   const { direcciones, recargar: recargarDirecciones } = useDirecciones();
 
@@ -819,6 +825,17 @@ export function CartScreen() {
                         })}
                       </CartPaymentRail>
                     </CartSummarySection>
+
+                    {/* Si falló, se dice qué pasó y se ofrece avisarnos. Antes
+                        el error se guardaba pero no se mostraba: el botón
+                        volvía a decir "Confirmar pedido" y la persona no sabía
+                        si se había hecho o no. */}
+                    {errorPedido ? (
+                      <CartFalloPedido role="alert">
+                        <span>{errorPedido}</span>
+                        <AvisarProblema error={ultimoFallo} contexto="Confirmar el pedido" />
+                      </CartFalloPedido>
+                    ) : null}
 
                     <CartActions>
                       <PrimaryButton

@@ -13,10 +13,13 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   ArrowRight,
+  BarChart3,
   Bell,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  FileCheck2,
+  FileText,
   Heart,
   Home,
   LayoutGrid,
@@ -358,28 +361,70 @@ const topLinks = [
   { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
 ] as const;
 
-type EnlaceInferior = { to: string; label: string; icon: AppIcon };
+type EnlaceInferior = { to: string; label: string; icon: AppIcon; end?: boolean };
 
-const ENLACES_INFERIORES_CLIENTE: EnlaceInferior[] = [
-  { to: '/', label: 'Inicio', icon: Home },
-  { to: '/categorias', label: 'Categorías', icon: LayoutGrid },
-  { to: '/pedidos', label: 'Mis pedidos', icon: PackageSearch },
-  { to: '/favoritos', label: 'Favoritos', icon: Heart },
-  { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
-];
+/**
+ * La barra de abajo, siempre con cinco botones.
+ *
+ * Cinco y no los que sobren: el del medio es más grande y sobresale, así que
+ * con cuatro o con tres queda corrido y se ve como un error. Es la barra que
+ * más se usa en el teléfono, y una barra torcida ensucia toda la pantalla.
+ *
+ * El primero es siempre Inicio y el último siempre Cuenta, que son los dos
+ * que no cambian de lugar entre roles. El tercero —el destacado— es lo que
+ * cada uno abre todo el día: sus pedidos, sus envíos, sus fletes.
+ */
+const ENLACES_INFERIORES: Record<string, EnlaceInferior[]> = {
+  cliente: [
+    { to: '/', label: 'Inicio', icon: Home },
+    { to: '/categorias', label: 'Categorías', icon: LayoutGrid },
+    { to: '/pedidos', label: 'Mis pedidos', icon: PackageSearch },
+    { to: '/favoritos', label: 'Favoritos', icon: Heart },
+    { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
+  ],
 
-/* La barra de abajo sigue al menú: si ahí no está lo de comprar, acá tampoco.
-   Es la que más se usa en el teléfono, que es donde trabaja quien reparte. */
-const ENLACES_INFERIORES_REPARTO: EnlaceInferior[] = [
-  { to: '/panel/repartidor', label: 'Inicio', icon: Home },
-  { to: '/notificaciones', label: 'Avisos', icon: Bell },
-  { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
-];
+  /* Quien reparte no compra desde acá, así que en lugar de categorías y
+     favoritos van las dos pantallas de su trabajo: lo que hay para tomar y
+     lo que ya ganó. */
+  delivery: [
+    { to: '/panel/repartidor', label: 'Inicio', icon: Home, end: true },
+    { to: '/panel/repartidor?ver=disponibles', label: 'Disponibles', icon: PackageSearch },
+    { to: '/panel/repartidor?ver=mios', label: 'Mis envíos', icon: MotoDeliveryIcon },
+    { to: '/panel/repartidor?ver=ganancias', label: 'Ganancias', icon: BarChart3 },
+    { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
+  ],
+
+  fletero: [
+    { to: '/panel/repartidor', label: 'Inicio', icon: Home, end: true },
+    { to: '/panel/repartidor?ver=disponibles', label: 'Disponibles', icon: PackageSearch },
+    { to: '/panel/repartidor?ver=mios', label: 'Mis fletes', icon: Truck },
+    { to: '/panel/repartidor?ver=ganancias', label: 'Ganancias', icon: BarChart3 },
+    { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
+  ],
+
+  /* El comercio mira los pedidos que le entran, que es lo que tiene que
+     atender en el momento. */
+  comercio: [
+    { to: '/panel/comercio', label: 'Inicio', icon: Home, end: true },
+    { to: '/panel/comercio?ver=productos', label: 'Productos', icon: LayoutGrid },
+    { to: '/panel/comercio?ver=pedidos', label: 'Mis pedidos', icon: PackageSearch },
+    { to: '/notificaciones', label: 'Avisos', icon: Bell },
+    { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
+  ],
+
+  /* Administración: lo que se mira es el estado de la plataforma y qué se
+     rompió. */
+  admin: [
+    { to: '/panel/admin', label: 'Inicio', icon: Home, end: true },
+    { to: '/panel/admin/postulaciones', label: 'Altas', icon: FileCheck2 },
+    { to: '/panel/admin/registro', label: 'Registro', icon: FileText },
+    { to: '/notificaciones', label: 'Avisos', icon: Bell },
+    { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
+  ],
+};
 
 function enlacesInferioresDe(rol: string | undefined) {
-  return rol === 'delivery' || rol === 'fletero'
-    ? ENLACES_INFERIORES_REPARTO
-    : ENLACES_INFERIORES_CLIENTE;
+  return ENLACES_INFERIORES[rol ?? 'cliente'] ?? ENLACES_INFERIORES.cliente;
 }
 
 export function MarketplaceFrame({
@@ -402,10 +447,11 @@ export function MarketplaceFrame({
   );
   const enlacesInferiores = useMemo(() => enlacesInferioresDe(usuario?.rol), [usuario?.rol]);
 
-  /* El boton grande del medio: para el cliente son sus pedidos y para quien
-     reparte su tablero, que es la pantalla a la que vuelve todo el dia. */
-  const destacadoAbajo =
-    usuario?.rol === 'delivery' || usuario?.rol === 'fletero' ? '/panel/repartidor' : '/pedidos';
+  /* El botón grande va siempre en el medio, que es el tercero de cinco. Se
+     toma por posición y no por dirección: atarlo a una ruta obligaba a
+     actualizarlo cada vez que cambia la barra, y si no coincidía con ninguna
+     quedaban los cinco iguales y la barra sin centro. */
+  const destacadoAbajo = enlacesInferiores[2]?.to;
   const { photo: profilePhoto } = useProfilePhoto();
   const navigate = useNavigate();
   const hasSearch = typeof query === 'string' && typeof onQueryChange === 'function';

@@ -806,3 +806,25 @@ export const EnvioAviso = styled.p`
 
   > svg { flex: 0 0 auto; margin-top: 0.1rem; }
 `;
+
+/**
+ * Lo que se ve cuando el pedido no se pudo confirmar.
+ *
+ * Va en rojo suave y no en rojo pleno: la persona ya sabe que algo salió
+ * mal, y gritárselo no ayuda. Debajo del mensaje, la salida para avisarnos.
+ */
+export const CartFalloPedido = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing[2]};
+  justify-items: start;
+  padding: ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  border: 1px solid ${({ theme }) => `${theme.color.danger}59`};
+  background: ${({ theme }) => `${theme.color.danger}14`};
+
+  > span {
+    color: ${({ theme }) => theme.color.danger};
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+`;
