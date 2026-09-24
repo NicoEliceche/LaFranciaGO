@@ -1,0 +1,22 @@
+# LaFranciaGO
+#
+# El catálogo es público y conviene que se encuentre: alguien que busca "la
+# francia farmacia" tiene que llegar. Lo que cuelga de una sesión no, aunque
+# igual pide cuenta: que aparezca en un buscador sólo lleva a una pantalla de
+# ingreso, y ensucia los resultados.
+
+User-agent: *
+Allow: /
+
+# Nada de esto sirve sin sesión.
+Disallow: /#/carrito
+Disallow: /#/pedidos
+Disallow: /#/mi-cuenta
+Disallow: /#/favoritos
+Disallow: /#/panel/
+Disallow: /#/gestion/
+Disallow: /#/admin/
+Disallow: /#/ingresar
+Disallow: /#/recuperar
+
+Sitemap: https://nicoeliceche.github.io/LaFranciaGO/sitemap.xml

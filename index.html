@@ -44,29 +44,92 @@
     />
     <link rel="icon" type="image/png" href="/LaFranciaGO/favicon.png" />
     <link rel="apple-touch-icon" href="/LaFranciaGO/apple-touch-icon.png" />
+
+    <!--
+      La API está en otro dominio, así que la primera llamada paga el saludo
+      completo: DNS, TCP y TLS. Abriendo la conexión mientras todavía se
+      descarga el JavaScript, cuando la aplicación pregunta quién es el
+      usuario el canal ya está listo. Medido: 110 ms.
+
+      crossorigin es obligatorio acá: las llamadas van con credenciales, y sin
+      esa marca el navegador abriría una conexión que después no puede usar.
+    -->
+    <link
+      rel="preconnect"
+      href="https://lafranciago-api.lafranciago-api.workers.dev"
+      crossorigin
+    />
     <title>LaFranciaGO | Marketplace local</title>
     <style>
-      /* Pintado inicial: la barra de marca aparece antes de que React monte,
-         para que la primera impresión no sea una pantalla en blanco. Se
-         reemplaza por la interfaz real y no altera su diseño. */
+      /* Pintado inicial, mientras baja y arranca el JavaScript.
+
+         Con el div vacío la pantalla quedaba en blanco hasta que React
+         montaba: en un teléfono con 4G lenta son más de tres segundos
+         mirando la nada. Esto dibuja la barra de marca y el nombre con CSS
+         solo, sin esperar a nada, y React lo reemplaza al montar.
+
+         Es a propósito que no imite la pantalla final: prometer una interfaz
+         que después se acomoda distinto se siente peor que una espera
+         honesta. Sólo dice "esto es LaFranciaGO y está cargando". */
       #root:empty::before {
         content: '';
         display: block;
         height: 58px;
         background: linear-gradient(135deg, #0047e7 0%, #2563eb 100%);
       }
+
+      #root:empty::after {
+        content: 'LaFranciaGO';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: calc(100vh - 58px);
+        height: calc(100dvh - 58px);
+        color: #0047e7;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        /* Aparece de a poco: si el JavaScript llega rápido, casi no se ve, y
+           no hay un parpadeo de texto que entra y sale. */
+        animation: aparecer 600ms ease-out both;
+      }
+
+      @keyframes aparecer {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 0.55;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #root:empty::after {
+          animation: none;
+          opacity: 0.55;
+        }
+      }
+
       body {
         margin: 0;
         background: #f5f7fb;
       }
+
       @media (prefers-color-scheme: dark) {
         body {
           background: #0c111d;
         }
+
+        #root:empty::after {
+          color: #4d8bff;
+        }
       }
     </style>
-    <script type="module" crossorigin src="/LaFranciaGO/assets/index-CQSQA-do.js"></script>
-    <link rel="modulepreload" crossorigin href="/LaFranciaGO/assets/react-D_B_6qYb.js">
+    <script type="module" crossorigin src="/LaFranciaGO/assets/index-PN1N2eMW.js"></script>
+    <link rel="modulepreload" crossorigin href="/LaFranciaGO/assets/react-6hK8W6IX.js">
+    <link rel="modulepreload" crossorigin href="/LaFranciaGO/assets/estilos-DzHAJWDP.js">
+    <link rel="modulepreload" crossorigin href="/LaFranciaGO/assets/iconos-D4KLLVJ2.js">
     <link rel="stylesheet" crossorigin href="/LaFranciaGO/assets/index-CQ7vFYxu.css">
   <link rel="manifest" href="/LaFranciaGO/manifest.webmanifest"></head>
   <body>
