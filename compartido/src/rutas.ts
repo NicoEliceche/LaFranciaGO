@@ -187,7 +187,19 @@ export const soporteApi = {
    * No pide sesión: quien no puede entrar es justamente el que más necesita
    * reportarlo. Si la hay, el correo llega con su email y su rol.
    */
-  reportar: (datos: { comentario: string; registroId?: string | null; pantalla?: string }) =>
+  reportar: (datos: {
+    comentario: string;
+    registroId?: string | null;
+    pantalla?: string;
+    /**
+     * El error técnico, cuando no llegó a quedar anotado del otro lado.
+     *
+     * Si la petición nunca salió de la máquina —sin internet, CORS— no hay
+     * nada registrado en el servidor, así que el reporte llegaría vacío. Esto
+     * es lo único que queda para saber qué pasó.
+     */
+    tecnico?: string | null;
+  }) =>
     api.post<{ ok: true; porCorreo: boolean }>('/soporte', datos),
 };
 

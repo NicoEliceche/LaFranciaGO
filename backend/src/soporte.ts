@@ -26,6 +26,14 @@ export interface Reporte {
   pantalla?: string | null;
   /** Navegador y sistema, que explican los problemas que le pasan a uno solo. */
   aparato?: string | null;
+  /**
+   * El error visto desde la máquina de la persona.
+   *
+   * Cuando la petición nunca llegó —sin internet, CORS, servidor caído— no
+   * hay nada anotado de este lado: `registroId` viene vacío y el reporte
+   * llegaría sin una sola pista. Esto es lo único que queda.
+   */
+  tecnico?: string | null;
 }
 
 export interface QuienReporta {
@@ -79,6 +87,13 @@ export async function enviarReporte(
     );
   }
 
+  /* Lo que vio el navegador. Va aparte del bloque de arriba porque los dos
+     pueden faltar por separado: si la petición no salió de la máquina, esto
+     es lo único que hay. */
+  if (reporte.tecnico) {
+    lineas.push('', '── Lo que vio el navegador ──', reporte.tecnico.slice(0, 1000));
+  }
+
   if (reporte.registroId) {
     lineas.push('', `Id en el registro: ${reporte.registroId}`);
   }
@@ -90,7 +105,7 @@ export async function enviarReporte(
   await anotar(env, 'aviso', `Reporte de ${quien.email ?? 'alguien sin sesión'}`, {
     area: 'soporte',
     usuarioId: quien.id,
-    detalle: { comentario: reporte.comentario, pantalla: reporte.pantalla },
+    detalle: { comentario: reporte.comentario, pantalla: reporte.pantalla, tecnico: reporte.tecnico },
   });
 
   if (!env.RESEND_API_KEY) {

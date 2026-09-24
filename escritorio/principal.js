@@ -9,11 +9,12 @@
  * Por eso este archivo no sabe qué pantallas tiene la aplicación adentro: si
  * mañana se rediseña la caja rápida entera, acá no cambia nada.
  */
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, screen, shell } = require('electron');
 const { existsSync } = require('node:fs');
 const path = require('node:path');
 
 const { abrirBaseLocal, encolarVenta, pendientes, sincronizar } = require('./cola');
+const { instalarMenu } = require('./menu');
 const { servirCompilada } = require('./servir');
 const { imprimirTicket, listarImpresoras } = require('./impresora');
 const { cargarAjustes, guardarAjustes, leerAjustes } = require('./ajustes');
@@ -63,11 +64,26 @@ async function buscarServidorLocal() {
 let ventana = null;
 
 async function crearVentana() {
+  /* El área de trabajo es la pantalla menos la barra de tareas. Se usa esa y
+     no el tamaño total a propósito: el negocio necesita llegar al reloj, al
+     volumen y a sus otros programas mientras atiende, y una ventana que tapa
+     la barra lo obliga a salir de la aplicación para cualquier cosa.
+
+     Por eso tampoco se usa `fullscreen: true`, que es lo que parecería
+     corresponder: esa opción toma la pantalla entera y esconde la barra. */
+  const { workArea } = screen.getPrimaryDisplay();
+
   ventana = new BrowserWindow({
-    width: 1280,
-    height: 820,
+    x: workArea.x,
+    y: workArea.y,
+    width: workArea.width,
+    height: workArea.height,
     minWidth: 1024,
     minHeight: 640,
+    /* Sin el marco de Windows: el negocio abre esto y ve la aplicación, no
+       una ventana con una aplicación adentro. La barra de menú propia queda
+       arriba y hace las veces de barra de título. */
+    frame: false,
     show: false,
     backgroundColor: '#050816',
     title: 'LaFranciaGO',
@@ -81,6 +97,10 @@ async function crearVentana() {
       sandbox: false,
     },
   });
+
+  /* Sin marco de ventana, esta barra es lo único que queda arriba: es la que
+     permite resolver por teléfono sin ir hasta el local. */
+  instalarMenu(ventana);
 
   /* Se muestra cuando terminó de dibujar: si no, se ve un rectángulo blanco
      los primeros segundos, que en una máquina lenta son varios. */
@@ -101,9 +121,24 @@ async function crearVentana() {
          llama LaFranciaGO, así que por el título las dos parecen iguales. */
       const sirvio = !url.startsWith('data:');
 
+      /* La geometría también se deja anotada: que la ventana quede encima de
+         la barra de tareas y sin marco es algo que se rompería en silencio, y
+         mirarlo a ojo cada vez no escala. */
+      const caja = ventana.getBounds();
+      const { workArea } = screen.getPrimaryDisplay();
+      const tapaLaBarra =
+        caja.y + caja.height > workArea.y + workArea.height || caja.x < workArea.x;
+
       await require('node:fs/promises').writeFile(
         path.join(__dirname, 'verificacion.txt'),
-        `${sirvio ? 'ok' : 'FALLO'} · titulo="${titulo}" · ${url.slice(0, 70)}`,
+        [
+          `${sirvio ? 'ok' : 'FALLO'} · titulo="${titulo}" · ${url.slice(0, 70)}`,
+          `modo=${ventana.isFullScreen() ? 'pantalla-completa' : 'ventana'}`,
+          `caja=${caja.width}x${caja.height}+${caja.x}+${caja.y}`,
+          `areaUtil=${workArea.width}x${workArea.height}+${workArea.x}+${workArea.y}`,
+          `tapaLaBarraDeTareas=${tapaLaBarra ? 'SI' : 'no'}`,
+          `menu=${require('electron').Menu.getApplicationMenu() ? 'propio' : 'FALTA'}`,
+        ].join('\n'),
         'utf8',
       );
     });

@@ -63,14 +63,30 @@ export function corsHeaders(request: Request, env: Env): Record<string, string> 
   const origin = request.headers.get('Origin') ?? '';
   const permitidos = env.ORIGENES_PERMITIDOS.split(',').map((value) => value.trim());
 
-  if (!permitidos.includes(origin)) {
+  /* La aplicación de escritorio sirve sus pantallas desde un servidor propio
+     en 127.0.0.1 con un puerto que elige el sistema, así que su origen no se
+     puede poner en una lista: cambia en cada arranque.
+
+     Se la reconoce por los dos juntos —un origen de loopback y su marca—, y
+     no sólo por la marca: cualquiera puede escribir una cabecera desde curl,
+     pero esto no le da nada que no tuviera ya. Lo que el CORS protege es que
+     una página de otro sitio lea datos del usuario aprovechando su sesión, y
+     una página en internet no puede presentarse con un origen de loopback.
+
+     Sin esto, la aplicación instalada sin internet y la de desarrollo sin
+     servidor de Vite recibían "Failed to fetch" al intentar entrar. */
+  const esEscritorio =
+    request.headers.get('X-LaFranciaGO-Escritorio') === '1' &&
+    /^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(origin);
+
+  if (!permitidos.includes(origin) && !esEscritorio) {
     return {};
   }
 
   return {
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-LaFranciaGO-Escritorio',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     /* Evita que un proxy sirva la respuesta de un origen a otro distinto. */
     Vary: 'Origin',

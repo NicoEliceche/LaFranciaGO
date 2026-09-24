@@ -42,6 +42,17 @@ export function AvisarProblema({
      accionable. Sólo viene en los 500. */
   const referencia = error instanceof ApiError ? error.referencia : null;
 
+  /* Cuando la petición no llegó a salir de la máquina no hay nada anotado
+     del otro lado, así que el reporte llegaría sin una sola pista. El texto
+     original del navegador —que a la persona se le ocultó por estar en
+     inglés— es justo lo que hace falta acá. */
+  const tecnico =
+    error instanceof ApiError
+      ? (error.tecnico?.causa ?? null)
+      : error instanceof Error
+        ? error.message
+        : null;
+
   const enviar = async () => {
     if (enviando) return;
 
@@ -52,6 +63,7 @@ export function AvisarProblema({
         comentario,
         registroId: referencia,
         pantalla: contexto ?? window.location.hash,
+        tecnico,
       });
 
       setListo(true);

@@ -30,6 +30,16 @@ export interface Configuracion {
   leerToken?: () => string | null | Promise<string | null>;
   /** Guarda el token que devolvió el login. */
   guardarToken?: (token: string | null) => void | Promise<void>;
+  /**
+   * Cabeceras que van en cada pedido.
+   *
+   * La aplicación de escritorio manda acá su marca: sirve sus pantallas desde
+   * un servidor propio con un puerto que elige el sistema, así que su origen
+   * no se puede poner en la lista del backend porque cambia en cada arranque.
+   * Sin esto, entrar desde la aplicación instalada fallaba con "Failed to
+   * fetch".
+   */
+  cabeceras?: Record<string, string>;
 }
 
 let configuracion: Configuracion = {

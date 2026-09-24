@@ -15,6 +15,16 @@ configurar({
   apiUrl: import.meta.env.VITE_API_URL ?? '',
   /* En el navegador la sesión es una cookie HttpOnly que viaja sola. */
   sesion: 'cookie',
+  /* La aplicación instalada sirve sus pantallas desde un servidor propio en
+     127.0.0.1, con un puerto que elige el sistema y cambia en cada arranque.
+     Ese origen no puede estar en la lista del backend, así que se anuncia con
+     esta marca; el backend la acepta sólo si además el origen es de loopback.
+     Sin esto, entrar desde la aplicación instalada fallaba en el navegador
+     antes de llegar al servidor. */
+  cabeceras:
+    typeof window !== 'undefined' && window.lafranciagoEscritorio
+      ? { 'X-LaFranciaGO-Escritorio': '1' }
+      : undefined,
 });
 
 export * from '@compartido';

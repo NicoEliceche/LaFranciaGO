@@ -4387,13 +4387,15 @@ async function enrutar(
       comentario?: string;
       registroId?: string;
       pantalla?: string;
+      tecnico?: string;
     }>(request);
 
     const comentario = String(body.comentario ?? '').slice(0, 2000);
+    const tecnico = String(body.tecnico ?? '').slice(0, 1000);
 
     /* El correo sale igual sin comentario —el error técnico ya dice
        bastante— pero sin nada de nada es un reporte vacío. */
-    if (!comentario.trim() && !body.registroId) {
+    if (!comentario.trim() && !body.registroId && !tecnico.trim()) {
       return error('Contanos qué pasó.', 400, cors);
     }
 
@@ -4423,6 +4425,7 @@ async function enrutar(
         comentario,
         registroId: body.registroId ?? null,
         pantalla: String(body.pantalla ?? '').slice(0, 200),
+        tecnico: tecnico.trim() || null,
         aparato: request.headers.get('User-Agent')?.slice(0, 200) ?? null,
       },
       {

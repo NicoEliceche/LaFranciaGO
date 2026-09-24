@@ -20,9 +20,24 @@ export class ApiError extends Error {
      * anda" que hay que ir a preguntar.
      */
     readonly referencia?: string | null,
+    /**
+     * El detalle técnico, cuando el mensaje de arriba es una traducción.
+     *
+     * Lo que ve la persona tiene que estar en su idioma y decirle qué hacer.
+     * Pero el texto original del navegador —"Failed to fetch", "NetworkError
+     * when attempting to fetch resource"— es justo lo que hace falta para
+     * entender qué pasó, así que no se tira: viaja escondido y sale sólo en
+     * el reporte a soporte.
+     */
+    readonly tecnico?: { causa: string } | null,
   ) {
     super(message);
     this.name = 'ApiError';
+  }
+
+  /** Si la petición nunca llegó al servidor. */
+  get sinConexion() {
+    return this.status === 0;
   }
 }
 
@@ -31,6 +46,11 @@ async function pedir<T>(ruta: string, init: RequestInit = {}): Promise<T> {
 
   const cabeceras: Record<string, string> = {
     ...(init.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+    /* Lo que cada plataforma necesita mandar siempre. La aplicación de
+       escritorio pone acá su marca, que es lo que le permite al backend
+       reconocerla: su origen es un puerto que elige el sistema y cambia en
+       cada arranque, así que no puede estar en una lista fija. */
+    ...(config.cabeceras ?? {}),
     ...((init.headers as Record<string, string>) ?? {}),
   };
 
@@ -42,13 +62,35 @@ async function pedir<T>(ruta: string, init: RequestInit = {}): Promise<T> {
     if (token) cabeceras.Authorization = `Bearer ${token}`;
   }
 
-  const respuesta = await fetch(`${config.apiUrl}${ruta}`, {
-    ...init,
-    /* En el navegador la cookie de sesión no viaja a otro dominio sin esto,
-       y toda petición autenticada volvería 401. */
-    ...(config.sesion === 'cookie' ? { credentials: 'include' as const } : {}),
-    headers: cabeceras,
-  });
+  let respuesta: Response;
+
+  try {
+    respuesta = await fetch(`${config.apiUrl}${ruta}`, {
+      ...init,
+      /* En el navegador la cookie de sesión no viaja a otro dominio sin esto,
+         y toda petición autenticada volvería 401. */
+      ...(config.sesion === 'cookie' ? { credentials: 'include' as const } : {}),
+      headers: cabeceras,
+    });
+  } catch (fallo) {
+    /* Cuando la petición no llega a destino —sin internet, el servidor caído,
+       CORS rechazado— `fetch` tira un TypeError con el texto del navegador,
+       en inglés y sin contexto: "Failed to fetch", "NetworkError...".
+
+       Ese texto terminaba en pantalla tal cual. Se traduce acá, que es por
+       donde pasan todas las llamadas, en vez de en cada pantalla: una sola
+       vez y sin que ninguna se olvide.
+
+       Se usa el 0 porque no hubo respuesta: no es un error del servidor, es
+       que nunca se llegó a hablar con él, y las pantallas que miran el
+       código pueden distinguir los dos casos. */
+    throw new ApiError(
+      'No pudimos conectarnos. Revisá tu conexión a internet e intentá de nuevo.',
+      0,
+      null,
+      { causa: fallo instanceof Error ? fallo.message : String(fallo) },
+    );
+  }
 
   if (!respuesta.ok) {
     /* El backend manda { error } y, en los 500, { referencia }: el id con el
