@@ -228,6 +228,30 @@ const ITEMS_COMERCIO: DrawerItemData[] = [
   },
 ];
 
+/* Para administración, "Inicio" es el tablero de la plataforma. */
+const ITEM_INICIO_ADMIN: DrawerItemData = {
+  to: '/panel/admin',
+  title: 'Inicio',
+  subtitle: 'Cómo viene la plataforma',
+  icon: Home,
+  end: true,
+};
+
+const ITEMS_ADMIN: DrawerItemData[] = [
+  {
+    to: '/panel/admin/postulaciones',
+    title: 'Altas',
+    subtitle: 'Comercios y repartidores por aprobar',
+    icon: FileCheck2,
+  },
+  {
+    to: '/panel/admin/registro',
+    title: 'Registro',
+    subtitle: 'Qué se rompió y por qué',
+    icon: FileText,
+  },
+];
+
 const ITEM_PUBLICAR: DrawerItemData = {
   to: '/registro/comercio',
   title: 'Publicar comercio',
@@ -301,6 +325,19 @@ function menuDe(rol: string | undefined, roles: string[] = []) {
     return {
       navegacion: [ITEM_INICIO_COMERCIO, ...ITEMS_COMERCIO, ITEM_CUENTA],
       acciones: [...ofrecimientos, ITEM_NOTIFICACIONES],
+    };
+  }
+
+  /* Administración tampoco compra desde acá: veía "Categorías" y "Favoritos"
+     por caer en la lista del cliente. Lo que mira es qué hay que aprobar y
+     qué se rompió, que es lo mismo que ya tenía abajo en el teléfono.
+
+     Tampoco se le ofrece publicar comercio ni anotarse de repartidor: no es
+     un vecino usando la aplicación, es quien la administra. */
+  if (rol === 'admin') {
+    return {
+      navegacion: [ITEM_INICIO_ADMIN, ...ITEMS_ADMIN, ITEM_CUENTA],
+      acciones: [ITEM_NOTIFICACIONES],
     };
   }
 

@@ -8,8 +8,9 @@
  *   node demo/admin.mjs              en esta máquina
  *   node demo/admin.mjs --remoto     en producción
  *
- * Después de crearla, cambiá la contraseña. La que deja este script es para
- * arrancar, no para dejar puesta.
+ * La contraseña que deja es para probar. Cambiala antes de que la aplicación
+ * tenga datos de gente de verdad: esta cuenta ve el registro de errores, que
+ * muestra bastante de cómo funciona todo por dentro.
  */
 import { spawnSync } from 'node:child_process';
 import { webcrypto as crypto } from 'node:crypto';
@@ -21,14 +22,18 @@ const BASE = 'lafranciago';
 const EMAIL = 'admin@lafrancia.ar';
 const NOMBRE = 'Administración';
 
-/* La contraseña pedida para arrancar. El registro exige ocho caracteres y
-   rechaza las más usadas, así que "admin" no pasa por ahí: se escribe
-   directamente en la base con el mismo hash que usaría el registro.
+/* La misma que las cuentas de demostración, para no tener que recordar una
+   aparte mientras se prueba.
 
-   Esa comprobación queda intacta a propósito. Bajarla para esta cuenta la
-   bajaría para todas, y es lo que impide que alguien registre "123456" en la
-   aplicación de verdad. */
-const CLAVE = 'admin';
+   Antes acá decía "admin", que es exactamente la contraseña que adivina
+   cualquiera, en la cuenta que abre el registro de errores: ahí se ven
+   mensajes internos, cuerpos de peticiones y stacks. Que el panel de quien
+   programa sea el eslabón más fácil de la aplicación es al revés de como
+   tiene que ser.
+
+   Sigue siendo una clave para probar, no para dejar puesta el día que esto
+   tenga datos de gente de verdad. */
+const CLAVE = 'Demo2026!';
 
 /* Los mismos números que src/lib.ts. Si cambian allá, cambian acá. */
 const ITERACIONES = 100_000;
