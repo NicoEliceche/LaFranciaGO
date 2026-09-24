@@ -13,6 +13,7 @@ import {
   CatalogCardShell,
   CatalogCardName,
   CatalogCardPrice,
+  CatalogCardPriceBlock,
   CatalogCardPriceUnit,
   CatalogCardPriceRow,
   CatalogCardTag,
@@ -83,27 +84,18 @@ export function CatalogProductCard({
         <CatalogCardName>{name}</CatalogCardName>
 
         <CatalogCardPriceRow>
-          <CatalogCardPrice>
-            {formatMoney(price)}
+          <CatalogCardPriceBlock>
+            <CatalogCardPrice>{formatMoney(price)}</CatalogCardPrice>
             {saleUnit && saleUnit !== 'unidad' ? (
-              <CatalogCardPriceUnit> {priceSuffix(saleUnit)}</CatalogCardPriceUnit>
+              <CatalogCardPriceUnit>{priceSuffix(saleUnit)}</CatalogCardPriceUnit>
             ) : null}
-          </CatalogCardPrice>
+          </CatalogCardPriceBlock>
 
+          {/* Menos arriba y más abajo: en vertical el texto de la cantidad se
+              queda con todo el ancho del selector, que es lo que evita que
+              etiquetas como "1 kg + 1/4" empujen el precio fuera de la
+              tarjeta. */}
           <CatalogStepper>
-            <CatalogStepperButton
-              type="button"
-              onClick={() => setUnits((current) => Math.max(MIN_UNITS, current - 1))}
-              disabled={units <= MIN_UNITS}
-              aria-label={`Quitar cantidad de ${name}`}
-            >
-              <Minus size={16} aria-hidden="true" />
-            </CatalogStepperButton>
-
-            <CatalogStepperValue aria-live="polite">
-              {stepLabel(saleUnit, units - MIN_UNITS)}
-            </CatalogStepperValue>
-
             <CatalogStepperButton
               type="button"
               onClick={() =>
@@ -114,7 +106,20 @@ export function CatalogProductCard({
               disabled={units - MIN_UNITS >= maxStepIndex(saleUnit)}
               aria-label={`Agregar cantidad de ${name}`}
             >
-              <Plus size={16} aria-hidden="true" />
+              <Plus size={15} aria-hidden="true" />
+            </CatalogStepperButton>
+
+            <CatalogStepperValue aria-live="polite">
+              {stepLabel(saleUnit, units - MIN_UNITS)}
+            </CatalogStepperValue>
+
+            <CatalogStepperButton
+              type="button"
+              onClick={() => setUnits((current) => Math.max(MIN_UNITS, current - 1))}
+              disabled={units <= MIN_UNITS}
+              aria-label={`Quitar cantidad de ${name}`}
+            >
+              <Minus size={15} aria-hidden="true" />
             </CatalogStepperButton>
           </CatalogStepper>
         </CatalogCardPriceRow>

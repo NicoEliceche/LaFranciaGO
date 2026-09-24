@@ -21,7 +21,15 @@ export const CatalogCardShell = styled.article`
 
 export const CatalogCardBody = styled.div`
   display: grid;
+  /* La fila del precio se estira y empuja el botón al fondo. Sin esto, dos
+     tarjetas vecinas terminan con el botón a distinta altura apenas una parte
+     el nombre en dos líneas y la otra no, y la grilla se ve despareja. */
+  grid-template-rows: auto 1fr auto auto;
   gap: 0.15rem;
+  /* La grilla estira las tarjetas a la altura de la más alta; el cuerpo tiene
+     que ocupar lo que le toca para que el fondo sea el fondo de verdad. */
+  flex: 1;
+  min-height: 0;
   padding: ${({ theme }) => theme.spacing[2]};
 `;
 
@@ -44,14 +52,36 @@ export const CatalogCardPriceRow = styled.div`
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing[1]};
   margin-top: ${({ theme }) => theme.spacing[1]};
+  /* Sin esto el precio empuja al selector fuera de la tarjeta en vez de
+     achicarse: una columna de 168px con un texto de "1 kg + 1/4" al lado no
+     entra, y lo que se salía era el borde. */
+  min-width: 0;
+`;
+
+/**
+ * El precio y su aclaración, uno debajo del otro.
+ *
+ * Iban en la misma línea y el "el kg" cortaba solo cuando no entraba, con lo
+ * que la altura de la tarjeta dependía de si el texto había cortado o no: dos
+ * productos vecinos quedaban con el precio a distinta altura. Puestos en
+ * columna a propósito, siempre ocupan lo mismo y sobra ancho para el
+ * selector, que es de donde salía el problema.
+ */
+export const CatalogCardPriceBlock = styled.div`
+  display: grid;
+  gap: 0;
+  min-width: 0;
 `;
 
 export const CatalogCardPrice = styled.span`
   font-family: ${({ theme }) => theme.typography.fontFamily.heading};
   font-size: ${({ theme }) => theme.typography.size.lg};
   font-weight: ${({ theme }) => theme.typography.weight.extrabold};
+  line-height: 1.15;
   letter-spacing: -0.03em;
   color: ${({ theme }) => theme.color.primary};
+  /* El precio es lo único que no puede partirse en dos renglones. */
+  white-space: nowrap;
 `;
 
 export const CatalogCardTag = styled.span`
@@ -69,13 +99,31 @@ export const CatalogCardTag = styled.span`
   box-shadow: ${({ theme }) => theme.shadow.sm};
 `;
 
+/**
+ * El selector de cantidad, en vertical.
+ *
+ * Estaba en fila —menos, cantidad, más— y funcionaba mientras la cantidad
+ * decía "1/4". Pero las etiquetas de peso llegan a "1 kg + 1/4": en una
+ * columna de 168px eso empujaba el precio afuera de la tarjeta.
+ *
+ * Con los botones arriba y abajo, el texto se queda con todo el ancho del
+ * selector en lugar de pelearlo contra dos círculos, y deja de crecer hacia
+ * los costados por más largo que sea. La altura que suma es la misma que ya
+ * ocupaba el bloque del precio al lado, así que la tarjeta no crece.
+ */
 export const CatalogStepper = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.1rem;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.05rem;
   flex: 0 0 auto;
-  padding: 0.15rem;
-  border-radius: ${({ theme }) => theme.radius.full};
+  /* Un piso para que no se angoste con "1/4" y un techo para que "1 docena
+     + 1/2" no lo estire al doble que el de la tarjeta de al lado: la grilla
+     se ve despareja aunque cada uno entre en la suya. */
+  min-width: 3.1rem;
+  max-width: 4.6rem;
+  padding: 0.2rem 0.3rem;
+  border-radius: ${({ theme }) => theme.radius.lg};
   background: ${({ theme }) => theme.color.primarySoft};
 `;
 
@@ -84,11 +132,14 @@ export const CatalogStepperButton = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.9rem;
-  height: 1.9rem;
+  width: 100%;
+  min-width: 1.75rem;
+  height: 1.4rem;
 
-  /* El círculo se ve chico, pero el área que responde al dedo
-     llega a 44px como pide el sistema de diseño. */
+  /* El botón se ve chato, pero el área que responde al dedo sigue llegando a
+     los 44px que pide el sistema de diseño. Se extiende hacia afuera del
+     selector —arriba el de menos, abajo el de más— donde no hay nada más
+     que tocar, así que no le roba el toque a ningún vecino. */
   &::after {
     content: '';
     position: absolute;
@@ -99,7 +150,7 @@ export const CatalogStepperButton = styled.button`
     transform: translate(-50%, -50%);
   }
   border: 0;
-  border-radius: ${({ theme }) => theme.radius.full};
+  border-radius: ${({ theme }) => theme.radius.md};
   background: ${({ theme }) => theme.color.surface};
   color: ${({ theme }) => theme.color.primary};
   cursor: pointer;
@@ -117,12 +168,20 @@ export const CatalogStepperButton = styled.button`
 `;
 
 export const CatalogStepperValue = styled.span`
-  min-width: 1.5rem;
+  /* Entre los dos botones, con el ancho del selector entero para él. Ya no
+     pelea contra los círculos por el espacio, que es lo que lo hacía
+     superponerse. */
+  padding: 0.05rem 0.1rem;
   text-align: center;
   font-family: ${({ theme }) => theme.typography.fontFamily.heading};
-  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-size: 0.7rem;
   font-weight: ${({ theme }) => theme.typography.weight.bold};
+  line-height: 1.2;
   color: ${({ theme }) => theme.color.primary};
+  /* Las etiquetas más largas ("1 docena + 1/2") no entran en el techo de
+     arriba. Se parten en dos renglones dentro del selector, que para eso
+     está en vertical, en vez de empujar el ancho. */
+  overflow-wrap: anywhere;
 `;
 
 export const CatalogAddToCartButton = styled.button`
@@ -132,6 +191,10 @@ export const CatalogAddToCartButton = styled.button`
   gap: 0.3rem;
   width: 100%;
   min-height: 2.25rem;
+  /* Alineado abajo de todo: la fila de arriba se estira y lo empuja acá, así
+     dos tarjetas vecinas tienen el botón a la misma altura aunque una tenga
+     el nombre en dos líneas y la otra en una. */
+  align-self: end;
   margin-top: ${({ theme }) => theme.spacing[2]};
   padding: 0 ${({ theme }) => theme.spacing[2]};
   border: 0;
@@ -166,9 +229,21 @@ export const CatalogInCartHint = styled.span`
   text-align: center;
 `;
 
-/** Aclara a qué corresponde el precio cuando no se vende por unidad. */
+/**
+ * Aclara a qué corresponde el precio cuando no se vende por unidad.
+ *
+ * Va debajo del precio y bien pegado: así no compite por el ancho con el
+ * selector, que es lo que rompía la tarjeta, y el par se lee como una sola
+ * cosa en lugar de dos.
+ */
 export const CatalogCardPriceUnit = styled.span`
+  display: block;
+  margin-top: -0.1rem;
   color: ${({ theme }) => theme.color.textSoft};
   font-size: ${({ theme }) => theme.typography.size.xs};
   font-weight: ${({ theme }) => theme.typography.weight.semibold};
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;

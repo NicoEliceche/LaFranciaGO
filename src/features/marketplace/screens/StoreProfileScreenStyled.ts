@@ -72,9 +72,14 @@ export const StoreCheckoutBar = styled.div`
   z-index: ${({ theme }) => theme.zIndex.bottomNav - 1};
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* Sin space-between: ese era el que abría un hueco entre el total y el
+     botón para llenar un ancho que la barra no necesitaba. */
   gap: ${({ theme }) => theme.spacing[3]};
-  width: min(100% - 2rem, 30rem);
+  /* Del ancho de su contenido, no del de la pantalla. Ocupa menos, tapa
+     menos y deja de tener aire en el medio. El tope sigue estando para que
+     un total largo no la estire de lado a lado. */
+  width: max-content;
+  max-width: min(100% - 2rem, 30rem);
   padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[2]}
     ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[4]};
   border-radius: ${({ theme }) => theme.radius.full};
@@ -99,6 +104,21 @@ export const StoreCheckoutBar = styled.div`
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     left: calc(50% + (var(--desktop-sidebar-width) / 2));
   }
+`;
+
+/**
+ * El lugar que la barra del carrito ocupa al final de la página.
+ *
+ * La barra está fija: flota sobre el contenido y no empuja nada, así que al
+ * llegar al final del catálogo tapaba las últimas tarjetas. Esto le reserva
+ * abajo lo que la barra mide, y el alto lo pone la pantalla después de
+ * medirla.
+ *
+ * `aria-hidden` porque no hay nada que leer: es espacio, no contenido.
+ */
+export const CheckoutBarSpacer = styled.div.attrs({ 'aria-hidden': true })`
+  flex: 0 0 auto;
+  transition: height 180ms ease;
 `;
 
 export const StoreCheckoutInfo = styled.div`

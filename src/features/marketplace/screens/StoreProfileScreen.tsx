@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import type { SaleUnitId } from '@shared/types/saleUnit.types';
 import {
   CreditCard,
@@ -59,6 +59,7 @@ import {
   OrderNoticeMeta,
   OrderNoticeText,
   OrderNoticeTitle,
+  CheckoutBarSpacer,
   StoreCheckoutBar,
   StoreCheckoutCount,
   StoreCheckoutCta,
@@ -1066,6 +1067,38 @@ export function StoreProfileScreen() {
     [allProducts, quantities],
   );
 
+  /* Cuánto mide la barra del carrito, para reservarle ese lugar al final de
+     la página. Ver el bloque donde se usa: la barra flota y por eso tapaba
+     las últimas tarjetas. */
+  const barraRef = useRef<HTMLDivElement | null>(null);
+  const [alturaBarra, setAlturaBarra] = useState(0);
+
+  /* En layout y no en efecto normal: así el lugar ya está reservado en el
+     mismo cuadro en que aparece la barra, y la página no pega un salto. */
+  useLayoutEffect(() => {
+    const barra = barraRef.current;
+
+    if (!barra) {
+      setAlturaBarra(0);
+
+      return;
+    }
+
+    /* Se observa en lugar de medir una sola vez: el alto cambia cuando el
+       total pasa a más cifras o la pantalla rota. */
+    const observador = new ResizeObserver(() => {
+      /* Lo que separa a la barra del borde de abajo también hay que
+         reservarlo, si no queda pegada a la última tarjeta. */
+      const separacion = Number.parseFloat(getComputedStyle(barra).bottom) || 0;
+
+      setAlturaBarra(barra.offsetHeight + separacion);
+    });
+
+    observador.observe(barra);
+
+    return () => observador.disconnect();
+  }, [selectedCount]);
+
   const selectedItems = useMemo(
     () =>
       allProducts
@@ -1289,8 +1322,18 @@ export function StoreProfileScreen() {
         </Section>
       )}
 
+      {/* La barra flota sobre el contenido, así que no ocupa lugar en el
+          scroll y tapaba las últimas tarjetas. Este bloque le reserva abajo
+          exactamente lo que mide, para que el catalálogo termine por encima
+          de ella en vez de debajo.
+
+          Se mide en vez de escribir un número fijo porque la altura depende
+          del total: un precio largo puede empujar el botón a otra línea, y un
+          valor a mano quedaría mal justo en ese caso. */}
+      {selectedCount > 0 && <CheckoutBarSpacer style={{ height: alturaBarra }} />}
+
       {selectedCount > 0 && (
-        <StoreCheckoutBar>
+        <StoreCheckoutBar ref={barraRef}>
           <StoreCheckoutInfo>
             <StoreCheckoutCount>
               {selectedCount} {selectedCount === 1 ? 'producto' : 'productos'}
