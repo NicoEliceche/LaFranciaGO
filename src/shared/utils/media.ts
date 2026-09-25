@@ -2,13 +2,20 @@ import type { MediaTone } from '@shared/types/media.types';
 
 const BASE = import.meta.env.BASE_URL;
 
-/** Rubros con imagen propia en public/media. */
-const KNOWN_CATEGORIES = new Set([
+/**
+ * Rubros con foto propia en public/media.
+ *
+ * Van en WebP porque estas imágenes no se muestran sólo en la pantalla de
+ * rubros: son también el respaldo de cada tarjeta de producto y de comercio
+ * mientras el negocio no subió la suya, así que el peso se paga muchas veces
+ * en la misma pantalla. En WebP las catorce juntas pesan 320 KB en lugar de
+ * los 3,7 MB que pesaban en PNG.
+ */
+const CATEGORIAS_CON_FOTO = new Set([
   'almacen',
   'bebidas',
   'carniceria',
-  'comercio',
-  'delivery',
+  'comida',
   'farmacia',
   'ferreteria',
   'indumentaria',
@@ -22,13 +29,28 @@ const KNOWN_CATEGORIES = new Set([
 ]);
 
 /**
+ * Los dos respaldos, que no son rubros que el cliente elija.
+ *
+ * `comercio` es lo que se muestra cuando el rubro no tiene foto —un local
+ * genérico— y `delivery` acompaña a los envíos. Siguen siendo dibujos en
+ * SVG: pesan menos de 3 KB y no hay foto que los reemplace.
+ */
+const RESPALDOS_SVG = new Set(['comercio', 'delivery']);
+
+/**
  * Resuelve la imagen de un rubro. Cae en `comercio` cuando el rubro no tiene
  * arte propio, de forma que toda tarjeta tenga siempre una superficie visual.
  */
 export const categoryImage = (categoryId?: string) => {
-  const key = categoryId && KNOWN_CATEGORIES.has(categoryId) ? categoryId : 'comercio';
+  if (categoryId && CATEGORIAS_CON_FOTO.has(categoryId)) {
+    return `${BASE}media/${categoryId}.webp`;
+  }
 
-  return `${BASE}media/${key}.svg`;
+  if (categoryId && RESPALDOS_SVG.has(categoryId)) {
+    return `${BASE}media/${categoryId}.svg`;
+  }
+
+  return `${BASE}media/comercio.svg`;
 };
 
 /** Iniciales para el avatar cuando el comercio no tiene logo cargado. */

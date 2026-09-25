@@ -33,3 +33,7 @@ informes/
 
 # Lo que deja el verificador de arranque de la app de escritorio.
 escritorio/verificacion.txt
+
+# Las fotos de rubro en PNG. La aplicacion sirve los .webp, que pesan una
+# decima parte; los PNG quedan fuera del repo, en LaFranciaGO-recursos.
+public/media/*.png
