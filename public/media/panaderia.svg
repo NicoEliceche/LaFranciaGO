@@ -1,17 +1,77 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 420" width="560" height="420" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" width="480" height="480" role="img">
+  <!-- Panadería: canasto con flautas paradas y medialunas al frente.
+       Las piezas van separadas y a distinta altura: apiladas y del mismo
+       color se funden en una sola mancha y deja de leerse qué son. -->
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#C2410C"/>
-      <stop offset="1" stop-color="#F59E0B"/>
+    <linearGradient id="pan-fondo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7C2D12"/>
+      <stop offset="1" stop-color="#C2410C"/>
     </linearGradient>
-    <radialGradient id="s" cx="26%" cy="16%" r="62%">
-      <stop offset="0" stop-color="#fff" stop-opacity=".34"/>
-      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    <radialGradient id="pan-luz" cx="32%" cy="16%" r="70%">
+      <stop offset="0" stop-color="#FDE68A" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#FDE68A" stop-opacity="0"/>
     </radialGradient>
+    <linearGradient id="pan-canasto" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#B8813F"/>
+      <stop offset="1" stop-color="#7C4A1E"/>
+    </linearGradient>
   </defs>
-  <rect width="560" height="420" fill="url(#g)"/>
-  <rect width="560" height="420" fill="url(#s)"/>
-  <g opacity=".95">
-    <path d="M160 280c0-52 40-88 100-88h60c48 0 84 32 84 76 0 30-22 52-56 52H196c-22 0-36-16-36-40z" fill="#FFFFFF" opacity=".9"/>
-    <path d="M210 250h180" stroke="#fff" stroke-opacity=".4" stroke-width="10" stroke-linecap="round"/></g>
+
+  <rect width="480" height="480" fill="url(#pan-fondo)"/>
+  <rect width="480" height="480" fill="url(#pan-luz)"/>
+
+  <!-- Tres flautas paradas, en abanico -->
+  <g>
+    <g transform="translate(196 118) rotate(-16)">
+      <rect x="0" y="0" width="42" height="196" rx="21" fill="#D99A4E"/>
+      <rect x="0" y="0" width="42" height="196" rx="21" fill="none" stroke="#8A4E1C" stroke-opacity=".3" stroke-width="3"/>
+      <g stroke="#8A4E1C" stroke-opacity=".55" stroke-width="6" stroke-linecap="round">
+        <path d="M10 36l22 14"/><path d="M10 82l22 14"/><path d="M10 128l22 14"/>
+      </g>
+    </g>
+    <g transform="translate(244 104)">
+      <rect x="0" y="0" width="44" height="210" rx="22" fill="#E8AC5E"/>
+      <g stroke="#8A4E1C" stroke-opacity=".55" stroke-width="6" stroke-linecap="round">
+        <path d="M11 38l22 14"/><path d="M11 86l22 14"/><path d="M11 134l22 14"/>
+      </g>
+    </g>
+    <g transform="translate(292 122) rotate(15)">
+      <rect x="0" y="0" width="40" height="190" rx="20" fill="#D08F45"/>
+      <g stroke="#8A4E1C" stroke-opacity=".5" stroke-width="6" stroke-linecap="round">
+        <path d="M9 36l22 14"/><path d="M9 82l22 14"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- Canasto de mimbre -->
+  <g>
+    <path d="M118 268h244l-26 108H144z" fill="url(#pan-canasto)"/>
+    <path d="M112 258h256a10 10 0 0 1 0 22H112a10 10 0 0 1 0-22z" fill="#C89250"/>
+    <g stroke="#5E3512" stroke-opacity=".4" stroke-width="4">
+      <path d="M134 306h212"/><path d="M140 338h200"/>
+    </g>
+    <g stroke="#5E3512" stroke-opacity=".28" stroke-width="4">
+      <path d="M176 282l-8 92"/><path d="M240 282v92"/><path d="M304 282l8 92"/>
+    </g>
+  </g>
+
+  <!-- Medialunas al frente del canasto, bien separadas -->
+  <g transform="translate(150 292) rotate(-10)">
+    <path d="M0 26c0-26 22-44 50-44 11 0 20 3 27 9-16-3-32 4-41 18-9 14-9 30-2 43-21-3-34-14-34-26z" fill="#F3BB72"/>
+    <path d="M8 24c3-18 20-31 40-34" fill="none" stroke="#C97F2E" stroke-opacity=".55" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(286 300) rotate(12)">
+    <path d="M0 24c0-24 20-40 46-40 10 0 19 3 25 8-15-3-30 4-38 17-8 13-8 28-2 40-19-3-31-13-31-25z" fill="#EFB264"/>
+    <path d="M8 22c3-16 18-28 36-31" fill="none" stroke="#C97F2E" stroke-opacity=".5" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Harina -->
+  <g fill="#FFF8EC" opacity=".5">
+    <circle cx="108" cy="386" r="4"/>
+    <circle cx="146" cy="398" r="3"/>
+    <circle cx="358" cy="384" r="3.5"/>
+    <circle cx="392" cy="372" r="2.5"/>
+  </g>
+
+  <rect y="368" width="480" height="112" fill="#4A1A08" opacity=".42"/>
 </svg>

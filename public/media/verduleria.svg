@@ -1,18 +1,72 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 420" width="560" height="420" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" width="480" height="480" role="img">
+  <!-- Verdulería: cajón de feria con verdura y fruta de estación. -->
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0F9D58"/>
-      <stop offset="1" stop-color="#22C55E"/>
+    <linearGradient id="ver-fondo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#14532D"/>
+      <stop offset="1" stop-color="#15803D"/>
     </linearGradient>
-    <radialGradient id="s" cx="26%" cy="16%" r="62%">
-      <stop offset="0" stop-color="#fff" stop-opacity=".34"/>
-      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    <radialGradient id="ver-luz" cx="30%" cy="16%" r="70%">
+      <stop offset="0" stop-color="#BBF7D0" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#BBF7D0" stop-opacity="0"/>
     </radialGradient>
+    <linearGradient id="ver-cajon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#A9713A"/>
+      <stop offset="1" stop-color="#7C4A1E"/>
+    </linearGradient>
   </defs>
-  <rect width="560" height="420" fill="url(#g)"/>
-  <rect width="560" height="420" fill="url(#s)"/>
-  <g opacity=".95">
-    <circle cx="230" cy="260" r="70" fill="#FFFFFF" opacity=".9"/>
-    <circle cx="330" cy="290" r="52" fill="#FFFFFF" opacity=".7"/>
-    <path d="M230 190c0-40 30-60 60-56-6 34-28 54-60 56z" fill="#FFFFFF" opacity=".85"/></g>
+
+  <rect width="480" height="480" fill="url(#ver-fondo)"/>
+  <rect width="480" height="480" fill="url(#ver-luz)"/>
+
+  <!-- Verdura de hoja atrás -->
+  <g transform="translate(128 214)">
+    <path d="M0 40C-6 6 16-22 46-26c-6 22 2 44 18 56-20 14-52 12-64-2z" fill="#4ADE80"/>
+    <path d="M14 34c8-18 22-30 36-34" fill="none" stroke="#166534" stroke-opacity=".45" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Zanahorias asomando -->
+  <g transform="translate(318 206) rotate(16)">
+    <path d="M0 0l16 4-8 74c-1 8-11 9-13 1z" fill="#F97316"/>
+    <g stroke="#16A34A" stroke-width="7" stroke-linecap="round">
+      <path d="M4 -2l-14-22"/><path d="M12 -2l4-26"/><path d="M18 2l20-18"/>
+    </g>
+  </g>
+
+  <!-- Cajón de feria -->
+  <g>
+    <path d="M92 266h296l-22 106H114z" fill="url(#ver-cajon)"/>
+    <path d="M92 266h296l-4 20H96z" fill="#C08A4E"/>
+    <g stroke="#5E3512" stroke-opacity=".45" stroke-width="4">
+      <path d="M112 306h256"/>
+      <path d="M118 338h244"/>
+    </g>
+  </g>
+
+  <!-- Fruta y verdura dentro del cajón -->
+  <g>
+    <!-- Tomates -->
+    <circle cx="164" cy="258" r="34" fill="#EF4444"/>
+    <circle cx="154" cy="248" r="10" fill="#FCA5A5" opacity=".55"/>
+    <path d="M164 226c-8-6-16-6-22-2 6 2 10 6 12 10 4-4 8-7 10-8z" fill="#16A34A"/>
+
+    <!-- Manzana verde -->
+    <circle cx="240" cy="250" r="38" fill="#84CC16"/>
+    <circle cx="228" cy="238" r="11" fill="#D9F99D" opacity=".5"/>
+    <path d="M240 214c0-10 6-16 14-18-2 10-6 16-14 18z" fill="#166534"/>
+
+    <!-- Naranja -->
+    <circle cx="316" cy="260" r="32" fill="#FB923C"/>
+    <circle cx="306" cy="250" r="9" fill="#FED7AA" opacity=".55"/>
+
+    <!-- Morrón -->
+    <path d="M196 292c-16 0-26 12-26 28s12 30 28 30 28-14 28-30-14-28-30-28z" fill="#DC2626"/>
+    <path d="M198 290c0-8 4-12 10-14-2 8-4 12-10 14z" fill="#15803D"/>
+
+    <!-- Papas -->
+    <ellipse cx="272" cy="318" rx="30" ry="22" fill="#C9A227"/>
+    <ellipse cx="262" cy="312" rx="8" ry="6" fill="#E3C75B" opacity=".6"/>
+    <ellipse cx="330" cy="326" rx="26" ry="19" fill="#B8912A"/>
+  </g>
+
+  <rect y="360" width="480" height="120" fill="#06280F" opacity=".45"/>
 </svg>
