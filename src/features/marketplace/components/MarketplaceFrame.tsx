@@ -221,6 +221,12 @@ const ITEMS_COMERCIO: DrawerItemData[] = [
     icon: Store,
   },
   {
+    to: '/panel/comercio?ver=productos',
+    title: 'Productos',
+    subtitle: 'Tu catálogo y los precios',
+    icon: LayoutGrid,
+  },
+  {
     to: '/panel/comercio?ver=pedidos',
     title: 'Mis pedidos',
     subtitle: 'Lo que entra y hay que preparar',
@@ -532,11 +538,14 @@ const ENLACES_INFERIORES: Record<string, EnlaceInferior[]> = {
 
   /* El comercio mira los pedidos que le entran, que es lo que tiene que
      atender en el momento. */
+  /* Los avisos salieron del pie: el comercio los tiene en el menú lateral, y
+     en el teléfono le sirve más tener a mano su ficha pública —horarios,
+     descripción, si está abierto— que una pantalla de alertas. */
   comercio: [
     { to: '/panel/comercio', label: 'Inicio', icon: Home, end: true },
     { to: '/panel/comercio?ver=productos', label: 'Productos', icon: LayoutGrid },
     { to: '/panel/comercio?ver=pedidos', label: 'Mis pedidos', icon: PackageSearch },
-    { to: '/notificaciones', label: 'Avisos', icon: Bell },
+    { to: '/panel/comercio?ver=negocio', label: 'Mi negocio', icon: Store },
     { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
   ],
 

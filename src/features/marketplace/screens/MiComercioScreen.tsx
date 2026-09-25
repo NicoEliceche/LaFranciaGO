@@ -35,7 +35,7 @@ import { formatMoney } from '@shared/utils/format';
 import { priceSuffix, stepLabel } from '@core/data/saleUnits';
 import type { SaleUnitId } from '@shared/types/saleUnit.types';
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { ChatPedidoDialog } from '../components/ChatPedidoDialog';
@@ -268,6 +268,8 @@ export function MiComercioScreen({
   seccionInicial,
   conPestanas = true,
 }: MiComercioScreenProps = {}) {
+  /* La parte de la dirección que dice qué sección abrir. */
+  const { search: busqueda } = useLocation();
   const [comercio, setComercio] = useState<ComercioApi | null>(null);
   const [productos, setProductos] = useState<ProductoApi[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -293,6 +295,22 @@ export function MiComercioScreen({
   useEffect(() => {
     if (seccionInicial) setSeccion(seccionInicial);
   }, [seccionInicial]);
+
+  /* Y acá la sección sigue a la dirección.
+
+     El estado de arriba se calcula una sola vez, al montar la pantalla. Pero
+     estando ya en /panel/comercio, tocar "Mi negocio" en el menú cambia la
+     dirección sin volver a montar nada: la sección se quedaba en la que
+     estaba y el botón parecía llevar siempre al resumen. */
+  useEffect(() => {
+    if (seccionInicial) return;
+
+    const pedida = new URLSearchParams(busqueda).get('ver');
+
+    setSeccion(
+      SECCIONES.some((item) => item.id === pedida) ? (pedida as Seccion) : 'resumen',
+    );
+  }, [busqueda, seccionInicial]);
   const [pedidos, setPedidos] = useState<PedidoComercioApi[]>([]);
   const [envios, setEnvios] = useState<EnvioApi[]>([]);
   const [chat, setChat] = useState<PedidoComercioApi | null>(null);
