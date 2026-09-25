@@ -188,6 +188,38 @@ const inicioDeReparto = (esFletero: boolean): DrawerItemData => ({
   end: true,
 });
 
+/**
+ * Las pantallas del día de quien reparte.
+ *
+ * Son las mismas que tiene en el pie del teléfono. Estaban sólo ahí, así
+ * que desde la computadora —donde no hay pie— no había cómo llegar a lo que
+ * usa todo el día: lo que hay para tomar, lo que ya tiene encima y cuánto
+ * lleva ganado.
+ *
+ * El nombre del medio cambia entre delivery y flete porque no reparten lo
+ * mismo, y llamarlo igual en los dos obligaría a la persona a traducir.
+ */
+const itemsDeReparto = (esFletero: boolean): DrawerItemData[] => [
+  {
+    to: '/panel/repartidor?ver=disponibles',
+    title: 'Disponibles',
+    subtitle: esFletero ? 'Fletes para tomar' : 'Pedidos para tomar',
+    icon: PackageSearch,
+  },
+  {
+    to: '/panel/repartidor?ver=mios',
+    title: esFletero ? 'Mis fletes' : 'Mis envíos',
+    subtitle: 'Lo que tenés en curso',
+    icon: esFletero ? Truck : MotoDeliveryIcon,
+  },
+  {
+    to: '/panel/repartidor?ver=ganancias',
+    title: 'Ganancias',
+    subtitle: 'Cuánto llevás cobrado',
+    icon: BarChart3,
+  },
+];
+
 const ITEM_CUENTA: DrawerItemData = {
   to: '/mi-cuenta',
   title: 'Cuenta',
@@ -279,6 +311,15 @@ const ITEM_SER_FLETERO: DrawerItemData = {
   icon: Truck,
 };
 
+/* Los avisos como pantalla del menú. Se llama igual que en el pie para que
+   sea evidente que es el mismo lugar. */
+const ITEM_AVISOS: DrawerItemData = {
+  to: '/notificaciones',
+  title: 'Avisos',
+  subtitle: 'Qué pasó en la plataforma',
+  icon: Bell,
+};
+
 const ITEM_NOTIFICACIONES: DrawerItemData = {
   to: '/notificaciones',
   title: 'Notificaciones',
@@ -316,7 +357,11 @@ function menuDe(rol: string | undefined, roles: string[] = []) {
 
   if (esDelivery || esFletero) {
     return {
-      navegacion: [inicioDeReparto(esFletero), ITEM_CUENTA],
+      navegacion: [
+        inicioDeReparto(esFletero),
+        ...itemsDeReparto(esFletero),
+        ITEM_CUENTA,
+      ],
       acciones: [...ofrecimientos, ITEM_NOTIFICACIONES],
     };
   }
@@ -342,8 +387,11 @@ function menuDe(rol: string | undefined, roles: string[] = []) {
      un vecino usando la aplicación, es quien la administra. */
   if (rol === 'admin') {
     return {
-      navegacion: [ITEM_INICIO_ADMIN, ...ITEMS_ADMIN, ITEM_CUENTA],
-      acciones: [ITEM_NOTIFICACIONES],
+      navegacion: [ITEM_INICIO_ADMIN, ...ITEMS_ADMIN, ITEM_AVISOS, ITEM_CUENTA],
+      /* Los avisos ya están arriba como pantalla, así que acá no se repiten:
+         administración no tiene ofrecimientos, y el bloque quedaría con una
+         sola entrada duplicada. */
+      acciones: [],
     };
   }
 
