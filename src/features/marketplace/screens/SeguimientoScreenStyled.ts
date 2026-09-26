@@ -265,3 +265,43 @@ export const ExtraLinea = styled.div`
     font-variant-numeric: tabular-nums;
   }
 `;
+
+/**
+ * El aviso de que no hay ubicación en vivo.
+ *
+ * Va en tono informativo y no de error: que el repartidor no comparta su
+ * ubicación es una situación normal —eligió no hacerlo, o se quedó sin
+ * señal— y pintarlo de rojo haría pensar que algo se rompió.
+ */
+export const SinUbicacion = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[3]};
+  border: 1px dashed ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: ${({ theme }) => theme.color.surfaceMuted};
+
+  > svg {
+    flex: none;
+    margin-top: 0.15rem;
+    color: ${({ theme }) => theme.color.textMuted};
+  }
+
+  > div {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  strong {
+    font-size: ${({ theme }) => theme.typography.size.sm};
+    line-height: 1.25;
+  }
+
+  span {
+    color: ${({ theme }) => theme.color.textMuted};
+    font-size: ${({ theme }) => theme.typography.size.xs};
+    line-height: 1.45;
+  }
+`;

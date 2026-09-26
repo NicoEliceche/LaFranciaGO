@@ -6,6 +6,7 @@ import {
   Check,
   CreditCard,
   MapPin,
+  MapPinOff,
   MessageSquare,
   PackageSearch,
   Store,
@@ -45,6 +46,7 @@ import {
   PasoTexto,
   RepartidorDatos,
   RepartidorFila,
+  SinUbicacion,
   RepartidorIcono,
 } from './SeguimientoScreenStyled';
 
@@ -124,6 +126,70 @@ const ORDEN_ENVIO: Record<string, number> = {
 };
 
 /** Hace cuánto se informó la posición, en minutos. */
+/**
+ * Cuánto falta cuando no se sabe dónde está el repartidor.
+ *
+ * Compartir la ubicación es opcional y en el pueblo hay señal despareja, así
+ * que muchas veces no hay punto que mostrar. Dejar el mapa vacío y sin decir
+ * nada es lo peor: la persona no sabe si el pedido está en camino o si la
+ * aplicación se rompió.
+ *
+ * Entonces se estima. No es la posición real y no se presenta como tal: es
+ * el tiempo que tardaría alguien saliendo del comercio hacia la dirección,
+ * que para un pueblo de pocas cuadras es una respuesta suficientemente útil.
+ */
+const VELOCIDAD_KMH: Record<Vehiculo, number> = {
+  /* Despacio a propósito: la calle de tierra, las esquinas y bajarse a tocar
+     el timbre pesan más que la velocidad de punta. Quedarse corto molesta
+     menos que prometer cinco minutos y llegar en quince. */
+  moto: 22,
+  auto: 20,
+  camioneta: 18,
+  camion: 14,
+};
+
+/** Distancia en línea recta, en kilómetros. */
+function kilometrosEntre(
+  a: { lat: number; lon: number },
+  b: { lat: number; lon: number },
+) {
+  const RADIO_TIERRA_KM = 6371;
+  const aRadianes = (grados: number) => (grados * Math.PI) / 180;
+
+  const dLat = aRadianes(b.lat - a.lat);
+  const dLon = aRadianes(b.lon - a.lon);
+
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(aRadianes(a.lat)) * Math.cos(aRadianes(b.lat)) * Math.sin(dLon / 2) ** 2;
+
+  return 2 * RADIO_TIERRA_KM * Math.asin(Math.sqrt(h));
+}
+
+/**
+ * Minutos estimados del comercio a la dirección.
+ *
+ * Se agrega un 30% a la línea recta porque las calles no son rectas, y unos
+ * minutos fijos por parar, estacionar y entregar.
+ */
+function minutosEstimados(
+  comercio: { lat: number; lon: number } | null,
+  destino: { lat: number; lon: number } | null,
+  vehiculo: Vehiculo | null,
+) {
+  if (!comercio || !destino) {
+    return null;
+  }
+
+  const km = kilometrosEntre(comercio, destino) * 1.3;
+  const kmh = VELOCIDAD_KMH[vehiculo ?? 'moto'];
+  const minutos = (km / kmh) * 60 + 4;
+
+  /* Menos de cinco minutos se lee como "ya está acá" y genera un reclamo
+     cuando no aparece: el piso evita prometer de más. */
+  return Math.max(5, Math.round(minutos));
+}
+
 function minutosDesde(iso: string | null) {
   if (!iso) {
     return null;
@@ -254,6 +320,20 @@ export function SeguimientoScreen() {
 
   const minutos = minutosDesde(pedido.ubicacion_en);
   const fresca = minutos !== null && minutos <= FRESCURA_MINUTOS;
+
+  /* Cuando el repartidor no comparte su ubicación —no la aceptó, la tiene
+     apagada, o se quedó sin señal— no hay punto que mostrar. En vez de
+     dejar el mapa mudo se estima cuánto falta y se dice de dónde sale ese
+     número, para que nadie lo confunda con seguimiento en vivo. */
+  const estimado = minutosEstimados(
+    pedido.comercio_lat && pedido.comercio_lon
+      ? { lat: pedido.comercio_lat, lon: pedido.comercio_lon }
+      : null,
+    pedido.destino_lat && pedido.destino_lon
+      ? { lat: pedido.destino_lat, lon: pedido.destino_lon }
+      : null,
+    pedido.vehiculo ?? null,
+  );
   const IconoVehiculo = pedido.vehiculo ? ICONO_VEHICULO[pedido.vehiculo] : Bike;
 
   /* El punto del repartidor sólo se muestra mientras tiene sentido: una vez
@@ -298,6 +378,26 @@ export function SeguimientoScreen() {
                 nombreRepartidor={pedido.repartidor}
               />
             </MapaCaja>
+
+            {/* El aviso va debajo del mapa, que es donde la persona acaba de
+                buscar el punto y no lo encontró. */}
+            {pedido.repartidor && !mostrarRepartidor && estadoEnvio !== 'entregado' ? (
+              <SinUbicacion role="status">
+                <MapPinOff size={18} aria-hidden="true" />
+                <div>
+                  <strong>
+                    {estimado
+                      ? `Llegaría en unos ${estimado} minutos`
+                      : 'En camino'}
+                  </strong>
+                  <span>
+                    {pedido.repartidor} no está compartiendo su ubicación, así que
+                    no podemos mostrarte dónde va
+                    {estimado ? '. El tiempo es estimado por la distancia' : ''}.
+                  </span>
+                </div>
+              </SinUbicacion>
+            ) : null}
 
             {pedido.repartidor ? (
               <RepartidorFila>

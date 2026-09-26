@@ -1847,6 +1847,22 @@ async function enrutar(
 
     await env.DB.batch(escrituras);
 
+    /* Cada paso queda anotado en el chat, que es donde la persona vuelve a
+       mirar en qué anda su pedido. La notificación se lee una vez y se
+       pierde; acá queda la historia completa, en orden.
+
+       "Retirado" también va, aunque no se notifique: en el chat no molesta y
+       explica por qué el pedido ya no está en el comercio. */
+    const EN_EL_CHAT: Record<string, string> = {
+      retirado: `${repartidor.usuario.nombre} retiró el pedido del comercio.`,
+      en_camino: `${repartidor.usuario.nombre} va en camino a la dirección de entrega.`,
+      entregado: 'Pedido entregado. ¡Que lo disfrutes!',
+    };
+
+    if (EN_EL_CHAT[esperado]) {
+      await mensajeDeSistema(env, envio.pedido_id, repartidor.usuario.id, EN_EL_CHAT[esperado]);
+    }
+
     /* Sólo dos pasos le importan al cliente: cuando sale y cuando llega.
        "Retirado" es información del comercio, no suya. */
     const TEXTO_CLIENTE: Record<string, { titulo: string; texto: string }> = {
@@ -3981,6 +3997,20 @@ async function enrutar(
         texto: aviso.texto,
         enlace: `/pedidos/${pedido.id}/seguimiento`,
       });
+    }
+
+    /* Y queda anotado en el chat.
+
+       La notificación se lee una vez y se pierde; el chat es donde la persona
+       vuelve a mirar "¿en qué anda mi pedido?". Sin esto tenía que deducirlo
+       de una notificación vieja o preguntar por escrito. */
+    const EN_EL_CHAT: Record<string, string> = {
+      preparando: 'El comercio empezó a preparar el pedido.',
+      listo: 'El pedido está listo para que lo retire el repartidor.',
+    };
+
+    if (EN_EL_CHAT[esperado]) {
+      await mensajeDeSistema(env, pedido.id, propio.usuario.id, EN_EL_CHAT[esperado]);
     }
 
     /* Al quedar listo, quien lo va a llevar tiene que enterarse: si ya lo
