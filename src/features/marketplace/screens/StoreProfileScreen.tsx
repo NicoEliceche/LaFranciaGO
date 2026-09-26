@@ -24,7 +24,7 @@ import { SectionHeading } from '../components/SectionHeading';
 import { StoreHero } from '../components/StoreHero';
 import { findStoreById, formatDistance, formatMoney } from '../marketplace.utils';
 import { customerOrders } from '../marketplaceContent';
-import { addToCart } from '../cartStore';
+import { addToCart, useCart } from '../cartStore';
 import { SECCION_OFERTAS, useStoreCatalog } from '../useStoreCatalog';
 import { useStores } from '../useStores';
 import {
@@ -1097,15 +1097,32 @@ export function StoreProfileScreen() {
       .slice(0, 4);
   }, [allProducts, selectedProduct]);
 
-  const selectedCount = useMemo(
-    () => Object.values(quantities).reduce((sum, quantity) => sum + quantity, 0),
-    [quantities],
+  /**
+   * Lo que dice la barra de abajo: sale del carrito de verdad.
+   *
+   * Antes lo calculaba esta pantalla por su cuenta, multiplicando el precio
+   * por el escalón elegido. Pero el escalón es una posición en la lista de
+   * cantidades, no una cantidad: para "1/2 kg" vale 0 y el factor es 0,5. Así
+   * medio kilo de asado a $11.500 se mostraba $23.000 en esta barra y $5.750
+   * en el carrito —el mismo producto con dos precios— y el contador decía
+   * "2 productos" por un solo corte de carne.
+   *
+   * Ahora se lee del carrito, que es el que sabe. Que dos lugares calculen lo
+   * mismo por separado es lo que permitió que se separaran: mientras haya una
+   * sola cuenta, no pueden contradecirse.
+   */
+  const carrito = useCart();
+
+  const delComercio = useMemo(
+    () => carrito.filter((item) => item.storeId === store.id),
+    [carrito, store.id],
   );
 
+  const selectedCount = delComercio.length;
+
   const selectedSubtotal = useMemo(
-    () =>
-      allProducts.reduce((sum, product) => sum + product.price * (quantities[product.id] ?? 0), 0),
-    [allProducts, quantities],
+    () => delComercio.reduce((suma, item) => suma + item.subtotal, 0),
+    [delComercio],
   );
 
   /* Cuánto mide la barra del carrito, para reservarle ese lugar al final de

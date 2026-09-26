@@ -94,7 +94,13 @@ export function addToCart(producto: ProductoParaCarrito, escalones = 1) {
   const existente = items.find((item) => item.id === producto.id);
 
   if (existente) {
-    const escalon = Math.min(existente.quantity + escalones, tope);
+    /* Se suma un escalón por cada paso elegido, igual que abajo: `escalones`
+       viene del selector, que arranca en 1 para la cantidad más chica.
+
+       Sumando `escalones` tal cual, agregar "1/2 kg" dos veces saltaba de
+       medio kilo a kilo y medio en lugar de a un kilo, porque el primer paso
+       contaba doble. */
+    const escalon = Math.min(existente.quantity + Math.max(escalones - 1, 0) + 1, tope);
 
     items = items.map((item) =>
       item.id === producto.id
