@@ -13,6 +13,7 @@ import { SearchBar } from '../components/SearchBar';
 import { SectionHeading } from '../components/SectionHeading';
 import { StoreCard } from '../components/StoreCard';
 import { categories } from '../../home/homeContent';
+import { MandadoDialog } from '../components/MandadoDialog';
 import { alternarFavorito, useFavoritos } from '../useFavoritos';
 import { useHomeData } from '../useHomeData';
 import { matchesQuery } from '../marketplace.utils';
@@ -43,6 +44,7 @@ const HOME_CATEGORY_PREVIEW = 8;
 
 export function MarketplaceHomeScreen() {
   const [query, setQuery] = useState('');
+  const [mandadoAbierto, setMandadoAbierto] = useState(false);
   const { sortMode } = useSortPreference();
 
   /* Comercios y ofertas salen de la base: son los que el comercio administra
@@ -108,7 +110,11 @@ export function MarketplaceHomeScreen() {
 
       <Section>
         <SectionInner>
-          <ErrandBanner to="/mandado">
+          {/* Abre el diálogo en lugar de cambiar de pantalla: pedir un mandado
+              es una sola cosa, y antes eran dos saltos de dirección —uno para
+              escribir y otro para el chat— con la persona perdiendo de vista
+              dónde estaba. */}
+          <ErrandBanner as="button" type="button" onClick={() => setMandadoAbierto(true)}>
             <ErrandBannerIcon>
               <PackageSearch size={22} aria-hidden="true" />
             </ErrandBannerIcon>
@@ -122,6 +128,8 @@ export function MarketplaceHomeScreen() {
               <ChevronRight size={18} aria-hidden="true" />
             </ErrandBannerArrow>
           </ErrandBanner>
+
+          <MandadoDialog abierto={mandadoAbierto} alCerrar={() => setMandadoAbierto(false)} />
         </SectionInner>
       </Section>
 
