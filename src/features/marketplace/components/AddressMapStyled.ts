@@ -5,7 +5,10 @@ import { neonIcon, neonSurface } from '@core/theme/neon';
 // ── Mapa de selección de ubicación ──
 
 export const MapWrap = styled.div`
+  /* Su propia capa: los z-index internos de Leaflet no tienen que
+     competir con los del resto de la aplicación. */
   position: relative;
+  isolation: isolate;
   min-height: 0;
   height: 100%;
   border-radius: ${({ theme }) => theme.radius.lg};

@@ -124,3 +124,19 @@ export const OrderCardTotal = styled.strong`
   letter-spacing: -0.02em;
   color: ${({ theme }) => theme.color.primary};
 `;
+
+/**
+ * La pista de que la tarjeta se puede tocar.
+ *
+ * Antes había un botón aparte, "Ver dónde va", que hacía lo mismo que tocar
+ * la tarjeta. Dos accesos a la misma pantalla hacen dudar de si van al mismo
+ * lado, y le sacaban lugar al único botón que sí hace algo distinto:
+ * cancelar. Ahora se dice con palabras y el botón se fue.
+ */
+export const OrderCardPista = styled.span`
+  display: block;
+  margin-top: 0.15rem;
+  color: ${({ theme }) => theme.color.primary};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.semibold};
+`;

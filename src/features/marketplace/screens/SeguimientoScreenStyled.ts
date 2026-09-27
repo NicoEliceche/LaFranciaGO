@@ -8,8 +8,26 @@ import styled from 'styled-components';
  * El contenedor de Leaflet toma la del padre, y sin una definida quedaba
  * chato: los puntos no entraban en el encuadre.
  */
+/**
+ * El mapa, encerrado en su propia capa.
+ *
+ * Leaflet apila sus cosas con z-index propios que llegan a 1000 —las capas
+ * de mosaicos, los marcadores, los controles de zoom— muy por encima del
+ * encabezado de la aplicación. Sin encerrarlo, esos números compiten con los
+ * del resto y el mapa se dibujaba por delante del encabezado al scrollear, y
+ * tapaba el chat al abrirlo.
+ *
+ * `isolation` crea un contexto de apilamiento propio: adentro Leaflet ordena
+ * lo suyo como quiera, y afuera todo el bloque vale por su z-index y nada
+ * más. `relative` y el recorte lo mantienen además dentro de su caja.
+ */
 export const MapaCaja = styled.div`
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
   height: 20rem;
+  overflow: hidden;
+  border-radius: ${({ theme }) => theme.radius.lg};
 
   @media (min-width: 48rem) {
     height: 24rem;

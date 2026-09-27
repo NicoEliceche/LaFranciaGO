@@ -11,6 +11,7 @@ import {
   OrderCardEta,
   OrderCardFooter,
   OrderCardHead,
+  OrderCardPista,
   OrderCardShell,
   OrderCardStore,
   OrderCardThumb,
@@ -32,8 +33,20 @@ const stateLabel: Record<CustomerOrder['state'], string> = {
 /** Fila de pedido en el historial: comercio, estado, total y acceso al detalle. */
 export function OrderCard({ order, priority }: OrderCardProps) {
   return (
-    /* Se lleva el pedido en la URL: el comercio muestra sólo lo comprado. */
-    <OrderCardShell to={`/comercios/${order.storeId}?pedido=${order.id}`}>
+    /* Mientras está en curso, la tarjeta lleva al seguimiento: es lo que la
+       persona viene a ver cuando toca su pedido. Antes llevaba al comercio,
+       que es a dónde compró, no dónde está lo que compró.
+
+       Una vez cerrado ya no hay nada que seguir, así que lleva al comercio
+       con el pedido en la dirección: ahí se ve qué se había comprado, y es
+       desde donde se vuelve a pedir lo mismo. */
+    <OrderCardShell
+      to={
+        order.state === 'proceso'
+          ? `/pedidos/${order.id}/seguimiento`
+          : `/comercios/${order.storeId}?pedido=${order.id}`
+      }
+    >
       <OrderCardThumb>
         <MediaFrame $ratio="1 / 1" $radius="md">
           <MediaImage
@@ -64,6 +77,15 @@ export function OrderCard({ order, priority }: OrderCardProps) {
           </span>
           <OrderCardTotal>{formatMoney(order.total)}</OrderCardTotal>
         </OrderCardFooter>
+
+        {/* Que la tarjeta entera se pueda tocar no se ve. Decirlo acá evita
+            el botón aparte que hacía lo mismo: dos maneras de entrar a lo
+            mismo hacen dudar de si van al mismo lado. */}
+        <OrderCardPista>
+          {order.state === 'proceso'
+            ? 'Entrá al pedido para ver dónde va'
+            : 'Entrá al pedido para ver más info'}
+        </OrderCardPista>
       </OrderCardBody>
 
       <ChevronRight size={18} aria-hidden="true" />

@@ -1,6 +1,8 @@
 import { Suspense, lazy } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 
+import { SubirAlCambiar } from '@core/navigation/SubirAlCambiar';
+
 import { ThemeProvider } from '@core/theme';
 import { MarketplaceHomeScreen } from '@features/marketplace/screens/MarketplaceHomeScreen';
 import { RutaPrivada } from '@features/marketplace/components/RutaPrivada';
@@ -166,6 +168,7 @@ function App() {
   return (
     <HashRouter>
       <ThemeProvider>
+        <SubirAlCambiar />
         <Suspense fallback={null}>
           <Routes>
             <Route

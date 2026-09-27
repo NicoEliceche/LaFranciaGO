@@ -1,4 +1,4 @@
-import { Clock3, MapPin, Star } from 'lucide-react';
+import { Clock3, Heart, MapPin, Star } from 'lucide-react';
 
 import { Avatar, MediaFrame, MediaImage, MediaOverlayTop } from '@shared/components/Media';
 import { categoryImage, initialsOf, toneFromId } from '@shared/utils/media';
@@ -12,6 +12,7 @@ import {
   StoreHeroName,
   StoreHeroOpenBadge,
   StoreHeroRatingBadge,
+  StoreHeroFavorito,
   StoreHeroShell,
   StoreHeroSubtitle,
 } from './StoreHeroStyled';
@@ -19,6 +20,10 @@ import {
 type StoreHeroProps = {
   id: string;
   name: string;
+  /* Si está guardado. Sin el par de props no se muestra el corazón, igual
+     que en la tarjeta del listado. */
+  favorito?: boolean;
+  onToggleFavorito?: (id: string) => void;
   category: string;
   categoryId?: string;
   address: string;
@@ -43,6 +48,8 @@ export function StoreHero({
   rating,
   openNow,
   minOrder,
+  favorito,
+  onToggleFavorito,
 }: StoreHeroProps) {
   return (
     <StoreHeroShell>
@@ -58,6 +65,21 @@ export function StoreHero({
               <Star size={13} aria-hidden="true" fill="currentColor" />
               {rating.toFixed(1)}
             </StoreHeroRatingBadge>
+          ) : null}
+
+          {/* El mismo corazón que en el listado. Estaba sólo allá, así que
+              entrando al comercio no había cómo guardarlo: había que volver
+              atrás a buscar la tarjeta. */}
+          {onToggleFavorito ? (
+            <StoreHeroFavorito
+              type="button"
+              data-activo={favorito}
+              onClick={() => onToggleFavorito(id)}
+              aria-pressed={favorito}
+              aria-label={favorito ? `Quitar ${name} de favoritos` : `Guardar ${name} en favoritos`}
+            >
+              <Heart size={17} aria-hidden="true" fill={favorito ? 'currentColor' : 'none'} />
+            </StoreHeroFavorito>
           ) : null}
         </MediaOverlayTop>
 

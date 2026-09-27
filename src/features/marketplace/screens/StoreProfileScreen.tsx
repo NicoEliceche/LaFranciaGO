@@ -25,6 +25,7 @@ import { StoreHero } from '../components/StoreHero';
 import { findStoreById, formatDistance, formatMoney } from '../marketplace.utils';
 import { customerOrders } from '../marketplaceContent';
 import { addToCart, useCart } from '../cartStore';
+import { alternarFavorito, useFavoritos } from '../useFavoritos';
 import { SECCION_OFERTAS, useStoreCatalog } from '../useStoreCatalog';
 import { useStores } from '../useStores';
 import {
@@ -1113,6 +1114,10 @@ export function StoreProfileScreen() {
    */
   const carrito = useCart();
 
+  /* Para el corazón de la portada: guardar el comercio sin volver al
+     listado. */
+  const { favoritos } = useFavoritos();
+
   const delComercio = useMemo(
     () => carrito.filter((item) => item.storeId === store.id),
     [carrito, store.id],
@@ -1255,6 +1260,8 @@ export function StoreProfileScreen() {
             distanceKm={store.distanceKm}
             rating={store.rating}
             openNow={store.openNow}
+            favorito={favoritos.has(store.id)}
+            onToggleFavorito={alternarFavorito}
             minOrder={store.minOrder}
           />
         </SectionInner>

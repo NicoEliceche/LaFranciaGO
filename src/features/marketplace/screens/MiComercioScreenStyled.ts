@@ -270,6 +270,11 @@ export const EstadoChip = styled.span`
 
 /** El mapa necesita alto explícito: sin esto Leaflet no dibuja nada. */
 export const MapaCaja = styled.div`
+  /* Encerrado en su propia capa: Leaflet apila lo suyo con z-index de hasta
+     1000 y sin esto se dibuja por delante del encabezado al scrollear. */
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
   height: 18rem;
   border-radius: ${({ theme }) => theme.radius.lg};
   overflow: hidden;

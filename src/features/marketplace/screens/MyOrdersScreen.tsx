@@ -23,7 +23,6 @@ import {
   PedidoAcciones,
   PedidoConSeguimiento,
   SearchSection,
-  SeguirBoton,
 } from './screenLayout';
 
 type OrderTab = 'todos' | OrderState;
@@ -143,15 +142,6 @@ export function MyOrdersScreen() {
                       cliente elige con cuál se queda. */}
                   {order.isFreight && order.state === 'proceso' ? (
                     <CotizacionesFlete pedidoId={order.id} onAceptada={() => void recargar()} />
-                  ) : null}
-
-                  {/* Seguir en vivo sólo tiene sentido mientras está en
-                      camino: en uno entregado, el mapa no diría nada. */}
-                  {order.state === 'proceso' ? (
-                    <SeguirBoton to={`/pedidos/${order.id}/seguimiento`}>
-                      <MapPin size={15} aria-hidden="true" />
-                      Ver dónde va
-                    </SeguirBoton>
                   ) : null}
 
                   {order.cancellable || (order.state === 'terminado' && !order.rated) ? (

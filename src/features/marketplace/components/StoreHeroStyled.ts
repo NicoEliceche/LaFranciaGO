@@ -89,3 +89,43 @@ export const StoreHeroRatingBadge = styled.span`
   font-weight: ${({ theme }) => theme.typography.weight.bold};
   box-shadow: ${({ theme }) => theme.shadow.sm};
 `;
+
+/**
+ * El corazón para guardar el comercio, sobre la portada.
+ *
+ * Es el mismo gesto que en la tarjeta del listado. Estaba sólo allá, así que
+ * entrando al comercio no había cómo guardarlo: había que volver atrás a
+ * buscar la tarjeta, que es justo lo que nadie hace.
+ */
+export const StoreHeroFavorito = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-start: auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.surface};
+  color: ${({ theme }) => theme.color.textMuted};
+  box-shadow: ${({ theme }) => theme.shadow.sm};
+  cursor: pointer;
+  transition: color 160ms ease, transform 160ms ease;
+
+  &[data-activo='true'] {
+    color: ${({ theme }) => theme.color.danger};
+  }
+
+  &:hover {
+    transform: scale(1.06);
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.primary};
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
