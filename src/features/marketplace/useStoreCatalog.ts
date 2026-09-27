@@ -213,23 +213,72 @@ export function useStoreCatalog(comercioId: string): Resultado {
            Se arma a partir de los productos ya convertidos, así la sección
            muestra exactamente las mismas tarjetas que el resto del catálogo,
            con su etiqueta y su precio. */
-        const enOferta = productos
-          .filter((producto) => ofertaDe.has(producto.id))
-          .map((producto, indice) =>
-            aProducto(
-              producto,
-              categorias.find((categoria) => categoria.id === producto.categoria_id)?.nombre ??
-                'Otros',
-              indice,
-            ),
-          );
+        /* La sección de ofertas muestra las ofertas, no los productos que
+           las componen.
 
-        if (enOferta.length > 0) {
+           Antes listaba los productos que tenían alguna promoción, y para un
+           combo eso significaba desarmarlo: tocando "Combo parrilla" en la
+           portada se llegaba a una lista con asado, chorizo y morcilla por
+           separado, cada uno a su precio. La oferta que se había tocado no
+           aparecía en ningún lado, y daba la impresión de que no existía.
+
+           Cada oferta es una tarjeta con su nombre, su precio y su foto. Los
+           productos sueltos siguen estando más abajo, en su categoría, con
+           la etiqueta de la promoción. */
+        const nombreDeCategoria = (producto: ProductoApi) =>
+          categorias.find((categoria) => categoria.id === producto.categoria_id)?.nombre ??
+          'Otros';
+
+        /* Ya convertidos: la tarjeta de la oferta hereda de uno de ellos la
+           categoría, la unidad de venta y la foto de respaldo. */
+        const porId = new Map(
+          productos.map((producto, indice) => [
+            producto.id,
+            aProducto(producto, nombreDeCategoria(producto), indice),
+          ]),
+        );
+
+        const tarjetasDeOferta: ProductoCatalogo[] = (ofertas ?? [])
+          .filter((oferta) => oferta.productos.some((parte) => porId.has(parte.id)))
+          .map((oferta, indice) => {
+            /* El primero de la lista presta su categoría y su unidad: sirve
+               para la foto de respaldo y para que el selector sepa de a
+               cuánto se vende. */
+            const principal = porId.get(
+              oferta.productos.find((parte) => porId.has(parte.id))!.id,
+            )!;
+
+            const cuantos = oferta.productos.length;
+
+            return {
+              ...principal,
+              /* El id es el de la oferta: agregar "Combo parrilla" al carrito
+                 no es lo mismo que agregar un asado. */
+              id: oferta.id,
+              name: oferta.titulo,
+              description:
+                oferta.descripcion ??
+                (cuantos > 1
+                  ? `Lleva ${cuantos} productos: ${oferta.productos.map((x) => x.nombre).join(', ')}`
+                  : ''),
+              price: oferta.precioFinal,
+              /* Un combo se lleva entero: no se vende por kilo aunque lo que
+                 tenga adentro sí. Decir "el kg" al lado del precio del combo
+                 hace pensar que son $21.000 por kilo. */
+              saleUnit: oferta.tipo === 'descuento' ? principal.saleUnit : 'unidad',
+              tone: TONOS[indice % TONOS.length],
+              foto: oferta.fotoUrl ?? principal.foto,
+              badge: etiquetaDe(oferta, principal.price).etiqueta,
+              oferta: etiquetaDe(oferta, principal.price),
+            };
+          });
+
+        if (tarjetasDeOferta.length > 0) {
           secciones.unshift({
             id: SECCION_OFERTAS,
             label: 'Ofertas',
             description: 'Lo que está en promoción ahora.',
-            products: enOferta,
+            products: tarjetasDeOferta,
           });
         }
 

@@ -77,23 +77,43 @@ const PRODUCTOS = [
 ];
 
 function sql(consulta) {
+  /* Por archivo y no como argumento: en la línea de comandos cada shell
+     interpreta a su manera las comillas y los paréntesis. */
+  const plana = consulta.replace(/\s+/g, ' ').trim();
+
+  /* Se llama a wrangler con node y sin shell.
+
+     Con shell, la consulta pasa por bash o por PowerShell antes de llegar al
+     programa, y cada uno interpreta a su manera las comillas y los
+     paréntesis: la misma consulta andá en una terminal y falla en la otra.
+     Sin shell llega tal cual, pero Node se niega a ejecutar un .cmd —que es
+     lo que deja npx en Windows—, así que se apunta directo al archivo .js
+     que ese .cmd iba a correr. */
   const salida = spawnSync(
-    'npx',
+    process.execPath,
     [
-      'wrangler',
+      path.join(import.meta.dirname, '..', 'node_modules', 'wrangler', 'bin', 'wrangler.js'),
       'd1',
       'execute',
       BASE,
       REMOTO ? '--remote' : '--local',
       '--command',
-      JSON.stringify(consulta),
+      plana,
       '--json',
     ],
-    { encoding: 'utf8', shell: true, cwd: path.join(import.meta.dirname, '..') },
+    { encoding: 'utf8', shell: false, cwd: path.join(import.meta.dirname, '..') },
   );
 
   if (salida.status !== 0) {
-    throw new Error(`falló la consulta: ${salida.stderr || salida.stdout}`);
+    const detalle = `${salida.stderr || ''}${salida.stdout || ''}`;
+    /* El mensaje de wrangler incluye el comando entero, que tapa el error
+       de verdad. Se busca la linea que lo explica. */
+    const lineas = detalle.split(String.fromCharCode(10));
+    const motivo =
+      lineas.find((linea) => /ERROR|error:/i.test(linea))?.trim() ??
+      'wrangler no pudo ejecutarla';
+
+    throw new Error(`falló la consulta: ${motivo}`);
   }
 
   const desde = salida.stdout.indexOf('[');

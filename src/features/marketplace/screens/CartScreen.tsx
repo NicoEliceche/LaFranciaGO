@@ -372,9 +372,13 @@ export function CartScreen() {
 
     try {
       const creados: string[] = [];
+      /* Cuántas entregas salieron en total: es lo que hay que avisar del otro
+         lado, porque en "Mis pedidos" van a aparecer varias filas por una
+         sola compra y sin explicación parece un error. */
+      let entregas = 0;
 
       for (const [comercioId, grupo] of porComercio) {
-        const { id } = await pedidosApi.crear({
+        const { id, partes: partesDelPedido } = await pedidosApi.crear({
           comercioId,
           direccionId: direccionElegida?.id,
           direccionTexto: direccionElegida?.address,
@@ -389,6 +393,7 @@ export function CartScreen() {
         });
 
         creados.push(id);
+        entregas += partesDelPedido ?? 1;
       }
 
       clearCart();
@@ -411,7 +416,9 @@ export function CartScreen() {
         }
       }
 
-      navigate('/pedidos');
+      /* El aviso viaja en la dirección y lo muestra la pantalla de pedidos,
+         que es dónde se ven las filas que hay que explicar. */
+      navigate(entregas > creados.length ? `/pedidos?entregas=${entregas}` : '/pedidos');
     } catch (fallo) {
       /* El carrito no se vacía si falló: perder lo armado sería peor que
          volver a intentar. */

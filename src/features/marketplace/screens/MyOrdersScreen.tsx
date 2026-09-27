@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MapPin, PackageSearch, Star, XCircle } from 'lucide-react';
 
 import { pedidosApi } from '@core/data/services/apiClient';
@@ -58,6 +58,21 @@ export function MyOrdersScreen() {
   const [puntuando, setPuntuando] = useState<CustomerOrder | null>(null);
   const [cancelando, setCancelando] = useState<CustomerOrder | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+
+  /* Al venir de confirmar un pedido que se partió, hay que explicarlo: si no,
+     aparecen varias filas por una sola compra y se lee como un error de la
+     aplicación. Se avisa acá y no en el carrito porque es acá donde se ven
+     las filas que hay que explicar. */
+  useEffect(() => {
+    const entregas = Number(new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('entregas'));
+
+    if (Number.isFinite(entregas) && entregas > 1) {
+      setAviso(
+        `Tu compra se dividió en ${entregas} entregas porque no entraba en un solo viaje. ` +
+          'Cada una llega por separado y las seguís desde acá.',
+      );
+    }
+  }, []);
   const [error, setError] = useState<string | null>(null);
 
   const visibleOrders = useMemo(
