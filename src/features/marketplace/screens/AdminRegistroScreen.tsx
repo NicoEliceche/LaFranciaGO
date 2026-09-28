@@ -8,7 +8,7 @@
  * Lo primero que se ve es lo último que pasó, porque cuando alguien avisa que
  * algo falló, casi siempre acaba de fallar.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Info, RefreshCw, Search, AlertTriangle, X } from 'lucide-react';
 
 import {
@@ -78,26 +78,67 @@ export function AdminRegistroScreen() {
   const [cargando, setCargando] = useState(true);
   const [fallo, setFallo] = useState<string | null>(null);
 
-  const cargar = useCallback(async () => {
-    setCargando(true);
-    setFallo(null);
+  /**
+   * Trae lo que hay en el servidor con los filtros puestos.
+   *
+   * Se llama al entrar y cada vez que cambian los filtros, pero sin tapar la
+   * pantalla: mientras responde se sigue viendo lo que ya había, filtrado
+   * acá. Así el filtro se siente instantáneo y aun así aparece lo que haya
+   * entrado desde la última consulta.
+   */
+  const cargar = useCallback(
+    async ({ silencioso = false } = {}) => {
+      if (!silencioso) setCargando(true);
 
-    try {
-      const datos = await registroApi.ver({ nivel, area, buscar });
+      setFallo(null);
 
-      setLineas(datos.lineas);
-      setResumen(datos.resumen);
-      setTotal(datos.total);
-    } catch (error) {
-      setFallo(error instanceof Error ? error.message : 'No pudimos leer el registro.');
-    } finally {
-      setCargando(false);
-    }
-  }, [nivel, area, buscar]);
+      try {
+        const datos = await registroApi.ver({ nivel, area, buscar });
+
+        setLineas(datos.lineas);
+        setResumen(datos.resumen);
+        setTotal(datos.total);
+      } catch (error) {
+        setFallo(error instanceof Error ? error.message : 'No pudimos leer el registro.');
+      } finally {
+        setCargando(false);
+      }
+    },
+    [nivel, area, buscar],
+  );
+
+  /* La primera carga muestra el indicador; las que dispara un filtro van en
+     silencio, porque la lista ya se acomodó sola. */
+  const primeraVez = useRef(true);
 
   useEffect(() => {
-    void cargar();
+    void cargar({ silencioso: !primeraVez.current });
+    primeraVez.current = false;
   }, [cargar]);
+
+  /**
+   * Lo que se ve, filtrado acá mismo.
+   *
+   * El servidor también filtra —hace falta, porque el registro tiene miles
+   * de líneas y no entran todas— pero esperar su respuesta para mover un
+   * filtro se siente lento. Se aplica el mismo criterio sobre lo que ya está
+   * cargado, y cuando el servidor contesta la lista se completa con lo que
+   * este lado no tenía.
+   */
+  const visibles = useMemo(() => {
+    const buscado = buscar.trim().toLowerCase();
+
+    return lineas.filter((linea) => {
+      if (nivel && linea.nivel !== nivel) return false;
+      if (area && linea.area !== area) return false;
+
+      if (!buscado) return true;
+
+      return `${linea.mensaje} ${linea.ruta ?? ''} ${linea.area ?? ''}`
+        .toLowerCase()
+        .includes(buscado);
+    });
+  }, [lineas, nivel, area, buscar]);
 
   useEffect(() => {
     registroApi
@@ -205,7 +246,7 @@ export function AdminRegistroScreen() {
               />
             ) : (
               <Lineas>
-                {lineas.map((linea) => {
+                {visibles.map((linea) => {
                   const Icono = ICONOS[linea.nivel] ?? Info;
 
                   return (

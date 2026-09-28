@@ -899,10 +899,10 @@ async function enrutar(
     }
 
     const postulacion = await env.DB.prepare(
-      'SELECT id, usuario_id, rol FROM postulaciones WHERE id = ?',
+      'SELECT id, usuario_id, rol, datos FROM postulaciones WHERE id = ?',
     )
       .bind(revision[1])
-      .first<{ id: string; usuario_id: string; rol: string }>();
+      .first<{ id: string; usuario_id: string; rol: string; datos: string | null }>();
 
     if (!postulacion) {
       return error('Postulación no encontrada.', 404, cors);
@@ -927,6 +927,69 @@ async function enrutar(
         'INSERT INTO revisiones (id, postulacion_id, admin_id, decision, nota) VALUES (?, ?, ?, ?, ?)',
       ).bind(nuevoId(), postulacion.id, admin.usuario.id, decision, nota || null),
     ]);
+
+    /* Aprobar un comercio tiene que crearlo.
+
+       La postulación guardaba los datos y el rol quedaba aprobado, pero el
+       comercio no existía en ningún lado: el dueño entraba y no tenía
+       negocio, y el cliente no lo veía en el listado. Quedaba aprobado en
+       los papeles y sin existir en la aplicación. */
+    if (decision === 'aprobado' && postulacion.rol === 'comercio') {
+      const yaExiste = await env.DB.prepare(
+        'SELECT id FROM comercios WHERE usuario_id = ?',
+      )
+        .bind(postulacion.usuario_id)
+        .first<{ id: string }>();
+
+      if (yaExiste) {
+        /* Se postuló desde el formulario largo, que sí lo crea: sólo hay que
+           publicarlo. */
+        await env.DB.prepare("UPDATE comercios SET estado = 'aprobado' WHERE id = ?")
+          .bind(yaExiste.id)
+          .run();
+      } else {
+        const datos = (() => {
+          try {
+            return JSON.parse(String(postulacion.datos ?? '{}')) as Record<string, unknown>;
+          } catch {
+            return {} as Record<string, unknown>;
+          }
+        })();
+
+        const nombre = String(datos.nombre ?? '').trim() || 'Comercio';
+
+        /* Un id legible y único, igual que en el alta larga. */
+        const base = slugify(nombre) || 'comercio';
+        let id = base;
+        let intento = 2;
+
+        while (await env.DB.prepare('SELECT id FROM comercios WHERE id = ?').bind(id).first()) {
+          id = `${base}-${intento}`;
+          intento += 1;
+        }
+
+        await env.DB.prepare(
+          `INSERT INTO comercios
+            (id, usuario_id, nombre, rubro_id, rubro_nombre, direccion, telefono,
+             email, horario, zona, descripcion, estado)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aprobado')`,
+        )
+          .bind(
+            id,
+            postulacion.usuario_id,
+            nombre,
+            String(datos.rubroId ?? 'comercio'),
+            String(datos.rubroNombre ?? datos.rubroId ?? 'Comercio'),
+            String(datos.direccion ?? ''),
+            (datos.telefono as string) ?? null,
+            (datos.email as string) ?? null,
+            (datos.horario as string) ?? null,
+            (datos.zona as string) ?? null,
+            (datos.descripcion as string) ?? null,
+          )
+          .run();
+      }
+    }
 
     /* La persona que se postuló tiene que enterarse: estuvo esperando una
        respuesta, y con "pedimos cambios" además necesita saber cuáles. */
