@@ -360,6 +360,17 @@ export const CartItemRow = styled.div`
   grid-template-columns: auto minmax(0, 1fr);
   gap: ${({ theme }) => theme.spacing[2]};
   min-width: 0;
+
+  /* El que impide confirmar el pedido. Antes el error decía "algún producto
+     no está disponible" y la persona tenía que adivinar cuál sacar; lo más
+     probable era que vaciara el carrito entero o se fuera. */
+  &[data-problema='true'] {
+    padding: ${({ theme }) => theme.spacing[2]};
+    margin-inline: calc(-1 * ${({ theme }) => theme.spacing[2]});
+    border-radius: ${({ theme }) => theme.radius.lg};
+    border: 1px solid ${({ theme }) => theme.color.danger};
+    background: rgba(220, 38, 38, 0.08);
+  }
 `;
 
 export const CartItemThumb = styled.div`

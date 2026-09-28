@@ -52,6 +52,17 @@ export type ProductoCatalogo = {
   stock: number | null;
   tamano?: string;
   oferta: OfertaDeProducto | null;
+  /**
+   * Con qué producto se arma el pedido.
+   *
+   * Las tarjetas de oferta llevan el id de la oferta, que es lo que las
+   * identifica en pantalla, pero el pedido se hace contra un producto de
+   * verdad: mandando el id de la oferta, el backend no lo encuentra en su
+   * catálogo y responde que no está disponible.
+   *
+   * En un producto normal es su propio id.
+   */
+  productoRealId: string;
 };
 
 export type SeccionCatalogo = {
@@ -185,6 +196,7 @@ export function useStoreCatalog(comercioId: string): Resultado {
             stock: producto.stock,
             tamano: producto.tamano,
             oferta: oferta ? etiquetaDe(oferta, producto.precio) : null,
+            productoRealId: producto.id,
           };
         };
 
@@ -255,6 +267,8 @@ export function useStoreCatalog(comercioId: string): Resultado {
               /* El id es el de la oferta: agregar "Combo parrilla" al carrito
                  no es lo mismo que agregar un asado. */
               id: oferta.id,
+              /* El pedido se arma con el producto, no con la oferta. */
+              productoRealId: principal.productoRealId,
               name: oferta.titulo,
               description:
                 oferta.descripcion ??

@@ -131,6 +131,8 @@ export interface FavoriteProduct {
 }
 
 export interface CartItem {
+  /** Con qué producto se arma el pedido, si el id es de una oferta. */
+  productoRealId?: string;
   id: string;
   product: string;
   store: string;

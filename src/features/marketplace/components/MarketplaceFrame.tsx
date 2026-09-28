@@ -37,6 +37,7 @@ import {
 import { useThemeMode } from '@core/theme';
 import { MotoDeliveryIcon } from '@shared/components/icons/MotoDeliveryIcon';
 
+import { BarraCarrito } from './BarraCarrito';
 import { useProfilePhoto } from '../profileStore';
 import { useSesion } from '../sessionStore';
 import { AddressSheet } from './AddressSheet';
@@ -1063,6 +1064,12 @@ export function MarketplaceFrame({
           })}
         </BottomNavList>
       </BottomNav>
+
+      {/* Acompaña mientras haya algo en el carrito, en cualquier pantalla.
+          Vivía adentro de la ficha del comercio y mostraba sólo lo de ese
+          comercio, así que desaparecía al volver a la portada y al entrar a
+          otro negocio decía el total de ese solo. */}
+      <BarraCarrito />
 
       {menuMounted && (
         <ModalOverlay data-drawer="true" data-state={menuPhase} role="presentation" onClick={closeOverlays}>

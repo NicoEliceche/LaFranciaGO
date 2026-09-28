@@ -84,6 +84,8 @@ type CatalogProduct = {
   tone: CatalogTone;
   badge?: string;
   suggestions: string[];
+  /** Con qué producto se arma el pedido, si el id es el de una oferta. */
+  productoRealId?: string;
 };
 
 type CatalogSection = {
@@ -1230,6 +1232,7 @@ export function StoreProfileScreen() {
     addToCart(
       {
         id: producto.id,
+        productoRealId: producto.productoRealId,
         product: producto.name,
         store: store.name,
         storeId: store.id,
@@ -1392,31 +1395,6 @@ export function StoreProfileScreen() {
         </Section>
       )}
 
-      {/* La barra flota sobre el contenido, así que no ocupa lugar en el
-          scroll y tapaba las últimas tarjetas. Este bloque le reserva abajo
-          exactamente lo que mide, para que el catalálogo termine por encima
-          de ella en vez de debajo.
-
-          Se mide en vez de escribir un número fijo porque la altura depende
-          del total: un precio largo puede empujar el botón a otra línea, y un
-          valor a mano quedaría mal justo en ese caso. */}
-      {selectedCount > 0 && <CheckoutBarSpacer style={{ height: alturaBarra }} />}
-
-      {selectedCount > 0 && (
-        <StoreCheckoutBar ref={barraRef}>
-          <StoreCheckoutInfo>
-            <StoreCheckoutCount>
-              {selectedCount} {selectedCount === 1 ? 'producto' : 'productos'}
-            </StoreCheckoutCount>
-            <StoreCheckoutTotal>{formatMoney(selectedSubtotal)}</StoreCheckoutTotal>
-          </StoreCheckoutInfo>
-
-          <StoreCheckoutCta to="/carrito">
-            <ShoppingCart size={18} aria-hidden="true" />
-            Ver carrito
-          </StoreCheckoutCta>
-        </StoreCheckoutBar>
-      )}
     </MarketplaceFrame>
   );
 }

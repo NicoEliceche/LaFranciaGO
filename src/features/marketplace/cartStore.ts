@@ -65,6 +65,8 @@ const ensureLoaded = () => {
 
 /** Lo que hace falta saber de un producto para ponerlo en el carrito. */
 export type ProductoParaCarrito = {
+  /** Con qué producto se arma el pedido, si el id de arriba es de una oferta. */
+  productoRealId?: string;
   id: string;
   product: string;
   store: string;
@@ -118,6 +120,7 @@ export function addToCart(producto: ProductoParaCarrito, escalones = 1) {
       ...items,
       {
         id: producto.id,
+        productoRealId: producto.productoRealId ?? producto.id,
         product: producto.product,
         store: producto.store,
         storeId: producto.storeId,

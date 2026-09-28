@@ -5171,7 +5171,25 @@ async function enrutar(
       }>();
 
     if (productos.length !== ids.length) {
-      return error('Algún producto ya no está disponible.', 409, cors);
+      /* Se dice cuáles faltan, no "alguno".
+
+         Con el mensaje genérico la persona tiene que adivinar qué sacar del
+         carrito, y lo más probable es que lo vacíe entero o abandone. Los
+         ids viajan para que la pantalla los pinte y ofrezca quitarlos. */
+      const encontrados = new Set(productos.map((producto) => producto.id));
+      const faltantes = ids.filter((id) => !encontrados.has(id));
+
+      return json(
+        {
+          error:
+            faltantes.length === 1
+              ? 'Un producto de tu carrito ya no está disponible.'
+              : `${faltantes.length} productos de tu carrito ya no están disponibles.`,
+          productos: faltantes,
+        },
+        { status: 409 },
+        cors,
+      );
     }
 
     const porId = new Map(productos.map((producto) => [producto.id, producto]));
@@ -5187,9 +5205,14 @@ async function enrutar(
       );
 
     if (agotados.length > 0) {
-      return error(
-        `Sin stock: ${agotados.map((producto) => producto.nombre).join(', ')}.`,
-        409,
+      /* Con los ids, además de los nombres: la pantalla los pinta en rojo y
+         ofrece sacarlos, en lugar de dejar que la persona los busque. */
+      return json(
+        {
+          error: `Sin stock: ${agotados.map((producto) => producto.nombre).join(', ')}.`,
+          productos: agotados.map((producto) => producto.id),
+        },
+        { status: 409 },
         cors,
       );
     }

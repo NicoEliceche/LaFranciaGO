@@ -30,6 +30,13 @@ export class ApiError extends Error {
      * el reporte a soporte.
      */
     readonly tecnico?: { causa: string } | null,
+    /**
+     * Qué cosas concretas fallaron, cuando el servidor las puede nombrar.
+     *
+     * Un "algún producto no está disponible" obliga a adivinar cuál sacar
+     * del carrito. Con los ids, la pantalla los marca y ofrece quitarlos.
+     */
+    readonly productos?: string[] | null,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -97,13 +104,15 @@ async function pedir<T>(ruta: string, init: RequestInit = {}): Promise<T> {
        que quedó anotado del otro lado. Si no viene nada, se usa el código. */
     const cuerpo = await respuesta
       .json()
-      .then((datos: { error?: string; referencia?: string }) => datos)
-      .catch(() => ({}) as { error?: string; referencia?: string });
+      .then((datos: { error?: string; referencia?: string; productos?: string[] }) => datos)
+      .catch(() => ({}) as { error?: string; referencia?: string; productos?: string[] });
 
     throw new ApiError(
       cuerpo.error ?? `Error ${respuesta.status}`,
       respuesta.status,
       cuerpo.referencia ?? null,
+      null,
+      cuerpo.productos ?? null,
     );
   }
 

@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { maxStepIndex, stepFactor, stepLabel } from '@core/data/saleUnits';
 import { AddressSheet } from '../components/AddressSheet';
 import { placeOrder } from '../ordersStore';
 import { changeCartQuantity, clearCart, removeCartItem, useCart } from '../cartStore';
+import { useStores } from '../useStores';
 import {
   AlertCircle,
   ArrowLeftRight,
@@ -11,7 +12,6 @@ import {
   Info,
   Minus,
   Plus,
-  ShieldCheck,
   ShoppingCart,
   Truck,
   Wallet,
@@ -22,6 +22,7 @@ import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { EmptyState } from '../components/EmptyState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { AvisarProblema } from '../components/AvisarProblema';
+import { ApiError } from '@core/data/services/apiClient';
 import { categoryImage } from '@shared/utils/media';
 import {
   type PreferenciaEnvio,
@@ -93,8 +94,6 @@ import {
   CartAddressNewButton,
   CartAddressOption,
   CartAddressPad,
-  CartTrustGrid,
-  CartTrustItem,
   CartStepper,
   CartStep,
   CartStepLabel,
@@ -236,24 +235,24 @@ const paymentMethods = [
   },
 ] as const;
 
-const trustPoints = [
-  /* Sólo dos, y que digan algo comprobable: "compra protegida" prometía un
-     sistema de reclamos que todavía no existe. */
-  { label: 'Precio final', icon: ShieldCheck },
-  { label: 'Seguí tu pedido', icon: Truck },
-] as const;
-
-const deliveryMethods = [
-  'Delivery GO',
-  'Entrega comercio',
-  'Sin retiro',
-];
+/**
+ * Cómo puede llegar el pedido.
+ *
+ * "Sin retiro" no significaba nada y estaba de relleno. Y el retiro por el
+ * comercio sólo se ofrece cuando todos los comercios del carrito pueden
+ * hacerlo: si uno solo no reparte, ofrecerlo obliga a la persona a descubrir
+ * después que por ese hay que ir igual.
+ */
+const ENTREGA_GO = 'Delivery GO';
+const ENTREGA_COMERCIO = 'Entrega comercio';
 
 export function CartScreen() {
   const items = useCart();
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
   const [errorPedido, setErrorPedido] = useState<string | null>(null);
+  /* Qué productos impiden confirmar, para marcarlos en la lista. */
+  const [problemas, setProblemas] = useState<string[]>([]);
 
   /* El error tal cual vino, que lleva la referencia con la que quedó anotado
      del otro lado: es lo que hace que el reporte llegue con el detalle. */
@@ -265,7 +264,40 @@ export function CartScreen() {
      principal en cuanto llegan: elegir por él antes de saber cuáles tiene
      sería adivinar. */
   const [direccionId, setDireccionId] = useState<string | null>(null);
-  const [entrega, setEntrega] = useState(deliveryMethods[0]);
+  const { stores } = useStores();
+
+  /**
+   * Qué formas de entrega se pueden ofrecer.
+   *
+   * El retiro por el comercio sólo aparece si todos los negocios del carrito
+   * reparten: alcanza con que uno no lo haga para que la opción sea una
+   * trampa, porque la persona la elige y después descubre que por ese hay que
+   * ir igual. Con un solo camino no hay nada que decidir mal.
+   *
+   * Hoy la regla no se nota porque el comercio todavía no declara si reparte
+   * —la tabla no tiene esa columna y `delivery` viene fijo en true—, así que
+   * siempre se ofrecen las dos. Queda escrita para que el día que ese dato
+   * exista empiece a aplicarse sola, en lugar de tener que acordarse.
+   */
+  const formasDeEntrega = useMemo(() => {
+    const comerciosDelCarrito = [...new Set(items.map((item) => item.storeId))];
+
+    const todosReparten =
+      comerciosDelCarrito.length > 0 &&
+      comerciosDelCarrito.every((id) => stores.find((store) => store.id === id)?.delivery);
+
+    return todosReparten ? [ENTREGA_GO, ENTREGA_COMERCIO] : [ENTREGA_GO];
+  }, [items, stores]);
+
+  const [entrega, setEntrega] = useState<string>(ENTREGA_GO);
+
+  /* Si la opción elegida deja de estar disponible —se sumó un comercio que
+     no reparte— se vuelve a la que siempre está. */
+  useEffect(() => {
+    if (!formasDeEntrega.includes(entrega)) {
+      setEntrega(ENTREGA_GO);
+    }
+  }, [entrega, formasDeEntrega]);
   const [preferencia, setPreferencia] = useState<PreferenciaEnvio>('cualquiera');
 
   /* Cuánto ocupa lo que hay en el carrito, para saber si entra en una moto.
@@ -367,6 +399,8 @@ export function CartScreen() {
       porComercio.set(item.storeId!, grupo);
     }
 
+    setProblemas([]);
+
     const eligioOnline =
       paymentMethods.find((fila) => fila.id === pago)?.online ?? false;
 
@@ -387,7 +421,9 @@ export function CartScreen() {
           metodoPago: `${paymentMethods.find((fila) => fila.id === pago)?.label ?? pago} · ${entrega}`,
           preferenciaEnvio: preferencia,
           items: grupo.map((item) => ({
-            productoId: item.id,
+            /* El id del carrito puede ser el de una oferta; el pedido se
+               arma siempre contra un producto del catálogo. */
+            productoId: item.productoRealId ?? item.id,
             escalon: item.quantity,
           })),
         });
@@ -424,6 +460,13 @@ export function CartScreen() {
          volver a intentar. */
       setErrorPedido(
         fallo instanceof Error ? fallo.message : 'No pudimos confirmar el pedido.',
+      );
+
+      /* Si el servidor dijo cuáles fallaron, se marcan: la persona los ve en
+         rojo y los saca, en lugar de tener que adivinar cuál es el que
+         molesta y terminar vaciando el carrito entero. */
+      setProblemas(
+        fallo instanceof ApiError && fallo.productos?.length ? fallo.productos : [],
       );
     } finally {
       setConfirmando(false);
@@ -518,7 +561,14 @@ export function CartScreen() {
 
                       <CartItemList>
                         {group.items.map((item) => (
-                          <CartItemRow key={item.id}>
+                          /* En rojo el que impide confirmar, para que se vea
+                             cuál hay que sacar. */
+                          <CartItemRow
+                            key={item.id}
+                            data-problema={problemas.includes(
+                              item.productoRealId ?? item.id,
+                            )}
+                          >
                             <CartItemThumb>
                               <CartItemThumbImage
                                 src={categoryImage(item.categoryId)}
@@ -653,19 +703,6 @@ export function CartScreen() {
                       </CartTotalRow>
                     </CartTotalsList>
 
-                    <CartTrustGrid>
-                      {trustPoints.map((point) => {
-                        const Icon = point.icon;
-
-                        return (
-                          <CartTrustItem key={point.label}>
-                            <Icon size={16} aria-hidden="true" />
-                            <span>{point.label}</span>
-                          </CartTrustItem>
-                        );
-                      })}
-                    </CartTrustGrid>
-
                     <CartSummarySection>
                       <div>
                         <SectionKicker>Dirección</SectionKicker>
@@ -713,7 +750,7 @@ export function CartScreen() {
                       </div>
 
                       <CartPaymentRail>
-                        {deliveryMethods.map((method) => (
+                        {formasDeEntrega.map((method) => (
                           <CartChipBoton
                             key={method}
                             type="button"
