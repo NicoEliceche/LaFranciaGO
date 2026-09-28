@@ -324,6 +324,9 @@ export function MiComercioScreen({
      todos juntos, porque editar de a uno deja estados intermedios raros. */
   const [horarios, setHorarios] = useState<HorarioApi[]>([]);
   const [guardando, setGuardando] = useState(false);
+  /* Si muestra el campo del vehículo. Arranca con lo que tiene guardado el
+     comercio y sigue a lo que elija en el momento. */
+  const [repartePropio, setRepartePropio] = useState(false);
   const [guardado, setGuardado] = useState<string | null>(null);
   const [ofertaPorBorrar, setOfertaPorBorrar] = useState<OfertaApi | null>(null);
 
@@ -390,6 +393,11 @@ export function MiComercioScreen({
         email: String(datos.get('email') ?? ''),
         descripcion: String(datos.get('descripcion') ?? ''),
         minimo: Number(datos.get('minimo') ?? 0),
+        deliveryPropio: datos.get('deliveryPropio') === 'si',
+        /* El vehículo sólo tiene sentido si reparte: mandarlo igual dejaría
+           guardado "moto" en un comercio que dijo que no reparte. */
+        deliveryVehiculo:
+          datos.get('deliveryPropio') === 'si' ? String(datos.get('deliveryVehiculo') ?? 'moto') : null,
       });
 
       setGuardado('Guardamos tus datos.');
@@ -502,6 +510,8 @@ export function MiComercioScreen({
       const datos = await miComercioApi.ver();
 
       setComercio(datos.comercio);
+      /* El campo del vehículo se muestra según lo que ya tenía guardado. */
+      setRepartePropio(Boolean(datos.comercio?.deliveryPropio));
       setProductos(datos.productos);
       setError(null);
 
@@ -747,6 +757,37 @@ export function MiComercioScreen({
                           maxLength={300}
                         />
                       </CampoFila>
+
+                      {/* Si reparte, y con qué.
+
+                          Decide si el cliente puede elegir "Entrega
+                          comercio" en el carrito: antes se ofrecía siempre,
+                          y el que no tenía a nadie para llevarlo se enteraba
+                          cuando ya había un pedido esperando. */}
+                      <CampoFila>
+                        <span>¿Tenés reparto propio?</span>
+                        <select
+                          name="deliveryPropio"
+                          defaultValue={comercio.deliveryPropio ? 'si' : 'no'}
+                          onChange={(evento) => setRepartePropio(evento.target.value === 'si')}
+                        >
+                          <option value="no">No, reparten los de LaFranciaGO</option>
+                          <option value="si">Sí, tengo quien reparta</option>
+                        </select>
+                      </CampoFila>
+
+                      {repartePropio ? (
+                        <CampoFila>
+                          <span>¿Con qué repartís?</span>
+                          <select
+                            name="deliveryVehiculo"
+                            defaultValue={comercio.deliveryVehiculo ?? 'moto'}
+                          >
+                            <option value="moto">Moto</option>
+                            <option value="auto">Auto</option>
+                          </select>
+                        </CampoFila>
+                      ) : null}
 
                       <CampoFila>
                         <span>Pedido mínimo</span>

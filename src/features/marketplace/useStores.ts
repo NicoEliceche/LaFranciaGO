@@ -49,7 +49,11 @@ function aStoreProfile(comercio: ComercioConDestacados): StoreProfile {
     distanceKm: undefined,
     rating: undefined,
     openNow: true,
-    delivery: true,
+    /* Si el comercio reparte con gente suya. Estaba fijo en true, así que el
+       carrito ofrecía "Entrega comercio" para cualquiera; ahora sale de lo
+       que el comercio declaró. Sin respuesta se asume que no, que es lo
+       seguro: ofrecer un retiro que no existe se descubre tarde. */
+    delivery: Boolean(comercio.deliveryPropio),
     pickup: true,
     minOrder: comercio.minimo,
     summary: comercio.descripcion ?? `${comercio.rubro_nombre} en La Francia.`,

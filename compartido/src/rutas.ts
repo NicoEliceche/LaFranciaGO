@@ -48,6 +48,16 @@ export interface ComercioApi {
      `gestionActiva` abre el sistema de gestión. Se cobran por separado. */
   premium: boolean;
   gestionActiva: boolean;
+  /**
+   * Si el comercio reparte con gente suya.
+   *
+   * `null` es que todavía no contestó, que no es lo mismo que haber dicho
+   * que no: en los dos casos no se ofrece el retiro por el comercio, pero
+   * sólo al primero tiene sentido pedirle que lo complete.
+   */
+  deliveryPropio: boolean | null;
+  /** Con qué reparte. Sólo tiene sentido si `deliveryPropio` es true. */
+  deliveryVehiculo: 'moto' | 'auto' | null;
   minimo: number;
 }
 

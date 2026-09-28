@@ -1152,7 +1152,7 @@ async function enrutar(
     const busqueda = url.searchParams.get('q');
 
     let sql =
-      "SELECT id, nombre, rubro_id, rubro_nombre, direccion, lat, lon, telefono, horario, zona, descripcion, logo_url, premium, minimo_centavos, cerrado_temporal, puntaje, resenas_count FROM comercios WHERE estado = 'aprobado'";
+      "SELECT id, nombre, rubro_id, rubro_nombre, direccion, lat, lon, telefono, horario, zona, descripcion, logo_url, premium, minimo_centavos, cerrado_temporal, puntaje, resenas_count, delivery_propio, delivery_vehiculo FROM comercios WHERE estado = 'aprobado'";
     const params: unknown[] = [];
 
     if (rubro) {
@@ -4789,6 +4789,10 @@ async function enrutar(
       lat: 'lat',
       lon: 'lon',
       minimo: 'minimo_centavos',
+      /* Si reparte con gente suya, y con qué. Deciden si el carrito puede
+         ofrecer "Entrega comercio" y cuánto entra en un viaje. */
+      deliveryPropio: 'delivery_propio',
+      deliveryVehiculo: 'delivery_vehiculo',
     };
 
     const cambios: string[] = [];
@@ -4800,9 +4804,21 @@ async function enrutar(
       }
 
       cambios.push(`${columna} = ?`);
-      valores.push(
-        columna === 'minimo_centavos' ? aCentavos(Number(body[entrada] ?? 0)) : body[entrada],
-      );
+
+      if (columna === 'minimo_centavos') {
+        valores.push(aCentavos(Number(body[entrada] ?? 0)));
+      } else if (columna === 'delivery_propio') {
+        valores.push(body[entrada] ? 1 : 0);
+      } else if (columna === 'delivery_vehiculo') {
+        /* Sólo los dos que puede tener un comercio del pueblo. Cualquier
+           otra cosa se guarda como "sin dato" en lugar de aceptar texto
+           libre, que después nadie sabe cómo interpretar. */
+        const vehiculo = String(body[entrada] ?? '');
+
+        valores.push(vehiculo === 'moto' || vehiculo === 'auto' ? vehiculo : null);
+      } else {
+        valores.push(body[entrada]);
+      }
     }
 
     if (typeof body.cerradoTemporal === 'boolean') {
@@ -6246,6 +6262,14 @@ const comercioSalida = (fila: Record<string, unknown>) => ({
   premium: Boolean(fila.premium),
   gestionActiva: Boolean(fila.gestion_activa),
   minimo: fila.minimo_centavos ? aPesos(Number(fila.minimo_centavos)) : 0,
+  /* Sale como booleano y no como el 0/1 de la base, salvo que no haya
+     contestado: ahí va null, que es distinto de "dijo que no" y permite
+     pedirle que lo complete sin molestar a quien ya respondió. */
+  deliveryPropio:
+    fila.delivery_propio === null || fila.delivery_propio === undefined
+      ? null
+      : Boolean(fila.delivery_propio),
+  deliveryVehiculo: (fila.delivery_vehiculo as string | null) ?? null,
 });
 
 const productoSalida = (fila: Record<string, unknown>) => ({
