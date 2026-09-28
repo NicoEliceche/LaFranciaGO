@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { hayBackend, pedidosApi } from '@core/data/services/apiClient';
+import {
+  type MandadoApi,
+  hayBackend,
+  mandadosApi,
+  pedidosApi,
+} from '@core/data/services/apiClient';
 
 import type { CustomerOrder } from './marketplace.types';
 
@@ -60,10 +65,37 @@ export function usePedidos() {
     }
 
     try {
-      const { pedidos: filas } = await pedidosApi.listar();
+      /* Los mandados viven en su propia tabla —no tienen comercio detrás—
+         pero para quien pide son un pedido más: los espera en el mismo lugar
+         que el resto. Sin esto se pedían y no aparecían en ningún lado. */
+      const [{ pedidos: filas }, mandados] = await Promise.all([
+        pedidosApi.listar(),
+        mandadosApi.mios().catch(() => ({ mandados: [] })),
+      ]);
+
+      const comoPedido = (mandado: MandadoApi): CustomerOrder => ({
+        id: mandado.id,
+        code: `#${mandado.id.slice(0, 6).toUpperCase()}`,
+        store: mandado.tipo === 'flete' ? 'Flete' : 'Mandado',
+        storeId: '',
+        categoryId: 'servicios',
+        total: 0,
+        status: mandado.repartidor
+          ? `Lo lleva ${mandado.repartidor}`
+          : 'Buscando quien lo tome',
+        state: mandado.estado === 'entregado' ? 'terminado' : 'proceso',
+        eta: mandado.estado === 'entregado' ? '' : 'A convenir',
+        date: cuando(mandado.creado_en),
+        itemCount: 1,
+        rated: false,
+        cancellable: mandado.estado !== 'entregado',
+        courier: mandado.repartidor,
+        isFreight: mandado.tipo === 'flete',
+        items: [],
+      });
 
       setPedidos(
-        filas.map((pedido) => {
+        filas.map((pedido): CustomerOrder => {
           const lineas = (pedido as { items?: Array<{ productoId: string | null; escalon: number }> })
             .items ?? [];
 
@@ -94,7 +126,7 @@ export function usePedidos() {
               quantity: linea.escalon + 1,
             })),
           };
-        }),
+        }).concat((mandados.mandados ?? []).map(comoPedido)),
       );
       setError(false);
     } catch {

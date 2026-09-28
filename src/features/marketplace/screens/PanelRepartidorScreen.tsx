@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Bike,
   Car,
@@ -27,6 +28,7 @@ import { ChatPedidoDialog } from '../components/ChatPedidoDialog';
 import { EmptyState } from '../components/EmptyState';
 import { CotizarDialog } from '../components/CotizarDialog';
 import { GananciasPanel } from '../components/GananciasPanel';
+import { ResumenRepartidor } from '../components/ResumenRepartidor';
 import { PedidoDetalleDialog } from '../components/PedidoDetalleDialog';
 import { SectionHeading } from '../components/SectionHeading';
 import { useSesion } from '../sessionStore';
@@ -43,6 +45,7 @@ import {
   PasoEnvio,
   PasosEnvio,
   PedidoDato,
+  AccionesEnvio,
   PedidoChips,
   PedidoDatos,
   PedidoTitulo,
@@ -55,12 +58,15 @@ import {
 /* Qué dice el encabezado en cada pestaña. Afuera del JSX porque son datos,
    no lógica, y anidados en el render se leían como un acertijo. */
 const TITULOS: Record<string, (esFletero: boolean) => string> = {
+  resumen: () => 'Tu día',
   disponibles: (esFletero) => (esFletero ? 'Fletes disponibles' : 'Pedidos disponibles'),
   mios: () => 'Lo que estás llevando',
   ganancias: () => 'Cuánto ganaste',
 };
 
 const SUBTITULOS: Record<string, (esFletero: boolean) => string> = {
+  resumen: (esFletero) =>
+    esFletero ? 'En qué andás y qué hay para tomar.' : 'En qué andás y qué hay para llevar.',
   disponibles: (esFletero) =>
     esFletero
       ? 'Fletes esperando que alguien los tome.'
@@ -135,11 +141,30 @@ export function PanelRepartidorScreen() {
      ?ver=mios para abrir "Mis envíos" de una, sin tener que tocar dos veces.
      Sin parámetro se abre en lo disponible, que es lo que se mira al empezar
      el día. */
-  const [pestana, setPestana] = useState<'disponibles' | 'mios' | 'ganancias'>(() => {
-    const pedida = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('ver');
+  const [pestana, setPestana] = useState<'resumen' | 'disponibles' | 'mios' | 'ganancias'>(
+    () => {
+      const pedida = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('ver');
 
-    return pedida === 'mios' || pedida === 'ganancias' ? pedida : 'disponibles';
-  });
+      return pedida === 'mios' || pedida === 'ganancias' || pedida === 'disponibles'
+        ? pedida
+        : 'resumen';
+    },
+  );
+
+  /* La pestaña sigue a la dirección: el menú apunta a ?ver=, y sin esto
+     tocar "Disponibles" estando en "Inicio" cambiaba la dirección sin
+     cambiar lo que se ve. */
+  const { search: consulta } = useLocation();
+
+  useEffect(() => {
+    const pedida = new URLSearchParams(consulta).get('ver');
+
+    setPestana(
+      pedida === 'mios' || pedida === 'ganancias' || pedida === 'disponibles'
+        ? pedida
+        : 'resumen',
+    );
+  }, [consulta]);
   const [avanzando, setAvanzando] = useState<string | null>(null);
 
   /* Qué flete se esta cotizando: un flete no se toma, se ofrece un
@@ -209,7 +234,38 @@ export function PanelRepartidorScreen() {
   }, [posicion]);
 
   const tomar = async (pedidoId: string) => {
-    await deliveryApi.tomar(pedidoId, posicion?.lat, posicion?.lon);
+    /**
+     * Se pide la ubicación justo al tomar el viaje.
+     *
+     * Es el momento en que tiene sentido preguntarla: al entrar a la
+     * pantalla la persona todavía está mirando, y un permiso pedido sin
+     * motivo claro se rechaza por reflejo. Acá ya aceptó un viaje y la
+     * pregunta se explica sola.
+     *
+     * Si la rechaza no pasa nada: el viaje se toma igual y el cliente ve el
+     * tiempo estimado por distancia en lugar del punto en el mapa.
+     */
+    const coordenadas = await new Promise<{ lat: number; lon: number } | null>(
+      (resolver) => {
+        if (posicion) {
+          resolver(posicion);
+
+          return;
+        }
+
+        /* Un tope de espera: si el navegador no contesta —o quedó un cartel
+           abierto sin responder— el viaje no puede quedar trabado. */
+        const reloj = window.setTimeout(() => resolver(null), 8000);
+
+        locate((coords) => {
+          window.clearTimeout(reloj);
+          setPosicion({ lat: coords.lat, lon: coords.lon });
+          resolver({ lat: coords.lat, lon: coords.lon });
+        });
+      },
+    );
+
+    await deliveryApi.tomar(pedidoId, coordenadas?.lat, coordenadas?.lon);
 
     const tomado = pedidos.find((pedido) => pedido.id === pedidoId) ?? null;
 
@@ -286,7 +342,7 @@ export function PanelRepartidorScreen() {
         <SectionInner>
           <SectionStack>
             <SectionHeading
-              title={TITULOS[pestana](esFletero)}
+              title={TITULOS[pestana]?.(esFletero) ?? ''}
               /* En ganancias no hay nada que contar: el número que importa
                  es la plata, y va adentro. */
               chip={
@@ -294,7 +350,7 @@ export function PanelRepartidorScreen() {
                   ? undefined
                   : `${pestana === 'disponibles' ? pedidos.length : envios.length}`
               }
-              subtitle={SUBTITULOS[pestana](esFletero)}
+              subtitle={SUBTITULOS[pestana]?.(esFletero) ?? ''}
             />
 
             {/* Con qué trabaja hoy: decide qué pedidos puede tomar, así que
@@ -348,6 +404,18 @@ export function PanelRepartidorScreen() {
               <AuthAviso role="alert" data-tono="error">
                 {error}
               </AuthAviso>
+            ) : null}
+
+            {/* Inicio: en qué anda ahora. Antes mostraba la misma lista que
+                "Disponibles", así que el primer botón del menú no decía nada
+                que el segundo no dijera. */}
+            {pestana === 'resumen' ? (
+              <ResumenRepartidor
+                esFletero={esFletero}
+                enCurso={envios.filter((envio) => envio.estado !== 'entregado').length}
+                disponibles={pedidos.length}
+                onVer={setPestana}
+              />
             ) : null}
 
             {pestana === 'ganancias' ? <GananciasPanel esFletero={esFletero} /> : null}
@@ -423,6 +491,7 @@ export function PanelRepartidorScreen() {
                             ))}
                           </PasosEnvio>
 
+                          <AccionesEnvio>
                           {siguiente ? (
                             <AvanzarBoton
                               type="button"
@@ -458,6 +527,7 @@ export function PanelRepartidorScreen() {
                           >
                             Abrir chat {esFletero ? 'del flete' : 'del pedido'}
                           </VerDetalleBoton>
+                          </AccionesEnvio>
                         </SectionStack>
                       </CardPad>
                     </Card>

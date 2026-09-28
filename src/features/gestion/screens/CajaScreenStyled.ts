@@ -193,3 +193,32 @@ export const Aviso = styled.p`
   color: ${({ theme }) => theme.color.text};
   font-size: ${({ theme }) => theme.typography.size.sm};
 `;
+
+/**
+ * El aviso de que algo funciona en la computadora del negocio.
+ *
+ * En dorado y no en el gris de los avisos comunes: no es una advertencia de
+ * que algo salió mal, es contarle al comercio que esa función existe y dónde
+ * se usa. El dorado es el mismo tono con que la aplicación marca lo que se
+ * paga aparte, así que se lee como parte de lo que contrató y no como un
+ * error.
+ *
+ * El color se define por tema en lugar de con opacidades: sobre el fondo
+ * oscuro un dorado claro vibra y cansa, y sobre el claro uno oscuro se
+ * confunde con el texto común.
+ */
+export const AvisoEscritorio = styled.div`
+  display: grid;
+  gap: 0.2rem;
+  padding: ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  border: 1px solid ${({ theme }) => (theme.mode === 'dark' ? '#8A6A1F' : '#E4C36A')};
+  background: ${({ theme }) => (theme.mode === 'dark' ? 'rgba(180, 138, 40, 0.14)' : '#FEF7E3')};
+  color: ${({ theme }) => (theme.mode === 'dark' ? '#F0D89B' : '#6B4E11')};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  line-height: 1.5;
+
+  > strong {
+    color: ${({ theme }) => (theme.mode === 'dark' ? '#FFE9B8' : '#4A360A')};
+  }
+`;

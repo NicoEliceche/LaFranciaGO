@@ -62,6 +62,37 @@ export const AtencionTexto = styled.span`
   line-height: 1.3;
 `;
 
+/**
+ * El ícono y el número, juntos arriba de la tarjeta.
+ *
+ * El ícono iba chiquito pegado al texto, así que de lejos las cinco tarjetas
+ * se veían iguales y había que leerlas para saber cuál era cuál. De un panel
+ * se mira la forma antes que la palabra.
+ */
+export const AtencionCabeza = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+`;
+
+export const AtencionIcono = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: ${({ theme }) => theme.color.surfaceMuted};
+  color: ${({ theme }) => theme.color.textMuted};
+
+  /* Lo que pide atención se pinta, para que se vea sin contar números. */
+  &[data-hay='true'] {
+    background: rgba(245, 158, 11, 0.16);
+    color: ${({ theme }) => theme.color.warning};
+  }
+`;
+
 /* ── Números ── */
 
 export const NumeroGrilla = styled.div`

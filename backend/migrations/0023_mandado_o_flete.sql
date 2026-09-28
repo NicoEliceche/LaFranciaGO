@@ -1,0 +1,16 @@
+-- Un mandado y un flete se piden igual, pero los toma gente distinta.
+--
+-- Los dos son "necesito que alguien haga esto por mi" sin comercio detras:
+-- se escriben en el mismo campo de texto y salen a buscar a alguien. La
+-- diferencia es quien puede tomarlos —un mandado lo lleva cualquier
+-- repartidor, un flete necesita camioneta o camion— y donde aparece despues:
+-- en "Mis envios" del delivery o en "Mis fletes" del fletero.
+--
+-- Se guarda en la misma tabla y no en una nueva porque comparten todo lo
+-- demas: la descripcion, la direccion, el estado, quien lo tomo. Dos tablas
+-- identicas salvo por una palabra se desincronizan a la primera que alguien
+-- toque una sola.
+--
+-- Los que ya existen quedan como mandado, que es lo unico que se podia pedir
+-- hasta ahora.
+ALTER TABLE mandados ADD COLUMN tipo TEXT NOT NULL DEFAULT 'mandado';

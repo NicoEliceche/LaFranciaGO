@@ -24,6 +24,8 @@ import { AuthAviso } from './AuthScreenStyled';
 import {
   AccionIcono,
   AtencionGrilla,
+  AtencionCabeza,
+  AtencionIcono,
   AtencionNumero,
   AtencionTarjeta,
   AtencionTexto,
@@ -184,55 +186,54 @@ export function AdminPanelScreen() {
 
             {/* Primero lo que pide que alguien haga algo. */}
             <AtencionGrilla>
-              <AtencionTarjeta
-                to="/panel/admin/postulaciones"
-                data-hay={pendientes.postulaciones > 0}
-              >
-                <AtencionNumero data-hay={pendientes.postulaciones > 0}>
-                  {pendientes.postulaciones}
-                </AtencionNumero>
-                <AtencionTexto>
-                  <FileCheck2 size={13} aria-hidden="true" /> Postulaciones sin revisar
-                </AtencionTexto>
-              </AtencionTarjeta>
-
-              <AtencionTarjeta to="/panel/admin" data-hay={pendientes.pedidosTrabados > 0}>
-                <AtencionNumero data-hay={pendientes.pedidosTrabados > 0}>
-                  {pendientes.pedidosTrabados}
-                </AtencionNumero>
-                <AtencionTexto>
-                  <Clock size={13} aria-hidden="true" /> Pedidos sin repartidor hace más de 2 h
-                </AtencionTexto>
-              </AtencionTarjeta>
-
-              <AtencionTarjeta to="/panel/admin" data-hay={pendientes.fraccionamientos > 0}>
-                <AtencionNumero data-hay={pendientes.fraccionamientos > 0}>
-                  {pendientes.fraccionamientos}
-                </AtencionNumero>
-                <AtencionTexto>
-                  <Split size={13} aria-hidden="true" /> Pedidos de fraccionamiento
-                </AtencionTexto>
-              </AtencionTarjeta>
-
-              <AtencionTarjeta to="/panel/admin" data-hay={pendientes.comercios > 0}>
-                <AtencionNumero data-hay={pendientes.comercios > 0}>
-                  {pendientes.comercios}
-                </AtencionNumero>
-                <AtencionTexto>
-                  <AlertTriangle size={13} aria-hidden="true" /> Comercios sin aprobar
-                </AtencionTexto>
-              </AtencionTarjeta>
-
-              {/* El registro no cuenta pendientes: no es algo que haya que
-                  resolver, es adónde se mira cuando algo falló. */}
-              <AtencionTarjeta to="/panel/admin/registro">
-                <AtencionNumero>
-                  <FileText size={20} aria-hidden="true" />
-                </AtencionNumero>
-                <AtencionTexto>
-                  <FileText size={13} aria-hidden="true" /> Registro de errores
-                </AtencionTexto>
-              </AtencionTarjeta>
+              {/* El ícono grande al lado del número, y el texto solo abajo.
+                  Antes el ícono iba chiquito pegado al texto, así que no se
+                  distinguía de lejos qué tarjeta era cuál: de un panel se
+                  mira la forma antes que la palabra. */}
+              {[
+                {
+                  a: '/panel/admin/postulaciones',
+                  icono: FileCheck2,
+                  cuantos: pendientes.postulaciones,
+                  texto: 'Postulaciones sin revisar',
+                },
+                {
+                  a: '/panel/admin',
+                  icono: Clock,
+                  cuantos: pendientes.pedidosTrabados,
+                  texto: 'Pedidos sin repartidor hace más de 2 h',
+                },
+                {
+                  a: '/panel/admin',
+                  icono: Split,
+                  cuantos: pendientes.fraccionamientos,
+                  texto: 'Pedidos de fraccionamiento',
+                },
+                {
+                  a: '/panel/admin',
+                  icono: AlertTriangle,
+                  cuantos: pendientes.comercios,
+                  texto: 'Comercios sin aprobar',
+                },
+                {
+                  a: '/panel/admin/registro',
+                  icono: FileText,
+                  /* Los errores del día. Antes acá iba un ícono en lugar del
+                     número, así que la tarjeta no decía si había algo roto. */
+                  cuantos: pendientes.erroresHoy ?? 0,
+                  texto: 'Errores en el registro (hoy)',
+                },
+              ].map(({ a, icono: Icono, cuantos, texto }) => (
+                <AtencionTarjeta key={texto} to={a} data-hay={cuantos > 0}>
+                  <AtencionCabeza>
+                    <AtencionIcono data-hay={cuantos > 0}>
+                      <Icono size={26} aria-hidden="true" />
+                    </AtencionIcono>
+                    <AtencionNumero data-hay={cuantos > 0}>{cuantos}</AtencionNumero>
+                  </AtencionCabeza>
+                  <AtencionTexto>{texto}</AtencionTexto>
+                </AtencionTarjeta>
+              ))}
             </AtencionGrilla>
 
             <SectionHeading title="Los números" subtitle="Hoy y esta semana." />

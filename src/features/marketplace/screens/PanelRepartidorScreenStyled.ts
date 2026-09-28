@@ -343,3 +343,21 @@ export const PedidoChips = styled.div`
   gap: ${({ theme }) => theme.spacing[1]};
   margin-inline-start: auto;
 `;
+
+/**
+ * Los botones del envío en curso, en una fila.
+ *
+ * En la computadora van los tres al lado, repartiéndose el ancho: apilados
+ * dejaban una columna de botones gigantes con mucho aire al costado. En el
+ * teléfono siguen uno debajo del otro, que es donde el pulgar llega mejor y
+ * donde tres botones en fila quedarían demasiado angostos para acertarles.
+ */
+export const AccionesEnvio = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing[2]};
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+  }
+`;

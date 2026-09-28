@@ -276,8 +276,17 @@ export const MandadoPrimario = styled.button`
   cursor: pointer;
   transition: background-color 180ms ease;
 
+  /* El flete va en tono tranquilo: se piden muchos menos mandados que
+     fletes, y dos botones plenos no dicen cuál es el camino habitual. */
+  &[data-secundario] {
+    background: ${({ theme }) => theme.color.surfaceMuted};
+    color: ${({ theme }) => theme.color.primary};
+    border: 1px solid ${({ theme }) => theme.color.border};
+  }
+
   &:hover {
     background: ${({ theme }) => theme.color.brandHover};
+    color: ${({ theme }) => theme.color.onPrimary};
   }
 
   &:focus-visible {
@@ -308,5 +317,21 @@ export const MandadoSecundario = styled.button`
   &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.color.primary};
     outline-offset: 2px;
+  }
+`;
+
+/**
+ * Los dos botones del pedido: mandado o flete.
+ *
+ * Uno al lado del otro y no uno debajo: son dos caminos igual de válidos, y
+ * apilados el de abajo se lee como secundario cuando no lo es.
+ */
+export const MandadoBotones = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing[2]};
+  margin-top: ${({ theme }) => theme.spacing[1]};
+
+  @media (min-width: 26rem) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 `;

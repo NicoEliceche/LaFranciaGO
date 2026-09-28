@@ -120,8 +120,8 @@ export function MarketplaceHomeScreen() {
             </ErrandBannerIcon>
 
             <ErrandBannerCopy>
-              <ErrandBannerTitle>¿Necesitás algún mandado?</ErrandBannerTitle>
-              <ErrandBannerText>Pedí lo que sea y un repartidor lo busca.</ErrandBannerText>
+              <ErrandBannerTitle>¿Necesitás algún mandado o flete?</ErrandBannerTitle>
+              <ErrandBannerText>Pedí lo que necesites.</ErrandBannerText>
             </ErrandBannerCopy>
 
             <ErrandBannerArrow>

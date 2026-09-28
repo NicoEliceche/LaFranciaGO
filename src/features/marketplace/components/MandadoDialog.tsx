@@ -30,11 +30,14 @@ import {
   X,
 } from 'lucide-react';
 
+import { mandadosApi } from '@core/data/services/apiClient';
+
 import { DEFAULT_RADIUS_KM, cancelErrand, createErrand, useErrand } from '../errandStore';
 import {
   MandadoAviso,
   MandadoAvisoIcono,
   MandadoAvisos,
+  MandadoBotones,
   MandadoCaja,
   MandadoCerrar,
   MandadoCuerpo,
@@ -96,7 +99,7 @@ export function MandadoDialog({ abierto, alCerrar }: { abierto: boolean; alCerra
     return null;
   }
 
-  const enviar = (evento: FormEvent<HTMLFormElement>) => {
+  const enviar = (evento: FormEvent<HTMLFormElement>, tipo: 'mandado' | 'flete' = 'mandado') => {
     evento.preventDefault();
     setIntentado(true);
 
@@ -104,7 +107,21 @@ export function MandadoDialog({ abierto, alCerrar }: { abierto: boolean; alCerra
       return;
     }
 
+    /* Queda guardado de verdad, además de en la pantalla.
+
+       El store local es el que hace andar el chat y los avisos en el momento;
+       la base es la que hace que el mandado exista después de recargar, se
+       vea en "Mis pedidos" y le llegue a los repartidores. Antes sólo estaba
+       lo primero: se podía pedir y al rato no existía en ningún lado. */
     createErrand(limpio, DIRECCION);
+
+    void mandadosApi
+      .crear({ descripcion: limpio, direccionTexto: DIRECCION, tipo })
+      .catch(() => {
+        /* El mandado ya se ve en pantalla; que falle el guardado no puede
+           borrar lo que la persona acaba de pedir. Queda anotado del otro
+           lado por el registro de errores. */
+      });
   };
 
   const irAlChat = () => {
@@ -134,7 +151,10 @@ export function MandadoDialog({ abierto, alCerrar }: { abierto: boolean; alCerra
         {momento === 'escribir' ? (
           <MandadoCuerpo as="form" onSubmit={enviar} noValidate>
             <MandadoTitulo>¿Qué necesitás?</MandadoTitulo>
-            <MandadoSubtitulo>Contanos qué hay que comprar o retirar.</MandadoSubtitulo>
+            <MandadoSubtitulo>
+              Contanos qué hay que comprar, retirar o trasladar. Un mandado lo lleva
+              cualquier repartidor; un flete va con camioneta o camión.
+            </MandadoSubtitulo>
 
             <MandadoTexto
               value={descripcion}
@@ -184,7 +204,21 @@ export function MandadoDialog({ abierto, alCerrar }: { abierto: boolean; alCerra
               </MandadoAviso>
             </MandadoAvisos>
 
-            <MandadoPrimario type="submit">Generar pedido de mandado</MandadoPrimario>
+            {/* Dos botones y no un selector: lo que cambia es quién lo toma
+                —un mandado lo lleva cualquiera, un flete necesita camioneta—
+                y eso se decide una vez, al pedirlo. */}
+            <MandadoBotones>
+              <MandadoPrimario type="submit">Generar mandado</MandadoPrimario>
+              <MandadoPrimario
+                type="button"
+                data-secundario
+                onClick={(evento) =>
+                  enviar(evento as unknown as FormEvent<HTMLFormElement>, 'flete')
+                }
+              >
+                Generar flete
+              </MandadoPrimario>
+            </MandadoBotones>
           </MandadoCuerpo>
         ) : null}
 

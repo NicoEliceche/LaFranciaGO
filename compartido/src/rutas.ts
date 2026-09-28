@@ -695,6 +695,9 @@ export interface MetricasAdminApi {
     fraccionamientos: number;
     pedidosTrabados: number;
     comercios: number;
+    /** Errores del último día. Un acumulado histórico no diría si algo se
+        está rompiendo ahora, que es lo que se mira. */
+    erroresHoy: number;
   };
   reparto: { activos: number; entregasSemana: number; enCurso: number; registrados: number };
   comercios: Array<{
@@ -871,6 +874,37 @@ export const fletesApi = {
     api.get<{ cotizaciones: CotizacionApi[] }>(`/fletes/${pedidoId}/cotizaciones`),
   aceptar: (cotizacionId: string) =>
     api.post<{ ok: true }>(`/cotizaciones/${cotizacionId}/aceptar`),
+};
+
+/** Un mandado: un encargo sin comercio detrás. */
+export interface MandadoApi {
+  id: string;
+  descripcion: string;
+  direccion_texto: string | null;
+  estado: string;
+  creado_en: string;
+  repartidor: string | null;
+  /** 'mandado' lo lleva cualquiera; 'flete' necesita camioneta o camión. */
+  tipo: 'mandado' | 'flete';
+}
+
+export const mandadosApi = {
+  /**
+   * Crea el mandado en la base.
+   *
+   * Antes vivía sólo en memoria del navegador: se podía pedir, pero al
+   * recargar desaparecía y no figuraba en "Mis pedidos" ni le llegaba a
+   * ningún repartidor.
+   */
+  crear: (datos: {
+    descripcion: string;
+    direccionTexto?: string;
+    lat?: number;
+    lon?: number;
+    tipo?: 'mandado' | 'flete';
+  }) => api.post<{ id: string; tipo: string }>('/mandados', datos),
+
+  mios: () => api.get<{ mandados: MandadoApi[] }>('/mandados'),
 };
 
 export const pagosApi = {

@@ -1061,7 +1061,12 @@ async function enrutar(
             LEFT JOIN envios e ON e.pedido_id = p.id
            WHERE p.estado = 'proceso' AND p.creado_en < datetime('now', '-2 hours')
              AND (e.id IS NULL OR e.estado = 'buscando')) AS pedidos_trabados,
-         (SELECT COUNT(*) FROM comercios WHERE estado = 'pendiente') AS comercios_pendientes`,
+         (SELECT COUNT(*) FROM comercios WHERE estado = 'pendiente') AS comercios_pendientes,
+         /* Los errores del día, no todos los que hubo: la tarjeta se mira
+            para saber si algo se está rompiendo ahora, y un acumulado
+            histórico no dice nada de eso. */
+         (SELECT COUNT(*) FROM registro
+           WHERE nivel = 'error' AND creado_en > datetime('now', '-1 day')) AS errores_hoy`,
     ).first<Record<string, number>>();
 
     /* Quién está vendiendo: es lo que decide a quién llamar. */
@@ -1133,6 +1138,7 @@ async function enrutar(
           fraccionamientos: Number(pendientes?.fraccionamientos ?? 0),
           pedidosTrabados: Number(pendientes?.pedidos_trabados ?? 0),
           comercios: Number(pendientes?.comercios_pendientes ?? 0),
+          erroresHoy: Number(pendientes?.errores_hoy ?? 0),
         },
         reparto: {
           activos: Number(reparto?.activos ?? 0),
@@ -2533,6 +2539,9 @@ async function enrutar(
       direccionTexto?: string;
       lat?: number;
       lon?: number;
+      /* Un mandado lo lleva cualquier repartidor; un flete necesita
+         camioneta o camión. Se piden igual y los toma gente distinta. */
+      tipo?: string;
     }>(request);
 
     const descripcion = String(body.descripcion ?? '').trim();
@@ -2543,9 +2552,11 @@ async function enrutar(
 
     const id = nuevoId();
 
+    const tipo = body.tipo === 'flete' ? 'flete' : 'mandado';
+
     await env.DB.prepare(
-      `INSERT INTO mandados (id, usuario_id, descripcion, direccion_texto, lat, lon)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO mandados (id, usuario_id, descripcion, direccion_texto, lat, lon, tipo)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
         id,
@@ -2554,10 +2565,11 @@ async function enrutar(
         body.direccionTexto ?? null,
         Number.isFinite(body.lat) ? body.lat : null,
         Number.isFinite(body.lon) ? body.lon : null,
+        tipo,
       )
       .run();
 
-    return json({ id }, { status: 201 }, cors);
+    return json({ id, tipo }, { status: 201 }, cors);
   }
 
   /** Los mandados de quien está adentro. */
@@ -2569,7 +2581,7 @@ async function enrutar(
     }
 
     const { results } = await env.DB.prepare(
-      `SELECT m.id, m.descripcion, m.direccion_texto, m.estado, m.creado_en,
+      `SELECT m.id, m.descripcion, m.direccion_texto, m.estado, m.creado_en, m.tipo,
               u.nombre AS repartidor
          FROM mandados m
          LEFT JOIN usuarios u ON u.id = m.repartidor_id

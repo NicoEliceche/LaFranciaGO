@@ -23,7 +23,15 @@ import { mostrarCentavos } from '../dinero';
 
 import { GestionFrame } from '../components/GestionFrame';
 import { esEscritorio } from '../entorno';
-import { Accion, Aviso, Campo, Panel, TituloPanel, Vacio } from './CajaScreenStyled';
+import {
+  Accion,
+  Aviso,
+  AvisoEscritorio,
+  Campo,
+  Panel,
+  TituloPanel,
+  Vacio,
+} from './CajaScreenStyled';
 import {
   Buscador,
   Cobro,
@@ -232,13 +240,6 @@ export function CajaRapidaScreen() {
 
   return (
     <GestionFrame titulo="Caja rápida">
-      {!enMostrador ? (
-        <Aviso role="note">
-          Esta pantalla cobra con la lectora de códigos y la impresora del negocio, así que
-          funciona en la computadora del local. Acá se ve igual para que sepas cómo es.
-        </Aviso>
-      ) : null}
-
       {sinSubir > 0 ? (
         <Aviso role="status">
           Hay {sinSubir} {sinSubir === 1 ? 'venta guardada' : 'ventas guardadas'} en esta
@@ -253,12 +254,12 @@ export function CajaRapidaScreen() {
           lectora y la impresora viven en la computadora del local, y eso hay
           que decirlo donde se intenta usarlas. */}
       {!enMostrador ? (
-        <Aviso role="status" data-tono="info">
+        <AvisoEscritorio role="status">
           <strong>La caja rápida funciona en la computadora del negocio.</strong> Ahí
           están la lectora de códigos y la impresora de tickets, que son las que
           hacen que cobrar lleve segundos. Desde acá podés mirar cómo es, pero
           para cobrar usá la aplicación instalada en el local.
-        </Aviso>
+        </AvisoEscritorio>
       ) : null}
 
       <Panel>
