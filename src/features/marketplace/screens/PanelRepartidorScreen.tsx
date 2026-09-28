@@ -43,6 +43,7 @@ import {
   PasoEnvio,
   PasosEnvio,
   PedidoDato,
+  PedidoChips,
   PedidoDatos,
   PedidoTitulo,
   UbicacionAviso,
@@ -441,6 +442,22 @@ export function PanelRepartidorScreen() {
                           >
                             Ver detalle {esFletero ? 'del flete' : 'del pedido'}
                           </VerDetalleBoton>
+
+                          {/* Sin esto no había cómo volver al chat del viaje
+                              en curso: quedaba atrás en el historial y la
+                              única salida era buscarlo de nuevo. */}
+                          <VerDetalleBoton
+                            type="button"
+                            onClick={() =>
+                              setChat({
+                                id: envio.pedido_id,
+                                codigo: envio.codigo,
+                                cliente: envio.cliente ?? '',
+                              } as PedidoDisponibleApi)
+                            }
+                          >
+                            Abrir chat {esFletero ? 'del flete' : 'del pedido'}
+                          </VerDetalleBoton>
                         </SectionStack>
                       </CardPad>
                     </Card>
@@ -457,16 +474,22 @@ export function PanelRepartidorScreen() {
                       <span>{pedido.comercio}</span>
                       {/* Si le entra tal cual o va a tener que hacer varios
                           viajes: es lo que decide si lo toma. */}
-                      {pedido.entraEnTuVehiculo === false ? (
-                        <CabeChip data-entra="false">
-                          {pedido.viajes} viajes
-                        </CabeChip>
-                      ) : typeof pedido.litros === 'number' && pedido.litros > 0 ? (
-                        <CabeChip data-entra="true">Entra</CabeChip>
-                      ) : null}
-                      {typeof pedido.distanciaKm === 'number' ? (
-                        <DistanciaChip>{pedido.distanciaKm} km</DistanciaChip>
-                      ) : null}
+                      {/* Los chips van agrupados a la derecha y no pegados
+                          al nombre: colgando del texto quedaban a distinta
+                          altura horizontal en cada tarjeta, según lo largo
+                          que fuera el nombre del comercio. */}
+                      <PedidoChips>
+                        {pedido.entraEnTuVehiculo === false ? (
+                          <CabeChip data-entra="false">
+                            Entra en {pedido.viajes} envíos
+                          </CabeChip>
+                        ) : typeof pedido.litros === 'number' && pedido.litros > 0 ? (
+                          <CabeChip data-entra="true">Entra todo en 1 envío</CabeChip>
+                        ) : null}
+                        {typeof pedido.distanciaKm === 'number' ? (
+                          <DistanciaChip>{pedido.distanciaKm} km</DistanciaChip>
+                        ) : null}
+                      </PedidoChips>
                     </PedidoTitulo>
 
                     <PedidoDatos>
@@ -518,6 +541,20 @@ export function PanelRepartidorScreen() {
         onClose={() => setDetalle(null)}
         onTomar={tomar}
         esFletero={esFletero}
+        /* Si el viaje ya es suyo no se le ofrece tomarlo otra vez: el
+           servidor lo rechaza igual, pero para entonces ya creyó que estaba
+           tomando otro. */
+        yaEsMio={envios.some((envio) => envio.pedido_id === detalle)}
+        onAbrirChat={(pedidoId) => {
+          const envio = envios.find((fila) => fila.pedido_id === pedidoId);
+
+          setDetalle(null);
+          setChat({
+            id: pedidoId,
+            codigo: envio?.codigo ?? '',
+            cliente: envio?.cliente ?? '',
+          } as PedidoDisponibleApi);
+        }}
       />
 
       <CotizarDialog

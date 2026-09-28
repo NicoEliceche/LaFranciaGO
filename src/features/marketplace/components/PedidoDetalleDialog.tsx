@@ -41,6 +41,16 @@ type Props = {
   onTomar: (pedidoId: string) => Promise<void>;
   /** Un fletero toma fletes, no pedidos: cambia cómo se nombra el viaje. */
   esFletero?: boolean;
+  /**
+   * Si este viaje ya es suyo.
+   *
+   * Sin esto el diálogo ofrecía "Tomar pedido" sobre algo ya tomado: al
+   * tocarlo el servidor lo rechaza, pero para entonces la persona ya creyó
+   * que estaba tomando otro viaje.
+   */
+  yaEsMio?: boolean;
+  /** Abre el chat del pedido. Sin esto no había cómo volver a él. */
+  onAbrirChat?: (pedidoId: string) => void;
 };
 
 export function PedidoDetalleDialog({
@@ -49,6 +59,8 @@ export function PedidoDetalleDialog({
   onClose,
   onTomar,
   esFletero = false,
+  yaEsMio = false,
+  onAbrirChat,
 }: Props) {
   const [datos, setDatos] = useState<DetallePedidoApi | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -182,9 +194,19 @@ export function PedidoDetalleDialog({
               ) : null}
             </DetalleBloque>
 
-            <AuthEnviar type="button" onClick={() => void tomar()} disabled={tomando}>
-              {tomando ? 'Tomando…' : esFletero ? 'Tomar flete' : 'Tomar pedido'}
-            </AuthEnviar>
+            {/* Ya tomado, lo único que hace falta es poder hablar. Ofrecer
+                "tomar" otra vez confunde y el servidor lo rechaza igual. */}
+            {yaEsMio ? (
+              onAbrirChat && datos.pedido.id ? (
+                <AuthEnviar type="button" onClick={() => onAbrirChat(datos.pedido.id)}>
+                  Abrir el chat {esFletero ? 'del flete' : 'del pedido'}
+                </AuthEnviar>
+              ) : null
+            ) : (
+              <AuthEnviar type="button" onClick={() => void tomar()} disabled={tomando}>
+                {tomando ? 'Tomando…' : esFletero ? 'Tomar flete' : 'Tomar pedido'}
+              </AuthEnviar>
+            )}
           </>
         ) : (
           <CardText>Cargando…</CardText>

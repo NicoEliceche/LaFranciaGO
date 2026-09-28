@@ -15,7 +15,7 @@ import {
   type MovimientoCajaApi,
   gestionApi,
 } from '@core/data/services/apiClient';
-import { leerCentavos, mostrarCentavos } from '../dinero';
+import { formatearMientrasEscribe, leerCentavos, mostrarCentavos } from '../dinero';
 
 import { GestionFrame } from '../components/GestionFrame';
 import { Total, Totales } from '../components/TablaStyled';
@@ -306,9 +306,13 @@ export function CajaScreen() {
                 <span>Con cuánto arrancás</span>
                 <input
                   value={inicial}
-                  onChange={(evento) => setInicial(evento.target.value)}
+                  /* Los separadores se ponen solos mientras escribe: en un
+                     campo de plata es donde más se equivoca quien atiende
+                     apurado, y un cero de más acá hace que la caja cierre con
+                     una diferencia que nadie sabe de dónde salió. */
+                  onChange={(evento) => setInicial(formatearMientrasEscribe(evento.target.value))}
                   inputMode="decimal"
-                  placeholder="0,00"
+                  placeholder="$ 0,00"
                 />
               </Campo>
 

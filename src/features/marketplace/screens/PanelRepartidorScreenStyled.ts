@@ -327,3 +327,19 @@ export const FraccionarBoton = styled.button`
     color: ${({ theme }) => theme.color.primary};
   }
 `;
+
+/**
+ * Los chips del pedido, agrupados a la derecha.
+ *
+ * Antes colgaban del nombre del comercio, así que su posición dependía de lo
+ * largo que fuera ese nombre: en una lista quedaban todos a distinta altura
+ * horizontal y se leía como desprolijo. Agrupados y anclados, caen siempre
+ * en el mismo lugar.
+ */
+export const PedidoChips = styled.div`
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: ${({ theme }) => theme.spacing[1]};
+  margin-inline-start: auto;
+`;

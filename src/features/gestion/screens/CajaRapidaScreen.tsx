@@ -248,6 +248,19 @@ export function CajaRapidaScreen() {
 
       {aviso ? <Aviso role="status">{aviso}</Aviso> : null}
 
+      {/* Sin esto la pantalla se abría con el campo muerto y sin explicación:
+          el comercio escribe, no pasa nada, y concluye que está rota. La
+          lectora y la impresora viven en la computadora del local, y eso hay
+          que decirlo donde se intenta usarlas. */}
+      {!enMostrador ? (
+        <Aviso role="status" data-tono="info">
+          <strong>La caja rápida funciona en la computadora del negocio.</strong> Ahí
+          están la lectora de códigos y la impresora de tickets, que son las que
+          hacen que cobrar lleve segundos. Desde acá podés mirar cómo es, pero
+          para cobrar usá la aplicación instalada en el local.
+        </Aviso>
+      ) : null}
+
       <Panel>
         <TituloPanel>Qué se lleva</TituloPanel>
 
@@ -256,7 +269,11 @@ export function CajaRapidaScreen() {
             ref={buscador}
             value={termino}
             onChange={(evento) => setTermino(evento.target.value)}
-            placeholder="Pasá el código o escribí el nombre"
+            placeholder={
+              enMostrador
+                ? 'Pasá el código o escribí el nombre'
+                : 'Disponible en la computadora del negocio'
+            }
             autoFocus={enMostrador}
             disabled={!enMostrador}
           />

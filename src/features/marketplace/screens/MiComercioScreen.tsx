@@ -41,6 +41,7 @@ import { MarketplaceFrame } from '../components/MarketplaceFrame';
 import { ChatPedidoDialog } from '../components/ChatPedidoDialog';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
+import { AvisarProblema } from '../components/AvisarProblema';
 import { EnviosMapa } from '../components/EnviosMapa';
 import { OfertaDialog } from '../components/OfertaDialog';
 import { ProductoDialog } from '../components/ProductoDialog';
@@ -274,6 +275,9 @@ export function MiComercioScreen({
   const [productos, setProductos] = useState<ProductoApi[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /* El error técnico del último intento, para poder avisar a soporte con el
+     detalle adjunto en lugar de un "no anda". */
+  const [falloPreparacion, setFalloPreparacion] = useState<unknown>(null);
 
   /* La sección puede venir en la dirección: la barra de abajo apunta a
      ?ver=pedidos para abrir los pedidos de una. Sin parámetro se abre en el
@@ -364,13 +368,28 @@ export function MiComercioScreen({
 
     try {
       await miComercioApi.prepararPedido(pedido.id, siguiente);
-    } catch {
+
+      /* Se confirma lo que ya se había pintado. Sin esto el cambio se ve
+         igual, pero el comercio no sabe si quedó guardado o si la pantalla
+         le está mintiendo hasta el próximo refresco. */
+      setGuardado(
+        siguiente === 'preparando'
+          ? `Pedido ${pedido.codigo} en preparación.`
+          : `Pedido ${pedido.codigo} listo para retirar.`,
+      );
+      window.setTimeout(() => setGuardado(null), 2500);
+    } catch (fallo) {
+      /* Vuelve atrás: dejarlo pintado sería peor que no haber reaccionado,
+         porque el comercio creería que avisó y el cliente no vio nada. */
       setPedidos((previos) =>
         previos.map((fila) =>
           fila.id === pedido.id ? { ...fila, preparacion: pedido.preparacion } : fila,
         ),
       );
-      setError('No pudimos actualizar el pedido.');
+      setError(
+        fallo instanceof Error ? fallo.message : 'No pudimos actualizar el pedido.',
+      );
+      setFalloPreparacion(fallo);
     } finally {
       setPreparando(null);
     }
@@ -581,7 +600,7 @@ export function MiComercioScreen({
     const temporizador = window.setInterval(traer, REFRESCO_MS);
 
     return () => window.clearInterval(temporizador);
-  }, [comercio, seccion]);
+  }, [comercio, seccion, preparando]);
 
   const sinLeer = useMemo(
     () => pedidos.reduce((suma, pedido) => suma + Number(pedido.sin_leer ?? 0), 0),
@@ -628,6 +647,12 @@ export function MiComercioScreen({
             {error ? (
               <AuthAviso role="alert" data-tono="error">
                 {error}
+                {/* Con el error técnico adjunto: el comercio toca y el reporte
+                    llega con el detalle, en lugar de un "no me anda" que hay
+                    que ir a preguntar. */}
+                {falloPreparacion ? (
+                  <AvisarProblema error={falloPreparacion} contexto="Mi comercio · pedidos" />
+                ) : null}
               </AuthAviso>
             ) : null}
 

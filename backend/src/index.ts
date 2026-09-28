@@ -90,8 +90,8 @@ import { rutaVersiones } from './versiones';
  * un precio escrito en el navegador lo puede cambiar cualquiera.
  */
 const PLANES_GESTION = {
-  go: { id: 'go', nombre: 'Comercio GO', precioCentavos: 9_999_900 },
-  pro: { id: 'pro', nombre: 'Comercio GO PRO', precioCentavos: 14_999_900 },
+  go: { id: 'go', nombre: 'Comercio GO', precioCentavos: 7_999_900 },
+  pro: { id: 'pro', nombre: 'Comercio GO PRO', precioCentavos: 9_999_900 },
 } as const;
 
 type PlanGestion = keyof typeof PLANES_GESTION;
@@ -3762,6 +3762,18 @@ async function enrutar(
     });
 
     if (!resultado.ok) {
+      /* Queda anotado con el motivo. Sin esto, el registro mostraba un 502
+         "sin detalle" y no había forma de saber si faltó conectar la cuenta
+         del comercio, si venció el token o si Mercado Pago no respondió. */
+      await anotarFallo(env, new Error(resultado.motivo), {
+        area: 'pagos',
+        ruta,
+        metodo,
+        estado: 502,
+        usuarioId: usuario.id,
+        detalle: { pedido: pedido.codigo, comercio: pedido.comercio_id },
+      });
+
       return error(resultado.motivo, 502, cors);
     }
 
