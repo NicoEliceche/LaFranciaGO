@@ -876,7 +876,25 @@ export const reclamosApi = {
     api.post<{ ok: true }>(`/reclamos/${reclamoId}/resolver`, { resolucion }),
 };
 
+/** Un flete esperando que alguien lo tome. */
+export interface FleteDisponibleApi {
+  id: string;
+  codigo: string;
+  descripcion: string;
+  destino_texto: string | null;
+  destino_lat: number | null;
+  destino_lon: number | null;
+  creado_en: string;
+  cliente: string;
+}
+
 export const fletesApi = {
+  /** Los fletes que nadie tomó todavía. */
+  disponibles: () => api.get<{ fletes: FleteDisponibleApi[] }>('/fletes/disponibles'),
+
+  /** Quien hace fletes se queda con este. */
+  tomar: (fleteId: string) => api.post<{ ok: true }>(`/fletes/${fleteId}/tomar`),
+
   cotizar: (pedidoId: string, precio: number, nota?: string) =>
     api.post<{ id: string; precio: number; distanciaKm: number | null }>(
       `/fletes/${pedidoId}/cotizar`,
@@ -896,7 +914,7 @@ export interface MandadoApi {
   estado: string;
   creado_en: string;
   repartidor: string | null;
-  /** 'mandado' lo lleva cualquiera; 'flete' necesita camioneta o camión. */
+  /** Cuál de los dos es: viven en tablas distintas pero se listan juntos. */
   tipo: 'mandado' | 'flete';
 }
 
@@ -942,14 +960,6 @@ export const mandadosApi = {
 
   mios: () => api.get<{ mandados: MandadoApi[] }>('/mandados'),
 
-  /**
-   * Quien reparte se queda con el mandado.
-   *
-   * Va por su propia puerta y no por la de los pedidos: un mandado no sale
-   * de un comercio, asi que no hay nada que avisarle al negocio ni stock que
-   * descontar.
-   */
-  tomar: (mandadoId: string) => api.post<{ ok: true }>(`/mandados/${mandadoId}/tomar`),
 };
 
 export const pagosApi = {
@@ -962,6 +972,28 @@ export const pagosApi = {
     ),
   /** El comercio conecta su cuenta de Mercado Pago para cobrar. */
   conectarComercio: () => api.get<{ url: string }>('/pagos/conectar'),
+};
+
+/** Un dato del sistema que administracion puede cambiar. */
+export interface ParametroApi {
+  clave: string;
+  valor: string | null;
+  /** Como se llama en la pantalla. */
+  etiqueta: string;
+  /** Para que sirve, en la misma fila: quien lo edita no escribio el codigo. */
+  descripcion: string;
+  grupo: string;
+  formato: string;
+  editado_en: string | null;
+  editado_por: string | null;
+}
+
+export const parametrosApi = {
+  listar: () => api.get<{ parametros: ParametroApi[] }>('/admin/parametros'),
+
+  /** Guarda uno solo: asi se sabe cual se toco y cual fallo. */
+  guardar: (clave: string, valor: string) =>
+    api.put<{ ok: true }>(`/admin/parametros/${clave}`, { valor }),
 };
 
 export const favoritosApi = {

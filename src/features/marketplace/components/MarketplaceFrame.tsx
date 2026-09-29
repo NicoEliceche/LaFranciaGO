@@ -20,6 +20,7 @@ import {
   ChevronRight,
   FileCheck2,
   FileText,
+  SlidersHorizontal,
   Heart,
   Home,
   LayoutGrid,
@@ -288,6 +289,12 @@ const ITEMS_ADMIN: DrawerItemData[] = [
     title: 'Registro',
     subtitle: 'Qué se rompió y por qué',
     icon: FileText,
+  },
+  {
+    to: '/panel/admin/parametros',
+    title: 'Parámetros',
+    subtitle: 'Alias, contacto y configuración',
+    icon: SlidersHorizontal,
   },
 ];
 

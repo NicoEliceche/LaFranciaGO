@@ -157,6 +157,11 @@ const AdminRegistroScreen = lazy(() =>
     default: m.AdminRegistroScreen,
   })),
 );
+const AdminParametrosScreen = lazy(() =>
+  import('@features/marketplace/screens/AdminParametrosScreen').then((m) => ({
+    default: m.AdminParametrosScreen,
+  })),
+);
 const AdminPanelScreen = lazy(() =>
   import('@features/marketplace/screens/AdminPanelScreen').then((m) => ({ default: m.AdminPanelScreen })),
 );
@@ -450,6 +455,17 @@ function App() {
               element={
                 <RutaPrivada>
                   <AdminRegistroScreen />
+                </RutaPrivada>
+              }
+            />
+            {/* Los parámetros del sistema: el alias donde se cobra, el
+                contacto, hasta dónde se reparte. Igual que el resto, quién
+                entra lo decide el servidor. */}
+            <Route
+              path="/panel/admin/parametros"
+              element={
+                <RutaPrivada>
+                  <AdminParametrosScreen />
                 </RutaPrivada>
               }
             />

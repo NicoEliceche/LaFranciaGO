@@ -79,6 +79,46 @@ function ingresoDe(roles: string[] | undefined) {
   return { rol: encontrado?.[0], panel: encontrado?.[1] ?? '/' };
 }
 
+/**
+ * Los comienzos de cada panel, para saber de quien es una direccion.
+ *
+ * No alcanza con la lista de arriba: un panel tiene muchas pantallas colgando
+ * —/panel/admin/registro, /panel/comercio/productos— y todas son del mismo
+ * rol.
+ */
+const PANELES: Array<[rol: string, prefijo: string]> = [
+  ['admin', '/panel/admin'],
+  ['comercio', '/panel/comercio'],
+  ['delivery', '/panel/repartidor'],
+  ['fletero', '/panel/repartidor'],
+];
+
+/**
+ * Si la cuenta que acaba de entrar puede abrir esa direccion.
+ *
+ * Al cerrar sesion desde un panel, el guardia de ruta manda a /ingresar
+ * anotando de donde venia. Eso esta bien cuando la misma persona vuelve a
+ * entrar —sigue donde estaba— pero estaba mandando a la cuenta *siguiente* a
+ * la pantalla de la anterior: se salia de admin, entraba un comercio, y
+ * aterrizaba en el panel de administracion.
+ *
+ * Asi que el destino guardado se respeta solo si le corresponde a quien
+ * entro. Si es de otro rol se descarta y cada uno arranca en su propio
+ * inicio, que es lo que se espera de un login.
+ */
+function puedeAbrir(destino: string, roles: string[] | undefined) {
+  const suyos = roles ?? [];
+  const duenos = PANELES.filter(([, prefijo]) => destino.startsWith(prefijo));
+
+  /* Una pantalla que no es de ningun panel —el carrito, un pedido— la puede
+     abrir cualquiera que haya entrado. */
+  if (duenos.length === 0) {
+    return true;
+  }
+
+  return duenos.some(([rol]) => suyos.includes(rol));
+}
+
 export function IngresarScreen() {
   const [parametros] = useSearchParams();
   const navegar = useNavigate();
@@ -126,9 +166,13 @@ export function IngresarScreen() {
         }
       }
 
-      /* Si venía de algún lado, vuelve ahí: el carrito a medio armar o el
-         pedido que estaba mirando siguen donde estaban. */
-      navegar(destinoPedido || panel, { replace: true });
+      /* Si venía de algún lado, vuelve ahí —el carrito a medio armar o el
+         pedido que estaba mirando siguen donde estaban— siempre que esa
+         pantalla sea de esta cuenta. Si no, va a su propio inicio. */
+      const volverA =
+        destinoPedido && puedeAbrir(destinoPedido, completo?.roles) ? destinoPedido : panel;
+
+      navegar(volverA, { replace: true });
     } catch (fallo) {
       setError(fallo instanceof Error ? fallo.message : 'No pudimos entrar.');
       setEnviando(false);

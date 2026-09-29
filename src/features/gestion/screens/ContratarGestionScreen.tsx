@@ -17,7 +17,7 @@
  */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Wallet } from 'lucide-react';
+import { Check, Wallet } from 'lucide-react';
 
 import {
   planGestionApi,
@@ -44,7 +44,6 @@ import {
   Planes,
   Precio,
   PrecioNota,
-  Volver,
 } from './ContratarGestionScreenStyled';
 
 /**
@@ -134,14 +133,6 @@ export function ContratarGestionScreen() {
   return (
     <MarketplaceFrame>
       <Panel>
-        {/* La salida va arriba y no al pie: todavia se esta adentro de la
-            aplicacion, y un boton de volver debajo de los precios se lee como
-            la alternativa a contratar. */}
-        <Volver type="button" onClick={() => navegar('/panel/comercio')}>
-          <ArrowLeft size={16} aria-hidden="true" />
-          Volver a la app
-        </Volver>
-
         <Cabecera>
           <Wallet size={22} aria-hidden="true" />
           <div>

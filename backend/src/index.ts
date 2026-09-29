@@ -1020,6 +1020,81 @@ async function enrutar(
    * viene el negocio, y quién está vendiendo. Lo accionable primero, porque
    * es a lo que se entra.
    */
+  // ── Parámetros del sistema ──
+  //
+  // Los datos nuestros que pueden cambiar —el alias donde se cobra, el
+  // teléfono de contacto, hasta dónde se reparte— se editan desde
+  // administración en vez de vivir en el código o en variables del entorno.
+  // Cambiar un alias no tiene por qué necesitar consola y publicar de nuevo.
+  //
+  // Los secretos siguen aparte: una clave de Mercado Pago no se muestra ni
+  // se edita en una pantalla. Acá van sólo los datos que igual se enseñan.
+
+  if (ruta === '/admin/parametros' && metodo === 'GET') {
+    const admin = await exigirAdmin(request, env, cors);
+
+    if ('respuesta' in admin) {
+      return admin.respuesta;
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT p.clave, p.valor, p.etiqueta, p.descripcion, p.grupo, p.formato,
+              p.editado_en, u.nombre AS editado_por
+         FROM parametros p
+         LEFT JOIN usuarios u ON u.id = p.editado_por
+        ORDER BY p.grupo, p.orden`,
+    ).all();
+
+    return json({ parametros: results }, {}, cors);
+  }
+
+  const guardarParametro = /^\/admin\/parametros\/([\w-]+)$/.exec(ruta);
+
+  if (guardarParametro && metodo === 'PUT') {
+    const admin = await exigirAdmin(request, env, cors);
+
+    if ('respuesta' in admin) {
+      return admin.respuesta;
+    }
+
+    const body = await leerJson<{ valor?: string | null }>(request);
+
+    /* El parámetro tiene que existir: no se crean desde acá. Si hiciera
+       falta uno nuevo, va con una migración, que es donde se escribe también
+       para qué sirve. */
+    const existe = await env.DB.prepare('SELECT formato FROM parametros WHERE clave = ?')
+      .bind(guardarParametro[1])
+      .first<{ formato: string }>();
+
+    if (!existe) {
+      return error('No encontrado', 404, cors);
+    }
+
+    /* Vacío se guarda como nulo y no como cadena vacía: "sin cargar" y
+       "cargado en blanco" son lo mismo, y dos formas de decirlo obligan a
+       preguntar por las dos en cada lectura. */
+    const crudo = body.valor === null || body.valor === undefined ? null : String(body.valor).trim();
+    const valor = crudo === '' ? null : crudo;
+
+    if (valor !== null && existe.formato === 'numero' && !Number.isFinite(Number(valor))) {
+      return error('Tiene que ser un número.', 400, cors);
+    }
+
+    if (valor !== null && existe.formato === 'email' && !valor.includes('@')) {
+      return error('No parece un correo válido.', 400, cors);
+    }
+
+    await env.DB.prepare(
+      `UPDATE parametros
+          SET valor = ?, editado_en = datetime('now'), editado_por = ?
+        WHERE clave = ?`,
+    )
+      .bind(valor?.slice(0, 500) ?? null, admin.usuario.id, guardarParametro[1])
+      .run();
+
+    return json({ ok: true }, {}, cors);
+  }
+
   if (ruta === '/admin/metricas' && metodo === 'GET') {
     const admin = await exigirAdmin(request, env, cors);
 
@@ -1606,17 +1681,21 @@ async function enrutar(
       .first<{ rol: string; vehiculo: string | null }>();
 
     const vehiculo = suVehiculo?.vehiculo ?? (suVehiculo?.rol === 'fletero' ? 'camioneta' : 'moto');
+    const esFletero = suVehiculo?.rol === 'fletero';
 
     const { results } = await env.DB.prepare(
       `SELECT p.id, p.codigo, p.direccion_texto, p.total_centavos, p.creado_en,
               p.volumen_litros, p.preferencia_envio, p.parte_numero, p.partes_total,
-              p.preparacion,
+              p.preparacion, p.tipo_pedido, p.descripcion,
+              p.lat AS mandado_lat, p.lon AS mandado_lon,
               c.nombre AS comercio, c.direccion AS comercio_direccion,
               c.lat AS comercio_lat, c.lon AS comercio_lon,
               u.nombre AS cliente,
               (SELECT COUNT(*) FROM pedido_items i WHERE i.pedido_id = p.id) AS items
          FROM pedidos p
-         JOIN comercios c ON c.id = p.comercio_id
+         /* LEFT y no JOIN: un mandado es un pedido sin comercio detrás, y con
+            un JOIN a secas quedaba afuera de la lista. */
+         LEFT JOIN comercios c ON c.id = p.comercio_id
          JOIN usuarios u ON u.id = p.usuario_id
          LEFT JOIN envios e ON e.pedido_id = p.id
         WHERE p.estado = 'proceso'
@@ -1624,24 +1703,33 @@ async function enrutar(
           /* Cada uno ve lo suyo: una mudanza no tiene por qué aparecer entre
              los pedidos de almacén, ni al revés. */
           AND p.tipo = ?
+          /* Los mandados los lleva quien reparte, no quien hace fletes: para
+             una mudanza está la lista de fletes. */
+          AND (p.tipo_pedido = 'pedido' OR ? = 0)
           /* Un pedido partido se reparte por sus partes, no entero: si
              apareciera el original, se entregaría dos veces lo mismo. */
           AND p.id NOT IN (SELECT DISTINCT pedido_padre_id FROM pedidos WHERE pedido_padre_id IS NOT NULL)
         ORDER BY p.creado_en DESC
         LIMIT 50`,
     )
-      .bind(suVehiculo?.rol === 'fletero' ? 'flete' : 'pedido')
+      .bind(esFletero ? 'flete' : 'pedido', esFletero ? 1 : 0)
       .all();
 
     const conDistancia = results.map((fila) => {
       const comercioLat = fila.comercio_lat as number | null;
       const comercioLon = fila.comercio_lon as number | null;
 
-      /* Sin coordenadas del comercio o del repartidor no hay distancia que
-         calcular: se deja en null y esos van al final de la lista. */
+      const esMandado = fila.tipo_pedido === 'mandado';
+
+      /* De dónde sale: el comercio en un pedido, el punto que marcó quien lo
+         pidió en un mandado. Sin coordenadas no hay distancia que calcular:
+         se deja en null y esos van al final de la lista. */
+      const origenLat = esMandado ? (fila.mandado_lat as number | null) : comercioLat;
+      const origenLon = esMandado ? (fila.mandado_lon as number | null) : comercioLon;
+
       const distancia =
-        Number.isFinite(lat) && Number.isFinite(lon) && comercioLat && comercioLon
-          ? distanciaKm(lat, lon, comercioLat, comercioLon)
+        Number.isFinite(lat) && Number.isFinite(lon) && origenLat && origenLon
+          ? distanciaKm(lat, lon, origenLat, origenLon)
           : null;
 
       const litros = Number(fila.volumen_litros ?? 0);
@@ -1649,58 +1737,59 @@ async function enrutar(
 
       return {
         ...fila,
-        total: aPesos(Number(fila.total_centavos)),
+        /* Un mandado no tiene precio todavía: se acuerda en el chat. */
+        total: esMandado ? null : aPesos(Number(fila.total_centavos)),
+        /* Lo que en un pedido es el nombre del comercio, en un mandado es de
+           dónde sale: la tarjeta muestra eso arriba. */
+        comercio: esMandado ? 'Mandado' : fila.comercio,
+        comercio_direccion: esMandado
+          ? (fila.direccion_texto as string | null) ?? 'A convenir'
+          : fila.comercio_direccion,
         distanciaKm: distancia,
         litros,
         /* Si le entra tal cual, o si va a tener que hacer más de un viaje. */
         entraEnTuVehiculo: entra,
         viajes: viajesNecesarios(litros, vehiculo),
         /* Con qué vehículos entra de una: la tarjeta muestra el ícono. */
-        vehiculos: vehiculosQueEntran(
-          litros,
-          suVehiculo?.rol === 'fletero' ? 'fletero' : 'delivery',
-        ),
+        vehiculos: vehiculosQueEntran(litros, esFletero ? 'fletero' : 'delivery'),
+        esMandado,
       };
     });
 
-    /* Los mandados y fletes sueltos van en la misma lista.
-       Un mandado no sale de un comercio —es "traeme esto", escrito a mano— y
-       por eso vive en su propia tabla. Pero para quien reparte es lo mismo
-       que un pedido: algo que hay que ir a buscar y llevar. Si apareciera en
-       otra pantalla, habria que mirar dos listas para saber si hay trabajo, y
-       la que tuviera menos se dejaria de mirar.
+    /* Los mandados y los fletes van en la misma lista que los pedidos.
+       Para quien reparte son todos lo mismo: algo que hay que ir a buscar y
+       llevar. Si aparecieran en otra pantalla habría que mirar dos listas
+       para saber si hay trabajo, y la que tuviera menos se dejaría de mirar.
 
-       El tipo separa igual que arriba: el mandado lo lleva cualquiera, el
-       flete necesita vehiculo grande. */
-    const { results: mandados } = await env.DB.prepare(
-      `SELECT m.id, m.descripcion, m.direccion_texto, m.lat, m.lon, m.creado_en,
-              u.nombre AS cliente
-         FROM mandados m
-         JOIN usuarios u ON u.id = m.usuario_id
-        WHERE m.estado = 'buscando' AND m.tipo = ?
-        ORDER BY m.creado_en DESC
-        LIMIT 30`,
-    )
-      .bind(suVehiculo?.rol === 'fletero' ? 'flete' : 'mandado')
-      .all();
+       El mandado ya viene con los pedidos —es uno, con tipo_pedido
+       'mandado'—, así que acá sólo hace falta traer los fletes, que son los
+       que viven aparte. Y sólo para quien los puede hacer. */
+    const { results: fletes } = esFletero
+      ? await env.DB.prepare(
+          `SELECT f.id, f.codigo, f.descripcion, f.destino_texto, f.destino_lat,
+                  f.destino_lon, f.creado_en, u.nombre AS cliente
+             FROM fletes f
+             JOIN usuarios u ON u.id = f.usuario_id
+            WHERE f.estado = 'buscando'
+            ORDER BY f.creado_en DESC
+            LIMIT 30`,
+        ).all()
+      : { results: [] as Record<string, unknown>[] };
 
-    const mandadosEnLista = mandados.map((fila) => {
-      const origenLat = fila.lat as number | null;
-      const origenLon = fila.lon as number | null;
+    const fletesEnLista = fletes.map((fila) => {
+      const origenLat = fila.destino_lat as number | null;
+      const origenLon = fila.destino_lon as number | null;
 
       return {
         ...fila,
-        /* El id lleva prefijo para que la pantalla sepa a que endpoint
-           mandarlo al tomarlo: no es un pedido de comercio. */
-        id: `mandado:${String(fila.id)}`,
-        codigo: String(fila.id).slice(0, 6).toUpperCase(),
-        /* Un mandado no tiene precio todavia: se acuerda en el chat. */
+        /* El id lleva prefijo para que la pantalla sepa a qué endpoint
+           mandarlo al tomarlo: un flete no se toma como un pedido. */
+        id: `flete:${String(fila.id)}`,
+        /* Un flete no tiene precio todavía: se cotiza. */
         total: null,
-        /* Lo que en un pedido es el comercio, aca es la descripcion: es lo
-           que la tarjeta muestra arriba como "de donde sale". */
-        comercio: 'Mandado',
-        comercio_direccion: (fila.direccion_texto as string | null) ?? 'A convenir',
-        descripcion: fila.descripcion,
+        /* Lo que en un pedido es el comercio, acá es de dónde sale. */
+        comercio: 'Flete',
+        comercio_direccion: (fila.destino_texto as string | null) ?? 'A convenir',
         items: 0,
         litros: 0,
         distanciaKm:
@@ -1710,11 +1799,11 @@ async function enrutar(
         entraEnTuVehiculo: true,
         viajes: 1,
         vehiculos: [] as string[],
-        esMandado: true,
+        esFlete: true,
       };
     });
 
-    const todo = [...conDistancia, ...mandadosEnLista];
+    const todo = [...conDistancia, ...fletesEnLista];
 
     todo.sort((a, b) => {
       if (a.distanciaKm === null) {
@@ -1879,14 +1968,16 @@ async function enrutar(
     const { results } = await env.DB.prepare(
       `SELECT e.id, e.estado, e.asignado_en, e.entregado_en,
               p.id AS pedido_id, p.codigo, p.direccion_texto, p.total_centavos,
-              p.metodo_pago,
+              p.metodo_pago, p.tipo_pedido, p.descripcion,
               c.nombre AS comercio, c.direccion AS comercio_direccion,
               c.telefono AS comercio_telefono,
               u.nombre AS cliente, u.telefono AS cliente_telefono,
               (SELECT COUNT(*) FROM pedido_items pi WHERE pi.pedido_id = p.id) AS items
          FROM envios e
          JOIN pedidos p ON p.id = e.pedido_id
-         JOIN comercios c ON c.id = p.comercio_id
+         /* LEFT: un mandado es un pedido sin comercio, y con JOIN a secas
+            desaparecía de la lista de quien lo está llevando. */
+         LEFT JOIN comercios c ON c.id = p.comercio_id
          JOIN usuarios u ON u.id = p.usuario_id
         WHERE e.repartidor_id = ? AND e.estado NOT IN ('entregado', 'cancelado')
         ORDER BY e.asignado_en ASC`,
@@ -1894,19 +1985,22 @@ async function enrutar(
       .bind(repartidor.usuario.id)
       .all<Record<string, unknown>>();
 
-    /* Los mandados tomados van en la misma lista que los envios.
+    /* Los fletes tomados van en la misma lista que los envíos.
        Quien reparte tiene una sola cabeza para acordarse de lo que lleva
-       encima: si el mandado apareciera aparte, seria lo primero que se
-       olvida. Se traen con la forma de un envio para que la pantalla no
-       tenga que distinguirlos. */
-    const { results: mandados } = await env.DB.prepare(
-      `SELECT m.id, m.estado, m.creado_en AS asignado_en, m.descripcion,
-              m.direccion_texto,
+       encima: si el flete apareciera aparte, sería lo primero que se
+       olvida. Se traen con la forma de un envío para que la pantalla no
+       tenga que distinguirlos.
+
+       Los mandados no hacen falta acá: ahora son pedidos, y al tomarlos se
+       anota un envío como con cualquier otro, así que ya vienen arriba. */
+    const { results: fletes } = await env.DB.prepare(
+      `SELECT f.id, f.codigo, f.estado, f.tomado_en AS asignado_en, f.descripcion,
+              f.destino_texto, f.precio_centavos,
               u.nombre AS cliente, u.telefono AS cliente_telefono
-         FROM mandados m
-         JOIN usuarios u ON u.id = m.usuario_id
-        WHERE m.repartidor_id = ? AND m.estado NOT IN ('entregado', 'cancelado')
-        ORDER BY m.creado_en ASC`,
+         FROM fletes f
+         JOIN usuarios u ON u.id = f.usuario_id
+        WHERE f.fletero_id = ? AND f.estado NOT IN ('entregado', 'cancelado')
+        ORDER BY f.tomado_en ASC`,
     )
       .bind(repartidor.usuario.id)
       .all<Record<string, unknown>>();
@@ -1916,24 +2010,30 @@ async function enrutar(
         envios: [
           ...results.map((fila) => ({
             ...fila,
-            total: aPesos(Number(fila.total_centavos)),
+            /* Un mandado no tiene precio: se acuerda en el chat. */
+            total: fila.tipo_pedido === 'mandado' ? null : aPesos(Number(fila.total_centavos)),
+            comercio: fila.tipo_pedido === 'mandado' ? 'Mandado' : fila.comercio,
+            comercio_direccion:
+              fila.tipo_pedido === 'mandado'
+                ? (fila.direccion_texto as string | null) ?? 'A convenir'
+                : fila.comercio_direccion,
+            esMandado: fila.tipo_pedido === 'mandado',
           })),
-          ...mandados.map((fila) => ({
+          ...fletes.map((fila) => ({
             ...fila,
-            id: `mandado:${String(fila.id)}`,
-            pedido_id: `mandado:${String(fila.id)}`,
-            codigo: String(fila.id).slice(0, 6).toUpperCase(),
-            /* Se acuerda en el chat, asi que todavia no hay monto. */
-            total: null,
+            id: `flete:${String(fila.id)}`,
+            pedido_id: `flete:${String(fila.id)}`,
+            /* Hasta que no se acepta una cotización no hay monto. */
+            total: fila.precio_centavos ? aPesos(Number(fila.precio_centavos)) : null,
             metodo_pago: null,
-            comercio: 'Mandado',
-            comercio_direccion: (fila.direccion_texto as string | null) ?? 'A convenir',
+            comercio: 'Flete',
+            comercio_direccion: (fila.destino_texto as string | null) ?? 'A convenir',
             comercio_telefono: null,
             items: 0,
-            /* El estado del mandado es 'tomado'; la pantalla de envios habla
+            /* El estado del flete es 'tomado'; la pantalla de envíos habla
                de 'asignado' para lo mismo. */
             estado: fila.estado === 'tomado' ? 'asignado' : fila.estado,
-            esMandado: true,
+            esFlete: true,
           })),
         ],
       },
@@ -2365,6 +2465,14 @@ async function enrutar(
       .bind(repartidor.usuario.id)
       .all<Record<string, unknown>>();
 
+    const { results: filasCobro } = await env.DB.prepare(
+      "SELECT clave, valor FROM parametros WHERE grupo = 'cobros'",
+    ).all<{ clave: string; valor: string | null }>();
+
+    const cobro = Object.fromEntries(
+      filasCobro.map((fila) => [fila.clave, fila.valor]),
+    ) as Record<string, string | null>;
+
     return json(
       {
         deuda: aPesos(Number(saldo?.deuda ?? 0)),
@@ -2372,13 +2480,14 @@ async function enrutar(
           ...fila,
           monto: aPesos(Number(fila.centavos)),
         })),
-        /* A donde transferir. Sale de las variables del entorno para poder
-           cambiarlo sin tocar el codigo. */
+        /* A donde transferir. Sale de los parametros, que administracion
+           edita desde su pantalla: cambiar un alias no tiene por que pedir
+           consola ni publicar la aplicacion de nuevo. */
         cobro: {
-          titular: env.COBRO_TITULAR ?? 'Diego Adalberto Ghione',
-          cbu: env.COBRO_CBU ?? null,
-          alias: env.COBRO_ALIAS ?? null,
-          mercadopago: env.COBRO_MERCADOPAGO ?? null,
+          titular: cobro.cobro_titular ?? 'La administración',
+          cbu: cobro.cobro_cbu ?? null,
+          alias: cobro.cobro_alias ?? null,
+          mercadopago: cobro.cobro_mercadopago ?? null,
         },
       },
       {},
@@ -2727,11 +2836,21 @@ async function enrutar(
     );
   }
 
-  // ── Mandados ──
+  // ── Mandados y fletes ──
   //
-  // Un mandado es un encargo sin comercio detrás: "traeme pan de lo de Juan",
-  // "llevá este paquete". Por eso no tiene productos ni precio cerrado, y lo
-  // que se acuerda se habla por el chat.
+  // Son dos cosas distintas y por eso viven separadas:
+  //
+  //   Un mandado es un pedido sin comercio detrás —"traeme pan de lo de
+  //   Juan"—. Se guarda en `pedidos` con tipo_pedido = 'mandado', porque
+  //   para todo lo demás se comporta igual: lo toma quien reparte, tiene su
+  //   chat, aparece en "Mis pedidos" y suma a las mismas estadísticas.
+  //
+  //   Un flete traslada algo grande. No se compra nada, hace falta un
+  //   vehículo mayor y el precio se cotiza caso por caso, así que tiene su
+  //   propia tabla.
+  //
+  // Para informes: pedido y mandado se separan filtrando tipo_pedido; los
+  // fletes se cuentan aparte.
 
   if (ruta === '/mandados' && metodo === 'POST') {
     const usuario = await usuarioActual(request, env);
@@ -2745,8 +2864,6 @@ async function enrutar(
       direccionTexto?: string;
       lat?: number;
       lon?: number;
-      /* Un mandado lo lleva cualquier repartidor; un flete necesita
-         camioneta o camión. Se piden igual y los toma gente distinta. */
       tipo?: string;
     }>(request);
 
@@ -2757,28 +2874,53 @@ async function enrutar(
     }
 
     const id = nuevoId();
+    const esFlete = body.tipo === 'flete';
+    const direccion = body.direccionTexto ?? 'A convenir';
+    const lat = Number.isFinite(body.lat) ? body.lat : null;
+    const lon = Number.isFinite(body.lon) ? body.lon : null;
 
-    const tipo = body.tipo === 'flete' ? 'flete' : 'mandado';
+    if (esFlete) {
+      await env.DB.prepare(
+        `INSERT INTO fletes (id, codigo, usuario_id, descripcion, destino_texto,
+                             destino_lat, destino_lon)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      )
+        .bind(
+          id,
+          `F-${Date.now().toString().slice(-6)}`,
+          usuario.id,
+          descripcion.slice(0, 500),
+          direccion,
+          lat,
+          lon,
+        )
+        .run();
 
+      return json({ id, tipo: 'flete' }, { status: 201 }, cors);
+    }
+
+    /* Un mandado es un pedido sin comercio: sin líneas y sin total, que se
+       acuerdan después por el chat. */
     await env.DB.prepare(
-      `INSERT INTO mandados (id, usuario_id, descripcion, direccion_texto, lat, lon, tipo)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO pedidos (id, codigo, usuario_id, comercio_id, direccion_texto,
+                            tipo_pedido, descripcion, lat, lon)
+       VALUES (?, ?, ?, NULL, ?, 'mandado', ?, ?, ?)`,
     )
       .bind(
         id,
+        `M-${Date.now().toString().slice(-6)}`,
         usuario.id,
+        direccion,
         descripcion.slice(0, 500),
-        body.direccionTexto ?? null,
-        Number.isFinite(body.lat) ? body.lat : null,
-        Number.isFinite(body.lon) ? body.lon : null,
-        tipo,
+        lat,
+        lon,
       )
       .run();
 
-    return json({ id, tipo }, { status: 201 }, cors);
+    return json({ id, tipo: 'mandado' }, { status: 201 }, cors);
   }
 
-  /** Los mandados de quien está adentro. */
+  /** Los mandados y fletes de quien está adentro. */
   if (ruta === '/mandados' && metodo === 'GET') {
     const usuario = await usuarioActual(request, env);
 
@@ -2786,93 +2928,110 @@ async function enrutar(
       return error('Necesitás iniciar sesión', 401, cors);
     }
 
-    const { results } = await env.DB.prepare(
-      `SELECT m.id, m.descripcion, m.direccion_texto, m.estado, m.creado_en, m.tipo,
-              u.nombre AS repartidor
-         FROM mandados m
-         LEFT JOIN usuarios u ON u.id = m.repartidor_id
-        WHERE m.usuario_id = ?
-        ORDER BY m.creado_en DESC LIMIT 30`,
-    )
-      .bind(usuario.id)
-      .all();
+    /* Los dos se piden juntos: para quien los pidió son "las cosas que
+       encargué", aunque por dentro vivan en tablas distintas. */
+    const [{ results: mandados }, { results: fletes }] = await Promise.all([
+      env.DB.prepare(
+        `SELECT p.id, p.descripcion, p.direccion_texto, p.estado, p.creado_en,
+                'mandado' AS tipo, u.nombre AS repartidor
+           FROM pedidos p
+           LEFT JOIN envios e ON e.pedido_id = p.id
+           LEFT JOIN usuarios u ON u.id = e.repartidor_id
+          WHERE p.usuario_id = ? AND p.tipo_pedido = 'mandado'
+          ORDER BY p.creado_en DESC LIMIT 30`,
+      )
+        .bind(usuario.id)
+        .all(),
+      env.DB.prepare(
+        `SELECT f.id, f.descripcion, f.destino_texto AS direccion_texto, f.estado,
+                f.creado_en, 'flete' AS tipo, u.nombre AS repartidor
+           FROM fletes f
+           LEFT JOIN usuarios u ON u.id = f.fletero_id
+          WHERE f.usuario_id = ?
+          ORDER BY f.creado_en DESC LIMIT 30`,
+      )
+        .bind(usuario.id)
+        .all(),
+    ]);
 
-    return json({ mandados: results }, {}, cors);
+    return json({ mandados: [...mandados, ...fletes] }, {}, cors);
   }
 
-  /** Los mandados sin tomar, para quien reparte. */
-  if (ruta === '/mandados/disponibles' && metodo === 'GET') {
-    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+  /** Los fletes sin tomar, para quien los hace. */
+  if (ruta === '/fletes/disponibles' && metodo === 'GET') {
+    const fletero = await exigirRol(request, env, cors, ['fletero']);
 
-    if ('respuesta' in repartidor) {
-      return repartidor.respuesta;
+    if ('respuesta' in fletero) {
+      return fletero.respuesta;
     }
 
     const { results } = await env.DB.prepare(
-      `SELECT m.id, m.descripcion, m.direccion_texto, m.lat, m.lon, m.creado_en,
-              u.nombre AS cliente
-         FROM mandados m
-         JOIN usuarios u ON u.id = m.usuario_id
-        WHERE m.estado = 'buscando'
-        ORDER BY m.creado_en DESC LIMIT 30`,
+      `SELECT f.id, f.codigo, f.descripcion, f.destino_texto, f.destino_lat,
+              f.destino_lon, f.creado_en, u.nombre AS cliente
+         FROM fletes f
+         JOIN usuarios u ON u.id = f.usuario_id
+        WHERE f.estado = 'buscando'
+        ORDER BY f.creado_en DESC LIMIT 30`,
     ).all();
 
-    return json({ mandados: results }, {}, cors);
+    return json({ fletes: results }, {}, cors);
   }
 
-  const tomarMandado = /^\/mandados\/([\w-]+)\/tomar$/.exec(ruta);
+  const tomarFlete = /^\/fletes\/([\w-]+)\/tomar$/.exec(ruta);
 
-  if (tomarMandado && metodo === 'POST') {
-    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+  if (tomarFlete && metodo === 'POST') {
+    const fletero = await exigirRol(request, env, cors, ['fletero']);
 
-    if ('respuesta' in repartidor) {
-      return repartidor.respuesta;
+    if ('respuesta' in fletero) {
+      return fletero.respuesta;
     }
 
-    /* Igual que con los pedidos: si dos lo toman a la vez, el segundo tiene
-       que enterarse en lugar de pisar al primero. */
+    /* Si dos lo toman a la vez, el segundo tiene que enterarse en lugar de
+       pisar al primero. */
     const libre = await env.DB.prepare(
-      "SELECT usuario_id FROM mandados WHERE id = ? AND estado = 'buscando'",
+      "SELECT usuario_id FROM fletes WHERE id = ? AND estado = 'buscando'",
     )
-      .bind(tomarMandado[1])
+      .bind(tomarFlete[1])
       .first<{ usuario_id: string }>();
 
     if (!libre) {
-      return error('Otro repartidor tomó este mandado.', 409, cors);
+      return error('Otro fletero tomó este flete.', 409, cors);
     }
 
     await env.DB.prepare(
-      "UPDATE mandados SET estado = 'tomado', repartidor_id = ? WHERE id = ? AND estado = 'buscando'",
+      `UPDATE fletes SET estado = 'tomado', fletero_id = ?, tomado_en = datetime('now')
+        WHERE id = ? AND estado = 'buscando'`,
     )
-      .bind(repartidor.usuario.id, tomarMandado[1])
+      .bind(fletero.usuario.id, tomarFlete[1])
       .run();
 
     await avisar(env, libre.usuario_id, {
       tipo: 'envio',
-      titulo: 'Alguien tomó tu mandado',
-      texto: `${repartidor.usuario.nombre} se está ocupando.`,
-      enlace: '/mandado',
+      titulo: 'Alguien tomó tu flete',
+      texto: `${fletero.usuario.nombre} se está ocupando.`,
+      enlace: '/pedidos',
     });
 
     return json({ ok: true }, {}, cors);
   }
 
-  /* El chat del mandado: lo que se acuerda se habla acá, porque un mandado no
-     tiene lista de productos donde dejarlo escrito. */
-  const chatMandado = /^\/mandados\/([\w-]+)\/mensajes$/.exec(ruta);
+  /* El chat del flete: lo que se acuerda se habla acá, porque un flete no
+     tiene lista de productos donde dejarlo escrito. El del mandado es el del
+     pedido, que ahora es lo que un mandado es. */
+  const chatFlete = /^\/fletes\/([\w-]+)\/mensajes$/.exec(ruta);
 
-  if (chatMandado && (metodo === 'GET' || metodo === 'POST')) {
+  if (chatFlete && (metodo === 'GET' || metodo === 'POST')) {
     const usuario = await usuarioActual(request, env);
 
     if (!usuario) {
       return error('Necesitás iniciar sesión', 401, cors);
     }
 
-    /* Sólo hablan los dos que están en el mandado. */
+    /* Sólo hablan los dos que están en el flete. */
     const permitido = await env.DB.prepare(
-      'SELECT 1 AS ok FROM mandados WHERE id = ? AND (usuario_id = ? OR repartidor_id = ?)',
+      'SELECT 1 AS ok FROM fletes WHERE id = ? AND (usuario_id = ? OR fletero_id = ?)',
     )
-      .bind(chatMandado[1], usuario.id, usuario.id)
+      .bind(chatFlete[1], usuario.id, usuario.id)
       .first();
 
     if (!permitido) {
@@ -2888,9 +3047,9 @@ async function enrutar(
       }
 
       await env.DB.prepare(
-        'INSERT INTO mandado_mensajes (id, mandado_id, autor_id, texto) VALUES (?, ?, ?, ?)',
+        'INSERT INTO flete_mensajes (id, flete_id, autor_id, texto) VALUES (?, ?, ?, ?)',
       )
-        .bind(nuevoId(), chatMandado[1], usuario.id, texto.slice(0, 1000))
+        .bind(nuevoId(), chatFlete[1], usuario.id, texto.slice(0, 1000))
         .run();
 
       return json({ ok: true }, { status: 201 }, cors);
@@ -2899,12 +3058,12 @@ async function enrutar(
     const { results } = await env.DB.prepare(
       `SELECT m.id, m.texto, m.tipo, m.media_url, m.creado_en, m.autor_id,
               u.nombre AS autor
-         FROM mandado_mensajes m
+         FROM flete_mensajes m
          JOIN usuarios u ON u.id = m.autor_id
-        WHERE m.mandado_id = ?
+        WHERE m.flete_id = ?
         ORDER BY m.creado_en ASC LIMIT 200`,
     )
-      .bind(chatMandado[1])
+      .bind(chatFlete[1])
       .all();
 
     return json({ mensajes: results, yo: usuario.id }, {}, cors);

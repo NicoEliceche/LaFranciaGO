@@ -1417,16 +1417,28 @@ export const HeaderSearchSlot = styled.div`
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     display: block;
-    grid-column: 2;
+    /* Toma toda la fila, no su propia columna: asi su centro es el centro
+       del espacio que queda a la derecha del menu lateral, que es donde se
+       centra el contenido de abajo. Las acciones siguen arriba a la derecha
+       —van en la misma celda— y no se pisan porque el buscador nunca pasa de
+       34rem. */
+    grid-column: 2 / -1;
     grid-row: 1;
     min-width: 0;
     /* Hasta 34rem, pero cede ancho si la dirección es larga: entre un
        buscador más corto y dos cosas superpuestas, gana el buscador corto. */
     width: 100%;
     max-width: 34rem;
-    /* Arranca donde arranca el contenido, y no pegado a las acciones de la
-       derecha: el buscador y lo primero de la página son la misma columna,
-       y desalineados se leían como dos bloques que no tienen que ver. */
-    justify-self: start;
+    /* Centrado sobre el mismo eje que el contenido de abajo.
+
+       No alcanza con centrarlo en su columna: la columna del buscador y la
+       de las acciones no miden lo mismo, así que su centro cae a la
+       izquierda del centro real. El contenido se centra en todo el ancho que
+       queda a la derecha del menú lateral, y el buscador tiene que caer en
+       ese mismo eje para leerse como una sola columna con lo de abajo.
+
+       El desplazamiento es la mitad de lo que se lleva la columna de las
+       acciones, que es justamente lo que descentra la fila. */
+    justify-self: center;
   }
 `;

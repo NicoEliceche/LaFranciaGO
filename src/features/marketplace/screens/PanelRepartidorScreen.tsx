@@ -19,7 +19,7 @@ import {
   type Vehiculo,
   NOMBRE_VEHICULO,
   deliveryApi,
-  mandadosApi,
+  fletesApi,
 } from '@core/data/services/apiClient';
 import { formatMoney } from '@shared/utils/format';
 import { useCurrentPosition } from '@shared/hooks/useCurrentPosition';
@@ -266,11 +266,12 @@ export function PanelRepartidorScreen() {
       },
     );
 
-    /* Un mandado se toma por otra puerta: no es un pedido de comercio y
-       vive en su propia tabla. El prefijo del id lo dice, que es lo que el
-       servidor manda justamente para no tener que adivinarlo aca. */
-    if (pedidoId.startsWith('mandado:')) {
-      await mandadosApi.tomar(pedidoId.slice('mandado:'.length));
+    /* Un flete se toma por otra puerta: no es un pedido y vive en su propia
+       tabla. El prefijo del id lo dice, que es lo que el servidor manda
+       justamente para no tener que adivinarlo acá. Un mandado no necesita
+       nada de esto: es un pedido, y se toma como cualquier otro. */
+    if (pedidoId.startsWith('flete:')) {
+      await fletesApi.tomar(pedidoId.slice('flete:'.length));
     } else {
       await deliveryApi.tomar(pedidoId, coordenadas?.lat, coordenadas?.lon);
     }
