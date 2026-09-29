@@ -27,6 +27,16 @@ export interface Env {
   MP_CLIENT_SECRET?: string;
   /** Dirección pública de esta API, para los avisos y las vueltas de OAuth. */
   API_PUBLIC_URL?: string;
+  /* ── A dónde paga su deuda quien cobra en efectivo ──
+     Quien reparte se queda la plata del pedido pagado en efectivo y después
+     la transfiere. Estos datos son los que ve en la pantalla al hacerlo.
+     Van en el entorno y no escritos en el código para poder cambiar el alias
+     sin publicar una versión nueva de la aplicación. */
+  COBRO_TITULAR?: string;
+  COBRO_CBU?: string;
+  COBRO_ALIAS?: string;
+  /** El enlace de cobro de Mercado Pago, con el que se arma el QR. */
+  COBRO_MERCADOPAGO?: string;
 }
 
 /* ── Respuestas ── */

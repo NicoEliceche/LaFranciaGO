@@ -35,6 +35,7 @@ import {
   Cabecera,
   Contratar,
   Destacado,
+  PlanTitulo,
   Item,
   Lista,
   Panel,
@@ -133,6 +134,14 @@ export function ContratarGestionScreen() {
   return (
     <MarketplaceFrame>
       <Panel>
+        {/* La salida va arriba y no al pie: todavia se esta adentro de la
+            aplicacion, y un boton de volver debajo de los precios se lee como
+            la alternativa a contratar. */}
+        <Volver type="button" onClick={() => navegar('/panel/comercio')}>
+          <ArrowLeft size={16} aria-hidden="true" />
+          Volver a la app
+        </Volver>
+
         <Cabecera>
           <Wallet size={22} aria-hidden="true" />
           <div>
@@ -155,8 +164,10 @@ export function ContratarGestionScreen() {
             return (
               <PlanTarjeta key={opcion.id} data-destacado={esPro}>
                 <PlanCabecera>
-                  <h2>{opcion.nombre}</h2>
-                  {esPro ? <Destacado>El más completo</Destacado> : null}
+                  <PlanTitulo>
+                    <h2>{opcion.nombre}</h2>
+                    {esPro ? <Destacado>El más completo</Destacado> : null}
+                  </PlanTitulo>
                   <p>{detalle.bajada}</p>
                 </PlanCabecera>
 
@@ -171,7 +182,7 @@ export function ContratarGestionScreen() {
                       hace que los dos planes parezcan iguales de lejos, que
                       es justo lo que hay que evitar al elegir. */}
                   {esPro ? (
-                    <Item>
+                    <Item data-incluye>
                       <Check size={16} aria-hidden="true" />
                       <strong>Todo lo de Comercio GO</strong>
                     </Item>
@@ -212,10 +223,6 @@ export function ContratarGestionScreen() {
           computadora del local. El resto anda desde el celular también.
         </PrecioNota>
 
-        <Volver type="button" onClick={() => navegar('/panel/comercio')}>
-          <ArrowLeft size={16} aria-hidden="true" />
-          Volver a la app
-        </Volver>
       </Panel>
     </MarketplaceFrame>
   );

@@ -1663,7 +1663,60 @@ async function enrutar(
       };
     });
 
-    conDistancia.sort((a, b) => {
+    /* Los mandados y fletes sueltos van en la misma lista.
+       Un mandado no sale de un comercio —es "traeme esto", escrito a mano— y
+       por eso vive en su propia tabla. Pero para quien reparte es lo mismo
+       que un pedido: algo que hay que ir a buscar y llevar. Si apareciera en
+       otra pantalla, habria que mirar dos listas para saber si hay trabajo, y
+       la que tuviera menos se dejaria de mirar.
+
+       El tipo separa igual que arriba: el mandado lo lleva cualquiera, el
+       flete necesita vehiculo grande. */
+    const { results: mandados } = await env.DB.prepare(
+      `SELECT m.id, m.descripcion, m.direccion_texto, m.lat, m.lon, m.creado_en,
+              u.nombre AS cliente
+         FROM mandados m
+         JOIN usuarios u ON u.id = m.usuario_id
+        WHERE m.estado = 'buscando' AND m.tipo = ?
+        ORDER BY m.creado_en DESC
+        LIMIT 30`,
+    )
+      .bind(suVehiculo?.rol === 'fletero' ? 'flete' : 'mandado')
+      .all();
+
+    const mandadosEnLista = mandados.map((fila) => {
+      const origenLat = fila.lat as number | null;
+      const origenLon = fila.lon as number | null;
+
+      return {
+        ...fila,
+        /* El id lleva prefijo para que la pantalla sepa a que endpoint
+           mandarlo al tomarlo: no es un pedido de comercio. */
+        id: `mandado:${String(fila.id)}`,
+        codigo: String(fila.id).slice(0, 6).toUpperCase(),
+        /* Un mandado no tiene precio todavia: se acuerda en el chat. */
+        total: null,
+        /* Lo que en un pedido es el comercio, aca es la descripcion: es lo
+           que la tarjeta muestra arriba como "de donde sale". */
+        comercio: 'Mandado',
+        comercio_direccion: (fila.direccion_texto as string | null) ?? 'A convenir',
+        descripcion: fila.descripcion,
+        items: 0,
+        litros: 0,
+        distanciaKm:
+          Number.isFinite(lat) && Number.isFinite(lon) && origenLat && origenLon
+            ? distanciaKm(lat, lon, origenLat, origenLon)
+            : null,
+        entraEnTuVehiculo: true,
+        viajes: 1,
+        vehiculos: [] as string[],
+        esMandado: true,
+      };
+    });
+
+    const todo = [...conDistancia, ...mandadosEnLista];
+
+    todo.sort((a, b) => {
       if (a.distanciaKm === null) {
         return b.distanciaKm === null ? 0 : 1;
       }
@@ -1675,7 +1728,7 @@ async function enrutar(
       return a.distanciaKm - b.distanciaKm;
     });
 
-    return json({ pedidos: conDistancia, vehiculo }, {}, cors);
+    return json({ pedidos: todo, vehiculo }, {}, cors);
   }
 
   const detallePedido = /^\/delivery\/pedidos\/([\w-]+)$/.exec(ruta);
@@ -1841,12 +1894,48 @@ async function enrutar(
       .bind(repartidor.usuario.id)
       .all<Record<string, unknown>>();
 
+    /* Los mandados tomados van en la misma lista que los envios.
+       Quien reparte tiene una sola cabeza para acordarse de lo que lleva
+       encima: si el mandado apareciera aparte, seria lo primero que se
+       olvida. Se traen con la forma de un envio para que la pantalla no
+       tenga que distinguirlos. */
+    const { results: mandados } = await env.DB.prepare(
+      `SELECT m.id, m.estado, m.creado_en AS asignado_en, m.descripcion,
+              m.direccion_texto,
+              u.nombre AS cliente, u.telefono AS cliente_telefono
+         FROM mandados m
+         JOIN usuarios u ON u.id = m.usuario_id
+        WHERE m.repartidor_id = ? AND m.estado NOT IN ('entregado', 'cancelado')
+        ORDER BY m.creado_en ASC`,
+    )
+      .bind(repartidor.usuario.id)
+      .all<Record<string, unknown>>();
+
     return json(
       {
-        envios: results.map((fila) => ({
-          ...fila,
-          total: aPesos(Number(fila.total_centavos)),
-        })),
+        envios: [
+          ...results.map((fila) => ({
+            ...fila,
+            total: aPesos(Number(fila.total_centavos)),
+          })),
+          ...mandados.map((fila) => ({
+            ...fila,
+            id: `mandado:${String(fila.id)}`,
+            pedido_id: `mandado:${String(fila.id)}`,
+            codigo: String(fila.id).slice(0, 6).toUpperCase(),
+            /* Se acuerda en el chat, asi que todavia no hay monto. */
+            total: null,
+            metodo_pago: null,
+            comercio: 'Mandado',
+            comercio_direccion: (fila.direccion_texto as string | null) ?? 'A convenir',
+            comercio_telefono: null,
+            items: 0,
+            /* El estado del mandado es 'tomado'; la pantalla de envios habla
+               de 'asignado' para lo mismo. */
+            estado: fila.estado === 'tomado' ? 'asignado' : fila.estado,
+            esMandado: true,
+          })),
+        ],
       },
       {},
       cors,
@@ -1877,10 +1966,19 @@ async function enrutar(
     /* El envío tiene que ser suyo: sin esta condición, cualquier repartidor
        podría dar por entregado el pedido de otro conociendo el id. */
     const envio = await env.DB.prepare(
-      'SELECT id, estado, pedido_id FROM envios WHERE id = ? AND repartidor_id = ?',
+      `SELECT e.id, e.estado, e.pedido_id, p.metodo_pago, p.total_centavos
+         FROM envios e
+         JOIN pedidos p ON p.id = e.pedido_id
+        WHERE e.id = ? AND e.repartidor_id = ?`,
     )
       .bind(avanzar[1], repartidor.usuario.id)
-      .first<{ id: string; estado: string; pedido_id: string }>();
+      .first<{
+        id: string;
+        estado: string;
+        pedido_id: string;
+        metodo_pago: string | null;
+        total_centavos: number;
+      }>();
 
     if (!envio) {
       return error('No encontrado', 404, cors);
@@ -1912,6 +2010,24 @@ async function enrutar(
           envio.pedido_id,
         ),
       );
+
+      /* Si el cliente pago en efectivo, esa plata la tiene el repartidor y es
+         del comercio: queda anotada como deuda suya con la plataforma. Se
+         anota al entregar y no al tomar el pedido porque hasta que no lo
+         entrega no cobro nada. */
+      if (envio.metodo_pago === 'efectivo') {
+        escrituras.push(
+          env.DB.prepare(
+            `INSERT INTO movimientos_efectivo (id, repartidor_id, tipo, centavos, pedido_id)
+             VALUES (?, ?, 'cobro', ?, ?)`,
+          ).bind(
+            nuevoId(),
+            repartidor.usuario.id,
+            Number(envio.total_centavos ?? 0),
+            envio.pedido_id,
+          ),
+        );
+      }
     }
 
     await env.DB.batch(escrituras);
@@ -2211,6 +2327,96 @@ async function enrutar(
    * Lo que gana es el envío de cada pedido que entregó: la comisión de la
    * plataforma lo incluye, y de ahí se le liquida.
    */
+  /**
+   * Cuanto debe de lo que cobro en efectivo, y a donde pagarlo.
+   *
+   * El saldo sale de sumar los movimientos y no de un campo guardado: asi
+   * siempre coincide con el detalle que se muestra, y si algo no cierra se
+   * puede ver exactamente en que viaje se desvio.
+   *
+   * Los datos para pagar vienen del servidor y no escritos en la pantalla:
+   * si manana cambia el alias, cambia en un lugar y no hay que publicar una
+   * version nueva de la aplicacion para que la gente pague bien.
+   */
+  if (ruta === '/delivery/deuda' && metodo === 'GET') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    const saldo = await env.DB.prepare(
+      `SELECT
+         COALESCE(SUM(CASE WHEN tipo = 'cobro' THEN centavos ELSE -centavos END), 0) AS deuda
+       FROM movimientos_efectivo
+      WHERE repartidor_id = ?`,
+    )
+      .bind(repartidor.usuario.id)
+      .first<{ deuda: number }>();
+
+    const { results: movimientos } = await env.DB.prepare(
+      `SELECT m.id, m.tipo, m.centavos, m.creado_en, m.nota, p.codigo
+         FROM movimientos_efectivo m
+         LEFT JOIN pedidos p ON p.id = m.pedido_id
+        WHERE m.repartidor_id = ?
+        ORDER BY m.creado_en DESC
+        LIMIT 30`,
+    )
+      .bind(repartidor.usuario.id)
+      .all<Record<string, unknown>>();
+
+    return json(
+      {
+        deuda: aPesos(Number(saldo?.deuda ?? 0)),
+        movimientos: movimientos.map((fila) => ({
+          ...fila,
+          monto: aPesos(Number(fila.centavos)),
+        })),
+        /* A donde transferir. Sale de las variables del entorno para poder
+           cambiarlo sin tocar el codigo. */
+        cobro: {
+          titular: env.COBRO_TITULAR ?? 'Diego Adalberto Ghione',
+          cbu: env.COBRO_CBU ?? null,
+          alias: env.COBRO_ALIAS ?? null,
+          mercadopago: env.COBRO_MERCADOPAGO ?? null,
+        },
+      },
+      {},
+      cors,
+    );
+  }
+
+  /**
+   * El repartidor declara que salda parte de su deuda.
+   *
+   * Queda como una declaracion suya, no como un pago verificado: la
+   * plataforma no puede ver la transferencia. Se anota para que los dos
+   * tengan el mismo numero delante cuando lo revisen.
+   */
+  if (ruta === '/delivery/deuda/pagar' && metodo === 'POST') {
+    const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
+
+    if ('respuesta' in repartidor) {
+      return repartidor.respuesta;
+    }
+
+    const body = await leerJson<{ monto?: number; nota?: string }>(request);
+    const centavos = aCentavos(Number(body.monto ?? 0));
+
+    if (centavos <= 0) {
+      return error('Poné cuánto transferiste.', 400, cors);
+    }
+
+    await env.DB.prepare(
+      `INSERT INTO movimientos_efectivo (id, repartidor_id, tipo, centavos, nota)
+       VALUES (?, ?, 'pago', ?, ?)`,
+    )
+      .bind(nuevoId(), repartidor.usuario.id, centavos, body.nota?.slice(0, 200) ?? null)
+      .run();
+
+    return json({ ok: true }, {}, cors);
+  }
+
   if (ruta === '/delivery/ganancias' && metodo === 'GET') {
     const repartidor = await exigirRol(request, env, cors, ['delivery', 'fletero']);
 

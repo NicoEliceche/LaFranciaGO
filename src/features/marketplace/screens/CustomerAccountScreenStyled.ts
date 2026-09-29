@@ -36,6 +36,15 @@ export const AccountProfileMail = styled.span`
   white-space: nowrap;
 `;
 
+/**
+ * El rol desde el que se esta mirando, al lado de la foto.
+ *
+ * Cada rol tiene su color porque quien cambia de cuenta seguido necesita
+ * saber donde esta parado sin leer: el pill se reconoce por el tono antes
+ * que por la palabra. Los colores salen de los tokens semanticos, que ya
+ * estan resueltos para los dos temas, y no de valores fijos que funcionarian
+ * en uno solo.
+ */
 export const AccountProfileTag = styled.span`
   justify-self: start;
   margin-top: ${({ theme }) => theme.spacing[1]};
@@ -47,6 +56,24 @@ export const AccountProfileTag = styled.span`
   font-weight: ${({ theme }) => theme.typography.weight.bold};
   letter-spacing: 0.04em;
   text-transform: uppercase;
+
+  /* El fondo se arma con el mismo color a baja opacidad: asi acompana al
+     tema sin necesitar un token nuevo por cada rol. */
+  &[data-rol='comercio'] {
+    background: color-mix(in srgb, ${({ theme }) => theme.color.success} 16%, transparent);
+    color: ${({ theme }) => theme.color.success};
+  }
+
+  &[data-rol='delivery'],
+  &[data-rol='fletero'] {
+    background: color-mix(in srgb, ${({ theme }) => theme.color.warning} 18%, transparent);
+    color: ${({ theme }) => theme.color.warning};
+  }
+
+  &[data-rol='admin'] {
+    background: color-mix(in srgb, ${({ theme }) => theme.color.danger} 16%, transparent);
+    color: ${({ theme }) => theme.color.danger};
+  }
 `;
 
 // ── Foto de perfil ──

@@ -418,8 +418,26 @@ const DesktopSidebar = styled.aside`
   }
 `;
 
+/**
+ * El menu lateral de escritorio.
+ *
+ * Todo el menu tiene que entrar de una en una pantalla de 1080 de alto: si
+ * hay que scrollear para llegar a la ultima entrada, esa entrada no existe
+ * para la mayoria. El aire que sobraba estaba arriba del logo y entre las
+ * secciones, asi que se recorta ahi y no del alto de cada fila, que es lo
+ * que se toca.
+ */
 const DesktopSidebarBody = styled(DrawerBody)`
   height: 100%;
+  /* Arriba el logo ya trae su propio aire; abajo se deja el de siempre. */
+  padding-top: ${({ theme }) => theme.spacing[2]};
+  gap: 0;
+
+  /* El logo con su frase: junto al primer grupo, no separado por media
+     pantalla. */
+  > *:first-child {
+    margin-bottom: ${({ theme }) => theme.spacing[3]};
+  }
 `;
 
 const notificationSections: NotificationSection[] = [

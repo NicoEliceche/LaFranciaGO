@@ -42,6 +42,23 @@ import {
 
 const primaryAddress = addresses.find((address) => address.primary) ?? addresses[0];
 
+/**
+ * Como se llama cada rol en la pantalla.
+ *
+ * El pill decia siempre "Cliente" aunque la sesion estuviera mirando como
+ * comercio o como delivery, asi que quien cambiaba de rol veia una etiqueta
+ * que lo contradecia. Dice el rol activo, que es desde donde se esta mirando
+ * ahora mismo, y no todos los que la cuenta tiene: eso ya se elige en el
+ * menu lateral.
+ */
+const NOMBRE_DE_ROL: Record<string, string> = {
+  cliente: 'Cliente',
+  comercio: 'Comercio',
+  delivery: 'Delivery',
+  fletero: 'Flete',
+  admin: 'Administracion',
+};
+
 export function CustomerAccountScreen() {
   const { usuario, conectado, salir } = useSesion();
   const { photo, setPhoto, clearPhoto } = useProfilePhoto();
@@ -55,6 +72,9 @@ export function CustomerAccountScreen() {
   const esComercio = roles.includes('comercio');
   const esDelivery = roles.includes('delivery');
   const esFletero = roles.includes('fletero');
+
+  /* El rol activo, que es el que el pill anuncia. */
+  const rolActivo = usuario?.rol ?? 'cliente';
 
   /**
    * La foto se comprime antes de guardarla y se convierte a data URL: un
@@ -145,7 +165,9 @@ export function CustomerAccountScreen() {
               <AccountProfileMail>
                 {usuario?.email ?? 'Entrá para guardar tus pedidos'}
               </AccountProfileMail>
-              <AccountProfileTag>Cliente</AccountProfileTag>
+              <AccountProfileTag data-rol={rolActivo}>
+                {NOMBRE_DE_ROL[rolActivo] ?? rolActivo}
+              </AccountProfileTag>
               {error ? <AvatarError role="status">{error}</AvatarError> : null}
             </AccountProfileCopy>
           </AccountProfileCard>

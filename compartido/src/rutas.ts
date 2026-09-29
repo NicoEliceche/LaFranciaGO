@@ -526,6 +526,18 @@ export const deliveryApi = {
     api.post<{ ok: true }>('/delivery/ubicacion', { lat, lon }),
   /** Los pedidos que este repartidor ya tomó y todavía tiene en la mano. */
   misEnvios: () => api.get<{ envios: EnvioAsignadoApi[] }>('/delivery/mis-envios'),
+
+  /**
+   * Cuanto debe de lo cobrado en efectivo, y a donde transferirlo.
+   *
+   * Los datos de cobro vienen del servidor: si cambia el alias, cambia una
+   * vez y no hay que publicar la aplicacion de nuevo.
+   */
+  deuda: () => api.get<DeudaApi>('/delivery/deuda'),
+
+  /** Declara que transfirio parte de lo que debe. */
+  pagarDeuda: (monto: number, nota?: string) =>
+    api.post<{ ok: true }>('/delivery/deuda/pagar', { monto, nota }),
   /** Avanza al paso siguiente: retirado, en camino, entregado. */
   avanzar: (envioId: string, estado: EstadoEnvio) =>
     api.post<{ ok: true; estado: EstadoEnvio }>(`/delivery/envios/${envioId}/estado`, { estado }),
@@ -888,6 +900,30 @@ export interface MandadoApi {
   tipo: 'mandado' | 'flete';
 }
 
+/** Un movimiento de la cuenta de efectivo de quien reparte. */
+export interface MovimientoEfectivoApi {
+  id: string;
+  /** 'cobro' es lo que paso a deber; 'pago', lo que ya transfirio. */
+  tipo: 'cobro' | 'pago';
+  monto: number;
+  creado_en: string;
+  nota: string | null;
+  /** El pedido del que salio, cuando es un cobro. */
+  codigo: string | null;
+}
+
+/** Lo que debe quien reparte, con el detalle y a donde pagarlo. */
+export interface DeudaApi {
+  deuda: number;
+  movimientos: MovimientoEfectivoApi[];
+  cobro: {
+    titular: string;
+    cbu: string | null;
+    alias: string | null;
+    mercadopago: string | null;
+  };
+}
+
 export const mandadosApi = {
   /**
    * Crea el mandado en la base.
@@ -905,6 +941,15 @@ export const mandadosApi = {
   }) => api.post<{ id: string; tipo: string }>('/mandados', datos),
 
   mios: () => api.get<{ mandados: MandadoApi[] }>('/mandados'),
+
+  /**
+   * Quien reparte se queda con el mandado.
+   *
+   * Va por su propia puerta y no por la de los pedidos: un mandado no sale
+   * de un comercio, asi que no hay nada que avisarle al negocio ni stock que
+   * descontar.
+   */
+  tomar: (mandadoId: string) => api.post<{ ok: true }>(`/mandados/${mandadoId}/tomar`),
 };
 
 export const pagosApi = {

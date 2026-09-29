@@ -255,10 +255,13 @@ export function CajaRapidaScreen() {
           que decirlo donde se intenta usarlas. */}
       {!enMostrador ? (
         <AvisoEscritorio role="status">
-          <strong>La caja rápida funciona en la computadora del negocio.</strong> Ahí
-          están la lectora de códigos y la impresora de tickets, que son las que
-          hacen que cobrar lleve segundos. Desde acá podés mirar cómo es, pero
-          para cobrar usá la aplicación instalada en el local.
+          <strong>
+            La caja rápida funciona en la computadora del negocio, pero desde la
+            web podés visualizar todo el resto.
+          </strong>{' '}
+          Ahí están la lectora de códigos y la impresora de tickets, que son las
+          que hacen que cobrar lleve segundos. Desde acá podés mirar cómo es,
+          pero para cobrar usá la aplicación instalada en el local.
         </AvisoEscritorio>
       ) : null}
 

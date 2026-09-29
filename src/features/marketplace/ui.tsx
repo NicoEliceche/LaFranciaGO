@@ -1424,6 +1424,9 @@ export const HeaderSearchSlot = styled.div`
        buscador más corto y dos cosas superpuestas, gana el buscador corto. */
     width: 100%;
     max-width: 34rem;
-    justify-self: end;
+    /* Arranca donde arranca el contenido, y no pegado a las acciones de la
+       derecha: el buscador y lo primero de la página son la misma columna,
+       y desalineados se leían como dos bloques que no tienen que ver. */
+    justify-self: start;
   }
 `;

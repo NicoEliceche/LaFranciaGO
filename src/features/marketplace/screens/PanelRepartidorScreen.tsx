@@ -19,6 +19,7 @@ import {
   type Vehiculo,
   NOMBRE_VEHICULO,
   deliveryApi,
+  mandadosApi,
 } from '@core/data/services/apiClient';
 import { formatMoney } from '@shared/utils/format';
 import { useCurrentPosition } from '@shared/hooks/useCurrentPosition';
@@ -265,7 +266,14 @@ export function PanelRepartidorScreen() {
       },
     );
 
-    await deliveryApi.tomar(pedidoId, coordenadas?.lat, coordenadas?.lon);
+    /* Un mandado se toma por otra puerta: no es un pedido de comercio y
+       vive en su propia tabla. El prefijo del id lo dice, que es lo que el
+       servidor manda justamente para no tener que adivinarlo aca. */
+    if (pedidoId.startsWith('mandado:')) {
+      await mandadosApi.tomar(pedidoId.slice('mandado:'.length));
+    } else {
+      await deliveryApi.tomar(pedidoId, coordenadas?.lat, coordenadas?.lon);
+    }
 
     const tomado = pedidos.find((pedido) => pedido.id === pedidoId) ?? null;
 

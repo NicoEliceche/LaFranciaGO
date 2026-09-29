@@ -11,11 +11,12 @@
  * esperando, que es la invitación a seguir.
  */
 import { useEffect, useState } from 'react';
-import { BarChart3, PackageSearch, Truck } from 'lucide-react';
+import { BarChart3, PackageSearch, Truck, Wallet } from 'lucide-react';
 
 import { type GananciasApi, deliveryApi } from '@core/data/services/apiClient';
 import { formatMoney } from '@shared/utils/format';
 
+import { DeudaDialog } from './DeudaDialog';
 import {
   ResumenAccion,
   ResumenDato,
@@ -38,6 +39,8 @@ interface Props {
 
 export function ResumenRepartidor({ esFletero, enCurso, disponibles, onVer }: Props) {
   const [datos, setDatos] = useState<GananciasApi | null>(null);
+  const [deuda, setDeuda] = useState<number | null>(null);
+  const [pagando, setPagando] = useState(false);
 
   useEffect(() => {
     let vigente = true;
@@ -50,6 +53,18 @@ export function ResumenRepartidor({ esFletero, enCurso, disponibles, onVer }: Pr
       .catch(() => {
         /* Sin ganancias el resumen igual sirve: lo que tiene en curso y lo
            que hay para tomar son los dos datos que no pueden faltar. */
+      });
+
+    /* Lo que debe de lo cobrado en efectivo. Se pide siempre y no solo
+       cuando hay deuda: la tarjeta tiene que poder decir "estas al dia",
+       que es la mitad de para que sirve mirarla. */
+    deliveryApi
+      .deuda()
+      .then((respuesta) => {
+        if (vigente) setDeuda(respuesta.deuda);
+      })
+      .catch(() => {
+        /* Sin este dato el resto del resumen sigue sirviendo. */
       });
 
     return () => {
@@ -97,6 +112,24 @@ export function ResumenRepartidor({ esFletero, enCurso, disponibles, onVer }: Pr
         </ResumenAccion>
       </ResumenTarjeta>
 
+      {/* La deuda solo aparece cuando existe: quien nunca cobro en efectivo
+          no tiene por que ver una tarjeta que le habla de algo que no le
+          pasa. Al lado de lo que gano, que es donde se piensa en plata. */}
+      {deuda !== null && deuda > 0 ? (
+        <ResumenTarjeta data-destacado>
+          <ResumenIcono data-destacado>
+            <Wallet size={24} aria-hidden="true" />
+          </ResumenIcono>
+          <ResumenDato>
+            <ResumenValor>{formatMoney(deuda)}</ResumenValor>
+            <ResumenEtiqueta>Debés de lo cobrado en efectivo</ResumenEtiqueta>
+          </ResumenDato>
+          <ResumenAccion type="button" onClick={() => setPagando(true)}>
+            Pagar deuda
+          </ResumenAccion>
+        </ResumenTarjeta>
+      ) : null}
+
       <ResumenTarjeta data-destacado={disponibles > 0}>
         <ResumenIcono data-destacado={disponibles > 0}>
           <PackageSearch size={24} aria-hidden="true" />
@@ -113,6 +146,8 @@ export function ResumenRepartidor({ esFletero, enCurso, disponibles, onVer }: Pr
           Ver {esFletero ? 'los fletes' : 'los pedidos'}
         </ResumenAccion>
       </ResumenTarjeta>
+
+      <DeudaDialog abierto={pagando} alCerrar={() => setPagando(false)} />
     </ResumenGrilla>
   );
 }

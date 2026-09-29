@@ -18,8 +18,12 @@ export const GamerToggleShell = styled.button`
   align-items: center;
   gap: ${({ theme }) => theme.spacing[2]};
   width: 100%;
-  min-height: 3.5rem;
-  padding: ${({ theme }) => theme.spacing[2]};
+  /* 45px y no 56: es lo ultimo del menu lateral, y esos 11px eran la
+     diferencia entre que entrara todo en 1080 de alto o hubiera que
+     scrollear para llegar al final. La letra, el switch y los iconos quedan
+     como estaban —lo que se achica es el aire de arriba y abajo. */
+  min-height: 2.8125rem;
+  padding: 0 ${({ theme }) => theme.spacing[2]};
   border-radius: ${({ theme }) => theme.radius.lg};
   border: 1px solid ${({ theme }) => theme.color.border};
   background: ${({ theme }) =>

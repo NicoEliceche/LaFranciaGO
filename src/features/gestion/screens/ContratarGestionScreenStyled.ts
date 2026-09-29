@@ -56,9 +56,17 @@ export const PrecioNota = styled.span`
   line-height: 1.5;
 `;
 
+/**
+ * Lo que trae el plan.
+ *
+ * Las lineas van juntas a proposito: separadas se leian como siete anuncios
+ * sueltos y la lista parecia mas larga de lo que es, que en una pantalla que
+ * cobra juega en contra. Apretadas se leen de un saque como un solo bloque
+ * de lo que se lleva.
+ */
 export const Lista = styled.ul`
   display: grid;
-  gap: ${({ theme }) => theme.spacing[2]};
+  gap: 0.3rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -75,6 +83,14 @@ export const Item = styled.li`
     flex-shrink: 0;
     margin-top: 0.2rem;
     color: ${({ theme }) => theme.color.success};
+  }
+
+  /* La linea que dice "todo lo del otro plan" se despega de las que siguen:
+     no es una prestacion mas, es de que se parte. */
+  &[data-incluye] {
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.15rem;
+    border-bottom: 1px solid ${({ theme }) => theme.color.border};
   }
 `;
 
@@ -168,8 +184,32 @@ export const PlanCabecera = styled.header`
   }
 `;
 
+/**
+ * El titulo del plan con su distintivo al lado.
+ *
+ * El pill estaba en su propia linea y empujaba el precio hacia abajo, asi
+ * que las dos tarjetas tenian el numero a distinta altura y costaba
+ * compararlas —que es lo unico que se hace en esta pantalla—. Al lado del
+ * titulo ocupa el espacio que ya estaba vacio a la derecha.
+ *
+ * Si no entran juntos baja solo el pill, que es lo accesorio: el titulo
+ * nunca se parte.
+ */
+export const PlanTitulo = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing[2]};
+
+  h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    line-height: 1.2;
+  }
+`;
+
 export const Destacado = styled.span`
-  justify-self: start;
+  flex: 0 0 auto;
   padding: 0.15rem ${({ theme }) => theme.spacing[2]};
   border-radius: ${({ theme }) => theme.radius.full};
   background: ${({ theme }) => theme.color.primarySoft};
