@@ -19,6 +19,9 @@ import {
   fiadoApi,
   gestionApi,
 } from '@core/data/services/apiClient';
+import { DEFAULT_SALE_UNIT, SALE_UNITS, priceSuffix } from '@core/data/saleUnits';
+import type { SaleUnitId } from '@shared/types/saleUnit.types';
+
 import { mostrarCentavos } from '../dinero';
 
 import { AbrirEnEscritorio } from '../components/AbrirEnEscritorio';
@@ -51,6 +54,46 @@ interface LineaVenta {
   /** En milésimos: 1000 es una unidad. */
   cantidad: number;
   precioCentavos: number;
+  /** Cómo se vende: decide de a cuánto suben las flechas. */
+  unidad: SaleUnitId;
+}
+
+/**
+ * De a cuánto se mueve la cantidad de un producto, en milésimos.
+ *
+ * El campo subía de a 0,001 para todo, así que bajarle uno a dos quesos daba
+ * 1,999. Nadie vende un milésimo de queso: el paso tiene que ser el mismo con
+ * el que se vende el producto.
+ *
+ * Sale de los escalones que ya define la aplicación, así que la caja del
+ * mostrador y la tienda hablan de las mismas cantidades: un cuarto de pan acá
+ * es un cuarto de pan allá.
+ */
+/**
+ * Traduce lo que guarda la base a una unidad conocida.
+ *
+ * La columna es texto libre, así que un producto viejo puede traer algo que
+ * ya no existe. En ese caso se lo trata como unidad suelta, que es lo que era
+ * antes de que hubiera unidades: se vende de a uno y nadie se sorprende.
+ */
+function unidadDe(guardada: string | null | undefined): SaleUnitId {
+  return guardada && guardada in SALE_UNITS ? (guardada as SaleUnitId) : DEFAULT_SALE_UNIT;
+}
+
+/** Cómo se llama la unidad, para el lector de pantalla. */
+function etiquetaUnidad(unidad: SaleUnitId): string {
+  return SALE_UNITS[unidad]?.priceSuffix ?? 'unidades';
+}
+
+function pasoDe(unidad: SaleUnitId): number {
+  const escalones = SALE_UNITS[unidad]?.steps ?? [];
+
+  /* El primer escalón es el mínimo que se puede vender, y también de a cuánto
+     avanza: un cuarto para el pan, medio kilo para la carne, uno para lo que
+     va por unidad. */
+  const primero = escalones[0]?.factor ?? 1;
+
+  return Math.round(primero * 1000);
 }
 
 export function CajaRapidaScreen() {
@@ -120,9 +163,12 @@ export function CajaRapidaScreen() {
          es lo que espera quien pasa tres veces el mismo producto. */
       const yaEsta = previas.find((l) => l.productoId === producto.id);
 
+      const unidad = unidadDe(producto.unidad_venta);
+      const paso = pasoDe(unidad);
+
       if (yaEsta) {
         return previas.map((l) =>
-          l.productoId === producto.id ? { ...l, cantidad: l.cantidad + 1000 } : l,
+          l.productoId === producto.id ? { ...l, cantidad: l.cantidad + paso } : l,
         );
       }
 
@@ -132,8 +178,11 @@ export function CajaRapidaScreen() {
           clave: `${producto.id}-${Date.now()}`,
           productoId: producto.id,
           nombre: producto.nombre,
-          cantidad: 1000,
+          /* Arranca en el escalón más chico que se puede vender: pasar pan
+             por la lectora tiene que dar un cuarto, no un kilo. */
+          cantidad: paso,
           precioCentavos: producto.precio_centavos,
+          unidad,
         },
       ];
     });
@@ -144,16 +193,26 @@ export function CajaRapidaScreen() {
   };
 
   const cambiarCantidad = (clave: string, unidades: number) => {
-    const milesimos = Math.round(unidades * 1000);
+    setLineas((previas) => {
+      const linea = previas.find((l) => l.clave === clave);
 
-    if (milesimos <= 0) {
-      setLineas((previas) => previas.filter((l) => l.clave !== clave));
-      return;
-    }
+      if (!linea) {
+        return previas;
+      }
 
-    setLineas((previas) =>
-      previas.map((l) => (l.clave === clave ? { ...l, cantidad: milesimos } : l)),
-    );
+      const paso = pasoDe(linea.unidad);
+
+      /* Se redondea al escalón más cercano: el campo deja escribir cualquier
+         número a mano, y "1,3 kg de carne" no es algo que la balanza del
+         mostrador vaya a pesar. */
+      const milesimos = Math.round(Math.round(unidades * 1000) / paso) * paso;
+
+      if (milesimos <= 0) {
+        return previas.filter((l) => l.clave !== clave);
+      }
+
+      return previas.map((l) => (l.clave === clave ? { ...l, cantidad: milesimos } : l));
+    });
   };
 
   /* Imprime el ticket si hay impresora. No corta la venta si falla: la
@@ -292,7 +351,8 @@ export function CajaRapidaScreen() {
               <Resultado key={producto.id} type="button" onClick={() => agregar(producto)}>
                 <strong>{producto.nombre}</strong>
                 <span>
-                  {mostrarCentavos(producto.precio_centavos)}
+                  {mostrarCentavos(producto.precio_centavos)}{' '}
+                  {priceSuffix(unidadDe(producto.unidad_venta))}
                   {producto.stock !== null ? ` · quedan ${producto.stock}` : ''}
                 </span>
               </Resultado>
@@ -308,16 +368,21 @@ export function CajaRapidaScreen() {
               <Linea key={linea.clave}>
                 <div>
                   <strong>{linea.nombre}</strong>
-                  <span>{mostrarCentavos(linea.precioCentavos)} cada uno</span>
+                  <span>
+                    {mostrarCentavos(linea.precioCentavos)} {priceSuffix(linea.unidad)}
+                  </span>
                 </div>
 
                 <input
                   type="number"
                   min="0"
-                  step="0.001"
+                  /* Las flechas suben y bajan de a un escalón del producto:
+                     de a uno lo que va por unidad, de a 1/4 el pan, de a 1/2
+                     la carne. */
+                  step={pasoDe(linea.unidad) / 1000}
                   value={linea.cantidad / 1000}
                   onChange={(evento) => cambiarCantidad(linea.clave, Number(evento.target.value))}
-                  aria-label={`Cuántos ${linea.nombre}`}
+                  aria-label={`Cuánto de ${linea.nombre}, en ${etiquetaUnidad(linea.unidad)}`}
                 />
 
                 <strong>{mostrarCentavos(Math.round((linea.precioCentavos * linea.cantidad) / 1000))}</strong>

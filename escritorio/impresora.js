@@ -64,7 +64,13 @@ function armarTicket({ comercio, numero, items, total, pagos, fecha, cajon = tru
 
   for (const item of items ?? []) {
     const unidades = item.cantidadMilesimos / 1000;
-    const cantidad = Number.isInteger(unidades) ? String(unidades) : unidades.toFixed(3);
+
+    /* Los decimales que sobran se recortan: un cuarto de queso es "0,25" y
+       no "0.250", que es como lo escribiria una maquina y no una persona. La
+       coma, porque es como se escribe aca. */
+    const cantidad = Number.isInteger(unidades)
+      ? String(unidades)
+      : unidades.toFixed(3).replace(/0+$/, '').replace('.', ',');
 
     partes.push(texto(item.nombre.slice(0, 42)));
     partes.push(
