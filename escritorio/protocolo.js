@@ -73,11 +73,20 @@ function destinoDe(direccion) {
 /**
  * Registra la aplicación como la que atiende `lafranciago://`.
  *
- * En la versión instalada alcanza con pedirlo. Sin empaquetar hay que
- * decirle a Windows con qué ejecutable y con qué argumentos, porque el
- * ejecutable es el de Electron y no el de la aplicación; igual no se hace,
- * porque registrar una ruta de desarrollo deja el sistema apuntando a algo
- * que se va a mover.
+ * Esto es lo que hace que el botón de la web encuentre la aplicación, y no
+ * el `protocols` del package.json. Se comprobó instalando: después de correr
+ * el instalador, `HKCU\Software\Classes\lafranciago` no existía; recién
+ * apareció al abrir la aplicación una primera vez, que es cuando corre esta
+ * línea.
+ *
+ * O sea que el botón funciona desde la segunda vez que se abre la
+ * aplicación: la primera hay que entrar por el ícono. Para el mostrador no
+ * es problema —se instala y se abre el mismo día— pero conviene saberlo en
+ * lugar de descubrirlo con alguien esperando.
+ *
+ * Sin empaquetar no se registra nada: el ejecutable es el de Electron y no
+ * el de la aplicación, y dejar el sistema apuntando a una ruta de desarrollo
+ * es apuntarlo a algo que se va a mover.
  */
 function registrarProtocolo(app) {
   if (!app.isPackaged) {
