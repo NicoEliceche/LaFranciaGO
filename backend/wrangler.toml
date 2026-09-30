@@ -43,14 +43,18 @@ API_PUBLIC_URL = "https://lafranciago-api.lafranciago-api.workers.dev"
 
 # Las credenciales de Google NO van acá: son secretos y este archivo se sube
 # al repositorio. Se cargan una sola vez con:
-#   npx wrangler secret put GOOGLE_CLIENT_ID
-#   npx wrangler secret put GOOGLE_CLIENT_SECRET
+#   npx wrangler secret put GOOGLE_CLIENT_ID --env ""
+#   npx wrangler secret put GOOGLE_CLIENT_SECRET --env ""
 #
 # Lo mismo para el correo y para Mercado Pago:
-#   npx wrangler secret put RESEND_API_KEY
-#   npx wrangler secret put MP_ACCESS_TOKEN
-#   npx wrangler secret put MP_CLIENT_ID
-#   npx wrangler secret put MP_CLIENT_SECRET
+#   npx wrangler secret put RESEND_API_KEY --env ""
+#   npx wrangler secret put MP_ACCESS_TOKEN --env ""
+#   npx wrangler secret put MP_CLIENT_ID --env ""
+#   npx wrangler secret put MP_CLIENT_SECRET --env ""
+#
+# El --env "" va porque mas abajo hay entornos definidos: sin el, wrangler
+# avisa que no sabe a cual apuntar. La cadena vacia es "el de arriba", que es
+# el de todos los dias. Para produccion, --env prod.
 
 # Entorno local para desarrollo: usa una copia de la base en disco.
 [env.dev]

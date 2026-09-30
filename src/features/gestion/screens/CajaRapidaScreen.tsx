@@ -21,6 +21,7 @@ import {
 } from '@core/data/services/apiClient';
 import { mostrarCentavos } from '../dinero';
 
+import { AbrirEnEscritorio } from '../components/AbrirEnEscritorio';
 import { GestionFrame } from '../components/GestionFrame';
 import { esEscritorio } from '../entorno';
 import {
@@ -262,6 +263,8 @@ export function CajaRapidaScreen() {
           Ahí están la lectora de códigos y la impresora de tickets, que son las
           que hacen que cobrar lleve segundos. Desde acá podés mirar cómo es,
           pero para cobrar usá la aplicación instalada en el local.
+
+          <AbrirEnEscritorio />
         </AvisoEscritorio>
       ) : null}
 

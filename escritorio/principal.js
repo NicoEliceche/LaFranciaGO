@@ -18,6 +18,7 @@ const { instalarMenu } = require('./menu');
 const { servirCompilada } = require('./servir');
 const { imprimirTicket, listarImpresoras } = require('./impresora');
 const { cargarAjustes, guardarAjustes, leerAjustes } = require('./ajustes');
+const { destinoDe, direccionEnArgumentos, registrarProtocolo } = require('./protocolo');
 const {
   cancelarProgramada,
   consultarVersion,
@@ -141,6 +142,18 @@ async function crearVentana() {
         ].join('\n'),
         'utf8',
       );
+
+      /* El enlace `lafranciago://` cambia de pantalla después de cargar, así
+         que dónde terminó se anota aparte, más tarde. Sin esto la
+         verificación mira la pantalla de arranque y dice que todo bien
+         aunque el enlace no haya hecho nada. */
+      setTimeout(() => {
+        void require('node:fs/promises').appendFile(
+          path.join(__dirname, 'verificacion.txt'),
+          `\ndestinoFinal=${ventana?.webContents.getURL().split('#')[1] ?? '(ninguno)'}`,
+          'utf8',
+        );
+      }, 2500);
     });
   }
 
@@ -227,6 +240,36 @@ async function crearVentana() {
   });
 }
 
+/**
+ * Lleva la ventana a la pantalla que pidio el navegador.
+ *
+ * Llega de `lafranciago://caja`, que es lo que dispara el boton "Abrir
+ * aplicacion de escritorio" de la web. La ruta ya viene filtrada contra la
+ * lista de destinos conocidos: si no era uno de ellos, no se mueve de donde
+ * estaba, que es mas prudente que mandarla a cualquier lado.
+ */
+async function irADestino(direccion) {
+  const ruta = destinoDe(direccion);
+
+  if (!ruta || !ventana) {
+    return;
+  }
+
+  /* La aplicacion usa rutas con almohadilla, asi que cambiar de pantalla es
+     cambiar esa parte: no hace falta recargar, y recargar perderia una venta
+     a medio cargar. */
+  await ventana.webContents.executeJavaScript(
+    `window.location.hash = ${JSON.stringify('#' + ruta)};`,
+  );
+
+  if (ventana.isMinimized()) ventana.restore();
+  ventana.focus();
+}
+
+/* Se le pide a Windows atender `lafranciago://`. Sin esto el boton de la web
+   no encuentra a quien mandarle la direccion. */
+registrarProtocolo(app);
+
 /* Una sola ventana por maquina. Dos abiertas contra la misma caja son dos
    personas cobrando sin verse, y al cerrar el turno la plata no da.
 
@@ -238,17 +281,25 @@ async function crearVentana() {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
+  app.on('second-instance', (_evento, argumentos) => {
     if (!ventana) return;
 
     if (ventana.isMinimized()) ventana.restore();
     ventana.focus();
+
+    /* Si la segunda vez vino por el enlace de la web, ademas de traerla al
+       frente hay que llevarla a la pantalla que pidio. */
+    void irADestino(direccionEnArgumentos(argumentos));
   });
 
   app.whenReady().then(async () => {
     await cargarAjustes();
     await abrirBaseLocal();
     await crearVentana();
+
+    /* Si la aplicacion estaba cerrada, la direccion llega entre los
+       argumentos con los que Windows la abrio. */
+    void irADestino(direccionEnArgumentos(process.argv));
 
     /* Se consulta despues de abrir: enterarse de que hay una version nueva no
        puede demorar el arranque del mostrador. */
@@ -259,6 +310,14 @@ if (!app.requestSingleInstanceLock()) {
     });
   });
 }
+
+/* En macOS la direccion no llega por argumentos sino por este evento. No es
+   donde se usa hoy —el mostrador es Windows— pero cuesta tres lineas y evita
+   que el dia que se pruebe en una Mac el boton no haga nada. */
+app.on('open-url', (evento, direccion) => {
+  evento.preventDefault();
+  void irADestino(direccion);
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

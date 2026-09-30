@@ -25,6 +25,14 @@
       "*.js",
       "../dist/**/*"
     ],
+    "protocols": [
+      {
+        "name": "LaFranciaGO",
+        "schemes": [
+          "lafranciago"
+        ]
+      }
+    ],
     "win": {
       "target": [
         {

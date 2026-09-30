@@ -222,3 +222,63 @@ export const AvisoEscritorio = styled.div`
     color: ${({ theme }) => (theme.mode === 'dark' ? '#FFE9B8' : '#4A360A')};
   }
 `;
+
+/**
+ * Abre la aplicación instalada, desde el navegador.
+ *
+ * Lleva a `lafranciago://caja`, que Windows entrega a la aplicación del
+ * local. Va en el mismo dorado del aviso porque es su continuación: primero
+ * se explica que la caja rápida vive en la computadora del negocio, y acá
+ * está el camino para llegar.
+ */
+export const AbrirEscritorio = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 0.45rem;
+  margin-top: ${({ theme }) => theme.spacing[2]};
+  min-height: 2.5rem;
+  padding: 0 ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid ${({ theme }) => (theme.mode === 'dark' ? '#C79A32' : '#C9A344')};
+  background: ${({ theme }) => (theme.mode === 'dark' ? 'rgba(199, 154, 50, 0.18)' : '#FBEFC9')};
+  color: ${({ theme }) => (theme.mode === 'dark' ? '#FFE9B8' : '#4A360A')};
+  font: inherit;
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  cursor: pointer;
+  transition: background-color 160ms ease;
+
+  &:hover {
+    background: ${({ theme }) => (theme.mode === 'dark' ? 'rgba(199, 154, 50, 0.3)' : '#F7E4AE')};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.primary};
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
+/**
+ * Lo que se dice cuando el botón no encontró la aplicación.
+ *
+ * Un enlace de protocolo que no lleva a ningún lado no avisa nada: el
+ * navegador se queda quieto y quien lo tocó concluye que la aplicación está
+ * rota. Por eso, si después de unos segundos seguimos acá, se explica qué
+ * pasó y se ofrece la descarga.
+ */
+export const EscritorioNoEsta = styled.p`
+  margin: ${({ theme }) => theme.spacing[2]} 0 0;
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  line-height: 1.5;
+
+  > a {
+    color: inherit;
+    font-weight: ${({ theme }) => theme.typography.weight.bold};
+    text-decoration: underline;
+  }
+`;
