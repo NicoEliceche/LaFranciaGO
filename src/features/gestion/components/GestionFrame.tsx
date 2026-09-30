@@ -37,6 +37,7 @@ import { useThemeMode } from '@core/theme/ThemeProvider';
 
 import { disponible } from '../entorno';
 import { AvisoActualizacion } from './AvisoActualizacion';
+import { BotonesVentana } from './BotonesVentana';
 import {
   BarraSuperior,
   BotonMenu,
@@ -288,6 +289,11 @@ export function GestionFrame({ titulo, children, acciones, sinLeer = 0 }: Gestio
 
           <h1>{titulo}</h1>
           {acciones}
+
+          {/* Minimizar, achicar y cerrar. Es la barra de arriba de la
+              aplicación instalada, que no tiene marco de Windows; en el
+              navegador no se dibujan. */}
+          <BotonesVentana />
         </BarraSuperior>
 
         <Contenido>

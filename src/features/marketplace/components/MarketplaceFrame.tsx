@@ -45,6 +45,7 @@ import { AddressSheet } from './AddressSheet';
 import { CuentaSidebar } from './CuentaSidebar';
 import { MenuComercio } from './MenuComercio';
 import { useNotificaciones } from '../useNotificaciones';
+import { BotonesVentana } from '@features/gestion/components/BotonesVentana';
 import { SearchBar } from './SearchBar';
 import { GamerThemeToggle } from './GamerThemeToggle';
 
@@ -970,6 +971,11 @@ export function MarketplaceFrame({
                     <UserRound size={18} aria-hidden="true" />
                   )}
                 </HeaderCircleLink>
+
+                {/* Minimizar, achicar y cerrar. Sólo aparecen en la
+                    aplicación instalada, que no tiene marco de Windows: en el
+                    navegador no hay ventana que manejar. */}
+                <BotonesVentana />
               </HeaderActionsRow>
             </BrandHeaderRow>
 

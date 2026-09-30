@@ -19,6 +19,19 @@ contextBridge.exposeInMainWorld('lafranciagoEscritorio', {
   /** Datos de la instalación, para mostrarlos en pantalla. */
   info: () => ipcRenderer.invoke('lafranciago:version'),
 
+  /* ── La ventana ──
+     Sin marco de Windows no hay botones arriba a la derecha, así que los
+     dibuja la aplicación y los acciona por acá. */
+
+  ventana: {
+    minimizar: () => ipcRenderer.invoke('lafranciago:minimizar'),
+    /** Alterna entre toda el área útil y una ventana más chica. */
+    alternarTamano: () => ipcRenderer.invoke('lafranciago:alternarTamano'),
+    /** Cómo está ahora, para dibujar el ícono que corresponde. */
+    tamano: () => ipcRenderer.invoke('lafranciago:tamano'),
+    cerrar: () => ipcRenderer.invoke('lafranciago:cerrar'),
+  },
+
   /** Imprime el ticket de una venta y abre el cajón. */
   imprimir: (datos) => ipcRenderer.invoke('lafranciago:imprimir', datos),
 

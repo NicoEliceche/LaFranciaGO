@@ -148,12 +148,36 @@ async function crearVentana() {
          verificación mira la pantalla de arranque y dice que todo bien
          aunque el enlace no haya hecho nada. */
       setTimeout(() => {
-        void require('node:fs/promises').appendFile(
-          path.join(__dirname, 'verificacion.txt'),
-          `\ndestinoFinal=${ventana?.webContents.getURL().split('#')[1] ?? '(ninguno)'}`,
-          'utf8',
-        );
-      }, 2500);
+        void (async () => {
+          /* Los tres botones de la ventana tienen que existir en la página y
+             tienen que moverla de verdad. Se prueba el del medio, que es el
+             único de los tres que deja algo observable: minimizar y cerrar
+             esconden la ventana y no se podría seguir mirando. */
+          const selector = 'nav[aria-label="Controles de la ventana"] button';
+          const cuantos = await ventana?.webContents.executeJavaScript(
+            `document.querySelectorAll(${JSON.stringify(selector)}).length`,
+          );
+
+          const antes = ventana?.getBounds();
+          const alternado = await ventana?.webContents.executeJavaScript(
+            'window.lafranciagoEscritorio.ventana.alternarTamano()',
+          );
+          const despues = ventana?.getBounds();
+          const cambio =
+            antes && despues && (antes.width !== despues.width || antes.height !== despues.height);
+
+          await require('node:fs/promises').appendFile(
+            path.join(__dirname, 'verificacion.txt'),
+            [
+              `\ndestinoFinal=${ventana?.webContents.getURL().split('#')[1] ?? '(ninguno)'}`,
+              `botonesDeVentana=${cuantos ?? 0}`,
+              `alternarCambioElTamano=${cambio ? 'SI' : 'NO'}`,
+              `quedoCompleta=${alternado?.completa}`,
+            ].join('\n'),
+            'utf8',
+          );
+        })();
+      }, 3000);
     });
   }
 
@@ -321,6 +345,81 @@ app.on('open-url', (evento, direccion) => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+/* ── La ventana ──
+ *
+ * La ventana no tiene marco de Windows, así que tampoco tiene los tres
+ * botones de arriba a la derecha. Los pone la aplicación, y para moverlos
+ * necesita pedírselo al proceso principal: la página no puede tocar su
+ * propia ventana.
+ *
+ * Son tres cosas que en cualquier programa están siempre, y no estaban:
+ * minimizar para atender otra cosa, achicar para ver dos programas a la vez,
+ * y cerrar. Sin ellos, cerrar la caja pedía Alt+F4. */
+
+ipcMain.handle('lafranciago:minimizar', () => {
+  ventana?.minimize();
+});
+
+/**
+ * Alterna entre ocupar toda el área útil y una ventana más chica.
+ *
+ * No usa `maximize()` sino el tamaño del área de trabajo, por lo mismo que
+ * al arrancar: maximizada de Windows tapa la barra de tareas, y el negocio
+ * necesita llegar al reloj y a sus otros programas mientras atiende.
+ *
+ * Devuelve cómo quedó para que el botón cambie de ícono sin tener que
+ * preguntar después.
+ */
+ipcMain.handle('lafranciago:alternarTamano', () => {
+  if (!ventana) return { completa: false };
+
+  const { workArea } = screen.getPrimaryDisplay();
+  const caja = ventana.getBounds();
+
+  /* Se compara con tolerancia: Windows puede devolver un pixel de
+     diferencia según el escalado de pantalla, y una comparación exacta
+     dejaría el botón sin saber en qué estado está. */
+  const ocupaTodo =
+    Math.abs(caja.width - workArea.width) < 4 && Math.abs(caja.height - workArea.height) < 4;
+
+  if (ocupaTodo) {
+    /* Tres cuartos del área útil, centrada: entra cómoda al lado de otro
+       programa, que es para lo que se achica. */
+    const ancho = Math.max(1024, Math.round(workArea.width * 0.75));
+    const alto = Math.max(640, Math.round(workArea.height * 0.8));
+
+    ventana.setBounds({
+      x: workArea.x + Math.round((workArea.width - ancho) / 2),
+      y: workArea.y + Math.round((workArea.height - alto) / 2),
+      width: ancho,
+      height: alto,
+    });
+
+    return { completa: false };
+  }
+
+  ventana.setBounds(workArea);
+
+  return { completa: true };
+});
+
+/** Si ahora mismo ocupa toda el área útil, para dibujar el ícono que va. */
+ipcMain.handle('lafranciago:tamano', () => {
+  if (!ventana) return { completa: false };
+
+  const { workArea } = screen.getPrimaryDisplay();
+  const caja = ventana.getBounds();
+
+  return {
+    completa:
+      Math.abs(caja.width - workArea.width) < 4 && Math.abs(caja.height - workArea.height) < 4,
+  };
+});
+
+ipcMain.handle('lafranciago:cerrar', () => {
+  ventana?.close();
 });
 
 /* ── Lo que la aplicación puede pedirle a la máquina ── */

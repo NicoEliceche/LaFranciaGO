@@ -228,6 +228,21 @@ export const BarraSuperior = styled.header`
   background: ${({ theme }) => theme.color.surface};
   border-block-end: 1px solid ${({ theme }) => theme.color.border};
 
+  /* En la aplicación instalada esta barra hace de barra de título: la ventana
+     no tiene marco de Windows, así que sin zona de arrastre no se podría
+     mover de lugar. En el navegador la propiedad no hace nada.
+
+     Lo que se toca se marca no-drag: sobre una zona de arrastre, un clic
+     sostenido mueve la ventana en vez de activar el botón. */
+  -webkit-app-region: drag;
+
+  button,
+  a,
+  input,
+  select {
+    -webkit-app-region: no-drag;
+  }
+
   > h1 {
     flex: 1 1 auto;
     min-width: 0;

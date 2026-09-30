@@ -1056,6 +1056,22 @@ export const BrandHeaderBar = styled.div`
   background: linear-gradient(135deg, #0047E7 0%, #2563EB 100%);
   color: #ffffff;
 
+  /* En la aplicación instalada esta barra hace de barra de título: la ventana
+     no tiene marco de Windows, así que sin una zona de arrastre no se podría
+     mover de lugar. En el navegador la propiedad no hace nada.
+
+     Todo lo que se toca se marca no-drag abajo: sobre una zona de arrastre,
+     un clic sostenido mueve la ventana en vez de activar el botón. */
+  -webkit-app-region: drag;
+
+  button,
+  a,
+  input,
+  select,
+  [role='button'] {
+    -webkit-app-region: no-drag;
+  }
+
   /* En oscuro se apoya el azul del logo sobre un fondo más profundo
      para que no vibre contra el resto de la interfaz. */
   ${({ theme }) =>

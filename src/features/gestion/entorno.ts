@@ -55,6 +55,13 @@ declare global {
       programarActualizacion?: (
         cuando: string | null,
       ) => Promise<{ ok: boolean; programadaPara?: string | null }>;
+      /** Minimizar, achicar y cerrar: la ventana no tiene marco propio. */
+      ventana?: {
+        minimizar: () => Promise<void>;
+        alternarTamano: () => Promise<{ completa: boolean }>;
+        tamano: () => Promise<{ completa: boolean }>;
+        cerrar: () => Promise<void>;
+      };
     };
   }
 }
