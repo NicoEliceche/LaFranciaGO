@@ -24,26 +24,26 @@ import {
  */
 
 type Props = {
-  pedidoId: string;
+  fleteId: string;
   /** Para que la pantalla de arriba se entere de que ya tiene quien lo haga. */
   onAceptada: () => void;
 };
 
-export function CotizacionesFlete({ pedidoId, onAceptada }: Props) {
+export function CotizacionesFlete({ fleteId, onAceptada }: Props) {
   const [cotizaciones, setCotizaciones] = useState<CotizacionApi[]>([]);
   const [aceptando, setAceptando] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     try {
-      const { cotizaciones: filas } = await fletesApi.cotizaciones(pedidoId);
+      const { cotizaciones: filas } = await fletesApi.cotizaciones(fleteId);
 
       setCotizaciones(filas);
     } catch {
       /* Sin cotizaciones no hay nada que mostrar: no es un error que
          merezca ocupar la pantalla. */
     }
-  }, [pedidoId]);
+  }, [fleteId]);
 
   useEffect(() => {
     void cargar();

@@ -895,13 +895,15 @@ export const fletesApi = {
   /** Quien hace fletes se queda con este. */
   tomar: (fleteId: string) => api.post<{ ok: true }>(`/fletes/${fleteId}/tomar`),
 
-  cotizar: (pedidoId: string, precio: number, nota?: string) =>
+  /* Toma el id del flete, no el de un pedido: desde que los fletes tienen
+     tabla propia, un id de pedido no existe de este lado. */
+  cotizar: (fleteId: string, precio: number, nota?: string) =>
     api.post<{ id: string; precio: number; distanciaKm: number | null }>(
-      `/fletes/${pedidoId}/cotizar`,
+      `/fletes/${fleteId}/cotizar`,
       { precio, nota },
     ),
-  cotizaciones: (pedidoId: string) =>
-    api.get<{ cotizaciones: CotizacionApi[] }>(`/fletes/${pedidoId}/cotizaciones`),
+  cotizaciones: (fleteId: string) =>
+    api.get<{ cotizaciones: CotizacionApi[] }>(`/fletes/${fleteId}/cotizaciones`),
   aceptar: (cotizacionId: string) =>
     api.post<{ ok: true }>(`/cotizaciones/${cotizacionId}/aceptar`),
 };

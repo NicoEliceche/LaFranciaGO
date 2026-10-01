@@ -156,7 +156,7 @@ export function MyOrdersScreen() {
                       curso, acá aparecen los precios que le pusieron y el
                       cliente elige con cuál se queda. */}
                   {order.isFreight && order.state === 'proceso' ? (
-                    <CotizacionesFlete pedidoId={order.id} onAceptada={() => void recargar()} />
+                    <CotizacionesFlete fleteId={order.id} onAceptada={() => void recargar()} />
                   ) : null}
 
                   {order.cancellable || (order.state === 'terminado' && !order.rated) ? (

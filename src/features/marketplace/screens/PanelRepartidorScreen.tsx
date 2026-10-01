@@ -638,7 +638,9 @@ export function PanelRepartidorScreen() {
 
       <CotizarDialog
         open={cotizando !== null}
-        pedidoId={cotizando?.id ?? ''}
+        /* El id viene con el prefijo que distingue un flete de un pedido en
+           la lista; el servidor espera el id a secas. */
+        fleteId={(cotizando?.id ?? '').replace(/^flete:/, '')}
         distanciaKm={cotizando?.distanciaKm ?? null}
         onCerrar={() => setCotizando(null)}
         onCotizado={() => void cargar()}

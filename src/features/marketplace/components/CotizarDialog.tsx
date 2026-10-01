@@ -32,7 +32,7 @@ const BASE = 2500;
 
 type Props = {
   open: boolean;
-  pedidoId: string;
+  fleteId: string;
   /** Lo que calculó el servidor entre origen y destino. */
   distanciaKm: number | null;
   onCerrar: () => void;
@@ -41,7 +41,7 @@ type Props = {
 
 export function CotizarDialog({
   open,
-  pedidoId,
+  fleteId,
   distanciaKm,
   onCerrar,
   onCotizado,
@@ -97,7 +97,7 @@ export function CotizarDialog({
     setError(null);
 
     try {
-      await fletesApi.cotizar(pedidoId, numero, nota.trim() || undefined);
+      await fletesApi.cotizar(fleteId, numero, nota.trim() || undefined);
       onCotizado();
       onCerrar();
     } catch (fallo) {

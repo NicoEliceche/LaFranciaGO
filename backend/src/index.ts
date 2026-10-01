@@ -2612,14 +2612,13 @@ async function enrutar(
       return error('Poné cuánto cobrás por el flete.', 400, cors);
     }
 
+    /* Sólo se cotiza lo que todavía está buscando quién lo lleve: si ya lo
+       tomó otro, el fletero tiene que enterarse en lugar de dejar una
+       cotización que nadie va a mirar. */
     const flete = await env.DB.prepare(
-      `SELECT p.id, p.codigo, p.usuario_id, p.estado, p.tipo,
-              c.lat AS origen_lat, c.lon AS origen_lon,
-              d.lat AS destino_lat, d.lon AS destino_lon
-         FROM pedidos p
-         JOIN comercios c ON c.id = p.comercio_id
-         LEFT JOIN direcciones d ON d.id = p.direccion_id
-        WHERE p.id = ? AND p.tipo = 'flete' AND p.estado = 'proceso'`,
+      `SELECT id, codigo, usuario_id, origen_lat, origen_lon, destino_lat, destino_lon
+         FROM fletes
+        WHERE id = ? AND estado = 'buscando'`,
     )
       .bind(cotizarFlete[1])
       .first<{
@@ -2633,29 +2632,47 @@ async function enrutar(
       }>();
 
     if (!flete) {
-      return error('No encontrado', 404, cors);
+      return error('Este flete ya no está disponible.', 404, cors);
     }
+
+    /* No se cotiza dos veces lo mismo: la segunda reemplaza a la primera,
+       que es lo que espera quien se equivocó de número y vuelve a mandar. */
+    const previa = await env.DB.prepare(
+      "SELECT id FROM cotizaciones WHERE flete_id = ? AND fletero_id = ? AND estado = 'pendiente'",
+    )
+      .bind(flete.id, fletero.usuario.id)
+      .first<{ id: string }>();
 
     const distancia =
       flete.origen_lat && flete.origen_lon && flete.destino_lat && flete.destino_lon
         ? distanciaKm(flete.origen_lat, flete.origen_lon, flete.destino_lat, flete.destino_lon)
         : null;
 
-    const id = nuevoId();
+    const id = previa?.id ?? nuevoId();
 
-    await env.DB.prepare(
-      `INSERT INTO cotizaciones (id, pedido_id, fletero_id, precio_centavos, distancia_km, nota)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-    )
-      .bind(
-        id,
-        flete.id,
-        fletero.usuario.id,
-        precio,
-        distancia,
-        String(body.nota ?? '').slice(0, 300) || null,
+    if (previa) {
+      await env.DB.prepare(
+        `UPDATE cotizaciones
+            SET precio_centavos = ?, distancia_km = ?, nota = ?, creado_en = datetime('now')
+          WHERE id = ?`,
       )
-      .run();
+        .bind(precio, distancia, String(body.nota ?? '').slice(0, 300) || null, previa.id)
+        .run();
+    } else {
+      await env.DB.prepare(
+        `INSERT INTO cotizaciones (id, flete_id, fletero_id, precio_centavos, distancia_km, nota)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      )
+        .bind(
+          id,
+          flete.id,
+          fletero.usuario.id,
+          precio,
+          distancia,
+          String(body.nota ?? '').slice(0, 300) || null,
+        )
+        .run();
+    }
 
     await avisar(env, flete.usuario_id, {
       tipo: 'pedido',
@@ -2677,13 +2694,15 @@ async function enrutar(
       return error('Necesitás iniciar sesión', 401, cors);
     }
 
+    /* Sólo las ve quien pidió el flete: acá sale cuánto cobra cada fletero,
+       y eso no es público. */
     const { results } = await env.DB.prepare(
       `SELECT co.id, co.precio_centavos, co.distancia_km, co.nota, co.estado, co.creado_en,
               u.nombre AS fletero
          FROM cotizaciones co
          JOIN usuarios u ON u.id = co.fletero_id
-         JOIN pedidos p ON p.id = co.pedido_id
-        WHERE co.pedido_id = ? AND p.usuario_id = ?
+         JOIN fletes f ON f.id = co.flete_id
+        WHERE co.flete_id = ? AND f.usuario_id = ?
         ORDER BY co.precio_centavos ASC`,
     )
       .bind(cotizacionesFlete[1], usuario.id)
@@ -2701,12 +2720,6 @@ async function enrutar(
     );
   }
 
-  /**
-   * El cliente acepta una cotización.
-   *
-   * Al aceptar, el flete queda para ese fletero: las demás cotizaciones se
-   * rechazan solas, porque el trabajo ya tiene quien lo haga.
-   */
   const aceptarCotizacion = /^\/cotizaciones\/([\w-]+)\/aceptar$/.exec(ruta);
 
   if (aceptarCotizacion && metodo === 'POST') {
@@ -2717,21 +2730,21 @@ async function enrutar(
     }
 
     const cotizacion = await env.DB.prepare(
-      `SELECT co.id, co.pedido_id, co.fletero_id, co.precio_centavos, co.estado,
-              p.codigo, p.subtotal_centavos
+      `SELECT co.id, co.flete_id, co.fletero_id, co.precio_centavos, co.estado,
+              f.codigo, f.estado AS estado_flete
          FROM cotizaciones co
-         JOIN pedidos p ON p.id = co.pedido_id
-        WHERE co.id = ? AND p.usuario_id = ?`,
+         JOIN fletes f ON f.id = co.flete_id
+        WHERE co.id = ? AND f.usuario_id = ?`,
     )
       .bind(aceptarCotizacion[1], usuario.id)
       .first<{
         id: string;
-        pedido_id: string;
+        flete_id: string;
         fletero_id: string;
         precio_centavos: number;
         estado: string;
         codigo: string;
-        subtotal_centavos: number;
+        estado_flete: string;
       }>();
 
     if (!cotizacion) {
@@ -2742,24 +2755,26 @@ async function enrutar(
       return error('Esa cotización ya no está vigente.', 409, cors);
     }
 
-    /* El precio del flete pasa a ser el del pedido: era eso lo que faltaba
-       para poder cobrarlo. */
+    /* Si el flete ya lo tomó alguien, aceptar una cotización lo dejaría con
+       dos dueños. */
+    if (cotizacion.estado_flete !== 'buscando') {
+      return error('Este flete ya tiene quién lo lleve.', 409, cors);
+    }
+
+    /* Aceptar una cierra las demás y le pone precio y dueño al flete: eso
+       era lo que faltaba para poder cobrarlo. */
     await env.DB.batch([
       env.DB.prepare(
         "UPDATE cotizaciones SET estado = 'aceptada', resuelto_en = datetime('now') WHERE id = ?",
       ).bind(cotizacion.id),
       env.DB.prepare(
-        "UPDATE cotizaciones SET estado = 'rechazada', resuelto_en = datetime('now') WHERE pedido_id = ? AND id != ? AND estado = 'pendiente'",
-      ).bind(cotizacion.pedido_id, cotizacion.id),
+        "UPDATE cotizaciones SET estado = 'rechazada', resuelto_en = datetime('now') WHERE flete_id = ? AND id != ? AND estado = 'pendiente'",
+      ).bind(cotizacion.flete_id, cotizacion.id),
       env.DB.prepare(
-        'UPDATE pedidos SET envio_centavos = ?, total_centavos = subtotal_centavos + ? WHERE id = ?',
-      ).bind(cotizacion.precio_centavos, cotizacion.precio_centavos, cotizacion.pedido_id),
-      /* Queda asignado a quien cotizó: nadie más lo va a tomar. */
-      env.DB.prepare('DELETE FROM envios WHERE pedido_id = ?').bind(cotizacion.pedido_id),
-      env.DB.prepare(
-        `INSERT INTO envios (id, pedido_id, repartidor_id, estado, asignado_en)
-         VALUES (?, ?, ?, 'asignado', datetime('now'))`,
-      ).bind(nuevoId(), cotizacion.pedido_id, cotizacion.fletero_id),
+        `UPDATE fletes
+            SET precio_centavos = ?, fletero_id = ?, estado = 'tomado', tomado_en = datetime('now')
+          WHERE id = ?`,
+      ).bind(cotizacion.precio_centavos, cotizacion.fletero_id, cotizacion.flete_id),
     ]);
 
     await avisar(env, cotizacion.fletero_id, {
@@ -2769,12 +2784,19 @@ async function enrutar(
       enlace: '/panel/repartidor',
     });
 
-    await mensajeDeSistema(
-      env,
-      cotizacion.pedido_id,
-      usuario.id,
-      `Se aceptó la cotización por ${aPesos(cotizacion.precio_centavos).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}.`,
-    );
+    /* Queda escrito en el chat del flete, que es donde los dos vuelven a
+       mirar qué se acordó. */
+    await env.DB.prepare(
+      `INSERT INTO flete_mensajes (id, flete_id, autor_id, texto, es_sistema)
+       VALUES (?, ?, ?, ?, 1)`,
+    )
+      .bind(
+        nuevoId(),
+        cotizacion.flete_id,
+        usuario.id,
+        `Se aceptó la cotización por ${aPesos(cotizacion.precio_centavos).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}.`,
+      )
+      .run();
 
     return json({ ok: true }, {}, cors);
   }
@@ -3057,7 +3079,7 @@ async function enrutar(
 
     const { results } = await env.DB.prepare(
       `SELECT m.id, m.texto, m.tipo, m.media_url, m.creado_en, m.autor_id,
-              u.nombre AS autor
+              m.es_sistema, u.nombre AS autor
          FROM flete_mensajes m
          JOIN usuarios u ON u.id = m.autor_id
         WHERE m.flete_id = ?
