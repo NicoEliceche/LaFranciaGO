@@ -40,3 +40,6 @@ public/media/*.png
 
 # El reporte de los tests: se genera al correrlos, no se versiona.
 pruebas/reporte.xml
+
+# Las copias de la base: tienen datos de gente real y no van al repositorio.
+backend/respaldos/

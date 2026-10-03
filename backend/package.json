@@ -10,7 +10,9 @@
     "db:migrar": "wrangler d1 migrations apply lafranciago --remote",
     "db:migrar:local": "wrangler d1 migrations apply lafranciago --local",
     "db:migrar:prod": "wrangler d1 migrations apply lafranciago-prod --remote --env prod",
-    "deploy:prod": "wrangler deploy --env prod"
+    "deploy:prod": "wrangler deploy --env prod",
+    "respaldo": "node respaldo.mjs",
+    "respaldo:prod": "node respaldo.mjs --prod"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260906.1",
