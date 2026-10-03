@@ -232,7 +232,14 @@ const ITEM_CUENTA: DrawerItemData = {
 
 const ITEMS_COMPRA: DrawerItemData[] = [
   { to: '/categorias', title: 'Categorías', subtitle: 'Navegá por rubros', icon: LayoutGrid },
-  { to: '/pedidos', title: 'Mis pedidos', subtitle: 'Historial y seguimiento', icon: PackageSearch },
+  {
+    to: '/pedidos',
+    /* Dice las dos cosas porque ahí van las dos: un flete no es un pedido y
+       quien pidió uno no lo busca bajo "pedidos". */
+    title: 'Mis pedidos/fletes',
+    subtitle: 'Historial y seguimiento',
+    icon: PackageSearch,
+  },
   { to: '/favoritos', title: 'Favoritos', subtitle: 'Guardados para después', icon: Heart },
 ];
 
@@ -587,7 +594,10 @@ const ENLACES_INFERIORES: Record<string, EnlaceInferior[]> = {
   cliente: [
     { to: '/', label: 'Inicio', icon: Home },
     { to: '/categorias', label: 'Categorías', icon: LayoutGrid },
-    { to: '/pedidos', label: 'Mis pedidos', icon: PackageSearch },
+    /* En la barra de abajo entran cinco botones en el ancho de un teléfono,
+       así que acá va la forma corta: "Pedidos/fletes" con la barra ya roza
+       los bordes a 360px. El nombre completo está en el menú lateral. */
+    { to: '/pedidos', label: 'Pedidos', icon: PackageSearch },
     { to: '/favoritos', label: 'Favoritos', icon: Heart },
     { to: '/mi-cuenta', label: 'Cuenta', icon: UserRound },
   ],

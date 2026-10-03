@@ -892,6 +892,14 @@ export const fletesApi = {
   /** Los fletes que nadie tomó todavía. */
   disponibles: () => api.get<{ fletes: FleteDisponibleApi[] }>('/fletes/disponibles'),
 
+  /**
+   * El detalle de un flete.
+   *
+   * Va por su propia puerta y no por la de los pedidos: un flete no tiene
+   * comercio ni líneas, y pedirlo como pedido devolvía 404.
+   */
+  detalle: (fleteId: string) => api.get<DetallePedidoApi>(`/fletes/${fleteId}`),
+
   /** Quien hace fletes se queda con este. */
   tomar: (fleteId: string) => api.post<{ ok: true }>(`/fletes/${fleteId}/tomar`),
 

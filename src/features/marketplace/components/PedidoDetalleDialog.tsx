@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MapPin, Package, Store, X } from 'lucide-react';
 
-import { type DetallePedidoApi, deliveryApi } from '@core/data/services/apiClient';
+import { type DetallePedidoApi, deliveryApi, fletesApi } from '@core/data/services/apiClient';
 import { formatMoney } from '@shared/utils/format';
 import { stepLabel } from '@core/data/saleUnits';
 import type { SaleUnitId } from '@shared/types/saleUnit.types';
@@ -74,10 +74,18 @@ export function PedidoDetalleDialog({
     setDatos(null);
     setError(null);
 
-    deliveryApi
-      .detalle(pedidoId)
+    /* Un flete se pide por otra puerta: no tiene comercio ni líneas, y vive
+       en su propia tabla. El prefijo del id lo dice, que es para lo que el
+       servidor lo manda. */
+    const esFlete = pedidoId.startsWith('flete:');
+
+    const traer = esFlete
+      ? fletesApi.detalle(pedidoId.slice('flete:'.length))
+      : deliveryApi.detalle(pedidoId);
+
+    traer
       .then(setDatos)
-      .catch(() => setError('No pudimos cargar el pedido.'));
+      .catch(() => setError(esFlete ? 'No pudimos cargar el flete.' : 'No pudimos cargar el pedido.'));
   }, [open, pedidoId]);
 
   useEffect(() => {

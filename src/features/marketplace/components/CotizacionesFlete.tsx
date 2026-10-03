@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Truck } from 'lucide-react';
+import { Check, Loader2, Truck } from 'lucide-react';
 
 import { type CotizacionApi, fletesApi } from '@core/data/services/apiClient';
 import { formatMoney } from '@shared/utils/format';
@@ -64,8 +64,26 @@ export function CotizacionesFlete({ fleteId, onAceptada }: Props) {
     }
   };
 
+  /* Sin cotizaciones el flete igual tiene algo que contar: que está
+     publicado y esperando. Antes no se mostraba nada, así que quien entraba
+     desde "Mis pedidos" veía su flete sin ninguna señal de que estuviera
+     pasando algo, y la única forma de saberlo era volver a pedirlo. */
   if (cotizaciones.length === 0) {
-    return null;
+    return (
+      <CotizacionLista>
+        <CotizacionCaja data-estado="esperando">
+          <CotizacionFletero>
+            <Loader2 size={14} aria-hidden="true" />
+            Buscando quién lo haga
+          </CotizacionFletero>
+
+          <CotizacionDato>
+            Los fleteros de la zona ya lo están viendo. Cuando alguno te pase un
+            precio, te avisamos y aparece acá para que elijas.
+          </CotizacionDato>
+        </CotizacionCaja>
+      </CotizacionLista>
+    );
   }
 
   const yaHayUna = cotizaciones.some((cotizacion) => cotizacion.estado === 'aceptada');

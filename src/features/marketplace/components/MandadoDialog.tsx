@@ -64,10 +64,25 @@ export function MandadoDialog({ abierto, alCerrar }: { abierto: boolean; alCerra
   const [descripcion, setDescripcion] = useState('');
   const [intentado, setIntentado] = useState(false);
 
-  /* En qué momento está el diálogo. Sale del mandado en curso y no de un
-     estado propio: si el repartidor lo toma mientras la persona mira la
-     pantalla, el diálogo tiene que enterarse solo. */
-  const momento = !mandado ? 'escribir' : mandado.status === 'buscando' ? 'avisando' : 'tomado';
+  /* Qué se pidió recién, para mostrar los pasos de después.
+     Arranca en null siempre: el banner tiene que dejar pedir aunque ya haya
+     algo en curso. Alguien puede necesitar un mandado mientras espera un
+     flete, y antes el diálogo le mostraba el estado del anterior en lugar
+     del formulario. */
+  const [reciente, setReciente] = useState<'mandado' | 'flete' | null>(null);
+
+  /* Si el de recién ya lo tomó alguien, para avisarlo sin preguntar. */
+  const momento = !reciente
+    ? 'escribir'
+    : mandado && mandado.status !== 'buscando'
+      ? 'tomado'
+      : 'avisando';
+
+  /* Lo que ya está en curso, para avisar antes de pedir otro igual. */
+  const hayEnCurso = Boolean(mandado && mandado.status === 'buscando');
+
+  /* Cuando se pide algo teniendo otro andando, se confirma primero. */
+  const [confirmando, setConfirmando] = useState<'mandado' | 'flete' | null>(null);
 
   const limpio = descripcion.trim();
   const error =
@@ -78,6 +93,8 @@ export function MandadoDialog({ abierto, alCerrar }: { abierto: boolean; alCerra
     if (!abierto) {
       setDescripcion('');
       setIntentado(false);
+      setReciente(null);
+      setConfirmando(null);
     }
   }, [abierto]);
 
@@ -106,6 +123,22 @@ export function MandadoDialog({ abierto, alCerrar }: { abierto: boolean; alCerra
     if (error) {
       return;
     }
+
+    /* Con uno andando se pregunta antes: pedir dos sin querer es fácil
+       —se toca el botón de más— y después hay dos personas en camino. */
+    if (hayEnCurso) {
+      setConfirmando(tipo);
+
+      return;
+    }
+
+    pedir(tipo);
+  };
+
+  /** Lo que se hace de verdad, una vez resuelta la confirmación. */
+  const pedir = (tipo: 'mandado' | 'flete') => {
+    setConfirmando(null);
+    setReciente(tipo);
 
     /* Queda guardado de verdad, además de en la pantalla.
 
@@ -148,7 +181,29 @@ export function MandadoDialog({ abierto, alCerrar }: { abierto: boolean; alCerra
           <X size={18} aria-hidden="true" />
         </MandadoCerrar>
 
-        {momento === 'escribir' ? (
+        {/* Ya hay uno andando y se esta pidiendo otro: se pregunta antes
+            de crearlo. Tocar el boton de mas y terminar con dos personas en
+            camino es un error caro y silencioso. */}
+        {confirmando ? (
+          <MandadoCuerpo>
+            <MandadoTitulo>Ya tenés un pedido activo</MandadoTitulo>
+            <MandadoSubtitulo>
+              Hay uno tuyo esperando que alguien lo tome. Podés pedir{' '}
+              {confirmando === 'flete' ? 'un flete' : 'un mandado'} igual: van por
+              separado y cada uno tiene su chat.
+            </MandadoSubtitulo>
+
+            <MandadoBotones>
+              <MandadoSecundario type="button" onClick={() => setConfirmando(null)}>
+                Cancelar
+              </MandadoSecundario>
+
+              <MandadoPrimario type="button" onClick={() => pedir(confirmando)}>
+                Confirmar
+              </MandadoPrimario>
+            </MandadoBotones>
+          </MandadoCuerpo>
+        ) : momento === 'escribir' ? (
           <MandadoCuerpo as="form" onSubmit={enviar} noValidate>
             <MandadoTitulo>¿Qué necesitás?</MandadoTitulo>
             <MandadoSubtitulo>

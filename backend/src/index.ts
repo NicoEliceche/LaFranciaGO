@@ -2999,6 +2999,99 @@ async function enrutar(
     return json({ fletes: results }, {}, cors);
   }
 
+  /**
+   * El detalle de un flete, para quien lo va a hacer.
+   *
+   * Va aparte del detalle de pedidos porque un flete no tiene comercio ni
+   * líneas: tiene una descripción escrita a mano y un destino. Intentar
+   * leerlo por la puerta de los pedidos daba 404, que es lo que veía el
+   * fletero al tocar "Ver detalle del flete".
+   *
+   * Sólo lo ve quien puede hacer algo con él: acá salen el nombre y el
+   * teléfono de quien lo pidió, y eso no es dato público. Se muestra si
+   * todavía está buscando quién lo lleve —el mismo criterio que la lista de
+   * disponibles— o si ya es suyo.
+   */
+  const detalleFlete = /^\/fletes\/([\w-]+)$/.exec(ruta);
+
+  if (detalleFlete && metodo === 'GET') {
+    const fletero = await exigirRol(request, env, cors, ['fletero']);
+
+    if ('respuesta' in fletero) {
+      return fletero.respuesta;
+    }
+
+    const flete = await env.DB.prepare(
+      `SELECT f.id, f.codigo, f.descripcion, f.origen_texto, f.destino_texto,
+              f.origen_lat, f.origen_lon, f.destino_lat, f.destino_lon,
+              f.estado, f.precio_centavos, f.creado_en, f.usuario_id,
+              u.nombre AS cliente, u.telefono AS cliente_telefono
+         FROM fletes f
+         JOIN usuarios u ON u.id = f.usuario_id
+        WHERE f.id = ?
+          AND (f.estado = 'buscando' OR f.fletero_id = ?)`,
+    )
+      .bind(detalleFlete[1], fletero.usuario.id)
+      .first<Record<string, unknown>>();
+
+    if (!flete) {
+      return error('No encontrado', 404, cors);
+    }
+
+    const distancia =
+      flete.origen_lat && flete.origen_lon && flete.destino_lat && flete.destino_lon
+        ? distanciaKm(
+            Number(flete.origen_lat),
+            Number(flete.origen_lon),
+            Number(flete.destino_lat),
+            Number(flete.destino_lon),
+          )
+        : null;
+
+    /* Lo que ya coticé, si coticé: sin esto el fletero no sabe si este flete
+       ya lo miró y le puso precio. */
+    const mia = await env.DB.prepare(
+      `SELECT precio_centavos, estado FROM cotizaciones
+        WHERE flete_id = ? AND fletero_id = ?
+        ORDER BY creado_en DESC LIMIT 1`,
+    )
+      .bind(detalleFlete[1], fletero.usuario.id)
+      .first<{ precio_centavos: number; estado: string }>();
+
+    return json(
+      {
+        /* Se devuelve con la forma que espera la pantalla de detalle, que es
+           la misma que usa para los pedidos. Lo que un pedido tiene como
+           comercio, acá es de dónde sale. */
+        id: flete.id,
+        codigo: flete.codigo,
+        esFlete: true,
+        descripcion: flete.descripcion,
+        direccion_texto: flete.destino_texto ?? 'A convenir',
+        comercio: 'Flete',
+        comercio_direccion: flete.origen_texto ?? 'A convenir',
+        comercio_telefono: null,
+        cliente: flete.cliente,
+        cliente_telefono: flete.cliente_telefono,
+        creado_en: flete.creado_en,
+        estado: flete.estado,
+        /* Hasta que no se acepta una cotización no hay precio. */
+        total: flete.precio_centavos ? aPesos(Number(flete.precio_centavos)) : null,
+        subtotal: null,
+        envio: null,
+        metodo_pago: null,
+        items: [],
+        distanciaKm: distancia,
+        miCotizacion: mia
+          ? { precio: aPesos(Number(mia.precio_centavos)), estado: mia.estado }
+          : null,
+      },
+      {},
+      cors,
+    );
+  }
+
+
   const tomarFlete = /^\/fletes\/([\w-]+)\/tomar$/.exec(ruta);
 
   if (tomarFlete && metodo === 'POST') {
