@@ -37,3 +37,6 @@ escritorio/verificacion.txt
 # Las fotos de rubro en PNG. La aplicacion sirve los .webp, que pesan una
 # decima parte; los PNG quedan fuera del repo, en LaFranciaGO-recursos.
 public/media/*.png
+
+# El reporte de los tests: se genera al correrlos, no se versiona.
+pruebas/reporte.xml

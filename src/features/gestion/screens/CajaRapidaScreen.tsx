@@ -19,9 +19,10 @@ import {
   fiadoApi,
   gestionApi,
 } from '@core/data/services/apiClient';
-import { DEFAULT_SALE_UNIT, SALE_UNITS, priceSuffix } from '@core/data/saleUnits';
+import { priceSuffix } from '@core/data/saleUnits';
 import type { SaleUnitId } from '@shared/types/saleUnit.types';
 
+import { acomodarCantidad, etiquetaUnidad, pasoDe, unidadDe } from '../cantidades';
 import { mostrarCentavos } from '../dinero';
 
 import { AbrirEnEscritorio } from '../components/AbrirEnEscritorio';
@@ -56,44 +57,6 @@ interface LineaVenta {
   precioCentavos: number;
   /** Cómo se vende: decide de a cuánto suben las flechas. */
   unidad: SaleUnitId;
-}
-
-/**
- * De a cuánto se mueve la cantidad de un producto, en milésimos.
- *
- * El campo subía de a 0,001 para todo, así que bajarle uno a dos quesos daba
- * 1,999. Nadie vende un milésimo de queso: el paso tiene que ser el mismo con
- * el que se vende el producto.
- *
- * Sale de los escalones que ya define la aplicación, así que la caja del
- * mostrador y la tienda hablan de las mismas cantidades: un cuarto de pan acá
- * es un cuarto de pan allá.
- */
-/**
- * Traduce lo que guarda la base a una unidad conocida.
- *
- * La columna es texto libre, así que un producto viejo puede traer algo que
- * ya no existe. En ese caso se lo trata como unidad suelta, que es lo que era
- * antes de que hubiera unidades: se vende de a uno y nadie se sorprende.
- */
-function unidadDe(guardada: string | null | undefined): SaleUnitId {
-  return guardada && guardada in SALE_UNITS ? (guardada as SaleUnitId) : DEFAULT_SALE_UNIT;
-}
-
-/** Cómo se llama la unidad, para el lector de pantalla. */
-function etiquetaUnidad(unidad: SaleUnitId): string {
-  return SALE_UNITS[unidad]?.priceSuffix ?? 'unidades';
-}
-
-function pasoDe(unidad: SaleUnitId): number {
-  const escalones = SALE_UNITS[unidad]?.steps ?? [];
-
-  /* El primer escalón es el mínimo que se puede vender, y también de a cuánto
-     avanza: un cuarto para el pan, medio kilo para la carne, uno para lo que
-     va por unidad. */
-  const primero = escalones[0]?.factor ?? 1;
-
-  return Math.round(primero * 1000);
 }
 
 export function CajaRapidaScreen() {
@@ -200,12 +163,7 @@ export function CajaRapidaScreen() {
         return previas;
       }
 
-      const paso = pasoDe(linea.unidad);
-
-      /* Se redondea al escalón más cercano: el campo deja escribir cualquier
-         número a mano, y "1,3 kg de carne" no es algo que la balanza del
-         mostrador vaya a pesar. */
-      const milesimos = Math.round(Math.round(unidades * 1000) / paso) * paso;
+      const milesimos = acomodarCantidad(unidades, linea.unidad);
 
       if (milesimos <= 0) {
         return previas.filter((l) => l.clave !== clave);
