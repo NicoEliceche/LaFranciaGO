@@ -43,3 +43,6 @@ pruebas/reporte.xml
 
 # Las copias de la base: tienen datos de gente real y no van al repositorio.
 backend/respaldos/
+
+# Copias de los .bat antes del reparto de puertos: son locales.
+*.antes-de-puertos
