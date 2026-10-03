@@ -231,4 +231,12 @@ export const MapLocateError = styled.p`
   font-size: 0.6875rem;
   line-height: 1.35;
   text-align: center;
+
+  /* La ubicación imprecisa no es una falla: salió, sólo que con mucho
+     margen. Va en ámbar y no en el gris del error para que se lea como "mirá
+     esto" y no como "algo se rompió". */
+  &[data-aviso] {
+    background: rgba(120, 83, 10, 0.92);
+    color: #ffe9b8;
+  }
 `;

@@ -1,10 +1,13 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { LocateFixed } from 'lucide-react';
 
 import 'leaflet/dist/leaflet.css';
 
-import { useCurrentPosition } from '@shared/hooks/useCurrentPosition';
+import {
+  PRECISION_DUDOSA_METROS,
+  useCurrentPosition,
+} from '@shared/hooks/useCurrentPosition';
 
 import {
   MapCanvas,
@@ -25,6 +28,11 @@ const DEFAULT_ZOOM = 16;
 /** Al ubicar al usuario se acerca más: ya sabemos la manzana exacta. */
 const LOCATED_ZOOM = 18;
 
+/* Cuando la ubicación puede errar por kilómetros, se queda a la altura del
+   pueblo en lugar de la calle: acercarse a una lectura imprecisa hace creer
+   que el punto es exacto. */
+const ZOOM_IMPRECISO = 14;
+
 /**
  * Mapa OpenStreetMap con pin arrastrable.
  *
@@ -34,6 +42,9 @@ const LOCATED_ZOOM = 18;
  */
 export function AddressMap({ lat, lon, onPick }: AddressMapProps) {
   const { status, error, locate } = useCurrentPosition();
+
+  /* Cuánto puede errar la última lectura, para poder avisarlo. */
+  const [precision, setPrecision] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -123,15 +134,21 @@ export function AddressMap({ lat, lon, onPick }: AddressMapProps) {
      movible después: el GPS puede errar unos metros y quien mejor sabe dónde
      está la puerta es el usuario. */
   const handleLocate = () => {
-    locate(({ lat: foundLat, lon: foundLon }) => {
+    locate(({ lat: foundLat, lon: foundLon, precisionMetros }) => {
       const map = mapRef.current;
       const marker = markerRef.current;
 
+      /* Con poca precisión no se acerca tanto: un zoom de calle sobre una
+         ubicación que puede estar a kilómetros hace creer que el punto es
+         exacto. El zoom acompaña lo que la lectura realmente sabe. */
+      const dudosa = precisionMetros > PRECISION_DUDOSA_METROS;
+
       if (map && marker) {
         marker.setLatLng([foundLat, foundLon]);
-        map.setView([foundLat, foundLon], LOCATED_ZOOM);
+        map.setView([foundLat, foundLon], dudosa ? ZOOM_IMPRECISO : LOCATED_ZOOM);
       }
 
+      setPrecision(precisionMetros);
       skipRecenterRef.current = true;
       onPickRef.current(foundLat, foundLon);
     });
@@ -145,6 +162,18 @@ export function AddressMap({ lat, lon, onPick }: AddressMapProps) {
       <MapCrosshair aria-hidden="true">Arrastrá el punto hasta tu casa</MapCrosshair>
 
       {error ? <MapLocateError role="status">{error}</MapLocateError> : null}
+
+      {/* La computadora de escritorio no tiene GPS: ubica por la dirección de
+          internet, y eso devuelve el centro de la zona del proveedor, que
+          puede estar a cien kilómetros. Sin este aviso, la dirección que se
+          completa sola parece correcta y nadie la revisa. */}
+      {!error && precision !== null && precision > PRECISION_DUDOSA_METROS ? (
+        <MapLocateError role="status" data-aviso>
+          Tu ubicación salió con un margen de {Math.round(precision / 1000)} km, así
+          que seguramente no sea exacta. Suele pasar en computadoras sin GPS.
+          Arrastrá el punto hasta tu casa.
+        </MapLocateError>
+      ) : null}
 
       <MapLocateButton
         type="button"

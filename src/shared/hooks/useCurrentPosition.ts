@@ -14,7 +14,22 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type GeolocationStatus = 'idle' | 'locating' | 'ready' | 'error';
 
-type Coords = { lat: number; lon: number };
+type Coords = {
+  lat: number;
+  lon: number;
+  /* Radio en metros dentro del cual está la persona, según el navegador.
+     Importa más de lo que parece: un teléfono con GPS da 5 a 30 metros, pero
+     una computadora de escritorio no tiene GPS y ubica por IP, que devuelve
+     el centro de la zona del proveedor —miles de metros, a veces en otra
+     ciudad—. Sin este dato la aplicación no puede distinguir una ubicación
+     exacta de una que está a 100 km. */
+  precisionMetros: number;
+};
+
+/* Arriba de esto la ubicación no sirve para poner una dirección: es el orden
+   de magnitud de un barrio entero. Por debajo, un punto en el mapa tiene
+   sentido aunque haya que corregirlo arrastrando. */
+export const PRECISION_DUDOSA_METROS = 1_000;
 
 /* Un fix reciente sirve: la persona no se movió entre que abrió la hoja y tocó
    el botón. Pedir precisión alta desde cero puede tardar decenas de segundos. */
@@ -74,7 +89,11 @@ export function useCurrentPosition() {
         }
 
         setStatus('ready');
-        onSuccess({ lat: position.coords.latitude, lon: position.coords.longitude });
+        onSuccess({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+          precisionMetros: position.coords.accuracy,
+        });
       },
       (positionError) => {
         if (!mountedRef.current) {
