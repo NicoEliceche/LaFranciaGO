@@ -33,6 +33,7 @@ import {
 import { mandadosApi } from '@core/data/services/apiClient';
 
 import { DEFAULT_RADIUS_KM, cancelErrand, createErrand, useErrand } from '../errandStore';
+import { useDirecciones } from '../useDirecciones';
 import {
   MandadoAviso,
   MandadoAvisoIcono,
@@ -55,11 +56,24 @@ import {
 } from './MandadoDialogStyled';
 
 const MINIMO_CARACTERES = 10;
-const DIRECCION = 'Av. San Martín 123';
+
 
 export function MandadoDialog({ abierto, alCerrar }: { abierto: boolean; alCerrar: () => void }) {
   const navegar = useNavigate();
   const { errand: mandado } = useErrand();
+
+  /* A dónde va el mandado: la dirección que el cliente tiene elegida, igual
+     que en el carrito. Antes acá había una escrita a mano —"Av. San Martín
+     123"— así que el flete salía siempre a la misma dirección sin importar
+     dónde viviera quien lo pedía. */
+  const { direcciones } = useDirecciones();
+
+  const direccionElegida =
+    direcciones.find((fila) => fila.primary) ?? direcciones[0] ?? null;
+
+  /* Sin ninguna cargada se acuerda por el chat, que es lo que pasaba igual
+     antes de que existieran las direcciones. */
+  const direccion = direccionElegida?.address ?? 'A convenir';
 
   const [descripcion, setDescripcion] = useState('');
   const [intentado, setIntentado] = useState(false);
@@ -146,10 +160,10 @@ export function MandadoDialog({ abierto, alCerrar }: { abierto: boolean; alCerra
        la base es la que hace que el mandado exista después de recargar, se
        vea en "Mis pedidos" y le llegue a los repartidores. Antes sólo estaba
        lo primero: se podía pedir y al rato no existía en ningún lado. */
-    createErrand(limpio, DIRECCION);
+    createErrand(limpio, direccion);
 
     void mandadosApi
-      .crear({ descripcion: limpio, direccionTexto: DIRECCION, tipo })
+      .crear({ descripcion: limpio, direccionTexto: direccion, tipo })
       .catch(() => {
         /* El mandado ya se ve en pantalla; que falle el guardado no puede
            borrar lo que la persona acaba de pedir. Queda anotado del otro
@@ -248,7 +262,7 @@ export function MandadoDialog({ abierto, alCerrar }: { abierto: boolean; alCerra
                 <MandadoAvisoIcono>
                   <MapPin size={15} aria-hidden="true" />
                 </MandadoAvisoIcono>
-                Entrega en {DIRECCION}.
+                Entrega en {direccion}.
               </MandadoAviso>
 
               <MandadoAviso>

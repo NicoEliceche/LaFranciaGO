@@ -143,13 +143,37 @@ export async function reverseGeocode(
     }
 
     const data = (await response.json()) as {
-      address?: { road?: string; house_number?: string; neighbourhood?: string; city?: string };
+      address?: {
+        road?: string;
+        house_number?: string;
+        neighbourhood?: string;
+        /* La localidad viene con distinto nombre según el tamaño del lugar:
+           una ciudad es `city`, un pueblo como La Francia suele llegar como
+           `town` o `village`. Si se mira sólo `city`, los pueblos quedan sin
+           localidad, que es justamente donde funciona esto. */
+        city?: string;
+        town?: string;
+        village?: string;
+        municipality?: string;
+        state?: string;
+      };
     };
 
     const address = data.address ?? {};
-    const street = [address.road, address.house_number].filter(Boolean).join(' ');
+    const calle = [address.road, address.house_number].filter(Boolean).join(' ');
+    const localidad =
+      address.city ?? address.town ?? address.village ?? address.municipality ?? null;
 
-    return street || address.neighbourhood || address.city || null;
+    /* Se devuelve la dirección completa y no sólo la calle: "San Martín 450"
+       no alcanza para que alguien que no conoce la zona sepa a dónde ir, y
+       hay una San Martín en cada pueblo.
+
+       Las partes vacías se descartan en lugar de dejar comas sueltas: en el
+       campo del medio del monte puede no haber calle, y "  , La Francia,
+       Córdoba" se lee como un error de la aplicación. */
+    const partes = [calle || address.neighbourhood, localidad, address.state].filter(Boolean);
+
+    return partes.length > 0 ? partes.join(', ') : null;
   } catch {
     return null;
   }
