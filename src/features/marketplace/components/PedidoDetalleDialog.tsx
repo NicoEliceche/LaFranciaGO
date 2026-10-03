@@ -151,7 +151,11 @@ export function PedidoDetalleDialog({
           </AuthAviso>
         ) : null}
 
-        {datos ? (
+        {/* Se pregunta por `datos.pedido` y no sólo por `datos`: si el
+            servidor devuelve algo con otra forma, leer dentro de un undefined
+            tira la pantalla entera a blanco en lugar de mostrar el error.
+            Pasó de verdad con los fletes. */}
+        {datos?.pedido ? (
           <>
             <DetalleBloque>
               <DetalleTitulo>

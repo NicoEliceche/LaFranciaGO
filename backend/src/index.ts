@@ -3058,29 +3058,41 @@ async function enrutar(
       .bind(detalleFlete[1], fletero.usuario.id)
       .first<{ precio_centavos: number; estado: string }>();
 
+    /* Se devuelve con la misma forma que el detalle de un pedido —todo
+       dentro de `pedido`, y las líneas aparte— porque lo dibuja la misma
+       pantalla. Devolver los campos sueltos la dejaba en blanco: buscaba
+       `pedido.codigo` y encontraba undefined. */
     return json(
       {
-        /* Se devuelve con la forma que espera la pantalla de detalle, que es
-           la misma que usa para los pedidos. Lo que un pedido tiene como
-           comercio, acá es de dónde sale. */
-        id: flete.id,
-        codigo: flete.codigo,
+        pedido: {
+          id: flete.id,
+          codigo: flete.codigo,
+          /* Lo que en un pedido es el comercio, acá es de dónde sale. */
+          comercio: 'Flete',
+          comercio_direccion: flete.origen_texto ?? 'A convenir',
+          comercio_telefono: null,
+          direccion_texto: flete.destino_texto ?? 'A convenir',
+          cliente: flete.cliente,
+          cliente_telefono: flete.cliente_telefono,
+          /* Hasta que no se acepta una cotización no hay precio. */
+          total: flete.precio_centavos ? aPesos(Number(flete.precio_centavos)) : 0,
+          subtotal: 0,
+          envio: 0,
+          metodo_pago: null,
+        },
+        /* Un flete no tiene líneas: lo que hay que llevar está escrito a
+           mano, así que va como una sola línea con la descripción. */
+        items: [
+          {
+            nombre: String(flete.descripcion ?? 'Flete'),
+            cantidad: 1,
+            precio: 0,
+            subtotal: 0,
+          },
+        ],
         esFlete: true,
-        descripcion: flete.descripcion,
-        direccion_texto: flete.destino_texto ?? 'A convenir',
-        comercio: 'Flete',
-        comercio_direccion: flete.origen_texto ?? 'A convenir',
-        comercio_telefono: null,
-        cliente: flete.cliente,
-        cliente_telefono: flete.cliente_telefono,
-        creado_en: flete.creado_en,
         estado: flete.estado,
-        /* Hasta que no se acepta una cotización no hay precio. */
-        total: flete.precio_centavos ? aPesos(Number(flete.precio_centavos)) : null,
-        subtotal: null,
-        envio: null,
-        metodo_pago: null,
-        items: [],
+        creado_en: flete.creado_en,
         distanciaKm: distancia,
         miCotizacion: mia
           ? { precio: aPesos(Number(mia.precio_centavos)), estado: mia.estado }

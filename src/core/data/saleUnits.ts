@@ -107,23 +107,38 @@ export const SALE_UNIT_OPTIONS = Object.values(SALE_UNITS);
 
 const unitOf = (unitId: SaleUnitId | undefined) => SALE_UNITS[unitId ?? DEFAULT_SALE_UNIT];
 
+/**
+ * Deja el escalón dentro de los que existen.
+ *
+ * Acota por arriba y por abajo, y trata lo que no es un número como el
+ * primero. Esto último no es teórico: una línea sin escalón —un flete, que
+ * no tiene unidad de venta— llegaba como `undefined`, y `Math.max(undefined,
+ * 0)` da NaN, así que `steps[NaN]` era undefined y leerle `.label` dejaba la
+ * pantalla entera en blanco.
+ */
+function acotarEscalon(stepIndex: number, cuantos: number) {
+  if (!Number.isFinite(stepIndex)) {
+    return 0;
+  }
+
+  return Math.min(Math.max(Math.trunc(stepIndex), 0), cuantos - 1);
+}
+
 /** Cuántos escalones tiene la unidad: es el tope del selector. */
 export const maxStepIndex = (unitId?: SaleUnitId) => unitOf(unitId).steps.length - 1;
 
 /** Texto del escalón elegido ("1/2", "3 unid."). */
 export function stepLabel(unitId: SaleUnitId | undefined, stepIndex: number) {
   const { steps } = unitOf(unitId);
-  const safeIndex = Math.min(Math.max(stepIndex, 0), steps.length - 1);
 
-  return steps[safeIndex].label;
+  return steps[acotarEscalon(stepIndex, steps.length)].label;
 }
 
 /** Cuánto multiplica al precio base el escalón elegido. */
 export function stepFactor(unitId: SaleUnitId | undefined, stepIndex: number) {
   const { steps } = unitOf(unitId);
-  const safeIndex = Math.min(Math.max(stepIndex, 0), steps.length - 1);
 
-  return steps[safeIndex].factor;
+  return steps[acotarEscalon(stepIndex, steps.length)].factor;
 }
 
 /** Sufijo para mostrar junto al precio ("$2.400 el kg"). */

@@ -89,6 +89,23 @@ describe('stepLabel', () => {
     expect(stepLabel('docena', 1)).toBe('1 docena');
   });
 
+  it('aguanta un escalón que no es un número', () => {
+    /* Este caso faltaba, y por eso se escapó un bug: una línea sin escalón
+       —un flete, que no tiene unidad de venta— llegaba como undefined.
+       `Math.max(undefined, 0)` da NaN, `steps[NaN]` es undefined, y leerle
+       `.label` dejaba la pantalla del detalle entera en blanco. */
+    const sinEscalon = undefined as unknown as number;
+
+    expect(stepLabel('peso', sinEscalon)).toBe('1/4');
+    expect(stepFactor('peso', sinEscalon)).toBe(0.25);
+    expect(stepLabel('unidad', Number.NaN)).toBe('1 unid.');
+    expect(stepFactor('pesoMedio', Number.NaN)).toBe(0.5);
+  });
+
+  it('un escalón con decimales se trata como el entero de abajo', () => {
+    expect(stepFactor('peso', 1.9)).toBe(stepFactor('peso', 1));
+  });
+
   it('nunca devuelve vacío, ni con un índice imposible', () => {
     /* Una etiqueta vacía deja el selector sin texto y la pantalla parece
        rota. */
