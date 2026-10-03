@@ -19,6 +19,9 @@ contextBridge.exposeInMainWorld('lafranciagoEscritorio', {
   /** Datos de la instalación, para mostrarlos en pantalla. */
   info: () => ipcRenderer.invoke('lafranciago:version'),
 
+  /** Qué computadora es ésta y qué le convendría mejorar. */
+  equipo: () => ipcRenderer.invoke('lafranciago:equipo'),
+
   /* ── La ventana ──
      Sin marco de Windows no hay botones arriba a la derecha, así que los
      dibuja la aplicación y los acciona por acá. */

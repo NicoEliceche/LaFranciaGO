@@ -19,6 +19,7 @@ const { servirCompilada } = require('./servir');
 const { imprimirTicket, listarImpresoras } = require('./impresora');
 const { cargarAjustes, guardarAjustes, leerAjustes } = require('./ajustes');
 const { destinoDe, direccionEnArgumentos, registrarProtocolo } = require('./protocolo');
+const { REQUISITOS, revisarEquipo } = require('./equipo');
 const {
   cancelarProgramada,
   consultarVersion,
@@ -420,6 +421,46 @@ ipcMain.handle('lafranciago:tamano', () => {
 
 ipcMain.handle('lafranciago:cerrar', () => {
   ventana?.close();
+});
+
+/**
+ * Qué computadora es ésta y qué le convendría mejorar.
+ *
+ * El ancho de pantalla se agrega acá y no en `equipo.js` porque lo sabe
+ * Electron, no el sistema operativo.
+ */
+ipcMain.handle('lafranciago:equipo', async () => {
+  const informe = await revisarEquipo();
+  const ancho = screen.getPrimaryDisplay().workAreaSize.width;
+  const estado =
+    ancho >= REQUISITOS.anchoPantalla.recomendado
+      ? 'bien'
+      : ancho >= REQUISITOS.anchoPantalla.minimo
+        ? 'justo'
+        : 'corto';
+
+  informe.puntos.push({
+    id: 'pantalla',
+    titulo: 'Pantalla',
+    tiene: `${ancho} píxeles de ancho`,
+    recomendado: `${REQUISITOS.anchoPantalla.recomendado} píxeles`,
+    estado,
+    consejo: {
+      corto:
+        'La pantalla es angosta para la caja rápida: vas a tener que desplazarte para ver la lista de productos mientras cobrás. Un monitor más ancho lo resuelve.',
+      justo: 'Entra todo, aunque algo ajustado. Con un monitor más ancho se trabaja más cómodo.',
+      bien: 'Entra todo cómodo.',
+    },
+  });
+
+  /* El resumen se recalcula: la pantalla puede ser lo único corto. */
+  informe.resumen = informe.puntos.some((p) => p.estado === 'corto')
+    ? 'corto'
+    : informe.puntos.some((p) => p.estado === 'justo')
+      ? 'justo'
+      : 'bien';
+
+  return informe;
 });
 
 /* ── Lo que la aplicación puede pedirle a la máquina ── */

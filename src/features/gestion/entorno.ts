@@ -55,6 +55,8 @@ declare global {
       programarActualizacion?: (
         cuando: string | null,
       ) => Promise<{ ok: boolean; programadaPara?: string | null }>;
+      /** Qué computadora es ésta y qué le convendría mejorar. */
+      equipo?: () => Promise<InformeEquipo>;
       /** Minimizar, achicar y cerrar: la ventana no tiene marco propio. */
       ventana?: {
         minimizar: () => Promise<void>;
@@ -87,6 +89,36 @@ export interface EstadoActualizacion {
 }
 
 /** Lo que esta instalación recuerda entre sesiones. */
+/** Cómo salió un punto del diagnóstico. */
+export type EstadoEquipo = 'bien' | 'justo' | 'corto' | 'desconocido';
+
+/** Una cosa que se revisó de la computadora. */
+export interface PuntoEquipo {
+  id: string;
+  titulo: string;
+  /** Lo que tiene esta máquina, ya escrito para mostrar. */
+  tiene: string;
+  /** Lo que conviene tener. */
+  recomendado: string;
+  /** Detalle largo, como el modelo del procesador. */
+  detalle?: string;
+  estado: EstadoEquipo;
+  /** Qué hacer, en palabras de quien atiende. Una por estado. */
+  consejo: Partial<Record<EstadoEquipo, string>>;
+}
+
+/** Lo que devuelve la revisión de la computadora. */
+export interface InformeEquipo {
+  sistema: string;
+  procesador: string;
+  memoriaGB: number;
+  nucleos: number | null;
+  discoLibreGB: number | null;
+  puntos: PuntoEquipo[];
+  /** El peor de los puntos: de nada sirve "todo bien" con el disco lleno. */
+  resumen: EstadoEquipo;
+}
+
 export interface AjustesEscritorio {
   /** Vacío significa "la predeterminada de Windows". */
   impresora: string;

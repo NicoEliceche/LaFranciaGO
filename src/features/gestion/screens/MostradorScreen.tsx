@@ -8,9 +8,10 @@
  * tiene algo para configurar en la computadora del negocio.
  */
 import { useCallback, useEffect, useState } from 'react';
-import { CloudOff, Monitor, Printer, RefreshCw } from 'lucide-react';
+import { CloudOff, Cpu, Monitor, Printer, RefreshCw } from 'lucide-react';
 
 import { GestionFrame } from '../components/GestionFrame';
+import { RevisionEquipo } from '../components/RevisionEquipo';
 import { Total, Totales } from '../components/TablaStyled';
 import { type AjustesEscritorio, esEscritorio } from '../entorno';
 import {
@@ -322,6 +323,20 @@ export function MostradorScreen() {
           </p>
         ) : null}
       </Panel>
+
+      {/* Último, por orden de importancia: que la impresora y la lectora
+          anden es lo que decide si hoy se puede cobrar. Que la computadora
+          sea lenta molesta, pero no frena la venta. */}
+      {enMostrador ? (
+        <Panel>
+          <TituloPanel>
+            <Cpu size={16} aria-hidden="true" />
+            Cómo anda esta computadora
+          </TituloPanel>
+
+          <RevisionEquipo />
+        </Panel>
+      ) : null}
     </GestionFrame>
   );
 }
