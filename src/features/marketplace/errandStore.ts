@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { ChatMessage, Errand, ErrandCourier } from './errand.types';
+import type { ChatMessage, Errand } from './errand.types';
 
 /**
- * Estado del mandado en memoria.
+ * Estado del mandado en memoria, para la pantalla.
  *
- * Sin backend todavía: el mandado vive en un store module-level para que la
- * pantalla de alta y la del chat compartan los mismos datos. Cuando exista la
- * API, este archivo es el único punto a reemplazar.
+ * El mandado de verdad vive en la base: esto es lo que la pantalla de alta y
+ * la del chat comparten mientras la persona lo está pidiendo, para no tener
+ * que ir al servidor por cada cambio de la vista.
+ *
+ * Lo que sí dejó de estar acá es la simulación que daba el mandado por
+ * tomado a los pocos segundos. Inventaba un repartidor que no existe, así
+ * que no se podía distinguir un circuito que anda de uno que no.
  */
 
 const listeners = new Set<() => void>();
@@ -24,13 +28,6 @@ const clearSimulation = () => {
 
 const now = () =>
   new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-
-/** Repartidores disponibles dentro del radio de búsqueda. */
-const nearbyCouriers: ErrandCourier[] = [
-  { id: 'c1', name: 'Roy Ramírez', vehicle: 'Moto', rating: 4.9, distanceKm: 1.2 },
-  { id: 'c2', name: 'Daniel Sosa', vehicle: 'Moto', rating: 4.7, distanceKm: 2.4 },
-  { id: 'c3', name: 'Matías Gómez', vehicle: 'Auto', rating: 4.8, distanceKm: 3.6 },
-];
 
 const DEFAULT_RADIUS_KM = 5;
 
@@ -64,34 +61,13 @@ export function createErrand(description: string, address: string) {
 
   notify();
 
-  /* Simulación: a los pocos segundos un repartidor toma el pedido y saluda. */
-  const taken = window.setTimeout(() => {
-    if (!currentErrand || currentErrand.status !== 'buscando') {
-      return;
-    }
-
-    const courier = nearbyCouriers[Math.floor(Math.random() * nearbyCouriers.length)];
-
-    currentErrand = {
-      ...currentErrand,
-      status: 'tomado',
-      courier,
-      messages: [
-        {
-          id: `m-${Date.now()}`,
-          author: 'repartidor',
-          kind: 'texto',
-          text: `¡Hola! Tomo tu mandado. Voy para allá, cualquier cosa escribime por acá.`,
-          time: now(),
-        },
-      ],
-    };
-
-    notify();
-  }, 3200);
-
-  simulationTimers.push(taken);
-
+  /* Antes acá había una simulación: a los 3,2 segundos inventaba un
+     repartidor de una lista falsa y mostraba el mandado como tomado. Eso se
+     escribió cuando no había backend, y ahora miente: el pedido queda
+     "buscando" de verdad hasta que alguien lo tome desde su cuenta, que es
+     lo que hay que poder probar. Con la simulación, crear un flete y verlo
+     tomado por "Roy Ramírez" tres segundos después hacía imposible
+     comprobar el circuito real. */
   return currentErrand;
 }
 
@@ -135,4 +111,4 @@ export function useErrand() {
   return useMemo(() => ({ errand, send }), [errand, send]);
 }
 
-export { nearbyCouriers, DEFAULT_RADIUS_KM };
+export { DEFAULT_RADIUS_KM };

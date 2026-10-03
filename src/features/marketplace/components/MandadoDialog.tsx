@@ -266,7 +266,6 @@ export function MandadoDialog({ abierto, alCerrar }: { abierto: boolean; alCerra
               <MandadoPrimario type="submit">Generar mandado</MandadoPrimario>
               <MandadoPrimario
                 type="button"
-                data-secundario
                 onClick={(evento) =>
                   enviar(evento as unknown as FormEvent<HTMLFormElement>, 'flete')
                 }

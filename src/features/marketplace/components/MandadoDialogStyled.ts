@@ -276,14 +276,6 @@ export const MandadoPrimario = styled.button`
   cursor: pointer;
   transition: background-color 180ms ease;
 
-  /* El flete va en tono tranquilo: se piden muchos menos mandados que
-     fletes, y dos botones plenos no dicen cuál es el camino habitual. */
-  &[data-secundario] {
-    background: ${({ theme }) => theme.color.surfaceMuted};
-    color: ${({ theme }) => theme.color.primary};
-    border: 1px solid ${({ theme }) => theme.color.border};
-  }
-
   &:hover {
     background: ${({ theme }) => theme.color.brandHover};
     color: ${({ theme }) => theme.color.onPrimary};
